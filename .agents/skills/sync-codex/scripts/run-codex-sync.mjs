@@ -42,12 +42,28 @@ async function listTestFiles(dir) {
     }
 }
 
-// SYNC stages (1-3, mutate) then VERIFY stages (4-10, read-only). The verify set is
-// `codex:verify:all` (codex tests, scripts tests, wf-cycle, sk-proto, residue, sdd, sync-divergence)
-// — i.e. the standalone runner equals the full `npm run verify:all`. portability-no-package-json.test.mjs
-// (PORT-005) locks this parity so the runner can never again verify LESS than the npm path.
+// SYNC stages (1-3, mutate) then VERIFY stages (read-only). This runner's non-mutate stage set IS
+// the canonical definition of "verify everything" — do NOT re-declare that roster anywhere else.
+// `npm run verify:all` passes it as an `--only=` allowlist, and `codex:verify:all` now delegates
+// straight to `verify:all` rather than maintaining a parallel `&&` chain (it drifted one verifier
+// behind for exactly that reason: nothing locked it). portability-no-package-json.test.mjs guards
+// both directions — PORT-005 asserts every npm-referenced verifier is a runner stage, PORT-008
+// deepEquals `verify:all --only` to this non-mutate set, and PORT-010 asserts `codex:verify:all`
+// delegates instead of re-listing stages. Adding a stage below therefore REQUIRES adding its id to
+// `verify:all --only=` or PORT-008 goes red — which is the point.
 const codexTestsDir = path.join(sourceScriptsDir, "tests");
 const claudeTestsDir = path.join(rootDir, ".claude", "scripts", "tests");
+// The hooks suites are standalone runners (custom .cjs harnesses), NOT `node --test` modules — running
+// them under `node --test` reports spurious failures. They are invoked through their own runner's
+// `--filter` selector. Only the SYNC-INTEGRITY suites belong here (catalog/mirror/protocol parity);
+// hook-behaviour suites (notification, security, lifecycle, …) stay in `npm test`, which is a
+// different concern and would add ~30s for no sync-integrity coverage.
+// The selector is a SUBSTRING match on suite names (derived from filenames), so a rename could empty
+// one of these stages. pipeline-stage-integrity.test.mjs guards that: STAGE-001 locks the runner to
+// exit 1 on a zero-match `--filter` (a stage that executed nothing is never a pass), and STAGE-002
+// asserts `--filter=parity` still selects BOTH parity suites — the only selector here matching more
+// than one, and therefore the only one whose coverage could silently halve.
+const hooksRunner = path.join(rootDir, ".claude", "hooks", "tests", "run-all-tests.cjs");
 const stages = [
     { id: "migrate",  label: "migrate",          cmd: "node", mutate: true, args: [path.join(sourceScriptsDir, "migrate-claude-to-codex.mjs"), ...migrateFlags] },
     { id: "hooks",    label: "sync-hooks",       cmd: "node", mutate: true, args: [path.join(sourceScriptsDir, "sync-hooks.mjs")] },
@@ -57,10 +73,38 @@ const stages = [
     // Listed via readdir so the stage works without shell glob expansion (PowerShell does not expand
     // globs the way POSIX shells do; the npm script relied on that, the runner does not).
     { id: "scripts-tests", label: "test-scripts", cmd: "node", argsAsync: async () => ["--test", ...await listTestFiles(claudeTestsDir)] },
+    // Catalog↔source parity: `.claude/SKILLS.yaml` must equal a fresh `generate_catalogs.py --skills`
+    // render, and the CLAUDE.md/AGENTS.md COUNT markers must match the real inventory (ADR-0001,
+    // ADR-0002). This guard existed and worked, but lived ONLY in the hooks suite — which no pipeline
+    // stage ran — so a changeset shipped a stale committed catalog while all 12 stages reported green.
+    { id: "hooks-count-drift", label: "hooks-count-drift", cmd: "node", args: [hooksRunner, "--filter=count-drift"] },
+    // Protocol-text + SYNC-carrier parity across the mirrored surfaces.
+    { id: "hooks-parity",     label: "hooks-parity",       cmd: "node", args: [hooksRunner, "--filter=parity"] },
+    // Doc↔code sync gate.
+    { id: "hooks-doc-sync",   label: "hooks-doc-sync",     cmd: "node", args: [hooksRunner, "--filter=doc-sync-gate"] },
     { id: "wf-cycle", label: "verify-wf-cycle",  cmd: "node", args: [path.join(sourceScriptsDir, "verify-workflow-cycle-compliance.mjs")] },
     { id: "sk-proto", label: "verify-sk-proto",  cmd: "node", args: [path.join(sourceScriptsDir, "verify-skill-protocol-compliance.mjs")] },
     { id: "residue",  label: "verify-residue",   cmd: "node", args: [path.join(sourceScriptsDir, "verify-no-project-residue.mjs")] },
     { id: "sdd",      label: "verify-sdd",       cmd: "node", args: [path.join(sourceScriptsDir, "verify-sdd-semantic-compliance.mjs")] },
+    // Self-Review Convergence Loop enforcement sensor (SC8). Statically asserts every review-family
+    // SKILL.md that carries findings language also carries the `/why-review --validate-findings`
+    // route, AND that a validate-only grader does NOT embed the `SYNC:double-round-trip-review`
+    // fix-loop engine. Read-only; fails the build if an author ships a review skill without the gate.
+    { id: "review-validate-coverage", label: "verify-review-validate-coverage", cmd: "node", args: [path.join(sourceScriptsDir, "verify-review-validate-coverage.mjs")] },
+    // SYNC tag <-> carrier adoption parity. Closes the last unguarded axis of the SYNC system: which
+    // review skill carries which tag. Asserts declared carriers actually carry both the main and
+    // :reminder block, that no UNDECLARED skill carries a matrix tag (the injector would never refresh
+    // it), and that every injected body byte-matches canonical. Parses the adoption matrix out of
+    // inject_review_skill_blocks.py rather than declaring a Node copy, so the two cannot disagree.
+    { id: "sync-adoption-parity", label: "verify-sync-adoption-parity", cmd: "node", args: [path.join(sourceScriptsDir, "verify-sync-adoption-parity.mjs")] },
+    // Provenance-marker discipline in .claude/docs/architecture-knowledge.md. The catalog's own §20
+    // rule says an unenforced rule "will be violated within a quarter" — this convention was violated
+    // three times in one authoring session, so the sensor asserts: declared tags only · `— VERIFY`
+    // only on a declared tag · every guarded section (§3/§8/§9/§10) carries its default-basis banner ·
+    // no banner enumerates row-level exceptions (a stale-prone second mechanism no consuming skill
+    // reads) · a `[model-knowledge]` marker carries `— VERIFY` so the consumers' guard actually fires.
+    // Fail-soft when the catalog is absent, so a project that copied `.claude` without it still syncs.
+    { id: "provenance-markers", label: "verify-provenance-markers", cmd: "node", args: [path.join(sourceScriptsDir, "verify-provenance-markers.mjs")] },
     // Cross-surface byte-equality oracle. verify-sync-divergence guards BOTH the .agents/skills mirror
     // AND the CONTEXT mirror (AGENTS.md + .codex/CODEX_CONTEXT.md) — the context idempotency check is
     // folded in there (not a separate stage/file) so the portable export ships zero new pipeline scripts.

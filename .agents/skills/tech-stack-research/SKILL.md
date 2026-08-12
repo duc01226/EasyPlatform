@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -56,14 +57,16 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Deliver a user-confirmed, per-layer tech stack — each choice backed by 3+ researched options, weighted scoring, cited evidence, and a confidence % — by acting as a solution architect who derives technical requirements from business analysis, researches the current market, and produces a detailed comparison report, so the team commits to a stack fit for scale, budget, skills, and timeline, not familiarity.
+**Goal:** Deliver user-confirmed, per-layer tech stack — each choice backed by 3+ researched options, weighted scoring, cited evidence, confidence % — by acting as solution architect: derive technical requirements from business analysis, research current market, produce detailed comparison report, so team commits to stack fit for scale, budget, skills, timeline, NOT familiarity.
 
 **Summary:**
 
-- Requirements come BEFORE research: load prior business/domain/PBI artifacts, map business signals to technical requirements, and gate on user confirmation (a direct user question) before any WebSearch.
-- Evaluate every stack layer (backend, frontend, database, messaging, infra, auth) independently — minimum 3 WebSearched options per layer, each with cited evidence (URL, benchmark, case study), never familiarity.
-- Score with the weighted 8-criteria matrix (High=3x / Medium=2x / Low=1x), then rank each layer with a confidence %; capped <=200-line report goes to `{plan-dir}/research/tech-stack-comparison.md`.
-- The end-of-skill user validation interview (5-8 questions) is mandatory and never skipped — only confirmed decisions get written to `phase-02-tech-stack.md` as `status: confirmed`.
+- **Purpose:** act as solution architect — derive technical requirements from business analysis, research current market, produce per-layer comparison report so team commits to stack fit for scale/budget/skills/timeline, NOT familiarity.
+- **All 7 main steps (run in order):** (1) Load Business Context → (2) Derive Technical Requirements + user-confirm → (3) Research Per Layer (WebSearch 3+ options each) → (4) Deep Comparison Matrix → (5) Weighted Score & Ranking → (6) Generate Report → (7) User Validation Interview.
+- Requirements BEFORE research: load prior business/domain/PBI artifacts (Step 1), map business signals → technical requirements (Step 2), gate on user confirmation (ask the user directly) before any WebSearch (Step 3).
+- Evaluate every stack layer (backend, frontend, database, messaging, infra, auth) independently — minimum 3 WebSearched options per layer, each with cited evidence (URL, benchmark, case study), NEVER familiarity (Steps 3-4).
+- Score with weighted 8-criteria matrix (High=3x / Medium=2x / Low=1x), rank each layer with confidence %; capped <=200-line report → `{plan-dir}/research/tech-stack-comparison.md` (Steps 5-6).
+- End-of-skill user validation interview (5-8 questions) mandatory, NEVER skipped — only confirmed decisions written to `phase-02-tech-stack.md` as `status: confirmed` (Step 7).
 
 **Workflow:**
 
@@ -79,15 +82,15 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 - **MANDATORY IMPORTANT MUST ATTENTION** research minimum 3 options per stack layer
 - **MANDATORY IMPORTANT MUST ATTENTION** include confidence % with evidence for every recommendation
-- **MANDATORY IMPORTANT MUST ATTENTION** run user validation interview at end (never skip)
+- **MANDATORY IMPORTANT MUST ATTENTION** run user validation interview at end (NEVER skip)
 - All claims must cite sources (URL, benchmark, case study)
-- Recommend based on benchmarked evidence (URL, benchmark, case study); never on familiarity alone
+- Recommend on benchmarked evidence (URL, benchmark, case study); NEVER on familiarity alone
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Step 1: Load Business Context
 
-Read artifacts from prior workflow steps (search in `plans/` and `team-artifacts/`):
+Read artifacts from prior workflow steps (search `plans/`, `team-artifacts/`):
 
 - Business evaluation report (viability, scale, constraints)
 - Domain model / ERD (complexity, entity count, relationships)
@@ -120,11 +123,11 @@ Map business signals to technical requirements:
 | Tight budget       | Open-source, low hosting cost                   | Should   |
 | Compliance         | Audit trail, encryption, auth framework         | Must     |
 
-**MANDATORY IMPORTANT MUST ATTENTION** validate derived requirements with user via a direct user question before proceeding to research.
+**MANDATORY IMPORTANT MUST ATTENTION** validate derived requirements with user by asking the user directly before proceeding to research.
 
 ## Step 3: Research Per Stack Layer
 
-For EACH layer, research top 3 options using WebSearch (minimum 5 queries total):
+For EACH layer, research top 3 options via WebSearch (minimum 5 queries total):
 
 ### Stack Layers to Evaluate
 
@@ -149,7 +152,7 @@ For EACH layer, research top 3 options using WebSearch (minimum 5 queries total)
 
 ## Step 4: Deep Comparison Matrix
 
-For EACH stack layer, produce a comparison table:
+For EACH stack layer, produce comparison table:
 
 | Criteria             | Option A          | Option B | Option C | Weight |
 | -------------------- | ----------------- | -------- | -------- | ------ |
@@ -219,7 +222,7 @@ Report must be **<=200 lines**. Use tables over prose.
 
 ## Step 7: User Validation Interview
 
-**MANDATORY IMPORTANT MUST ATTENTION** present findings and ask 5-8 questions via a direct user question:
+**MANDATORY IMPORTANT MUST ATTENTION** present findings and ask 5-8 questions by asking the user directly:
 
 ### Required Questions
 
@@ -237,7 +240,7 @@ Report must be **<=200 lines**. Use tables over prose.
 - "Preference for managed services vs self-hosted?"
 - "Monorepo or polyrepo for this team size?"
 
-After user confirms, update report with final decisions and mark as `status: confirmed`.
+After user confirms, update report with final decisions, mark `status: confirmed`.
 
 ## Output
 
@@ -249,7 +252,7 @@ After user confirms, update report with final decisions and mark as `status: con
 ---
 
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate EVERY recommendation with user via a direct user question — never auto-decide.
+**MANDATORY IMPORTANT MUST ATTENTION** validate EVERY recommendation with user by asking the user directly — NEVER auto-decide.
 **MANDATORY IMPORTANT MUST ATTENTION** include confidence % and evidence citations for all claims.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 
@@ -257,7 +260,7 @@ After user confirms, update report with final decisions and mark as `status: con
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use ask the user directly to present these options. Do NOT skip because task seems "simple"/"obvious" — the user decides:
 
 - **"$architecture-design (Recommended)"** — Design solution architecture with chosen tech stack
 - **"$plan"** — If architecture already decided
@@ -265,10 +268,37 @@ After user confirms, update report with final decisions and mark as `status: con
 
 ### Council escalation (always-offer, second prompt)
 
-After the existing `## Next Steps` prompt above resolves, present a **second**, independent a direct user question call:
+After the existing `## Next Steps` prompt above resolves, present a **second**, independent ask the user directly call:
 
 - **"Skip council — proceed with chosen stack (Recommended)"** — Continue with the selected tech stack as-is.
 - **"Escalate to $llm-council"** — Run 11 sub-agent council. Best applied when 2+ stacks score within 15% on the comparison matrix or you have unfamiliar/strategic dependencies. Cheaper alternatives: `$why-review`, `$plan-validate`.
+
+<!-- SYNC:scenario-stress-eval -->
+
+> **Scenario Stress & Resilience Evaluation** — CONDITIONAL, evidence-gated, business-criticality-aware. The top-down companion to `SYNC:scale-technique-gate`: instead of _"is technique X present?"_, put the system UNDER concrete failure/load scenarios and judge whether it SURVIVES, SELF-HEALS, and whether its BUSINESS needs it to. **ADVICE-ONLY: emit the Scenario Stress Matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.**
+>
+> 1. **Reuse the scale tier** derived by `SYNC:scale-technique-gate` (or derive it identically from evidence); **also derive business-criticality `B0`–`B3`** from specs/SLA/product docs + the domain, cite `file:line` + confidence. `B0` best-effort · `B1` important · `B2` business-critical · `B3` mission-critical/regulated. Unknown → state the assumption, do **NOT** default to `B3`/`T3`. **Criticality-signal floor (both-directions safety):** regulated / PII / financial / health data, money movement, auth/identity, or legal-compliance scope raises `B` to **at least `B2` even absent SLA/SLO docs**; anti-over-engineering lowers hardening ONLY when NO such signal is present. `B` (blast if it fails) and `T` (scale of load/data) are independent — a low-traffic payroll run is low-`T`, high-`B`.
+> 2. **Select in-scope scenarios** — only those the system's `B`/`T` combination warrants (a `B0` internal PoC skips region-loss/DR entirely; a `B3`/`T0` regulated service still needs backups + DR by BUSINESS, not scale).
+> 3. **Walk each in-scope scenario:** simulate the stimulus → trace the break path → name the failure signature → answer the self-heal/recovery question (auto-recover? MTTR? manual runbook?) → name the trade-off it forces. Families: traffic spike · sustained growth · data-volume growth · write/ingest burst · dependency down/slow · instance/node loss · zone/region loss · **data loss/corruption** · poison-message/retry-storm · cascading failure/backpressure · cold-start/deploy-blip · clock-skew/duplicate-delivery.
+> 4. **Assign one verdict per scenario:** `WITHSTANDS` · `DEGRADES-GRACEFULLY` · `FAILS-HARD` (→ **advise only**) · `N/A-by-business` (not warranted → skip, not a gap) · `OVER-HARDENED` (resilience beyond business need → **advise AGAINST**, cite carrying cost).
+> 5. **Anti-over-engineering guard (first-class):** a lean system whose business does not need HA/DR is a PASS; `OVER-HARDENED` flags resilience the business does not warrant. This guard is symmetric with the criticality-signal floor above — never under-harden a `B2`+ system just because its traffic is low.
+> 6. **Output — Scenario Stress Matrix:** `scenario | in-scope (B/T)? | verdict | self-heal | trade-off | evidence (file:line/config/infra)`. Full catalog + Business×Scale in-scope baseline + verdict/tier tables → `.claude/docs/scenario-stress-catalog.md`. **ADVISORY-ONLY: NEVER mutate any `/20`, `/24`, verdict band, or gate pass/fail. Drift-guard: scenarios/verdicts/business-tiers are AUTHORITATIVE in the catalog — update it FIRST, then re-run `.claude/scripts/inject_scenario_stress_gate.py`. Scale tier stays single-sourced in `scale-technique-catalog.md`.**
+>
+> **BLOCKED until:** `- [ ]` scale tier + business-criticality (with criticality-signal floor) derived from evidence `- [ ]` in-scope scenarios selected `- [ ]` matrix emitted `- [ ]` over-hardening guard applied `- [ ]` advisory-only (no score/verdict mutation) confirmed
+
+<!-- /SYNC:scenario-stress-eval -->
+
+<!-- SYNC:scale-technique-gate:reminder -->
+
+**IMPORTANT MUST ATTENTION** scale-technique gate: derive the scale tier from evidence FIRST (T0 internal · T1 <10k · T2 10k–1M · T3 millions+), then judge each warranted technique `PRESENT`/`MISSING-WARRANTED`/`N/A-by-scale`/`OVER-ENGINEERED`. Advise on warranted-but-missing gaps AND advise AGAINST unwarranted heavyweight techniques (anti-over-engineering). **ADVICE-ONLY — emit the Technique Applicability Matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.** Full catalog → `.claude/docs/scale-technique-catalog.md` (authoritative for tier thresholds & per-technique warranting tiers — on any change update the catalog FIRST, then re-run `inject_scale_technique_gate.py`).
+
+<!-- /SYNC:scale-technique-gate:reminder -->
+
+<!-- SYNC:scenario-stress-eval:reminder -->
+
+**IMPORTANT MUST ATTENTION** scenario-stress gate: reuse the scale tier `T0`–`T3` AND derive business-criticality `B0`–`B3` from evidence first — apply the **criticality-signal floor** (regulated/PII/financial/health data · money movement · auth/identity · legal-compliance → at least `B2` even absent SLA docs; do NOT default to `B3`). Select only the scenarios the `B`/`T` combination warrants, then walk each (simulate → trace → failure signature → self-heal/MTTR → trade-off) and assign `WITHSTANDS`/`DEGRADES-GRACEFULLY`/`FAILS-HARD`/`N/A-by-business`/`OVER-HARDENED`. Anti-over-engineering is first-class (a lean system that needs no HA/DR is a PASS) AND symmetric (never under-harden a `B2`+ system for low traffic). **ADVICE-ONLY — emit the Scenario Stress Matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.** Full catalog → `.claude/docs/scenario-stress-catalog.md` (authoritative for scenarios/verdicts/business-tiers — on any change update the catalog FIRST, then re-run `inject_scenario_stress_gate.py`; scale tier stays single-sourced in `scale-technique-catalog.md`).
+
+<!-- /SYNC:scenario-stress-eval:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
@@ -285,14 +315,40 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 **IMPORTANT MUST ATTENTION Goal:** deliver user-confirmed, per-layer tech stack — each choice backed by 3+ researched options, weighted 8-criteria scoring, cited evidence, confidence % — so team commits to a stack fit for scale, budget, skills, timeline, NOT familiarity.
 
+**IMPORTANT MUST ATTENTION — run ALL 7 steps in declared order, none skipped:** (1) Load Business Context → (2) Derive Technical Requirements (+ ask the user directly confirm) → (3) Research Per Layer (WebSearch 3+ options each) → (4) Deep Comparison Matrix → (5) Weighted Score & Ranking (confidence %) → (6) Generate Report (<=200 lines) → (7) User Validation Interview (5-8 questions, write `status: confirmed`) — why: AI keeps collapsing this into "just pick a stack" and dropping requirements-derivation, scoring, and the confirmation gate that make the choice defensible.
+
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
 - **Critical Thinking:** MUST ATTENTION apply critical + sequential thinking; traced proof, confidence >80% to act, NEVER guess as fact.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
 **IMPORTANT MUST ATTENTION** research minimum 3 WebSearched options per stack layer (backend, frontend, database, messaging, infra, auth); every recommendation carries confidence % + cited evidence (URL, benchmark, case study) — NEVER recommend on familiarity alone — why: familiarity bias commits the team to the wrong stack that surfaces only at scale.
-**IMPORTANT MUST ATTENTION** gate on user via a direct user question at EVERY decision point — confirm derived requirements before research (Step 2), confirm each layer recommendation in the end interview (Step 7) — NEVER auto-decide — why: the team owns the stack, not the AI.
+**IMPORTANT MUST ATTENTION** gate on user by asking the user directly at EVERY decision point — confirm derived requirements before research (Step 2), confirm each layer recommendation in the end interview (Step 7) — NEVER auto-decide — why: the team owns the stack, not the AI.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; mark one `in_progress`, `completed` immediately after evidence; add a final review todo.
+
+<!-- SYNC:scale-technique-gate -->
+
+> **Scalability & Production-Readiness Technique Gate** — CONDITIONAL, evidence-gated, scale-tiered. Judge which system-design techniques a system _warrants_ at its scale — flag warranted-but-missing gaps AND advise AGAINST unwarranted heavyweight ones. **ADVICE-ONLY: emit the matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.**
+>
+> 1. **Derive the scale tier FIRST — from evidence, never assumed.** Read users/RPS, SLO/latency targets, data volume, tenancy, topology from config/infra/specs; cite `file:line` + confidence. Tiers: `T0` internal/single-instance · `T1` small SaaS (<10k users) · `T2` high-scale (10k–1M) · `T3` massive/multi-region (millions+). Unknown tier → state assumption, do NOT default to T3.
+> 2. **Judge each concern group only at/above its warranting tier** (member techniques → owning review skill for depth):
+>     - Traffic & Edge — Rate Limiting, Load Balancing, Reverse Proxy, API Gateway, CDN, Edge Caching, WAF, DDoS (T1+; CDN/WAF T2+) → security-review owns WAF/DDoS
+>     - Caching & Data Access — Caching, Cache Invalidation, DB Indexing, Query Optimization, N+1, Connection Pooling (T1+) → performance-review owns depth
+>     - Data Scaling & Consistency — Read Replicas, Sharding, Partitioning, Replication, CAP, Eventual Consistency, Locks, Leader Election (T2+; sharding/multi-region T3) → performance-review
+>     - Async & Messaging — Message Queues, Pub/Sub, Event-Driven, Saga, DLQ, Distributed Transactions, Backpressure, Webhooks, WebSockets/SSE (T2+)
+>     - Resilience — Circuit Breakers, Timeouts, Retries, Backoff, Idempotency, Health Checks, Liveness/Readiness, Failover, Graceful Degradation (T1+) → production-readiness-review
+>     - Scaling & Compute — Autoscaling, Horizontal/Vertical Scaling, Serverless Limits, Cold Starts, Cron Jobs, Thread Safety, GC/Memory Leaks (T1+; autoscaling T2+)
+>     - Deployment & Release — CI/CD, Docker, Kubernetes, Blue-Green/Canary/Rolling, Rollbacks, Feature Flags, IaC/Terraform/Helm, Build Caching (CI/CD T0+; K8s/canary T2+)
+>     - Observability — Monitoring, Logging, Distributed Tracing, Metrics, Alerting, SLOs/SLIs, Error Budgets (T1+; tracing/error-budgets T2+) → production-readiness-review
+>     - Security & Compliance — Secrets Management, IAM, OAuth, JWT Rotation, TLS, Encryption at Rest/Transit, CORS, CSRF, SQLi, XSS, SSRF (T0+) → security-review owns
+>     - DR & Infra — Backups, Disaster Recovery, Multi-Region, Chaos Engineering, Schema Versioning, DB Migrations, Cost Optimization (backups T1+; DR/multi-region/chaos T3) → production-readiness-review
+> 3. **Assign one of 4 verdicts per warranted technique:** `PRESENT` · `MISSING-WARRANTED` (→ **advise only** — guidance, NOT a score/gate lever) · `N/A-by-scale` (below warranting tier) · `OVER-ENGINEERED` (present but unwarranted at this tier → advise AGAINST).
+> 4. **Anti-over-engineering guard (first-class):** do NOT recommend K8s, sharding, multi-region, service mesh, event sourcing, or distributed transactions below their warranting tier. A correctly-lean small system is a PASS, never a gap.
+> 5. **Output — Technique Applicability Matrix:** `technique | tier-warranted? | present? | verdict | advice | evidence (file:line/config/infra)`. Full grouped catalog + per-tier baseline → `.claude/docs/scale-technique-catalog.md`. Hosting reviews surface this matrix WITHOUT changing any `/20`, `/24`, verdict band, or PASS/FAIL (per user decision 2026-07-06). **Drift-guard: tier thresholds & per-technique warranting tiers are AUTHORITATIVE in `.claude/docs/scale-technique-catalog.md` — the inline tier summary above is a condensed pointer; on any tier/technique change, update the catalog FIRST, then re-run `.claude/scripts/inject_scale_technique_gate.py` to re-propagate this block.**
+>
+> **BLOCKED until:** `- [ ]` tier derived from evidence (not assumed) `- [ ]` matrix emitted `- [ ]` over-engineering guard applied `- [ ]` advisory-only (no score/verdict mutation) confirmed
+
+<!-- /SYNC:scale-technique-gate -->
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
@@ -325,15 +381,16 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
 
 **IMPORTANT MUST ATTENTION** requirements come BEFORE research — load prior business/domain/PBI artifacts (Step 1), map business signals to technical requirements (Step 2), user-confirm them, THEN WebSearch (Step 3) — NEVER research before requirements are derived and confirmed — why: researching first picks tech then back-fits the problem, the reverse of architecture.
 **IMPORTANT MUST ATTENTION** score every layer with the weighted 8-criteria matrix (High=3x / Medium=2x / Low=1x), rank with confidence %, cap the `{plan-dir}/research/tech-stack-comparison.md` report at <=200 lines using tables over prose — why: an unscored or unbounded report hides the trade-off the decision turns on.
-**IMPORTANT MUST ATTENTION** only user-confirmed decisions get written to `phase-02-tech-stack.md` as `status: confirmed` — the end interview (5-8 a direct user question questions) is mandatory and never skipped even when the choice seems "obvious" — why: an unconfirmed stack is a guess the team will pay for.
+**IMPORTANT MUST ATTENTION** only user-confirmed decisions get written to `phase-02-tech-stack.md` as `status: confirmed` — the end interview (5-8 ask the user directly questions) is mandatory and NEVER skipped even when the choice seems "obvious" — why: an unconfirmed stack is a guess the team will pay for.
 **IMPORTANT MUST ATTENTION** every claim, finding, and recommendation requires `file:line`/URL proof or traced evidence + confidence % (>80% act, 60-80% verify first, <60% DO NOT recommend) — NEVER present a guess as fact — why: a stack chosen on speculation fails silently until production.
 **IMPORTANT MUST ATTENTION** evaluate fit before copying a reference stack from another project — verify the new context shares the same scale, budget, team skills, compliance, and timeline constraints — why: the closest example rarely matches preconditions, and a mismatched copy compiles but fails the real requirements.
 
@@ -431,8 +488,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -443,6 +501,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

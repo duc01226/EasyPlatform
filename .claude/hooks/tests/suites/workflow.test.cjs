@@ -110,12 +110,12 @@ const deadModuleVerificationTests = [
         }
     },
     {
-        name: '[review-guidance] review-changes workflow injectContext includes multilingual UI sync check',
+        name: '[review-guidance] workflow-review-changes injectContext includes multilingual UI sync check',
         fn: async () => {
             const configPath = path.resolve(__dirname, '..', '..', '..', 'workflows.json');
             const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
             const text = data.workflows?.['workflow-review-changes']?.preActions?.injectContext || '';
-            assertContains(text, 'MULTILINGUAL UI SYNC CHECK', 'review-changes workflow should include multilingual UI sync guidance');
+            assertContains(text, 'MULTILINGUAL UI SYNC CHECK', 'workflow-review-changes should include multilingual UI sync guidance');
         }
     }
 ];
@@ -156,12 +156,14 @@ const EXPECTED_WORKFLOW_IDS = [
     'workflow-refactor',
     'workflow-research',
     'workflow-review-changes',
+    'workflow-architecture-audit',
     'workflow-code-to-spec',
     'workflow-spec-to-pbi',
     'workflow-spec-sync',
     'workflow-visualize',
     'workflow-seed-test-data',
-    'workflow-write-integration-test'
+    'workflow-write-integration-test',
+    'workflow-integration-test-green'
 ];
 
 // Ids removed by the rename — must never reappear as workflow keys.

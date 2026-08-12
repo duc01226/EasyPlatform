@@ -158,6 +158,40 @@ function findPythonBinary() {
 }
 
 /**
+ * Ordered list of python fallback command names to probe, by platform.
+ *
+ * Windows: probe real `python` BEFORE `python3`. On Windows a bare `python3`
+ * is typically the Microsoft-Store execution alias, which wastes ~140ms failing
+ * before the real interpreter (`python`) resolves in ~17ms — a per-session cost
+ * that widens the margin below the harness spawn timeout under load.
+ * Off-Windows: `python3` is the canonical interpreter and `python` is often
+ * absent, so `python3` MUST be probed first.
+ *
+ * `python3` always remains in the list, so hosts where ONLY `python3` resolves
+ * (Linux/macOS, and Windows boxes where `python` is unavailable) still detect a
+ * version — the reorder is a cost optimization, never a coverage reduction.
+ *
+ * @param {string} platform - a `process.platform` value (e.g. 'win32', 'linux', 'darwin')
+ */
+function pythonFallbackOrder(platform) {
+  return platform === "win32" ? ["python", "python3"] : ["python3", "python"];
+}
+
+/**
+ * Resolve a python version string from the platform-ordered fallback commands.
+ * @param {string} platform - a `process.platform` value
+ * @param {(binary: string, args: string[]) => string|null} run - binary runner (execFileSafe)
+ * @returns {string|null} version string, or null if no interpreter resolves
+ */
+function resolvePythonFallback(platform, run) {
+  for (const cmd of pythonFallbackOrder(platform)) {
+    const result = run(cmd, ["--version"]);
+    if (result) return result;
+  }
+  return null;
+}
+
+/**
  * Get Python version with optimized detection
  * Layer 0: Fast path pre-check (instant fs lookup)
  * Layer 1: Timeout protection (2s max per command)
@@ -173,16 +207,10 @@ function getPythonVersion() {
     if (result) return result;
   }
 
-  // Fallback: Try shell resolution with strict timeout
-  // This catches non-standard installations but caps at 2s
-  // Note: Shell fallback still needed for pyenv/asdf where binary isn't in standard paths
-  const commands = ["python3", "python"];
-  for (const cmd of commands) {
-    const result = execFileSafe(cmd, ["--version"]);
-    if (result) return result;
-  }
-
-  return null;
+  // Fallback: shell resolution with strict timeout (still needed for pyenv/asdf
+  // where the binary isn't in standard paths). Platform-ordered to avoid the
+  // wasteful Windows MS-Store `python3` alias probe — see pythonFallbackOrder.
+  return resolvePythonFallback(process.platform, execFileSafe);
 }
 
 /**
@@ -470,4 +498,17 @@ async function main() {
   }
 }
 
-main();
+// Export pure helpers for unit testing (per session-init-docs.cjs convention).
+// Only the platform-ordered python fallback is exercised by tests today.
+module.exports = {
+  pythonFallbackOrder,
+  resolvePythonFallback,
+  getPythonVersion,
+};
+
+// Run if executed directly (not required as module). Claude Code spawns this
+// file with `node`, so require.main === module holds and main() still runs;
+// requiring it from a test does NOT trigger main().
+if (require.main === module) {
+  main();
+}

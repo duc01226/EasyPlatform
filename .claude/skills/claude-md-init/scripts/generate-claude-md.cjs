@@ -234,8 +234,10 @@ function stampHeader(content) {
         .replace(SKILLS_BLOCK_RE, '')
         .replace(CK_CRIT_BLOCK_RE, '')
         .replace(CK_AIMP_BLOCK_RE, '')
-        .replace(/^\n+/, '')
-        .replace(/\n{3,}/g, '\n\n');
+        // CRLF-aware: a `\r\n\r\n\r\n` run has no consecutive `\n`, so an LF-only
+        // pattern here silently leaves the blank gap each stripped block left behind.
+        .replace(/^(?:\r?\n)+/, '')
+        .replace(/(?:\r?\n){3,}/g, '\n\n');
     if (!hasGuides(text)) return text;
     const gate = loadWorkflowGate();
     const skills = loadWorkflowSkillsCatalog();
@@ -389,7 +391,10 @@ function loadConfig() {
 }
 
 function hasMarkers(content) {
-    return SECTION_OPEN.test(content.split('\n').find(l => SECTION_OPEN.test(l.trim())) || '');
+    // Match on the TRIMMED line — CLAUDE.md is often CRLF, so a raw line ends in "\r"
+    // and SECTION_OPEN's `$` anchor would fail (the marker "looks" absent), misrouting
+    // detectMode() to smart-merge and silently skipping the back-fill guard on Windows.
+    return content.split('\n').some(l => SECTION_OPEN.test(l.trim()));
 }
 
 function detectMode() {

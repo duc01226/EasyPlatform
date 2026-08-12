@@ -2,6 +2,7 @@
 
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -892,8 +893,52 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
 
                     throw new PlatformDomainRowVersionConflictException($"Save changes has conflicted version. {ex.Message}", ex);
                 }
+                // Translate a UNIQUE-constraint violation into the provider-neutral platform exception, exactly as the
+                // concurrency conflict above is translated. Recognising the provider-native error is THIS layer's
+                // responsibility — it keeps callers in the Domain/Application layers free of any database-provider type
+                // and free of the fragile `ex.GetType().Name is "..."` workaround that a rename would silently break.
+                // The original DbUpdateException is preserved as InnerException, so the Serilog destructurer and any
+                // constraint-name inspection still see everything they did before.
+                catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+                {
+                    // No provider text is interpolated into the message, unlike the row-version sibling above. This
+                    // message is copied VERBATIM into the HTTP 400 body (PlatformAspNetMvcErrorInfo.FromDomainException)
+                    // and reaches the UI, and the Mongo half of this same exception type already carries no provider
+                    // detail (PlatformMongoDbContext :661/:665) — one exception type must not have two hygiene rules.
+                    // Nothing is lost for debugging: DeveloperExceptionMessage still carries the full ToString()
+                    // including this InnerException when developer exceptions are enabled, and it is logged server-side.
+                    throw new PlatformDomainUniqueConstraintViolationException("Save changes violated a unique constraint.", ex);
+                }
             },
             cancellationToken);
+    }
+
+    /// <summary>
+    /// ANSI SQL class-23 <c>unique_violation</c>. Matching the SQLSTATE rather than an exception type or a message
+    /// keeps this assembly provider-neutral — the point of <c>Easy.Platform.EfCore</c> — and immune to locale and
+    /// server-version wording changes.
+    /// </summary>
+    protected const string UniqueViolationSqlState = "23505";
+
+    /// <summary>
+    /// True when <paramref name="exception" /> is a UNIQUE-constraint violation (unique index or primary key).
+    /// <para>
+    /// Matched through <see cref="DbException.SqlState" />, which every ADO.NET provider may populate, so no
+    /// database-provider package is referenced here. PostgreSQL (Npgsql) overrides <c>SqlState</c> and reports
+    /// <c>23505</c>, so it is translated; any future provider that reports the same standard SQLSTATE is translated
+    /// for free.
+    /// </para>
+    /// <para>
+    /// <b>Providers that do not populate SQLSTATE</b> — notably Microsoft.Data.SqlClient (unique violations arrive as
+    /// error numbers 2601/2627 on <c>SqlException.Number</c>) and Microsoft.Data.Sqlite — inherit
+    /// <see cref="DbException.SqlState" />'s <c>null</c> default and are therefore NOT translated; the raw
+    /// <c>DbUpdateException</c> propagates, which is the pre-existing behaviour. Adding one means extending this method
+    /// with the provider's own error-number check; it is <c>static</c>, so a derived context cannot override it.
+    /// </para>
+    /// </summary>
+    protected static bool IsUniqueConstraintViolation(DbUpdateException exception)
+    {
+        return exception.InnerException is DbException { SqlState: UniqueViolationSqlState };
     }
 
     /// <summary>

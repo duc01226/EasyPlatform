@@ -2,6 +2,7 @@
 
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Infrastructures.MessageBus;
+using Microsoft.Extensions.Logging;
 
 #endregion
 
@@ -118,6 +119,45 @@ public static class PlatformApplicationCommonRequestContextKeys
     private static bool IsMatchedPipeLinePart(string? expectedValue, string actualValue)
     {
         return expectedValue == null || string.Equals(actualValue, expectedValue, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Returns true when <paramref name="pipeline" /> indicates a circular call for
+    /// <paramref name="pipelineRoutingKey" /> under the configured <paramref name="maxCircularCount" />.
+    /// Pure predicate — no logging, no throwing (callers own the reaction). Preserves the original guard
+    /// math exactly: only evaluated once the pipeline is at least 2x the threshold (cheap-path skip), then
+    /// true when the routing key already appears &gt;= <paramref name="maxCircularCount" /> times excluding
+    /// the current (last) call. Single source of truth shared by the consumer, event-handler, and
+    /// background-job circular guards so their detection cannot drift apart.
+    /// </summary>
+    public static bool IsCircularPipeLineExceeded(this List<string> pipeline, string pipelineRoutingKey, int maxCircularCount)
+    {
+        if (pipeline.Count < maxCircularCount * 2)
+            return false;
+
+        return pipeline.Take(pipeline.Count - 1).Count(item => item == pipelineRoutingKey) >= maxCircularCount;
+    }
+
+    public static bool ShouldSkipDueToCircularPipeLine(
+        this List<string> pipeline,
+        string pipelineRoutingKey,
+        int maxCircularCount,
+        ILogger logger,
+        string skippedOperationName)
+    {
+        if (!pipeline.IsCircularPipeLineExceeded(pipelineRoutingKey, maxCircularCount))
+            return false;
+
+        logger.LogError(
+            "[CircularPipeLineSkipped] Skipped {SkippedOperationName} due to detected circular pipeline. "
+            + "RoutingKey:{RoutingKey}; TriggeredCount:{TriggeredCount}; MaxCircularCount:{MaxCircularCount}; PipeLine:{PipeLine}",
+            skippedOperationName,
+            pipelineRoutingKey,
+            pipeline.Count(item => item == pipelineRoutingKey),
+            maxCircularCount,
+            pipeline.ToJson());
+
+        return true;
     }
 
     public static string RequestId(this IDictionary<string, object?> context)

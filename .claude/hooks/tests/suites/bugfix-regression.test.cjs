@@ -23,10 +23,17 @@ const {
 const { assertEqual, assertContains, assertAllowed, assertNotContains, assertTrue } = require('../lib/assertions.cjs');
 const { createTempDir, cleanupTempDir, createMockFile, fileExists } = require('../lib/test-utils.cjs');
 
-// Hook paths
+// Hook paths
 const SESSION_INIT = getHookPath('session-init.cjs');
 const POST_EDIT_PRETTIER = getHookPath('post-edit-prettier.cjs');
 const SESSION_END = getHookPath('session-end.cjs');
+
+// session-init/session-end/prettier all spawn node subprocesses (session-init alone
+// spawns 3 git/python grandchildren); under full-suite resource contention a spawn can
+// exceed hook-runner's 10s default and hit SIGKILL — a flaky, environmental timeout
+// (see plans/reports/debug-investigate-260711-lifecycle-timeouts.md). Give every
+// spawn-based test in this file a wider per-call ceiling, matching test-all-hooks.cjs:334/348.
+const SPAWN_TIMEOUT_MS = 20000;
 
 // ============================================================================
 // BUG FIX 2: tmpclaude Cleanup in .claude Subdirectories
@@ -51,7 +58,7 @@ const tmpclaudeCleanupTests = [
 
                 // Run session-init which calls cleanupTempFiles
                 const input = createSessionStartInput('startup', 'test-session');
-                await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 // File should be cleaned up
                 assertTrue(!fs.existsSync(tmpFile), 'tmpclaude file should be cleaned from .claude/skills');
@@ -74,7 +81,7 @@ const tmpclaudeCleanupTests = [
                 assertTrue(fs.existsSync(tmpFile), 'tmpclaude file should exist before cleanup');
 
                 const input = createSessionStartInput('startup', 'test-session');
-                await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertTrue(!fs.existsSync(tmpFile), 'tmpclaude file should be cleaned from .claude/hooks');
             } finally {
@@ -96,7 +103,7 @@ const tmpclaudeCleanupTests = [
                 assertTrue(fs.existsSync(tmpFile), 'tmpclaude file should exist before cleanup');
 
                 const input = createSessionStartInput('startup', 'test-session');
-                await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertTrue(!fs.existsSync(tmpFile), 'tmpclaude file should be cleaned from .claude root');
             } finally {
@@ -130,7 +137,7 @@ const tmpclaudeCleanupTests = [
                 tmpFiles.forEach(f => assertTrue(fs.existsSync(f), `${f} should exist before cleanup`));
 
                 const input = createSessionStartInput('startup', 'test-session');
-                await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 tmpFiles.forEach(f => assertTrue(!fs.existsSync(f), `${f} should be cleaned up`));
             } finally {
@@ -156,7 +163,7 @@ const tmpclaudeCleanupTests = [
                 fs.writeFileSync(stateFile, '{"state": "active"}');
 
                 const input = createSessionStartInput('startup', 'test-session');
-                await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertTrue(!fs.existsSync(tmpFile), 'tmpclaude file should be deleted');
                 assertTrue(fs.existsSync(regularFile), 'regular file should be preserved');
@@ -178,7 +185,7 @@ const tmpclaudeCleanupTests = [
                 fs.writeFileSync(gitFile, 'git object');
 
                 const input = createSessionStartInput('startup', 'test-session');
-                await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 // .git should be skipped
                 assertTrue(fs.existsSync(gitFile), '.git directory contents should not be touched');
@@ -199,7 +206,7 @@ const tmpclaudeCleanupTests = [
                 assertTrue(fs.existsSync(tmpFile), 'tmpclaude file should exist before cleanup');
 
                 const input = createSessionStartInput('startup', 'test-session');
-                await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertTrue(!fs.existsSync(tmpFile), 'tmpclaude file should be cleaned from project root');
             } finally {
@@ -214,7 +221,7 @@ const tmpclaudeCleanupTests = [
             try {
                 // No .claude directory - should not crash
                 const input = createSessionStartInput('startup', 'test-session');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertAllowed(result.code, 'Should not crash without .claude directory');
             } finally {
@@ -246,7 +253,7 @@ const tmpclaudeSessionEndTests = [
 
                 // Run session-end hook
                 const input = createSessionEndInput('exit');
-                await runHook(SESSION_END, input, { cwd: tmpDir });
+                await runHook(SESSION_END, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertTrue(!fs.existsSync(tmpFile), 'tmpclaude file should be cleaned on session exit');
             } finally {
@@ -265,7 +272,7 @@ const tmpclaudeSessionEndTests = [
                 assertTrue(fs.existsSync(tmpFile), 'tmpclaude file should exist before session clear');
 
                 const input = createSessionEndInput('clear');
-                await runHook(SESSION_END, input, { cwd: tmpDir });
+                await runHook(SESSION_END, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertTrue(!fs.existsSync(tmpFile), 'tmpclaude file should be cleaned on session clear');
             } finally {
@@ -293,7 +300,7 @@ const tmpclaudeSessionEndTests = [
                 assertTrue(fs.existsSync(tmpFile2), 'hooks tmpclaude should exist');
 
                 const input = createSessionEndInput('exit');
-                await runHook(SESSION_END, input, { cwd: tmpDir });
+                await runHook(SESSION_END, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertTrue(!fs.existsSync(tmpFile1), 'skills tmpclaude should be cleaned on session-end');
                 assertTrue(!fs.existsSync(tmpFile2), 'hooks tmpclaude should be cleaned on session-end');
@@ -309,7 +316,7 @@ const tmpclaudeSessionEndTests = [
             try {
                 // Session-end should not crash even without temp files
                 const input = createSessionEndInput('exit');
-                const result = await runHook(SESSION_END, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_END, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertAllowed(result.code, 'session-end should complete without errors');
             } finally {
@@ -345,7 +352,7 @@ const prettierSkipPatternTests = [
                     new_string: 'edited'
                 });
 
-                await runHook(POST_EDIT_PRETTIER, input, { cwd: tmpDir });
+                await runHook(POST_EDIT_PRETTIER, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 // File should NOT be modified by Prettier
                 const afterContent = fs.readFileSync(hookFile, 'utf8');
@@ -371,7 +378,7 @@ const prettierSkipPatternTests = [
                     file_path: skillFile
                 });
 
-                await runHook(POST_EDIT_PRETTIER, input, { cwd: tmpDir });
+                await runHook(POST_EDIT_PRETTIER, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 const afterContent = fs.readFileSync(skillFile, 'utf8');
                 assertEqual(afterContent, originalContent, 'File in .claude/skills/ should not be formatted');
@@ -395,7 +402,7 @@ const prettierSkipPatternTests = [
                     file_path: scriptFile
                 });
 
-                await runHook(POST_EDIT_PRETTIER, input, { cwd: tmpDir });
+                await runHook(POST_EDIT_PRETTIER, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 const afterContent = fs.readFileSync(scriptFile, 'utf8');
                 assertEqual(afterContent, originalContent, 'Nested .claude/skills/ file should not be formatted');
@@ -420,7 +427,8 @@ const prettierSkipPatternTests = [
                 });
 
                 const result = await runHook(POST_EDIT_PRETTIER, input, {
-                    cwd: tmpDir
+                    cwd: tmpDir,
+                    timeout: SPAWN_TIMEOUT_MS
                 });
 
                 // Should not crash - whether Prettier runs depends on config availability
@@ -447,7 +455,7 @@ const prettierSkipPatternTests = [
                     content: originalContent
                 });
 
-                await runHook(POST_EDIT_PRETTIER, input, { cwd: tmpDir });
+                await runHook(POST_EDIT_PRETTIER, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 const afterContent = fs.readFileSync(hookFile, 'utf8');
                 assertEqual(afterContent, originalContent, 'Written file in .claude/hooks/ should not be formatted');
@@ -466,7 +474,8 @@ const prettierSkipPatternTests = [
                 });
 
                 const result = await runHook(POST_EDIT_PRETTIER, input, {
-                    cwd: tmpDir
+                    cwd: tmpDir,
+                    timeout: SPAWN_TIMEOUT_MS
                 });
                 assertAllowed(result.code, 'Should ignore Read tool');
             } finally {
@@ -495,7 +504,7 @@ const edgeCaseTests = [
                 assertTrue(fs.existsSync(tmpFile), 'Deep tmpclaude file should exist before cleanup');
 
                 const input = createSessionStartInput('startup', 'test-session');
-                await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertTrue(!fs.existsSync(tmpFile), 'Deep tmpclaude file should be cleaned');
             } finally {
@@ -528,7 +537,7 @@ const edgeCaseTests = [
                 invalidFiles.forEach(f => fs.writeFileSync(path.join(claudeDir, f), 'invalid'));
 
                 const input = createSessionStartInput('startup', 'test-session');
-                await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 // Valid patterns should be cleaned
                 validFiles.forEach(f => {
@@ -554,7 +563,7 @@ const edgeCaseTests = [
                 // Directory exists but is empty
 
                 const input = createSessionStartInput('startup', 'test-session');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
 
                 assertAllowed(result.code, 'Should handle empty .claude directory');
             } finally {
@@ -576,7 +585,8 @@ const edgeCaseTests = [
                 };
 
                 const result = await runHook(POST_EDIT_PRETTIER, input, {
-                    cwd: tmpDir
+                    cwd: tmpDir,
+                    timeout: SPAWN_TIMEOUT_MS
                 });
 
                 // Should not attempt to format a file that failed to edit
@@ -596,7 +606,8 @@ const edgeCaseTests = [
                 });
 
                 const result = await runHook(POST_EDIT_PRETTIER, input, {
-                    cwd: tmpDir
+                    cwd: tmpDir,
+                    timeout: SPAWN_TIMEOUT_MS
                 });
 
                 // Should handle gracefully without crashing

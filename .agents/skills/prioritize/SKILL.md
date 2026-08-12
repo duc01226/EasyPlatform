@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -58,26 +59,29 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Goal:** Produce a defensible ranked ordering of 3+ backlog items using RICE, MoSCoW, or Value-Effort frameworks so the team works highest-value items first — every rank backed by a score and tech-agnostic rationale (value/effort/risk/impact).
 
-**Summary:**
+**Summary:** PURPOSE — rank 3+ backlog items so the team works highest-value first; every rank = a score + tech-agnostic rationale. The main steps/tasks, in order:
 
-- Require 3+ items first; pick the framework by the decision tree — RICE when quantitative data exists, MoSCoW for stakeholder must/should/could alignment, Value-Effort 2x2 for a quick call — default RICE when unsure.
-- Score with the exact framework formula (RICE = Reach×Impact×Confidence ÷ Effort using the fixed Impact/Confidence scales and story-point Effort), then rank descending (RICE), by band (MoSCoW), or by quadrant (V-E).
-- Keep every rationale tech-agnostic per M1: justify by value/effort/risk/business impact, never by named stack, framework, or design pattern.
-- On a near-tie (top-2 RICE within 15%, same-band MoSCoW overlap, or flagged stakeholder disagreement), the gate fires — use a direct user question to offer `$llm-council` escalation vs. accepting the ranking; otherwise end without prompting.
+- **Step 1-2 Collect & Select** — require 3+ items FIRST (fewer → discuss directly, NEVER force a framework); pick framework by decision tree — RICE = quantitative data exists, MoSCoW = stakeholder must/should/could alignment, Value-Effort 2x2 = quick call; default RICE when unsure.
+- **Step 3 Score** — apply the EXACT framework formula (RICE = Reach×Impact×Confidence ÷ Effort, fixed Impact/Confidence scales, story-point Effort); NEVER invent ad-hoc scores.
+- **Step 4-5 Rank & Output** — rank descending (RICE) / by band (MoSCoW) / by quadrant (V-E); emit prioritized table with scores + Do-first/Plan-next/Defer recommendations.
+- **Step 6 Propagate (MANDATORY when PBI files exist)** — write rank (1-999, ascending) + priority label back into EACH PBI's frontmatter; `pbi-mockup`/`feature-presentation` read priority from there.
+- **Cross-cutting — tech-agnostic (M1):** justify every rank by value/effort/risk/business impact, NEVER by named stack/framework/pattern. **Tie gate:** near-tie (top-2 RICE within 15%, same-band MoSCoW overlap, flagged stakeholder disagreement) → ask the user directly offering `$llm-council`; else end without prompting.
 
 **Workflow:**
 
-1. **Collect Items** — Read from files or parse inline list (minimum 3 items)
+1. **Collect Items** — read from files or parse inline list (minimum 3 items)
 2. **Select Framework** — RICE (quantitative), MoSCoW (stakeholder alignment), Value-Effort (quick decision)
-3. **Score Each Item** — Apply framework criteria and calculate scores
-4. **Rank and Report** — Output prioritized table with rationale and recommendations
+3. **Score Each Item** — apply framework criteria and calculate scores
+4. **Rank & Report** — output prioritized table with rationale and recommendations
+5. **Propagate Priority** — IF PBI files exist → MANDATORY: write `rank` + `priority` label back into EACH PBI frontmatter
+6. **Tie Gate** — near-tie → ask the user directly (`$llm-council` vs accept); else end without prompting
 
 **Key Rules:**
 
 - Minimum 3 items required; fewer than 3 should be discussed directly
 - Default to RICE if unsure; ask user if ambiguous
 - Optionally update PBI file priority fields after ranking
-- **Tech-agnostic rationale (M1):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Justify every ranking by value, effort, risk, and business impact — NOT by implementation technology. Rationale prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3: no framework/product/language/design-pattern names; effort may cite story points and relative complexity, never a named stack.
+- **Tech-agnostic rationale (M1):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. Justify every ranking by value, effort, risk, and business impact — NOT by implementation technology. Rationale prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3: no framework/product/language/design-pattern names; effort may cite story points and relative complexity, never a named stack.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -157,7 +161,7 @@ Order backlog items using data-driven frameworks → ranked list with scores and
 
 5. **Output** prioritized list with scores and rationale
 
-6. **IF PBI files exist** -> optionally update priority field in frontmatter (numeric 1-999)
+6. **IF PBI files exist** -> **MANDATORY priority propagation**: write the resulting priority back into EACH PBI's frontmatter — both the numeric `rank` (1-999, ascending) and the `priority` label (e.g. Must Have / Should Have / Could Have / Won't Have, or the framework's category). Never leave this optional when PBI files exist: a PBI without its priority is incomplete, and downstream consumers (`pbi-mockup` header badge, `feature-presentation` Scope & backlog slide) read priority FROM the PBI frontmatter. Update every ranked PBI, not just the standalone backlog file.
 
 ## Output Format
 
@@ -219,7 +223,7 @@ Order backlog items using data-driven frameworks → ranked list with scores and
 - Multi-stakeholder disagreement flagged in input → gate fires
 - None of the above → gate does NOT fire; skill ends without prompting
 
-**MANDATORY ATTENTION** — when the gate fires, you MUST use a direct user question to present these options (identical preamble pattern to architecture-design's `## Next Steps` MANDATORY ATTENTION block):
+**MANDATORY ATTENTION** — when the gate fires, you MUST use ask the user directly to present these options (identical preamble pattern to architecture-design's `## Next Steps` MANDATORY ATTENTION block):
 
 - **"Escalate to $llm-council (Recommended)"** — Tie/disagreement detected. Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Council's Contrarian + Outsider lenses are well-suited to multi-PBI ranking ties. Cheaper alternatives: `$why-review`, `$plan-validate` (use these instead if the tie is narrow but stakes are routine).
 - **"Skip — accept current ranking"** — Acknowledge the tie; proceed with current ranking.
@@ -258,24 +262,27 @@ If gate does NOT fire, the prioritization decision stands; do NOT prompt.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
 - **IMPORTANT MUST ATTENTION** require 3+ items BEFORE ranking; fewer than 3 → discuss directly, NEVER force a framework — why: ranking 1-2 items adds ceremony without signal
+- **IMPORTANT MUST ATTENTION** select the framework by the decision tree — RICE for quantitative data, MoSCoW for stakeholder must/should/could alignment, Value-Effort 2x2 for a quick call; default RICE when unsure, ask the user when ambiguous — why: matching framework to the decision type is what makes the ranking defensible
+- **IMPORTANT MUST ATTENTION** emit the prioritized table (scores + rationale) AND Do-first/Plan-next/Defer recommendations — NEVER stop at raw scores — why: the consumable output is the ranked table plus an action call, not a number column
 - **IMPORTANT MUST ATTENTION** keep every rationale tech-agnostic per M1 — justify by value/effort/risk/business impact, NEVER by named stack/framework/product/language/design-pattern; effort may cite story points + relative complexity only — why: spec-principles §3 BLOCKING, a tech-named rationale leaks implementation into a priority call
 - **IMPORTANT MUST ATTENTION** score with the EXACT framework formula (RICE = Reach×Impact×Confidence ÷ Effort, fixed Impact/Confidence scales, story-point Effort), then rank descending (RICE) / by band (MoSCoW) / by quadrant (V-E) — NEVER invent ad-hoc scores — why: a defensible rank needs a reproducible number
-- **IMPORTANT MUST ATTENTION** on a near-tie (top-2 RICE within 15%, same-band MoSCoW overlap, flagged stakeholder disagreement) the gate FIRES — use a direct user question to offer `$llm-council` escalation vs. accepting the ranking; if the gate does NOT fire, end WITHOUT prompting — why: tie-breaking is a judgment call the user owns, but a clear winner needs no interruption
+- **IMPORTANT MUST ATTENTION** on a near-tie (top-2 RICE within 15%, same-band MoSCoW overlap, flagged stakeholder disagreement) the gate FIRES — use ask the user directly to offer `$llm-council` escalation vs. accepting the ranking; if the gate does NOT fire, end WITHOUT prompting — why: tie-breaking is a judgment call the user owns, but a clear winner needs no interruption
 - **IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; mark one `in_progress`, `completed` immediately after evidence
 - **IMPORTANT MUST ATTENTION** search codebase/artifacts for 3+ similar patterns before creating new structure; evaluate pattern FIT (same constraints/scope) before copying a nearby example — why: closest example ≠ matching preconditions
 - **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act, <60% DO NOT recommend); NEVER present a guess as fact
-- **IMPORTANT MUST ATTENTION** optionally update PBI file priority fields (numeric 1-999) ONLY after ranking; grep downstream consumers before changing any priority field — why: stale priority refs cascade silently
+- **IMPORTANT MUST ATTENTION** when PBI files exist, propagating the ranking into EACH PBI's frontmatter (numeric `rank` 1-999 + `priority` label) is MANDATORY, not optional — do it after ranking; grep downstream consumers before changing any priority field — why: downstream consumers (`pbi-mockup` header, `feature-presentation` Scope & backlog slide) read priority from PBI frontmatter, and stale/absent priority refs cascade silently
 - **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
 
 **Anti-Rationalization:**
 
-| Evasion                                    | Rebuttal                                                                                  |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| "Only 2 items, just rank them"             | Below the 3-item floor → discuss directly; a framework adds ceremony, not signal          |
-| "I'll cite the framework in the rationale" | Tech-agnostic per M1 — justify by value/effort/risk only, never by named stack            |
-| "Scores are close enough, I'll pick"       | Near-tie fires the gate → a direct user question for `$llm-council`, never silently break |
-| "RICE feels right, skip the formula"       | Apply the EXACT formula with fixed scales — a defensible rank needs a number              |
-| "Already know the patterns"                | Show `file:line` evidence — no proof = no search                                          |
+| Evasion                                                | Rebuttal                                                                                                                                           |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Only 2 items, just rank them"                         | Below the 3-item floor → discuss directly; a framework adds ceremony, not signal                                                                   |
+| "I'll cite the framework in the rationale"             | Tech-agnostic per M1 — justify by value/effort/risk only, never by named stack                                                                     |
+| "Scores are close enough, I'll pick"                   | Near-tie fires the gate → ask the user directly for `$llm-council`, never silently break                                                           |
+| "RICE feels right, skip the formula"                   | Apply the EXACT formula with fixed scales — a defensible rank needs a number                                                                       |
+| "The backlog file has the ranking, PBIs don't need it" | When PBI files exist, priority write-back to each PBI frontmatter is MANDATORY — mockup + presentation read priority from the PBI, not the backlog |
+| "Already know the patterns"                            | Show `file:line` evidence — no proof = no search                                                                                                   |
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
@@ -310,8 +317,9 @@ If gate does NOT fire, the prioritization decision stands; do NOT prompt.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -396,8 +404,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -408,6 +417,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

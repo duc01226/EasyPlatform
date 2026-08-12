@@ -66,7 +66,7 @@ REPLACEMENTS = [
     (
         r"\*\*MANDATORY IMPORTANT MUST ATTENTION\*\* NEVER declare PASS after Round 1 alone — fresh sub-agent review is mandatory",
         "**MANDATORY IMPORTANT MUST ATTENTION** fresh sub-agent re-review is mandatory ONLY after a fix cycle. Clean Round 1 ENDS the review.",
-        "NEVER declare PASS (review-changes)",
+        "NEVER declare PASS (changes-review)",
     ),
     (
         r"\*\*MANDATORY IMPORTANT MUST ATTENTION\*\* NEVER declare PASS after Round 1 alone — Round 2 MUST spawn fresh sub-agent with zero prior context",
@@ -95,7 +95,7 @@ REPLACEMENTS = [
         "NEVER reuse sub-agent across rounds. A clean round ENDS the review; a round with issues triggers fix → fresh sub-agent re-review.",
         "seed-test-data:228",
     ),
-    # 8. review-domain-entities.md:18 — embedded in CRITICAL RULES list
+    # 8. domain-entities-review.md:18 — embedded in CRITICAL RULES list
     (
         r"\(2\) NEVER declare PASS without fresh sub-agent Round 2\.",
         "(2) When Round 1 finds issues, NEVER declare PASS without fresh sub-agent Round 2 after fixing. Clean Round 1 ENDS the review.",
@@ -106,11 +106,11 @@ REPLACEMENTS = [
         "- Clean Round 1 ENDS the review. When issues are found, NEVER declare PASS without fresh sub-agent Round 2 after fixing.",
         "domain-entities bullet",
     ),
-    # 9. review-changes "NEVER declare PASS after Round 1 alone — fresh sub-agent review mandatory (Round 2+)"
+    # 9. changes-review "NEVER declare PASS after Round 1 alone — fresh sub-agent review mandatory (Round 2+)"
     (
         r"> 2\. \*\*NEVER declare PASS after Round 1 alone\*\* — fresh sub-agent review mandatory \(Round 2\+\)",
         "> 2. **Clean Round 1 ENDS the review.** When issues found, fresh sub-agent re-review mandatory after fixing.",
-        "review-changes top reminder",
+        "changes-review top reminder",
     ),
     # 10. shared/sub-agent-selection-guide.md
     (

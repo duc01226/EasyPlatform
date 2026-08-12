@@ -255,6 +255,7 @@ async function main() {
 
   const suitesDir = path.join(__dirname, 'suites');
   let suites = discoverSuites(suitesDir);
+  const discoveredCount = suites.length;
 
   // Filter suites by name if specified
   if (flags.filter) {
@@ -270,6 +271,20 @@ async function main() {
 
   console.log(`\n${COLORS.bright}${COLORS.cyan}Claude Hooks Test Runner${COLORS.reset}`);
   console.log(`${COLORS.dim}Found ${suites.length} test suite(s)${COLORS.reset}`);
+
+  // An explicit `--filter` that selects NOTHING is a caller error, not a clean run. Suites are
+  // discovered by filename and matched by SUBSTRING, so renaming a suite silently empties any
+  // selector that named it — and an automated caller (the codex pipeline invokes this runner with
+  // `--filter=count-drift|parity|doc-sync-gate`) would then report a green stage having executed
+  // zero assertions. Exit 1 so a vacuous selection can never masquerade as a pass.
+  // The genuinely-empty-suites-dir case below keeps exit 0: nothing was requested and nothing exists,
+  // which is the fresh-scaffold state, not a false green. `--list` above also stays exit 0 — listing
+  // an empty selection is informational, not a verification claim.
+  if (suites.length === 0 && flags.filter && discoveredCount > 0) {
+    console.log(`\n${COLORS.yellow}No test suite name matched --filter=${flags.filter}${COLORS.reset}`);
+    console.log(`${COLORS.dim}${discoveredCount} suite(s) exist; run with --list to see their names.${COLORS.reset}\n`);
+    process.exit(1);
+  }
 
   if (suites.length === 0) {
     console.log(`\n${COLORS.yellow}No test suites found${COLORS.reset}`);

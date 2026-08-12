@@ -33,7 +33,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -50,7 +51,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Goal:** [Workflow] Trigger Write Integration Tests workflow — spec-first test authoring: investigate domain logic → write/update specs → generate test code → 7-gate review (incl. change coverage) → run and verify.
 
-**Absorbed use cases:** converting existing TC specs into integration test code (former test-to-integration — specs already exist, so `$spec [mode=tests]` runs in UPDATE/verify mode instead of authoring from scratch) and stability verification of existing suites (former test-verify — the `$integration-test-verify` step's 3-consecutive-run gate). For spec-only authoring with no test code, use the `$spec [mode=tests]` skill directly.
+**Absorbed use cases:** converting existing TC specs into integration test code (former test-to-integration — specs already exist, so `$spec [mode=tests]` runs in UPDATE/verify mode instead of authoring from scratch) and stability verification of existing suites (former test-verify — the `$integration-test-verify` step's 2-consecutive-run gate). For spec-only authoring with no test code, use the `$spec [mode=tests]` skill directly.
 
 **Workflow:**
 
@@ -66,10 +67,10 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - MUST ATTENTION define success criteria before execution and loop until observable verification passes.
 - MUST ATTENTION require integration tests to protect a named business rule/invariant and fail if that intent breaks.
 - MUST ATTENTION arrange integration-test data through real use cases or valid seeded fixtures; never create impossible state through repository hacks.
-- MUST ATTENTION verify integration suites with 3 consecutive passing runs without DB reset before declaring done.
+- MUST ATTENTION verify integration suites with 2 consecutive passing runs without DB reset before declaring done.
 - NEVER skip mandatory workflow or skill gates.
 
-**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $spec [mode=tests] -> $why-review -> $review-artifact --type=spec-tests -> $integration-test -> $integration-test-review -> $integration-test-verify -> $spec [mode=sync] -> $docs-update -> $workflow-end -> $watzup
+**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $spec [mode=tests] -> $why-review -> $artifact-review --type=spec-tests -> $integration-test -> $integration-test-review -> $integration-test-verify -> $spec [mode=sync] -> $docs-update -> $workflow-end -> $watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
@@ -79,24 +80,36 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 Activate the `workflow-write-integration-test` workflow. Run `$start-workflow workflow-write-integration-test` with the user's prompt as context.
 
-**Steps:** $scout → $investigate → $spec [mode=tests] → $why-review → $review-artifact --type=spec-tests → $integration-test → $integration-test-review → $integration-test-verify → $spec [mode=sync] → $docs-update → $workflow-end → $watzup
+**Steps:** $scout → $investigate → $spec [mode=tests] → $why-review → $artifact-review --type=spec-tests → $integration-test → $integration-test-review → $integration-test-verify → $spec [mode=sync] → $docs-update → $workflow-end → $watzup
 
 > **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
 >
 > **`$scout`** — Find target command/handler files; locate existing integration tests in the same service for pattern matching. Output: list of target files + existing test examples.
 > **`$investigate`** — Read handler/entity/event source. Map: fields written, entities created/updated/deleted, event handlers fired, validation rules. Output: domain logic summary to use as assertion blueprint.
 > **`$spec [mode=tests]`** — Write/update `TC-{FEATURE}-{NNN}` specs in feature doc Section 8. CREATE mode for new tests, UPDATE mode for changed behavior. Output: TC mapping list (TC code -> covering test method name(s) or annotation filter).
-> **`$review-artifact --type=spec-tests`** — Validate spec quality: GIVEN/WHEN/THEN completeness, happy path + validation failure + auth paths covered, no collisions with existing TC codes.
+> **`$artifact-review --type=spec-tests`** — Validate spec quality: GIVEN/WHEN/THEN completeness, happy path + validation failure + auth paths covered, no collisions with existing TC codes.
 > **`$integration-test`** — Generate test files from TC specs using FROM-PROMPT or FROM-CHANGES mode. Non-negotiable: real use-case/valid-seeder data setup, async polling/retry for all DB assertions, unique data generators for all test data, test-spec annotation on every test method (adapt annotation syntax to your framework).
 > **`$integration-test-review`** — 7-gate quality check (assertion value, data state, repeatability, domain logic, traceability, three-way sync, change coverage). Gate 7: every behavior-changing production file in the change set maps to a covering test (integration-first; unit fallback needs justification) AND a spec TC. Validate findings, fix only validated issues, then restart the full integration-test review after fixes. NEVER proceed with CRITICAL/HIGH issues outstanding.
-> **`$integration-test-verify`** — Run tests via `quickRunCommand` from `docs/project-config.json` for 3 consecutive runs without DB reset. Report exact pass/fail counts with test runner output. NEVER mark complete without real output.
-> **`$spec [mode=sync]`** — Sync §8 TCs ↔ integration test code (`docs/specs/`). Update each TC's `IntegrationTest` field with **all** covering `{File}::{MethodName}` links (one TC → many tests, 1:N; a test-filter expression when the set is large). Coverage = ≥1 annotation-tagged test; never force one test per TC.
+> **`$integration-test-verify`** — Run tests via `quickRunCommand` from `docs/project-config.json` for 2 consecutive runs without DB reset. Report exact pass/fail counts with test runner output. NEVER mark complete without real output.
+> **`$spec [mode=sync]`** — Sync §8 TCs ↔ executing test code (`docs/specs/`). Update each TC's `CoveredBy` field with **all** covering `{File}::{MethodName}` links (one TC → many tests, 1:N; a test-filter expression when the set is large). Coverage = ≥1 annotation-tagged test; never force one test per TC.
 > **`$docs-update`** — Update feature doc evidence fields, version history, and changelog if test coverage changed materially.
 > **`$workflow-end`** + **`$watzup`** — Close workflow state, then summarize and run the final `$understand` handoff.
 
 ---
 
-**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $spec [mode=tests] -> $why-review -> $review-artifact --type=spec-tests -> $integration-test -> $integration-test-review -> $integration-test-verify -> $spec [mode=sync] -> $docs-update -> $workflow-end -> $watzup
+**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $spec [mode=tests] -> $why-review -> $artifact-review --type=spec-tests -> $integration-test -> $integration-test-review -> $integration-test-verify -> $spec [mode=sync] -> $docs-update -> $workflow-end -> $watzup
+
+<!-- SYNC:integration-test-execution-discipline -->
+
+> **Integration Test Execution Discipline** — How the integration-test family (write · review · verify) runs, diagnoses, and clears a suite. Binds `$integration-test`, `$integration-test-review`, and `$integration-test-verify` identically.
+>
+> 1. **Verify the WHOLE system passes — not a hand-picked subset.** `$integration-test-verify` must prove the full relevant suite is green (every test in the system the change can touch), not one cherry-picked test. "All pass" is only true with actual runner output (Passed/Failed/Skipped counts + names) and only after 2 consecutive green runs without a DB reset.
+> 2. **Drive state through real use-case paths — NEVER hack seed data.** Set up every precondition exactly as a real user would: real commands, queries, production consumers/messages, or valid idempotent seeders. NEVER create or mutate domain data by direct repository writes — that fabricates states a user could never reach and hides the real workflow bug. Hacking seed data to force a green run is forbidden.
+> 3. **On ANY failure → `$debug-investigate` the root cause BEFORE any fix.** Do not guess, do not patch the symptom site. Trace the failure end-to-start and classify whose fault it is: test code (wrong assertion/setup), source/production code (real defect), or environment/infrastructure/data. Then route: test-code fault → `$integration-test-review` to fix the test at the root (never weaken assertions or add skips); source-code fault → fix the production defect at the owning layer and report it; environment fault → mark BLOCKED and point at the startup script. NEVER change a test to match broken code.
+> 4. **60-second runtime cap — a slow test is a RED FLAG, not a tuning knob.** Local integration tests run fast. If any single test (or a stalled suite) exceeds ~60s, STOP and treat the slowness itself as a defect signal — deadlock, missing `await`, infinite poll/retry, a real network/external call, or an unbounded query. `$debug-investigate` the cause; NEVER paper over it by raising the timeout or extending the wait.
+> 5. **Loop until the whole suite is green.** After fixing the validated root cause, restart the full 2-run verification from run 1. Done means the entire relevant suite passes repeatably — never green-once, never a subset.
+
+<!-- /SYNC:integration-test-execution-discipline -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -107,8 +120,9 @@ Activate the `workflow-write-integration-test` workflow. Run `$start-workflow wo
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -133,11 +147,11 @@ Activate the `workflow-write-integration-test` workflow. Run `$start-workflow wo
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -230,8 +244,8 @@ Activate the `workflow-write-integration-test` workflow. Run `$start-workflow wo
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -353,8 +367,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -365,6 +380,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

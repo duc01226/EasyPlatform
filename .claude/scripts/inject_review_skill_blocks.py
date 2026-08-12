@@ -2,10 +2,18 @@
 
 Tags propagated (each with its `:reminder` sibling):
   - SYNC:systematic-review-batching     -> 10 multi-file / diff reviewers
-  - SYNC:severity-rubric                -> 15 finding-emitting reviewers
+  - SYNC:severity-rubric                -> 16 finding-emitting reviewers
   - SYNC:category-review-thinking        -> same 10 as batching (co-paired:
         the batching block names it as each batch agent's primary thinking model,
         so it must resolve wherever batching is adopted)
+  - SYNC:double-round-trip-review       -> 14 finding-PRODUCER review skills
+        (review->validate->fix->full-re-review loop; graders + loop-orchestrators
+        excluded — see DOUBLE_ROUND_TRIP comment)
+  - SYNC:goal-contract-satisfaction-loop -> ALL_REVIEW_SKILLS (all 20)
+        (save-goal-before-loop + check-goal-each-cycle; additive-safe)
+  - SYNC:trade-off-interrogation-gate    -> ALL_REVIEW_SKILLS (all 20)
+        (trade-off? worth it? material -> confirm with user; additive-safe,
+         graders and loop-orchestrators included — see ALL_REVIEW_SKILLS comment)
 
 Idempotent. For each (skill, tag):
   TOP main block -> refreshed in place if drifted, else inserted BEFORE
@@ -35,24 +43,70 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = PROJECT_ROOT / ".claude" / "skills"
 
 BATCHING = [
-    "review-changes", "code-review", "review-architecture", "review-domain-entities",
-    "review-ui", "integration-test-review", "security-review",
-    "performance-review", "production-readiness-review",
+    "changes-review", "code-review", "architecture-review", "domain-entities-review",
+    "ui-review", "integration-test-review", "security-review",
+    "performance-review", "production-readiness-review", "architecture-review-full",
 ]
 SEVERITY = [
-    "code-review", "review-changes", "review-architecture",
-    "review-domain-entities", "review-ui", "integration-test-review", "security-review",
-    "performance-review", "production-readiness-review", "knowledge-review", "review-artifact",
+    "code-review", "changes-review", "architecture-review",
+    "domain-entities-review", "ui-review", "integration-test-review", "security-review",
+    "performance-review", "production-readiness-review", "knowledge-review", "artifact-review",
     "spec-clarify",
-    "plan-review", "why-review", "code-simplifier",
+    "plan-review", "why-review", "code-simplifier", "architecture-review-full",
 ]
 CATEGORY = list(BATCHING)  # co-paired with batching
+
+# The review->validate->fix->full-re-review convergence loop. Finding-PRODUCER review
+# skills only. EXCLUDES graders (architecture-scalability-review, quality-gate-review):
+# verify-review-validate-coverage.mjs forbids graders from carrying this fix-loop block
+# (a grader emits a grade, not a review->fix loop). EXCLUDES the loop-orchestrators
+# (why-review-loop, workflow-review-changes, workflow-review-changes-loop) — they own the
+# OUTER fix loop and each inner /why-review round self-binds this block already.
+DOUBLE_ROUND_TRIP = [
+    "changes-review", "code-review", "architecture-review", "architecture-review-full",
+    "domain-entities-review", "ui-review", "integration-test-review",
+    "security-review", "performance-review", "production-readiness-review",
+    "knowledge-review", "artifact-review", "plan-review", "why-review",
+]
+# EVERY review skill — finding-producers, graders, AND loop-orchestrators. Declared ONCE
+# because two tags below adopt this exact population, and maintaining the roster twice is
+# how it drifts: GOAL_CONTRACT once fell a skill behind TRADE_OFF (missing
+# "changes-review-loop") and nothing detected it — verify-sync-adoption-parity.mjs compares
+# declared carriers against injected blocks per tag, so two internally-consistent lists that
+# disagree with EACH OTHER both pass. One roster makes that class of drift unrepresentable.
+# Adding a review skill here adopts it into every ALL_REVIEW_SKILLS tag at once; a tag that
+# must genuinely diverge replaces its alias below with its own literal list.
+ALL_REVIEW_SKILLS = [
+    "changes-review", "changes-review-loop", "code-review", "architecture-review",
+    "architecture-review-full",
+    "architecture-scalability-review", "domain-entities-review", "ui-review",
+    "integration-test-review", "integration-test-verify-loop",
+    "security-review", "performance-review",
+    "production-readiness-review", "quality-gate-review", "knowledge-review",
+    "artifact-review", "plan-review", "why-review", "why-review-loop",
+    "workflow-review-changes", "workflow-review-changes-loop",
+]
+# Save-goal-before-loop + read-goal-each-cycle + Goal-Satisfaction-matrix: every review skill
+# anchors its loop to a persisted Goal Contract. verify-workflow-cycle-compliance.mjs is
+# positive-only (no forbid rule for extra carriers), so this is additive-safe.
+GOAL_CONTRACT = list(ALL_REVIEW_SKILLS)
+# The 3-question trade-off gate (trade-off? worth it? material -> confirm with user).
+# Every review skill, graders and loop-orchestrators included: a grader that scores a design
+# without pricing what the design sacrifices is as incomplete as a finding-producer that
+# recommends a fix without pricing it, and a fix-loop is exactly where an unpriced one-way
+# door ships silently under convergence pressure. Additive-safe: no verifier forbids extra
+# carriers of this tag (unlike DOUBLE_ROUND_TRIP, which graders must not carry per
+# verify-review-validate-coverage.mjs).
+TRADE_OFF = list(ALL_REVIEW_SKILLS)
 
 # Canonical apply order per skill (stable, cosmetic only).
 MATRIX = [
     ("SYNC:systematic-review-batching", BATCHING),
     ("SYNC:severity-rubric", SEVERITY),
     ("SYNC:category-review-thinking", CATEGORY),
+    ("SYNC:double-round-trip-review", DOUBLE_ROUND_TRIP),
+    ("SYNC:goal-contract-satisfaction-loop", GOAL_CONTRACT),
+    ("SYNC:trade-off-interrogation-gate", TRADE_OFF),
 ]
 
 CLOSING_RE = re.compile(r"^## Closing Reminders\b.*$", re.MULTILINE)

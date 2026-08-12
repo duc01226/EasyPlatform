@@ -33,7 +33,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -61,10 +62,12 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
-- Router first: with `--target={ci|issue|logs|test|types|ui}` jump to that self-contained inline branch (each runs its own diagnosis + `$prove-fix`); no flag = run the full diagnose→fix spine.
-- Diagnose before patching — trace the symptom end-to-start to the invariant-owning layer (hypothesis matrix + forward convergence proof), and NEVER fix at the crash site: the crash site is a symptom, the cause enters at a lower layer.
-- Two hard gates that cannot be skipped: the Confidence & Evidence Gate (declare `Confidence: X%` + `file:line`, STOP if <60%) and the 🛑 Validate-Before-Fix approval (present root cause + plan via a direct user question before any code change — skip approval only inside a workflow).
-- Standalone (no parent workflow) self-assembles the minimum spine: `debug-investigate → fix + prove-fix → conditional $spec correctness check → $review-changes (production code) → $why-review`; inside a workflow this whole contract is SKIPPED.
+- **Purpose:** an intelligent fix router that cures the disease, not the symptom — diagnose root cause with evidence, fix at the lowest invariant-owning layer, prove it with `$prove-fix`, then keep spec + tests + code in sync.
+- **Router first (`--target=`):** with `--target={ci|issue|logs|test|types|ui}` jump to that self-contained inline branch (each runs its own diagnosis + `$prove-fix`); no flag = run the full diagnose→fix spine. — why: branches must not re-run §1/§2 of the standalone spine.
+- **Main steps (no-flag spine):** scout (parallel subagents) → diagnose root cause end-to-start (`debug-investigate`, `file:line` evidence, hypothesis matrix, forward convergence proof) → Confidence & Evidence Gate → plan with impact analysis → 🛑 Validate-Before-Fix approval → implement at the owning layer → `$prove-fix` → conditional `$spec` correctness check → `$changes-review` (production code) → `$why-review` terminal sign-off.
+- **Two hard gates that cannot be skipped:** the Confidence & Evidence Gate (declare `Confidence: X%` + `file:line`, STOP if <60%) and the 🛑 Validate-Before-Fix approval (present root cause + plan by asking the user directly before any code change — skip approval only inside a workflow).
+- **Diagnose before patching:** trace the symptom end-to-start to the invariant-owning layer, and NEVER fix at the crash site — the crash site is a symptom, the cause enters at a lower layer.
+- **Mode + skip rules:** default mode HARD (full rigor) unless ALL 5 trivial-bug opt-out conditions hold; standalone (no parent workflow) self-assembles the minimum spine `debug-investigate → fix + prove-fix → $spec correctness check → $changes-review (production code) → $why-review`; inside a workflow this whole contract is SKIPPED. — why: standalone has no sequence supplying diagnosis, spec sync, or review.
 
 **Workflow:**
 
@@ -100,7 +103,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 > **`$fix` is normally a step inside `workflow-bugfix`** — there the sequence (`scout → investigate → debug-investigate → spec [mode=amend] → plan → … → fix → prove-fix → … → spec [mode=sync] → workflow-review-changes`) supplies the diagnosis, spec sync, and review around the fix. **Called STANDALONE, no sequence supplies them.** `$fix` alone diagnoses and patches code; it does NOT by itself guarantee the root cause was traced to its owning layer, that the Feature Spec under `docs/specs/` still matches behavior, or that the change was reviewed. Standalone, that gap is symptom-patching + spec/doc drift.
 >
-> **Scope:** this contract governs the **no-flag `$fix` spine** (the full diagnose→fix path). The `--target={ci|issue|logs|test|types|ui}` branches are self-contained — each runs its own diagnosis + `$prove-fix` — so they do NOT re-run §1/§2 here; standalone, they inherit only **§3 (spec-correctness check)** and **§4 (why-review)** as their trailing gates (and `--target=issue` already owns its own `$review-changes` gate — see that branch).
+> **Scope:** this contract governs the **no-flag `$fix` spine** (the full diagnose→fix path). The `--target={ci|issue|logs|test|types|ui}` branches are self-contained — each runs its own diagnosis + `$prove-fix` — so they do NOT re-run §1/§2 here; standalone, they inherit only **§3 (spec-correctness check)** and **§4 (why-review)** as their trailing gates (and `--target=issue` already owns its own `$changes-review` gate — see that branch).
 >
 > **Detect mode:** call the current task list first (per the Nested Task Expansion Contract below). **Active parent workflow row present → this whole section is SKIPPED** (the workflow owns these steps; duplicating them double-runs the spine). **No parent row → standalone:** before the first code edit, MUST ATTENTION self-assemble this minimum bugfix spine as task tracking todos, in order:
 >
@@ -110,9 +113,9 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 >     - **Spec was WRONG / stale** — it described behavior that was never true, or intended behavior changed and the spec wasn't updated. The spec is (part of) the defect → run `$spec [mode=amend]` to correct the §1-§7 spec, then `$spec [mode=sync]` to reconcile §8 `TC-{FEATURE}-{NNN}` ↔ integration tests.
 >     - **Spec was CORRECT, the code just failed to meet it** — pure code defect; §1-§7 behavior now matches the spec again. **No §1-§7 amendment.** But still check the §8 test cases: if the bug reproduced a scenario/edge case that **no existing `TC-{FEATURE}-{NNN}` covered** (the spec was _correct but lacked the bug case_), add a regression test case via `$spec [mode=tests]` so the spec captures it, then `$spec [mode=sync]` to reconcile §8 ↔ the new regression test. Only if an existing TC already covered the case do you record `Spec verified correct, bug case already in §8 — no spec change (code-only defect)` with `file:line` evidence and move on. Never leave a fixed bug whose case is absent from the spec's §8.
 >     - **No governing spec exists** — the buggy area has no Feature Spec under `docs/specs/`. Record `No governing spec — nothing to amend` with `file:line` evidence; if the area now warrants one, run `$spec [mode=init]` (then `[mode=tests]` to seed §8 with the bug case as a regression TC) rather than only suggesting it. _Decide the case explicitly — skip only the amendment, never the decision; never leave the bug case undocumented when a spec governs the area._
-> 4. **`$why-review`** — _rationale review, the FINAL todo (after the fix AND after any `$review-changes`)._ Terminal sign-off on the converged change: root cause correctly owned, fix at the lowest invariant-owning layer (not the crash site), no symptom-patching, regression covered, and the §3 spec decision justified. Reporting "done" is blocked until this passes. _Non-functional-trivial fixes (typo, log/comment text; fast-mode) MAY satisfy this inline/briefly rather than spawning the full skill — symmetric with §1._
+> 4. **`$why-review`** — _rationale review, the FINAL todo (after the fix AND after any `$changes-review`)._ Terminal sign-off on the converged change: root cause correctly owned, fix at the lowest invariant-owning layer (not the crash site), no symptom-patching, regression covered, and the §3 spec decision justified. Reporting "done" is blocked until this passes. _Non-functional-trivial fixes (typo, log/comment text; fast-mode) MAY satisfy this inline/briefly rather than spawning the full skill — symmetric with §1._
 >
-> **Production-code fixes** also get a `$review-changes` todo **before** §4 (the broad code review whose validated fixes may change the diff; §4 then signs off on the result). `$review-changes` placement and the inside-workflow skip are owned by the shared Standalone Review Gate below — reference it; do not restate the mandate. **Final standalone todo order:** `debug-investigate → [fix spine + prove-fix] → spec-check → review-changes (if production code) → why-review`.
+> **Production-code fixes** also get a `$changes-review` todo **before** §4 (the broad code review whose validated fixes may change the diff; §4 then signs off on the result). `$changes-review` placement and the inside-workflow skip are owned by the shared Standalone Review Gate below — reference it; do not restate the mandate. **Final standalone todo order:** `debug-investigate → [fix spine + prove-fix] → spec-check → changes-review (if production code) → why-review`.
 
 ## Debug Mindset (NON-NEGOTIABLE)
 
@@ -158,7 +161,7 @@ Run `tsc --noEmit` (or `nx build` / `bun run typecheck` / `npx tsc`) to gather a
 2. **Classify** — Group by cause: missing types, wrong signatures, import/export issues.
 3. **Fix at root** — Give each value its real, specific type (or `unknown` + a narrowing guard). Do NOT use `any` to silence the checker — `any` ships the underlying type defect. Fix the root cause (wrong interface, missing export), not the symptom site. — why: `any` silences the checker and lets the type defect ship.
 4. **Repeat** until `tsc --noEmit` is clean — zero type errors.
-5. **🛑 Validate Before Fix:** present errors + root cause via a direct user question, get approval before code changes (skip if inside a workflow).
+5. **🛑 Validate Before Fix:** present errors + root cause by asking the user directly, get approval before code changes (skip if inside a workflow).
 6. **After fixing, run `$prove-fix`** — build code proof traces per change with confidence scores. Never skip.
 
 The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to this branch unchanged.
@@ -176,7 +179,7 @@ The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to
 **Workflow:**
 
 1. Use the `debugger` subagent to read the CI logs via the configured CI tool/API (from `docs/project-config.json`), analyze the final failing log/error **backward** to the root cause, and report back. Write findings to `.ai/workspace/analysis/{ci-issue}.analysis.md`; re-read before implementing.
-2. **🛑 Present root cause + proposed fix → a direct user question → wait for approval.**
+2. **🛑 Present root cause + proposed fix → ask the user directly → wait for approval.**
 3. Implement the fix from the report.
 4. Use the `tester` subagent to verify; report back.
 5. If tests fail, repeat from step 2.
@@ -201,10 +204,10 @@ The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to
 
 1. Activate the `debug-investigate` skill and follow its workflow. See `.claude/docs/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.
 2. Use external memory at `.ai/workspace/analysis/issue-[number].analysis.md` for structured analysis. **Re-read the ENTIRE analysis file before proposing any fix.**
-3. **🛑 Present root cause + proposed fix → a direct user question → wait for approval before implementing.**
+3. **🛑 Present root cause + proposed fix → ask the user directly → wait for approval before implementing.**
 4. Implement, then run `$prove-fix`.
 
-> **Standalone Review Gate (non-workflow only):** any standalone production-code fix — the no-flag spine (Standalone Mode Minimum Contract above) **or** `$fix --target=issue` — adds a `$review-changes` task tracking todo as the **final review-changes gate**, placed immediately before the contract's §4 `$why-review` terminal sign-off (spec-check → review-changes → why-review). Inside a workflow, skip — the sequence handles `$review-changes`.
+> **Standalone Review Gate (non-workflow only):** any standalone production-code fix — the no-flag spine (Standalone Mode Minimum Contract above) **or** `$fix --target=issue` — adds a `$changes-review` task tracking todo as the **final changes-review gate**, placed immediately before the contract's §4 `$why-review` terminal sign-off (spec-check → changes-review → why-review). Inside a workflow, skip — the sequence handles `$changes-review`.
 
 The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to this branch unchanged.
 
@@ -223,7 +226,7 @@ The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to
 2. Use the `debugger` subagent to analyze `./logs.txt`: read with `Grep` `head_limit: 30` (last 30 lines; increase if needed — avoid loading the whole file). Write analysis to `.ai/workspace/analysis/{issue-name}.analysis.md`; re-read before fixing.
 3. Use the `scout` subagent to locate the exact source of the issue; report back.
 4. Use the `planner` subagent to create an implementation plan; report back.
-5. **🛑 Present root cause + fix plan → a direct user question → wait for approval.**
+5. **🛑 Present root cause + fix plan → ask the user directly → wait for approval.**
 6. Implement the fix.
 7. Use the `tester` subagent to verify; report back.
 8. Use the `code-reviewer` subagent to review the changes; report back.
@@ -250,7 +253,7 @@ The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to
 2. Use the `tester` subagent to run the tests; report back. Write failure analysis to `.ai/workspace/analysis/{test-issue}.analysis.md`; re-read before fixing.
 3. If tests fail, use the `debugger` subagent to find the root cause; report back.
 4. Use the `planner` subagent to create an implementation plan; report back.
-5. **🛑 Present root cause + fix plan → a direct user question → wait for approval.**
+5. **🛑 Present root cause + fix plan → ask the user directly → wait for approval.**
 6. Implement the plan step by step.
 7. Use the `tester` subagent to verify; report back.
 8. Use the `code-reviewer` subagent to review the changes; report back.
@@ -269,7 +272,7 @@ The Debug Mindset, Confidence & Evidence Gate, and all SYNC gates below apply to
 - Check responsive breakpoints when fixing layout issues.
 - **Pre-read (design system):** load `designSystem.canonicalDoc` + `tokenFiles` from `docs/project-config.json` so fixes use real token names (`--brand-*`, `$brand-*`) and canonical component classes — not invented values.
 
-**Required skills (priority order):** `ui-ux-pro-max` (design-intelligence DB) → `web-design-guidelines` (principles) → `frontend-design` (implementation patterns).
+**Required skills (priority order):** `ui-ux-pro-max` (design-intelligence DB) → `web-design-guidelines` (principles) → `design --lane=marketing` (implementation patterns).
 
 **Workflow:**
 
@@ -284,7 +287,7 @@ python $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "z-index animation" 
 
 If the user provides screenshots/videos, use the `visual analysis tooling` skill to describe the issue in detail so developers can predict the root causes.
 
-> **🛑 After identifying the UI root cause, present findings + proposed fix → a direct user question → wait for approval before any code change.**
+> **🛑 After identifying the UI root cause, present findings + proposed fix → ask the user directly → wait for approval before any code change.**
 
 1. Use the `ui-ux-designer` subagent to implement the fix step by step (against the design guideline — `designSystem.canonicalDoc`).
 2. Capture screenshots (at the exact parent container, not the whole page) and analyze with the appropriate Gemini skill (`visual analysis tooling`, `video-analysis`, or `document-extraction`) so the result matches the design guideline and addresses all issues. Repeat until addressed.
@@ -301,13 +304,13 @@ If user provides screenshots or videos, use `visual analysis tooling` skill to d
 
 ### Fulfill the request
 
-**Question Everything:** Use a direct user question tool to ask probing questions to fully understand user's request, constraints, true objectives. Don't assume — clarify until 100% certain.
+**Question Everything:** Use ask the user directly tool to ask probing questions to fully understand user's request, constraints, true objectives. Don't assume — clarify until 100% certain.
 
-- Use a direct user question to clarify any open questions.
+- Use ask the user directly to clarify any open questions.
 - Ask 1 question at a time; wait for answer before next question.
 - No questions → start next step.
 
-> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause + plan creation, MUST ATTENTION present findings + proposed fix plan to user via a direct user question and get explicit approval BEFORE any code changes. No silent fixes.
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause + plan creation, MUST ATTENTION present findings + proposed fix plan to user by asking the user directly and get explicit approval BEFORE any code changes. No silent fixes.
 > **End-to-Start Trace Gate:** For non-trivial bugs, failed verification, stale/incorrect final outputs, or behavior-changing fixes, the root-cause plan MUST ATTENTION include `Debugger Trace: End -> Start`, feeder paths, hypothesis matrix, owning fix layer, and forward convergence proof. If missing, STOP and run `$debug-investigate` or `$investigate` before planning code changes.
 
 ### Fix the issue
@@ -323,7 +326,7 @@ Analyze skills catalog and activate other needed skills during the process.
    1.6. Confirm the report contains final symptom -> reader -> storage/projection -> writer -> consumer/job -> producer/origin, all feeder paths, hypothesis matrix, owning fix layer, and forward convergence proof.
 2. Use `researcher` subagent to research root causes on internet (if needed) and report back.
 3. Use `planner` subagent to create implementation plan based on reports; report back.
-4. **🛑 Present root cause + fix plan → a direct user question → wait for user approval.**
+4. **🛑 Present root cause + fix plan → ask the user directly → wait for user approval.**
 5. Use `$plan-execute` SlashCommand to implement plan step by step.
 6. Final Report:
 
@@ -347,9 +350,9 @@ Analyze skills catalog and activate other needed skills during the process.
 
 ## Next Steps (Standalone: after the Minimum Contract completes. Skip if inside workflow.)
 
-> **The Standalone Mode Minimum Contract above is NOT optional and NOT a question** — standalone `$fix` has already auto-run `debug-investigate` → fix spine → `$prove-fix` → conditional `$spec` check → (`$review-changes` for production code) → `$why-review` as the terminal sign-off. Do not re-ask the user whether to do those; they are the guaranteed floor.
+> **The Standalone Mode Minimum Contract above is NOT optional and NOT a question** — standalone `$fix` has already auto-run `debug-investigate` → fix spine → `$prove-fix` → conditional `$spec` check → (`$changes-review` for production code) → `$why-review` as the terminal sign-off. Do not re-ask the user whether to do those; they are the guaranteed floor.
 >
-> **AFTER that floor is met,** MUST ATTENTION use a direct user question to offer what lies BEYOND the minimum (user decides):
+> **AFTER that floor is met,** MUST ATTENTION use ask the user directly to offer what lies BEYOND the minimum (user decides):
 
 - **"Proceed with full workflow (Recommended)"** — Hand off to the best-fit workflow (e.g. `workflow-bugfix`) from here to add the remaining gates the minimum spine omits — `plan-validate`, `integration-test` authoring/review/verify, `production-readiness-review`, `security-review`, `changelog`, `docs-update`.
 - **"$test"** — Run the full test suite to verify the fix in context.
@@ -414,11 +417,11 @@ Analyze skills catalog and activate other needed skills during the process.
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -504,6 +507,22 @@ Analyze skills catalog and activate other needed skills during the process.
 
 <!-- /SYNC:source-test-drift-check -->
 
+<!-- SYNC:test-failure-fault-adjudication -->
+
+> **Test-Failure Fault Adjudication** — When a test fails (or you are debugging or fixing a failure), the job is to determine _who is at fault — the source code or the test code_. Getting that verdict right matters more than turning the suite green. Binds every debug / fix / test skill identically.
+>
+> 1. **Root-cause first — never guess, never patch the symptom.** `$debug-investigate` and trace the failure end-to-start to its actual cause before touching either side. A green-again suite is NOT the goal; a correct verdict on what was actually wrong is.
+> 2. **Triangulate against the spec AND the source.** If a governing Feature Spec covers the behavior (e.g. `docs/specs/**` — §3 ACs / §4 BRs / §5 invariants / §8 TCs), it is the tiebreaker for _intended_ behavior — compare BOTH the production source and the failing test against it. With no spec, the documented intent / acceptance criteria / caller contract is the reference. Decide from this evidence whether the SOURCE is wrong or the TEST is wrong.
+> 3. **Classify who is at fault, then fix the wrong side at its root:**
+>     - **SOURCE-WRONG** — production code violates the spec's intended behavior or a clear invariant → fix the source at the owning layer; keep or strengthen the test that caught it.
+>     - **TEST-WRONG** — the test encodes a stale or incorrect assertion, setup, or expectation that contradicts intended behavior → fix the test at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green.
+>     - NEVER change a test to match broken source, and NEVER change source to satisfy a broken test. (Migration code excluded — schema/data migrations are one-time execution paths, not core application logic.)
+> 4. **Ask the user when intended behavior is unclear.** If no spec covers the behavior, the spec is silent, or the spec is ambiguous about which side is correct, STOP and ask the user directly (or consult the canonical spec owner) before editing either side — never silently pick source or test just to make the suite pass.
+>
+> Reconcile to intended behavior, never to whichever side currently passes — green can encode the very bug.
+
+<!-- /SYNC:test-failure-fault-adjudication -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -513,8 +532,9 @@ Analyze skills catalog and activate other needed skills during the process.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -558,8 +578,8 @@ Analyze skills catalog and activate other needed skills during the process.
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -604,14 +624,15 @@ Analyze skills catalog and activate other needed skills during the process.
 
 **IMPORTANT MUST ATTENTION** trace the symptom end-to-start to the invariant-owning layer and fix there — NEVER at the crash site — why: the crash site is a symptom; the bad state enters at a lower layer and one fix there protects all downstream consumers
 **IMPORTANT MUST ATTENTION** declare `Confidence: X%` + `file:line` proof for EVERY claim — 95%+ recommend, 80-94% caveats, 60-79% list unknowns, STOP if <60% — why: speculation patches the wrong layer and ships the disease
-**IMPORTANT MUST ATTENTION** 🛑 Validate-Before-Fix — present root cause + plan via a direct user question and get approval BEFORE any code change (skip ONLY inside a workflow) — why: silent fixes bypass the human gate on irreversible code change
+**IMPORTANT MUST ATTENTION** 🛑 Validate-Before-Fix — present root cause + plan by asking the user directly and get approval BEFORE any code change (skip ONLY inside a workflow) — why: silent fixes bypass the human gate on irreversible code change
 **IMPORTANT MUST ATTENTION** route on `--target=` FIRST — each `{ci|issue|logs|test|types|ui}` branch is self-contained (own diagnosis + `$prove-fix`); no flag = full diagnose→fix spine — why: branches must not re-run §1/§2 of the standalone spine
 **IMPORTANT MUST ATTENTION** default mode HARD (full rigor) — opt out to fast mode ONLY when the bug is genuinely trivial (ALL 5 Default Mode Policy conditions met); when in doubt default hard — why: skipping diagnosis on a non-trivial bug fixes the symptom and leaves the disease
-**IMPORTANT MUST ATTENTION** standalone (no parent workflow) self-assembles the spine `debug-investigate → fix + prove-fix → $spec correctness check → $review-changes (production code) → $why-review`; inside a workflow SKIP it — why: standalone has no sequence supplying diagnosis, spec sync, or review
+**IMPORTANT MUST ATTENTION** standalone (no parent workflow) self-assembles the spine `debug-investigate → fix + prove-fix → $spec correctness check → $changes-review (production code) → $why-review`; inside a workflow SKIP it — why: standalone has no sequence supplying diagnosis, spec sync, or review
 **IMPORTANT MUST ATTENTION** after fixing, run `$prove-fix` — build code proof traces per change with confidence scores; never skip — why: a "should fix it" without a forward convergence proof is unverified
 **IMPORTANT MUST ATTENTION** spec-loop completion — the fix is NOT done until the violated §4/§5 invariant has a universally-quantified property TC + boundary case, the changed line is mutation-killed, and the finding fed BOTH spec and tests (Dual-Feedback) — why: a code-only patch leaves the bug case undocumented and able to silently return
 **IMPORTANT MUST ATTENTION** break work into small task tracking todos BEFORE starting (one read = one task); call the current task list first on context loss to resume, never duplicate — why: long debug files exhaust context and silently lose findings
 **IMPORTANT MUST ATTENTION** read required project-reference docs (`lessons.md` always; `integration-test-reference.md` for test branch; `docs/specs/` for behavior) before target work — why: project conventions override generic debugging assumptions
+**IMPORTANT MUST ATTENTION** on a FAILED TEST (`--target=test` or any test failure), FIRST read the `$integration-test-review` skill protocol (assertion-quality, coverage & spec↔test↔code fault gates) to set fix direction — decide whether the fault is a source-code root cause or a test-code setup/assertion issue — why: fixing without that verdict patches the wrong side and can green a broken invariant.
 **IMPORTANT MUST ATTENTION** search 3+ similar patterns and read existing code before any fix; evaluate fit before copying a nearby pattern — why: closest example ≠ matching preconditions
 **IMPORTANT MUST ATTENTION** add a final review todo to verify work quality, then extract root-cause lessons (`$learn`) if the failure mode would recur without the reminder
 
@@ -713,8 +734,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -725,6 +747,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

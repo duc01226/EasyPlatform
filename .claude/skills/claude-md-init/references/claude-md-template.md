@@ -79,16 +79,19 @@ Before writing code, you MUST grep/glob for 3+ similar examples and follow the l
 
 ## Project Reference Loading
 
-Before project-specific work, route by changed path and read only the relevant docs:
+**Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth describing THIS repo: modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, and workflow patterns. Consult its content to ground exact paths, run-commands, conventions, and rules **before investigating, planning, or coding** — never assume framework defaults. (`docs/project-config.json` + the reference docs below are what `CLAUDE.md` is generated from; read the config directly whenever you need precise paths, commands, or rules. If it is missing or still a skeleton, run `/project-init` or the narrow setup route first.)
 
-| Path → Reference Doc                    | Read first                                                                                                      |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Backend / CQRS / API / domain changes   | `docs/project-reference/backend-patterns-reference.md`, `docs/project-reference/project-structure-reference.md` |
-| Frontend / Angular / state changes      | `docs/project-reference/frontend-patterns-reference.md`                                                         |
-| Integration tests                       | `docs/project-reference/integration-test-reference.md`                                                          |
-| E2E tests                               | `docs/project-reference/e2e-test-reference.md`                                                                  |
-| Specs / test cases / behavior contracts | `docs/project-reference/spec-system-reference.md`, `docs/project-reference/feature-spec-reference.md`           |
-| SCSS / CSS / templates / design system  | `docs/project-reference/design-system/design-system-canonical.md`                                               |
+Then route by changed path and read only the relevant docs:
+
+| Path → Reference Doc                                                          | Read first                                                                                            |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Project structure, architecture, tech stack, deployment, or setup (any layer) | `docs/project-reference/project-structure-reference.md`                                               |
+| Backend / CQRS / API / domain changes                                         | `docs/project-reference/backend-patterns-reference.md`                                                |
+| Frontend / Angular / state changes                                            | `docs/project-reference/frontend-patterns-reference.md`                                               |
+| Integration tests                                                             | `docs/project-reference/integration-test-reference.md`                                                |
+| E2E tests                                                                     | `docs/project-reference/e2e-test-reference.md`                                                        |
+| Specs / test cases / behavior contracts                                       | `docs/project-reference/spec-system-reference.md`, `docs/project-reference/feature-spec-reference.md` |
+| SCSS / CSS / templates / design system                                        | `docs/project-reference/design-system/design-system-canonical.md`                                     |
 
 If the routing table is stale or a required doc is missing, run `/project-init` or the narrow setup route before coding.
 
@@ -113,7 +116,7 @@ Workflow progression is **model-driven** — your responsibility, not a tool/hoo
 
 1. **Advancement.** A step is complete when its work returns — whether run **inline** (a skill/step call) OR dispatched as a **sub-agent** (Agent / Task tool). A sub-agent completion advances the step **identically** to an inline call. Do not wait for any hook or tool event to advance; advance by judgment and your task list.
 2. **Parallel phase = all-return barrier.** When steps are declared a parallel-phase group, spawn **ALL** members together (one message), then advance **only after EVERY member returns**. Never start the next step — and never start any code-mutating step (e.g. `code-simplifier`) — until the whole group has returned. A conditional member whose trigger is absent counts as "returned."
-3. **Workflow-in-workflow → sub-agent.** A step that itself activates a multi-step workflow MUST run as a sub-agent; it returns only a summary and writes full findings to `plans/reports/`. This preserves context containment.
+3. **Workflow-in-workflow → sub-agent (one exception).** A step that itself activates a multi-step workflow MUST run as a sub-agent; it returns only a summary and writes full findings to `plans/reports/`. This preserves context containment. **EXCEPTION — `workflow-review-changes`:** when it appears as a step inside ANY parent workflow (`workflow-feature`, `workflow-bugfix`, `workflow-refactor`, etc.) it MUST run INLINE in the main current session agent, NEVER as a sub-agent — its Step 0 `/goal` gate binds the session Stop hook and its step-15 re-review is inline by design; a sub-agent cannot own the Stop hook, so delegating it silently breaks the unabandonable review→fix→re-review loop. Its own step 2 and steps 4–10 reviewers stay sub-agents, so context stays bounded.
 4. **Hooks/trackers are accelerators only.** Any step-tracking hook is an optimization that may emit "next step" hints; correctness MUST NOT depend on it. Claude and Codex both run without a step-tracking hook and advance entirely by this rule.
 
 ---

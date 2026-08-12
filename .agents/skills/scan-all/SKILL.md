@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -54,7 +55,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 1. **Check Prerequisites** — Verify project has content (not empty)
 2. **Launch Parallel Scans** — All 12 skills simultaneously
 3. **Collect Results** — Read scan output from reference docs
-4. **Clear Staleness Flag** — Remove `.claude/.scan-stale` so the gate unblocks
+4. **Clear Staleness Flag** — Re-evaluate all docs via `refreshScanStaleFlag()`, which removes `.claude/.scan-stale` once every doc is fresh (see Post-Scan Cleanup)
 5. **Build Knowledge Graph** — Run `$graph-build` to update structural graph
 6. **Enhance Docs** — Run `$prompt-enhance` on all 12 scanned docs
 7. **Summarize** — Report what was refreshed
@@ -80,22 +81,24 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Execution
 
-Launch all 12 scan skills in parallel:
+Each scan reads real code evidence and (re)populates ONE reference doc under `docs/project-reference/`. Those docs are injected into AI context downstream, so scanning is what keeps that guidance true to the current codebase — the **Purpose** column says what each scan documents and therefore why it matters. Launch all 12 code-derived scans in parallel:
 
-| #   | Invocation                         | Target Doc                       |
-| --- | ---------------------------------- | -------------------------------- |
-| 1   | `$scan --target=project-structure` | `project-structure-reference.md` |
-| 2   | `$scan --target=backend-patterns`  | `backend-patterns-reference.md`  |
-| 3   | `$scan --target=seed-test-data`    | `seed-test-data-reference.md`    |
-| 4   | `$scan --target=frontend-patterns` | `frontend-patterns-reference.md` |
-| 5   | `$scan --target=integration-tests` | `integration-test-reference.md`  |
-| 6   | `$scan --target=feature-spec`      | `feature-spec-reference.md`      |
-| 7   | `$scan --target=code-review-rules` | `code-review-rules.md`           |
-| 8   | `$scan --target=scss-styling`      | `scss-styling-guide.md`          |
-| 9   | `$scan --target=design-system`     | `design-system/README.md`        |
-| 10  | `$scan --target=e2e-tests`         | `e2e-test-reference.md`          |
-| 11  | `$scan --target=domain-entities`   | `domain-entities-reference.md`   |
-| 12  | `$scan --target=docs-index`        | `docs-index-reference.md`        |
+| #   | Invocation                         | Target Doc                       | Purpose — what the scan documents                                                                                        |
+| --- | ---------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 1   | `$scan --target=project-structure` | `project-structure-reference.md` | Service architecture, ports, directory layout, tech stack, deployment & module registry (spans backend, frontend, infra) |
+| 2   | `$scan --target=backend-patterns`  | `backend-patterns-reference.md`  | Repository, CQRS, validation, entity, event & migration patterns                                                         |
+| 3   | `$scan --target=seed-test-data`    | `seed-test-data-reference.md`    | Seeder patterns & conventions, from real code evidence                                                                   |
+| 4   | `$scan --target=frontend-patterns` | `frontend-patterns-reference.md` | Component, state, form, API, routing & styling patterns                                                                  |
+| 5   | `$scan --target=integration-tests` | `integration-test-reference.md`  | Integration-test base classes, fixtures, helpers & service setup                                                         |
+| 6   | `$scan --target=feature-spec`      | `feature-spec-reference.md`      | Feature-doc structure, app→service mapping, spec templates & conventions                                                 |
+| 7   | `$scan --target=code-review-rules` | `code-review-rules.md`           | Code conventions, anti-patterns, architecture rules & review checklists                                                  |
+| 8   | `$scan --target=scss-styling`      | `scss-styling-guide.md`          | SCSS architecture, BEM conventions, mixins, variables, theming & responsive patterns                                     |
+| 9   | `$scan --target=design-system`     | `design-system/README.md`        | Design tokens, component inventory & app→doc design-system mappings                                                      |
+| 10  | `$scan --target=e2e-tests`         | `e2e-test-reference.md`          | E2E architecture, page objects, step definitions, config & framework patterns                                            |
+| 11  | `$scan --target=domain-entities`   | `domain-entities-reference.md`   | Domain entities, DTOs, aggregate boundaries, sync patterns & ER diagrams                                                 |
+| 12  | `$scan --target=docs-index`        | `docs-index-reference.md`        | Documentation structure, categories, relationships & lookup tables                                                       |
+
+> **Coverage & count.** These 12 are the _code-derived_ docs. The child `scan` skill exposes a 13th key, `ui-system` — a meta-target that only fan-runs #4, #8, #9 together — intentionally excluded here to avoid double-scanning. Curated/static docs (`lessons.md`, `spec-principles.md`, `spec-system-reference.md`, `workflow-spec-test-code-cycle-reference.md`) are hand-authored, not scanned, so they are absent by design. Purpose text mirrors each target's `description` in `.claude/skills/scan/references/targets.md` — update it THERE first if a target's scope changes, then reflect it here.
 
 ## Post-Scan Cleanup
 
@@ -192,8 +195,9 @@ After all scans complete, report:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -311,8 +315,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -323,6 +328,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

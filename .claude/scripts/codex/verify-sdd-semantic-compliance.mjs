@@ -179,6 +179,11 @@ const SOURCE_CARRIER_PATTERN = /\[Source:\s*([^\]]+?)\s*\]/g;
 // evidence fields as prose floods M2 with carrier noise and hides the true narrative leaks.
 const EVIDENCE_CARRIER_LABELS = [
   "Evidence",
+  // Canonical test-coverage carrier. `IntegrationTest` below is its legacy alias —
+  // both must stay exempt: templates emit `CoveredBy`, existing specs may still
+  // carry the old label, and exempting only one would flag identical content
+  // differently depending on which name it happens to use.
+  "CoveredBy",
   "IntegrationTest",
   "Integration Test",
   "Source",
@@ -277,7 +282,7 @@ const CHECKS = [
     code: "SDD006",
     file: ".claude/skills/spec/references/sync.md",
     requireAll: ["emergency recovery", "recovery report", "from-integration-tests"],
-    requireAny: ["AskUserQuestion", "direct user question"],
+    requireAny: ["AskUserQuestion", "direct user question", "ask the user directly"],
     forbidAny: PROJECT_LAYOUT_TERMS,
     message: "Reverse sync must be explicit emergency recovery with user confirmation.",
   },
@@ -397,7 +402,7 @@ const CHECKS = [
     code: "SDD016",
     file: ".agents/skills/spec/references/sync.md",
     requireAll: ["emergency recovery", "recovery report", "from-integration-tests"],
-    requireAny: ["AskUserQuestion", "direct user question"],
+    requireAny: ["AskUserQuestion", "direct user question", "ask the user directly"],
     forbidAny: PROJECT_LAYOUT_TERMS,
     message: "Codex spec sync mirror must remain project-portable and require explicit reverse-sync recovery.",
   },

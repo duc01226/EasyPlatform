@@ -19,10 +19,9 @@ description: '[Quality] Use when you need to research and configure code quality
 
 **Summary:**
 
-- Detect the stack first (from `plan.md` / architecture report), then research each tool category (linter, formatter, type checker, static analyzer, dependency scanner, architecture fitness) via QUERY TEMPLATES — NEVER hardcode tool names; present top 2-3 options per category through `AskUserQuestion` and let the user pick.
-- Configure with the STRICTEST reasonable defaults (loosen ONLY with explicit user approval), always emit a stack-agnostic `.editorconfig`, and add tool cache dirs to `.gitignore`.
-- Wire BOTH a pre-commit hook (formatter→linter→type-check, staged-files-only, <30s) AND a matching CI quality gate — the local and CI checks MUST NOT diverge.
-- Prove it works: fire the pre-commit hook with an intentional violation and confirm it blocks the commit before declaring complete.
+- **Purpose** — install the full computational feedback sensor layer for the detected stack so no code change reaches main unguarded: strict-by-default, research-driven (NEVER hardcode tools), local-and-CI with zero divergence, proven to block.
+- **Main steps, in order:** (1) **Detect stack** — read `plan.md` → architecture report → tech-stack report, write `stack-profile.md`; `AskUserQuestion` if a critical field is undetectable. (2) **Research each tool category** — linter, formatter, type checker, static analyzer, dependency scanner, architecture fitness — via QUERY TEMPLATES; score top 3; present top 2-3 per category via `AskUserQuestion`, user picks. (3) **Install & configure** — STRICTEST reasonable defaults (loosen ONLY with explicit user approval), document what each rule catches, add cache dirs to `.gitignore`, ALWAYS emit a stack-agnostic `.editorconfig`. (4) **Wire the pre-commit hook** — formatter→linter→type-check, staged-files-only, <30s; document setup in `README.md`. (5) **Configure the CI quality gate** to MIRROR the hook (format→lint→type→static→dep-scan), coverage diagnostic-only. (6) **Verify** — fire the hook with an INTENTIONAL violation, confirm it blocks before declaring complete. (7) **Next steps** — `AskUserQuestion` to continue to `/harness-setup`.
+- **Non-negotiables** — research-driven tool choice (NEVER hardcode), strict-by-default, local↔CI zero divergence, prove the gate blocks before done.
 
 **Output:** Config files at project root + pre-commit hook config + CI quality gate step + `.editorconfig`.
 
@@ -86,6 +85,20 @@ For each tech stack layer detected, research these TOOL CATEGORIES using the que
 3. Present via `AskUserQuestion`: "For {category} in {language}, which tool?" — top 2-3 as options + brief pros/cons
 
 **IMPORTANT:** Confidence in current ecosystem <80% (fast-moving ecosystem, unfamiliar stack) → use WebSearch to verify before presenting options. — why: tool ecosystems churn fast; stale recommendations cargo-cult dead tools.
+
+### Dependency-Boundary Enforcement (Architecture Fitness detail — options, not defaults)
+
+The **Architecture Fitness** category above is where **dependency-direction / module-boundary** enforcement is chosen. It consumes the `architecture-design` "Arch rules / fitness" scaffold handoff. Treat the following only as **example candidates to research and evaluate for stack fit** — never mandatory installs. Research the current ecosystem, then present the top 2-3 via `AskUserQuestion` and let the user confirm:
+
+| Stack family | Example dependency-boundary tools (evaluate, do NOT hardcode)                             |
+| ------------ | ----------------------------------------------------------------------------------------- |
+| JS / TS      | dependency-cruiser, eslint-plugin-boundaries (eslint-boundaries), Nx module-boundary lint |
+| .NET         | NetArchTest, ArchUnitNET                                                                  |
+| JVM          | ArchUnit                                                                                  |
+| Python       | import-linter                                                                             |
+| Go           | go-arch-lint / depguard                                                                   |
+
+Only add a boundary tool when the architecture actually declares dependency directions to enforce. If no cross-module rules are declared, record `N/A — no cross-module dependency rules declared` rather than installing a tool speculatively. Chosen rules MUST encode the architecture's dependency directions and fail CI on a violation, mirroring the pre-commit posture (local↔CI zero divergence). Init/audit grading of whether boundaries exist at all is owned by `architecture-scalability-review`; per-change boundary drift is owned by `architecture-review`. — why: a boundary tool with no declared rules is ceremony; enforcement without CI teeth is documentation.
 
 ---
 
@@ -218,8 +231,9 @@ After all config files generated, verify MUST ATTENTION each item:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -238,6 +252,8 @@ After all config files generated, verify MUST ATTENTION each item:
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Every code change is caught by an automated quality sensor — both locally (fast feedback) AND in CI (enforcement gate) — before it reaches main, with ZERO divergence between the two, by installing the full sensor layer (linter, formatter, type checker, static analyzer, dependency scanner, architecture fitness, pre-commit hook, CI gate) for the detected stack.
+
+**IMPORTANT MUST ATTENTION Main steps (in order — do not skip):** (1) detect stack → (2) research tool categories, present 2-3 per category via `AskUserQuestion` → (3) install & configure strict + `.editorconfig` + `.gitignore` → (4) wire pre-commit hook (format→lint→type, staged-only, <30s) → (5) mirror it in a CI quality gate → (6) verify the hook blocks an INTENTIONAL violation → (7) offer `/harness-setup` next.
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 

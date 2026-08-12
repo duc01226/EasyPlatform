@@ -33,7 +33,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -119,18 +120,21 @@ Before authoring the spec, validate the idea framing with `$why-review`:
 
 These steps run in sequence. **Spec-driven order: idea → draft Feature Spec → test specs → review.**
 
-| Step                                 | Purpose                                                                                                                  | Output                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| `$idea`                              | Capture the converged idea as a structured artifact                                                                      | `team-artifacts/ideas/{date}-po-idea-{slug}.md` |
-| `$spec [mode=draft]`                 | Author the canonical tech-free 8-section Feature Spec §1-7 FROM the idea text (no code grep; `provisional: true` marker) | `docs/specs/{Bucket}/README.{Feature}.md`       |
-| `$spec [mode=tests]`                 | Author §8 TC-{FEATURE}-{NNN} behavioral test cases (`Evidence: TBD`, `Status: Planned` — before any code)                | Feature Spec §8 Test Specifications             |
-| `$review-artifact --type=spec-tests` | Test-spec quality check                                                                                                  | Reviewed §8 TCs                                 |
-| `$review-artifact`                   | Feature Spec quality check                                                                                               | Reviewed Feature Spec                           |
-| `$spec-clarify`                      | Brainstorm open questions, audit non-obvious decisions, confirm with user (BLOCKING)                                     | Clarified spec + Decisions Log                  |
-| `$why-review`                        | Validate the authored spec's rationale and completeness                                                                  | Why-Review checklist                            |
-| `$docs-update`                       | Sync the Feature Spec (§8) and derived bucket indexes                                                                    | Docs-update report                              |
+| Step                                 | Purpose                                                                                                                                                            | Output                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| `$idea`                              | Capture the converged idea as a structured artifact                                                                                                                | `team-artifacts/ideas/{date}-po-idea-{slug}.md` |
+| `$spec [mode=draft]`                 | Author the canonical tech-free 8-section Feature Spec §1-7 FROM the idea text (no code grep; `provisional: true` marker)                                           | `docs/specs/{Bucket}/README.{Feature}.md`       |
+| `$spec [mode=tests]`                 | Author §8 TC-{FEATURE}-{NNN} behavioral test cases (`Evidence: TBD`, `Status: Planned` — before any code)                                                          | Feature Spec §8 Test Specifications             |
+| `$artifact-review --type=spec-tests` | Test-spec quality check                                                                                                                                            | Reviewed §8 TCs                                 |
+| `$artifact-review`                   | Feature Spec quality check                                                                                                                                         | Reviewed Feature Spec                           |
+| `$design-spec`                       | UI ideas only — author tech-agnostic UI specs (NO mockup/backlog; spec-only contract preserved); gated by `SYNC:existing-ui-research`. Skip for backend-only ideas | UI design specs                                 |
+| `$spec-clarify`                      | Brainstorm open questions, audit non-obvious decisions, confirm with user (BLOCKING)                                                                               | Clarified spec + Decisions Log                  |
+| `$why-review`                        | Validate the authored spec's rationale and completeness                                                                                                            | Why-Review checklist                            |
+| `$docs-update`                       | Sync the Feature Spec (§8) and derived bucket indexes                                                                                                              | Docs-update report                              |
 
 **Provisional output:** because no code exists yet, the spec is provisional — §8 TCs carry `Evidence: TBD` and `Status: Planned`, and frontmatter carries `provisional: true`. The first `workflow-code-to-spec` / `spec [mode=update]` run against real code upgrades `TBD` → real `[Source:]` anchors and clears the provisional flag.
+
+> **Spec-hub coupling (§6 interaction surface ↔ UI artifacts):** the `$design-spec` produced here is NOT a standalone artifact — it is the deep companion of the governing Feature Spec's **§6 interaction surface** (View Inventory / Navigation Map / Key UI States / per-story click-path). `design-spec` seeds from §6 and records its own path in the spec's `design_spec:` frontmatter so the spec stays the navigable hub: a reader goes spec → §6 thin intent → `design-spec` deep companion, and the two never drift. Keep deep visual fidelity (layout, tokens, pixel detail) in the `design-spec`, never in §6. See the `SYNC:ui-intent-layer` block below for the full rule — do not restate it here. Backend-only ideas (no UI) → skip `$design-spec` and state that reason.
 
 ### 4. Handoff
 
@@ -150,14 +154,14 @@ At `$workflow-end`, AI presents:
 
 ---
 
-**IMPORTANT MANDATORY Steps:** $web-research -> $deep-research -> $brainstorm -> $spec-discovery -> $domain-analysis -> $why-review -> $idea -> $spec [mode=draft] -> $spec [mode=tests] -> $review-artifact --type=spec-tests -> $review-artifact -> $spec-clarify -> $why-review -> $docs-update -> $workflow-end -> $watzup
+**IMPORTANT MANDATORY Steps:** $web-research -> $deep-research -> $brainstorm -> $spec-discovery -> $domain-analysis -> $why-review -> $idea -> $spec [mode=draft] -> $spec [mode=tests] -> $artifact-review --type=spec-tests -> $artifact-review -> $design-spec -> $spec-clarify -> $why-review -> $docs-update -> $feature-presentation -> $workflow-end -> $watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `workflow-idea-to-spec` workflow. Run `$start-workflow workflow-idea-to-spec` with the user's prompt as context.
 
 **Steps:**
-$web-research → $deep-research → $brainstorm → $spec-discovery → $domain-analysis → $why-review → $idea → $spec [mode=draft] → $spec [mode=tests] → $review-artifact --type=spec-tests → $review-artifact → $spec-clarify → $why-review → $docs-update → $workflow-end → $watzup
+$web-research → $deep-research → $brainstorm → $spec-discovery → $domain-analysis → $why-review → $idea → $spec [mode=draft] → $spec [mode=tests] → $artifact-review --type=spec-tests → $artifact-review → $design-spec → $spec-clarify → $why-review → $docs-update → $feature-presentation → $workflow-end → $watzup
 
 > **Scale awareness:** When the brainstorm converges on multiple distinct capabilities, this workflow authors one Feature Spec per capability. For 4+ capabilities, spawn one `spec` sub-agent per capability in ONE message (each gets the framing context + output path); the main context assembles and reviews. Use incremental-write patterns to prevent context overrun.
 
@@ -170,8 +174,9 @@ $web-research → $deep-research → $brainstorm → $spec-discovery → $domain
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -245,6 +250,22 @@ $web-research → $deep-research → $brainstorm → $spec-discovery → $domain
 
 <!-- /SYNC:subagent-return-contract -->
 
+<!-- SYNC:ui-intent-layer -->
+
+> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
+>
+> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
+> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
+> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
+> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
+> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
+>
+> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
+
+<!-- /SYNC:ui-intent-layer -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -264,6 +285,12 @@ $web-research → $deep-research → $brainstorm → $spec-discovery → $domain
 
 <!-- /SYNC:nested-task-creation:reminder -->
 
+<!-- SYNC:ui-intent-layer:reminder -->
+
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+
+<!-- /SYNC:ui-intent-layer:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Ensure spec-driven idea-to-spec converts a raw idea into ONE canonical, provisional Feature Spec — reviewed and docs-synced, ready to hand off for backlog decomposition or implementation.
@@ -282,7 +309,7 @@ $web-research → $deep-research → $brainstorm → $spec-discovery → $domain
 - **MANDATORY IMPORTANT MUST ATTENTION** PROVISIONAL OUTPUT — §8 carries `Evidence: TBD` / `Status: Planned` and frontmatter `provisional: true`; reconcile against code later via `workflow-code-to-spec`
 - **MANDATORY IMPORTANT MUST ATTENTION** NEVER decompose into PBIs/stories/backlog here — chain `workflow-spec-to-pbi` for a backlog
 - **MANDATORY IMPORTANT MUST ATTENTION** why-review runs after domain-analysis — FAIL revisits framing, WARN requires user acknowledgment
-- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via a direct user question — never auto-select scope
+- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user by asking the user directly — never auto-select scope
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify the authored Feature Spec(s)
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
@@ -377,8 +404,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -389,6 +417,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

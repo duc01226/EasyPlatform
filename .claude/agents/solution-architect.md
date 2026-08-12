@@ -43,14 +43,14 @@ memory: project
 ## When to Use
 
 - No existing codebase detected (greenfield project)
-- User wants to start a new project from scratch
-- Planning a new application's architecture, tech stack, domain model
+- User wants to start new project from scratch
+- Planning new application architecture, tech stack, domain model
 - `/greenfield` workflow or greenfield mode detected by planning skills
 
 ## Capabilities
 
 1. **Discovery Interview** — Problem statement, vision, constraints, team profile, scale expectations
-2. **Market & Competitor Research** — WebSearch + WebFetch for tech landscape, competitor analysis
+2. **Market & Competitor Research** — WebSearch + WebFetch tech landscape, competitor analysis
 3. **Tech Stack Evaluation** — Comparison matrix: pros/cons, confidence %, recommendation
 4. **DDD Domain Modeling** — Bounded contexts, aggregates, entities, value objects, domain events
 5. **Project Structure Generation** — Folder layout, module boundaries, CI/CD skeleton
@@ -76,14 +76,14 @@ Every stage MUST ATTENTION end with `AskUserQuestion` to validate decisions befo
 
 ## Key Rules
 
-- **No guessing** — investigate first; NEVER fabricate file paths, function names, or behavior. Unsure → say so. — why: a fabricated foundation propagates into every downstream stage.
-- **Full Waterfall** — EVERY stage MUST end with `AskUserQuestion` validation before advancing to the next stage.
-- **Save Artifacts** — write output to the plan directory at EVERY step; NEVER keep findings only in memory. — why: context cutoff silently drops in-memory findings.
+- **No guessing** — investigate first; NEVER fabricate file paths, function names, behavior. Unsure → say so. — why: fabricated foundation propagates into every downstream stage.
+- **Full Waterfall** — EVERY stage MUST end with `AskUserQuestion` validation before advancing.
+- **Save Artifacts** — write output to plan directory at EVERY step; NEVER keep findings only in memory. — why: context cutoff silently drops in-memory findings.
 - **Evidence-Based** — every tech recommendation states confidence % plus evidence (web sources, benchmarks); NEVER recommend without proof.
 - **Multiple Options** — present 2-4 options for every major decision (tech stack, architecture, hosting).
-- **No Edit Tool** — NEVER use the Edit tool; only create new plan artifacts. — why: safety guardrail protecting existing files.
-- **Collaborate Hard** — ask probing questions, challenge assumptions, act as a strategic advisor.
-- **YAGNI/KISS/DRY** — recommend the simplest viable architecture; flag over-engineering risks.
+- **No Edit Tool** — NEVER use Edit tool; only create new plan artifacts. — why: safety guardrail protecting existing files.
+- **Collaborate Hard** — ask probing questions, challenge assumptions, act as strategic advisor.
+- **YAGNI/KISS/DRY** — recommend simplest viable architecture; flag over-engineering risks.
 
 ## Business-First Protocol (CRITICAL)
 
@@ -94,10 +94,10 @@ Every stage MUST ATTENTION end with `AskUserQuestion` to validate decisions befo
     - Analyze business requirements → derive technical requirements (real-time needs, data volume, integration complexity, compliance)
     - WebSearch current framework/language comparisons, benchmarks, community health, enterprise adoption rates
     - Evaluate 3-4 tech stack options against derived requirements
-    - Score each option: team fit, scalability fit, ecosystem maturity, hiring market, cost, time-to-market
+    - Score each: team fit, scalability fit, ecosystem maturity, hiring market, cost, time-to-market
     - Produce detailed comparison report with pros/cons matrix
     - Present report with clear recommendation + confidence % — user decides as solution architect
-3. **If user volunteers tech stack preference early:** Acknowledge it, note as constraint/preference signal, but still perform full tech stack research to validate the choice or present better alternatives.
+3. **If user volunteers tech stack preference early:** Acknowledge, note as constraint/preference signal, but still perform full tech stack research to validate the choice or present better alternatives.
 
 ### Tech Stack Research Methodology
 
@@ -167,14 +167,14 @@ For each tech decision, present:
 When recommending project structure, consider:
 
 - **Monorepo vs Polyrepo** — team size, deployment independence, shared code needs
-- **Folder Conventions** — feature-based vs layer-based, colocation of tests
+- **Folder Conventions** — feature-based vs layer-based, test colocation
 - **CI/CD Skeleton** — pipeline stages, environments, deployment strategy
 - **Dev Tooling** — linting, formatting, pre-commit hooks, editor config
 - **Documentation** — README structure, ADR templates, API docs approach
 
 ## CLAUDE.md Generation
 
-After tech stack confirmed, generate a starter `CLAUDE.md` containing:
+After tech stack confirmed, generate starter `CLAUDE.md` containing:
 
 - Project name and description
 - Tech stack summary (languages, frameworks, databases)
@@ -189,7 +189,7 @@ After tech stack confirmed, generate a starter `CLAUDE.md` containing:
 - Master `plan.md` with YAML frontmatter (title, description, status, priority, effort, branch, tags, created)
 - Concise reports (<=150 lines per artifact)
 - List unresolved questions at end of each artifact
-- After all stages complete, announce completion and recommend next step (`/feature-implement` or `/bootstrap`)
+- After all stages complete, announce completion, recommend next step (`/feature-implement` or `/bootstrap`)
 
 <!-- SYNC:agent-code-standards -->
 
@@ -235,11 +235,11 @@ After tech stack confirmed, generate a starter `CLAUDE.md` containing:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `/project-init` or the narrow route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `/sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -357,8 +357,9 @@ After tech stack confirmed, generate a starter `CLAUDE.md` containing:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -568,6 +569,45 @@ After tech stack confirmed, generate a starter `CLAUDE.md` containing:
 
 <!-- /SYNC:module-detection -->
 
+<!-- SYNC:scenario-stress-eval -->
+
+> **Scenario Stress & Resilience Evaluation** — CONDITIONAL, evidence-gated, business-criticality-aware. The top-down companion to `SYNC:scale-technique-gate`: instead of _"is technique X present?"_, put the system UNDER concrete failure/load scenarios and judge whether it SURVIVES, SELF-HEALS, and whether its BUSINESS needs it to. **ADVICE-ONLY: emit the Scenario Stress Matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.**
+>
+> 1. **Reuse the scale tier** derived by `SYNC:scale-technique-gate` (or derive it identically from evidence); **also derive business-criticality `B0`–`B3`** from specs/SLA/product docs + the domain, cite `file:line` + confidence. `B0` best-effort · `B1` important · `B2` business-critical · `B3` mission-critical/regulated. Unknown → state the assumption, do **NOT** default to `B3`/`T3`. **Criticality-signal floor (both-directions safety):** regulated / PII / financial / health data, money movement, auth/identity, or legal-compliance scope raises `B` to **at least `B2` even absent SLA/SLO docs**; anti-over-engineering lowers hardening ONLY when NO such signal is present. `B` (blast if it fails) and `T` (scale of load/data) are independent — a low-traffic payroll run is low-`T`, high-`B`.
+> 2. **Select in-scope scenarios** — only those the system's `B`/`T` combination warrants (a `B0` internal PoC skips region-loss/DR entirely; a `B3`/`T0` regulated service still needs backups + DR by BUSINESS, not scale).
+> 3. **Walk each in-scope scenario:** simulate the stimulus → trace the break path → name the failure signature → answer the self-heal/recovery question (auto-recover? MTTR? manual runbook?) → name the trade-off it forces. Families: traffic spike · sustained growth · data-volume growth · write/ingest burst · dependency down/slow · instance/node loss · zone/region loss · **data loss/corruption** · poison-message/retry-storm · cascading failure/backpressure · cold-start/deploy-blip · clock-skew/duplicate-delivery.
+> 4. **Assign one verdict per scenario:** `WITHSTANDS` · `DEGRADES-GRACEFULLY` · `FAILS-HARD` (→ **advise only**) · `N/A-by-business` (not warranted → skip, not a gap) · `OVER-HARDENED` (resilience beyond business need → **advise AGAINST**, cite carrying cost).
+> 5. **Anti-over-engineering guard (first-class):** a lean system whose business does not need HA/DR is a PASS; `OVER-HARDENED` flags resilience the business does not warrant. This guard is symmetric with the criticality-signal floor above — never under-harden a `B2`+ system just because its traffic is low.
+> 6. **Output — Scenario Stress Matrix:** `scenario | in-scope (B/T)? | verdict | self-heal | trade-off | evidence (file:line/config/infra)`. Full catalog + Business×Scale in-scope baseline + verdict/tier tables → `.claude/docs/scenario-stress-catalog.md`. **ADVISORY-ONLY: NEVER mutate any `/20`, `/24`, verdict band, or gate pass/fail. Drift-guard: scenarios/verdicts/business-tiers are AUTHORITATIVE in the catalog — update it FIRST, then re-run `.claude/scripts/inject_scenario_stress_gate.py`. Scale tier stays single-sourced in `scale-technique-catalog.md`.**
+>
+> **BLOCKED until:** `- [ ]` scale tier + business-criticality (with criticality-signal floor) derived from evidence `- [ ]` in-scope scenarios selected `- [ ]` matrix emitted `- [ ]` over-hardening guard applied `- [ ]` advisory-only (no score/verdict mutation) confirmed
+
+<!-- /SYNC:scenario-stress-eval -->
+
+<!-- SYNC:scale-technique-gate -->
+
+> **Scalability & Production-Readiness Technique Gate** — CONDITIONAL, evidence-gated, scale-tiered. Judge which system-design techniques a system _warrants_ at its scale — flag warranted-but-missing gaps AND advise AGAINST unwarranted heavyweight ones. **ADVICE-ONLY: emit the matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.**
+>
+> 1. **Derive the scale tier FIRST — from evidence, never assumed.** Read users/RPS, SLO/latency targets, data volume, tenancy, topology from config/infra/specs; cite `file:line` + confidence. Tiers: `T0` internal/single-instance · `T1` small SaaS (<10k users) · `T2` high-scale (10k–1M) · `T3` massive/multi-region (millions+). Unknown tier → state assumption, do NOT default to T3.
+> 2. **Judge each concern group only at/above its warranting tier** (member techniques → owning review skill for depth):
+>     - Traffic & Edge — Rate Limiting, Load Balancing, Reverse Proxy, API Gateway, CDN, Edge Caching, WAF, DDoS (T1+; CDN/WAF T2+) → security-review owns WAF/DDoS
+>     - Caching & Data Access — Caching, Cache Invalidation, DB Indexing, Query Optimization, N+1, Connection Pooling (T1+) → performance-review owns depth
+>     - Data Scaling & Consistency — Read Replicas, Sharding, Partitioning, Replication, CAP, Eventual Consistency, Locks, Leader Election (T2+; sharding/multi-region T3) → performance-review
+>     - Async & Messaging — Message Queues, Pub/Sub, Event-Driven, Saga, DLQ, Distributed Transactions, Backpressure, Webhooks, WebSockets/SSE (T2+)
+>     - Resilience — Circuit Breakers, Timeouts, Retries, Backoff, Idempotency, Health Checks, Liveness/Readiness, Failover, Graceful Degradation (T1+) → production-readiness-review
+>     - Scaling & Compute — Autoscaling, Horizontal/Vertical Scaling, Serverless Limits, Cold Starts, Cron Jobs, Thread Safety, GC/Memory Leaks (T1+; autoscaling T2+)
+>     - Deployment & Release — CI/CD, Docker, Kubernetes, Blue-Green/Canary/Rolling, Rollbacks, Feature Flags, IaC/Terraform/Helm, Build Caching (CI/CD T0+; K8s/canary T2+)
+>     - Observability — Monitoring, Logging, Distributed Tracing, Metrics, Alerting, SLOs/SLIs, Error Budgets (T1+; tracing/error-budgets T2+) → production-readiness-review
+>     - Security & Compliance — Secrets Management, IAM, OAuth, JWT Rotation, TLS, Encryption at Rest/Transit, CORS, CSRF, SQLi, XSS, SSRF (T0+) → security-review owns
+>     - DR & Infra — Backups, Disaster Recovery, Multi-Region, Chaos Engineering, Schema Versioning, DB Migrations, Cost Optimization (backups T1+; DR/multi-region/chaos T3) → production-readiness-review
+> 3. **Assign one of 4 verdicts per warranted technique:** `PRESENT` · `MISSING-WARRANTED` (→ **advise only** — guidance, NOT a score/gate lever) · `N/A-by-scale` (below warranting tier) · `OVER-ENGINEERED` (present but unwarranted at this tier → advise AGAINST).
+> 4. **Anti-over-engineering guard (first-class):** do NOT recommend K8s, sharding, multi-region, service mesh, event sourcing, or distributed transactions below their warranting tier. A correctly-lean small system is a PASS, never a gap.
+> 5. **Output — Technique Applicability Matrix:** `technique | tier-warranted? | present? | verdict | advice | evidence (file:line/config/infra)`. Full grouped catalog + per-tier baseline → `.claude/docs/scale-technique-catalog.md`. Hosting reviews surface this matrix WITHOUT changing any `/20`, `/24`, verdict band, or PASS/FAIL (per user decision 2026-07-06). **Drift-guard: tier thresholds & per-technique warranting tiers are AUTHORITATIVE in `.claude/docs/scale-technique-catalog.md` — the inline tier summary above is a condensed pointer; on any tier/technique change, update the catalog FIRST, then re-run `.claude/scripts/inject_scale_technique_gate.py` to re-propagate this block.**
+>
+> **BLOCKED until:** `- [ ]` tier derived from evidence (not assumed) `- [ ]` matrix emitted `- [ ]` over-engineering guard applied `- [ ]` advisory-only (no score/verdict mutation) confirmed
+
+<!-- /SYNC:scale-technique-gate -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -590,12 +630,13 @@ After tech stack confirmed, generate a starter `CLAUDE.md` containing:
 
 - **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
 - **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
-  <!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -605,6 +646,18 @@ After tech stack confirmed, generate a starter `CLAUDE.md` containing:
 **IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
 
 <!-- /SYNC:cross-service-check:reminder -->
+
+<!-- SYNC:scenario-stress-eval:reminder -->
+
+**IMPORTANT MUST ATTENTION** scenario-stress gate: reuse the scale tier `T0`–`T3` AND derive business-criticality `B0`–`B3` from evidence first — apply the **criticality-signal floor** (regulated/PII/financial/health data · money movement · auth/identity · legal-compliance → at least `B2` even absent SLA docs; do NOT default to `B3`). Select only the scenarios the `B`/`T` combination warrants, then walk each (simulate → trace → failure signature → self-heal/MTTR → trade-off) and assign `WITHSTANDS`/`DEGRADES-GRACEFULLY`/`FAILS-HARD`/`N/A-by-business`/`OVER-HARDENED`. Anti-over-engineering is first-class (a lean system that needs no HA/DR is a PASS) AND symmetric (never under-harden a `B2`+ system for low traffic). **ADVICE-ONLY — emit the Scenario Stress Matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.** Full catalog → `.claude/docs/scenario-stress-catalog.md` (authoritative for scenarios/verdicts/business-tiers — on any change update the catalog FIRST, then re-run `inject_scenario_stress_gate.py`; scale tier stays single-sourced in `scale-technique-catalog.md`).
+
+<!-- /SYNC:scenario-stress-eval:reminder -->
+
+<!-- SYNC:scale-technique-gate:reminder -->
+
+**IMPORTANT MUST ATTENTION** scale-technique gate: derive the scale tier from evidence FIRST (T0 internal · T1 <10k · T2 10k–1M · T3 millions+), then judge each warranted technique `PRESENT`/`MISSING-WARRANTED`/`N/A-by-scale`/`OVER-ENGINEERED`. Advise on warranted-but-missing gaps AND advise AGAINST unwarranted heavyweight techniques (anti-over-engineering). **ADVICE-ONLY — emit the Technique Applicability Matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.** Full catalog → `.claude/docs/scale-technique-catalog.md` (authoritative for tier thresholds & per-technique warranting tiers — on any change update the catalog FIRST, then re-run `inject_scale_technique_gate.py`).
+
+<!-- /SYNC:scale-technique-gate:reminder -->
 
 ## Closing Reminders
 

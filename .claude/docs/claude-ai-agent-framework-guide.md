@@ -5,7 +5,7 @@
 **Audience:** AI engineers, tech leads, and teams wanting to build reliable AI-assisted development systems.
 **Scope:** What each layer does, why it exists, how the pieces compose, the design principles behind every decision, and which AI agent best practices each addresses.
 
-> **Document Sync Status** — Current local verification (2026-06-15): **15 hook files · 156 skills · 17 workflows · 29 agents** using the ADR-0002 filesystem metrics. Codex mirrors are committed under `.agents/`, `.codex/`, and `AGENTS.md`. Notable mechanisms documented here include multi-AI-tool portability (§13), behavioral-principle injection (§8.21), self-validating review (§8.20), and embedded sequential-thinking.
+> **Document Sync Status** — Current local verification (2026-08-12): **16 hook files · 163 skills · 19 workflows · 29 agents** using the ADR-0002 filesystem metrics. Codex mirrors are committed under `.agents/`, `.codex/`, and `AGENTS.md`. Notable mechanisms documented here include multi-AI-tool portability (§13), behavioral-principle injection (§8.21), self-validating review (§8.20), and embedded sequential-thinking.
 
 ---
 
@@ -45,7 +45,7 @@
 
 ## 1. Executive Summary
 
-This framework wraps Claude Code in a three-pillar execution framework — **15 top-level hook files**, **156 skills**, **17 registered workflows**, and **29 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
+This framework wraps Claude Code in a three-pillar execution framework — **16 top-level hook files**, **163 skills**, **19 registered workflows**, and **29 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
 
 It is also **harness- and project-agnostic**: the `.claude/` source compiles to verified OpenAI Codex mirrors (`AGENTS.md`, `.agents/`, `.codex/`), while all project-specific knowledge is factored into `project-config.json` + reference docs — so the same behavior runs on any supported AI tool and ports to any codebase (Section 13).
 
@@ -65,7 +65,7 @@ It is also **harness- and project-agnostic**: the `.claude/` source compiles to 
 │  AI drifts from plan   │  CLAUDE.md task rule│  Model-driven gate│
 │  AI injects duplicates │  Hooks (dedup)      │  File-based dedup│
 │  AI skips test specs   │  TDD skills/flows   │  Unified TC IDs  │
-│  AI misses lifecycle   │  17 workflows       │  Full SDLC cover │
+│  AI misses lifecycle   │  19 workflows       │  Full SDLC cover │
 │  AI skips research   │  big-feature wf      │  Step-select gate  │
 │  AI skips E2E tests    │  E2E skills/flows   │  Recording→test  │
 │  AI ignores doc format │  buildSpecContext   │  8-section inject  │
@@ -96,7 +96,7 @@ graph TB
         AUQ[Model Auto-Select<br/>start-workflow]
     end
 
-    subgraph "Enforcement Layer — 15 Top-Level Hook Files"
+    subgraph "Enforcement Layer — 16 Top-Level Hook Files"
         subgraph "Safety Hooks"
             PB[Path Boundary Block]
             PR[Privacy Block]
@@ -117,14 +117,14 @@ graph TB
         end
     end
 
-    subgraph "Intelligence Layer — 156 Skills"
+    subgraph "Intelligence Layer — 163 Skills"
         SP[Shared Protocols<br/>5 files]
         IS[Implementation Skills<br/>feature-implement, fix, refactor]
         QS[Quality Skills<br/>code-review, prove-fix]
         PS[Planning Skills<br/>plan, investigate, scout]
     end
 
-    subgraph "Orchestration Layer — 17 Workflows"
+    subgraph "Orchestration Layer — 18 Workflows"
         FW[Feature Workflow]
         BW[Bugfix Workflow]
         RW[Refactor Workflow]
@@ -282,7 +282,7 @@ graph LR
 > `.claude/settings.json`.
 
 ```
-HOOK SYSTEM (15 top-level .cjs hooks + 1 .js notification helper)
+HOOK SYSTEM (16 top-level .cjs hooks + 1 .js notification helper)
 │
 ├── SESSION LIFECYCLE (6 hooks)
 │   ├── verify-install.cjs ────────── Install-integrity preflight (runs first)
@@ -296,11 +296,12 @@ HOOK SYSTEM (15 top-level .cjs hooks + 1 .js notification helper)
 │   └── init-prompt-gate.cjs ──────── Block until project-config exists; routes
 │   │                                  /project-init when CLAUDE.md/AGENTS.md missing
 │
-├── SAFETY & BLOCKING (5 hooks)
+├── SAFETY & BLOCKING (6 hooks)
 │   ├── path-boundary-block.cjs ──── Block access outside project root
 │   ├── privacy-block.cjs ─────────── Block .env, credentials, keys
 │   ├── scout-block.cjs ──────────── Block bulk reads outside approved scope
 │   ├── windows-command-detector ──── Block Windows CMD in Git Bash
+│   ├── bash-shell-guard.cjs ─────── Block PowerShell here-strings in Git Bash
 │   └── git-commit-block.cjs ──────── Block git commit/push unless /commit is active
 │
 ├── DOC SYNC (1 hook)
@@ -454,21 +455,21 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate
 2. Declare confidence level...
 ```
 
-### 5.2 Skill Categories (156 skills)
+### 5.2 Skill Categories (163 skills)
 
 ```mermaid
 mindmap
-  root((156 Skills))
+  root((163 Skills))
     Quality & Verification
       code-review
       prove-fix
       quality-gate-review
-      review-changes
+      changes-review
       code-simplifier
       production-readiness-review
-      review-artifact --type=pbi
-      review-artifact --type=story
-      review-artifact --type=spec-tests
+      artifact-review --type=pbi
+      artifact-review --type=story
+      artifact-review --type=spec-tests
     Planning & Research
       plan
       plan-review
@@ -520,7 +521,7 @@ mindmap
       project-manager
       dependency
     Frontend & Design
-      frontend-design
+      design
       ui-ux-pro-max
       web-design-guidelines
     Code Intelligence
@@ -536,13 +537,13 @@ mindmap
       MCP management guidance
       skill-creator
       dual-ai
-    Workflow Triggers (17)
+    Workflow Triggers (18)
       workflow-feature
       workflow-big-feature
       workflow-bugfix
       workflow-greenfield-init
       workflow-refactor
-      ... 16 more
+      ... 13 more
 ```
 
 ### 5.3 Shared Protocols — The Foundation
@@ -694,9 +695,9 @@ Three new review skills create quality checkpoints between artifact-producing st
 
 | Review Skill                        | Reviews Output From          | Checks                                                  |
 | ----------------------------------- | ---------------------------- | ------------------------------------------------------- |
-| `review-artifact --type=pbi`        | `/refine` (PBI)              | INVEST criteria, acceptance criteria completeness, gaps |
-| `review-artifact --type=story`      | `/story` (stories)           | Vertical slicing quality, dependency tables, SPIDR      |
-| `review-artifact --type=spec-tests` | `/spec [mode=tests]` (specs) | TC coverage, traceability to ACs, boundary cases        |
+| `artifact-review --type=pbi`        | `/refine` (PBI)              | INVEST criteria, acceptance criteria completeness, gaps |
+| `artifact-review --type=story`      | `/story` (stories)           | Vertical slicing quality, dependency tables, SPIDR      |
+| `artifact-review --type=spec-tests` | `/spec [mode=tests]` (specs) | TC coverage, traceability to ACs, boundary cases        |
 
 **Added to workflows:** workflow-idea-to-pbi, workflow-big-feature, workflow-greenfield-init
 
@@ -755,7 +756,7 @@ Workflows are **JSON-defined sequences of skills** stored in `.claude/workflows.
             "fix",
             "prove-fix",
             "code-simplifier",
-            "review-changes",
+            "changes-review",
             "code-review",
             "changelog",
             "test",
@@ -771,7 +772,7 @@ Workflows are **JSON-defined sequences of skills** stored in `.claude/workflows.
 }
 ```
 
-### 6.2 Workflow Catalog (17 Workflows)
+### 6.2 Workflow Catalog (18 Workflows)
 
 ```
 WORKFLOW CATALOG
@@ -801,8 +802,9 @@ WORKFLOW CATALOG
 ├── DOCUMENTATION & SPEC (1)
 │   └── workflow-feature-spec
 │
-├── REVIEW (1)
-│   └── workflow-review-changes
+├── REVIEW (2)
+│   ├── workflow-review-changes
+│   └── workflow-architecture-audit
 │
 └── DESIGN & VISUALIZATION (1)
     └── workflow-visualize
@@ -811,14 +813,14 @@ WORKFLOW CATALOG
 
 > Removed in the 2026-06 catalog prune (use the equivalent skill directly instead of a workflow):
 > tdd-feature → `feature` (spec-driven with tests by default) · test-to-integration / test-verify → `write-integration-test` ·
-> pbi-to-tests → `/spec [mode=tests]` · quality-audit → `review-changes` · security-audit → `/security-review` ·
+> pbi-to-tests → `/spec [mode=tests]` · quality-audit → `changes-review` · security-audit → `/security-review` ·
 > performance → `/performance-review` · investigation → `/investigate` · migration → `/db-migrate` ·
 > package-upgrade → `/package-upgrade` skill · release-prep → `/production-readiness-review` + `/quality-gate-review` ·
-> batch-operation / verification / deployment → direct execution with `/plan` + `/review-changes`.
+> batch-operation / verification / deployment → direct execution with `/plan` + `/changes-review`.
 >
 > Removed in the 2026-06-13 prune: full-feature-lifecycle → `workflow-idea-to-pbi` (now idea→spec→pbi) then `workflow-feature` ·
 > documentation → `/docs-update` skill (or the docs-update step in `workflow-feature`) · spec-index → `/spec-index` skill (still a step in `workflow-spec-to-pbi`) ·
-> design-workflow → `/design-spec` → `/interface-design` (product UIs) or `/frontend-design` (marketing/creative).
+> design-workflow → `/design-spec` → `/design --lane=product` (product UIs) or `/design --lane=marketing` (marketing/creative).
 
 ### 6.3 Workflow Detection & Auto-Selection
 
@@ -839,7 +841,7 @@ sequenceDiagram
 
     Model->>Skill: /start-workflow workflow-bugfix
 
-    Skill->>Todo: Create tasks for ALL steps:<br/>1. [Bugfix] /scout<br/>2. [Bugfix] /investigate<br/>3. [Bugfix] /debug-investigate<br/>4. [Bugfix] /plan<br/>...17 steps total
+    Skill->>Todo: Create tasks for ALL steps:<br/>1. [Bugfix] /scout<br/>2. [Bugfix] /investigate<br/>3. [Bugfix] /debug-investigate<br/>4. [Bugfix] /plan<br/>...24 steps total
 
     loop Each workflow step
         Todo->>Skill: Mark step in_progress
@@ -876,9 +878,9 @@ The hook and skill system is **project-agnostic**. All project-specific knowledg
 ```mermaid
 graph LR
     subgraph "Generic Framework (reusable)"
-        H[15 Hook Files]
-        S[156 Skills]
-        W[17 Workflows]
+        H[16 Hook Files]
+        S[163 Skills]
+        W[18 Workflows]
     end
 
     subgraph "Project-Specific (swappable)"
@@ -1075,7 +1077,7 @@ graph TB
 │  AI evaluates: direct edit? single skill? feature workflow?      │
 │                    ↓                                              │
 │  Best match: feature workflow → activates immediately            │
-│  (steps: scout→investigate→spec [mode=tests]→plan→feature-implement→test→docs)│
+│  (steps: scout→investigate→spec [mode=tests]→plan→plan-execute→test→docs)│
 │                                                                   │
 │  EXCEPTION: explicit invocation — when the user names a          │
 │  workflow or skill (start-workflow X, slash-skill), that exact   │
@@ -1335,12 +1337,12 @@ flowchart LR
 │  Input: Existing TCs + code changes                              │
 │  Action: Diff TCs against current code → find gaps               │
 │  Evidence: updated [Source: namespace/service/id] anchors        │
-│  Next: /test → /review-changes                                   │
+│  Next: /test → /changes-review                                   │
 │                                                                   │
 │  ALL MODES:                                                       │
 │  • Write TCs to feature doc Section 8 (canonical)               │
 │  • Use AskUserQuestion for TC review with user                  │
-│  • Sync each §8 TC's IntegrationTest field to test code         │
+│  • Sync each §8 TC's CoveredBy field to test code              │
 │  • Unified format: TC-{FEATURE}-{NNN}                           │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -1349,11 +1351,11 @@ flowchart LR
 
 Dedicated registered workflows and workflow trigger skills support test-driven development:
 
-| Workflow                                           | Sequence                                                                                                                | Use Case                                                                                         |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| **idea-to-pbi**                                    | `/idea` → `/refine` → `/story` → `/spec [mode=tests]` → `/dor-gate`                                                     | Go from raw idea to grooming-ready PBI, stories, and reviewed test specifications                |
-| **feature**                                        | `/scout` → `/investigate` → `/spec` → `/spec [mode=tests]` → `/plan` → `/feature-implement` → `/integration-test` → ... | Spec-driven with tests by default: test specs written and reviewed FIRST, then implement         |
-| **e2e** (`--source=recording\|update-ui\|changes`) | `/scout` → `/e2e-test` → `/test` → `/docs-update` → `/workflow-end` → `/watzup`                                         | Generate from a recording, update screenshot baselines, or sync E2E tests to spec/source changes |
+| Workflow                                           | Sequence                                                                                                           | Use Case                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| **idea-to-pbi**                                    | `/idea` → `/refine` → `/story` → `/spec [mode=tests]` → `/dor-gate`                                                | Go from raw idea to grooming-ready PBI, stories, and reviewed test specifications                |
+| **feature**                                        | `/scout` → `/investigate` → `/spec` → `/spec [mode=tests]` → `/plan` → `/plan-execute` → `/integration-test` → ... | Spec-driven with tests by default: test specs written and reviewed FIRST, then implement         |
+| **e2e** (`--source=recording\|update-ui\|changes`) | `/scout` → `/e2e-test` → `/test` → `/docs-update` → `/workflow-end` → `/watzup`                                    | Generate from a recording, update screenshot baselines, or sync E2E tests to spec/source changes |
 
 #### Interactive Idea & Requirement Capture
 
@@ -1422,7 +1424,7 @@ The framework supports AI-assisted development across **every phase** of the sof
 │                     │ feature workflow       │ build verification │
 │─────────────────────│────────────────────────│────────────────────│
 │  7. CODE REVIEW     │ /code-review           │ Automated quality  │
-│                     │ /review-changes        │ checks, pattern    │
+│                     │ /changes-review        │ checks, pattern    │
 │                     │ /prove-fix, /production-readiness-review│ compliance, proofs │
 │─────────────────────│────────────────────────│────────────────────│
 │  8. DOCUMENTATION   │ /docs-update           │ Auto-detect stale  │
@@ -1430,7 +1432,7 @@ The framework supports AI-assisted development across **every phase** of the sof
 │                     │ /changelog             │ changelogs, sync   │
 │─────────────────────│────────────────────────│────────────────────│
 │  9. SIGN-OFF        │ /quality-gate-review         │ Quality gates,     │
-│                     │ /review-artifact       │ artifact review    │
+│                     │ /artifact-review       │ artifact review    │
 │─────────────────────│────────────────────────│────────────────────│
 │  10. OPERATIONS     │ /devops                │ Infrastructure     │
 │                     │ /production-readiness-review            │ automation and     │
@@ -1498,7 +1500,7 @@ TEST SPECIFICATION ARCHITECTURE
 4. Generates TC outlines with `Evidence: [Source: namespace/service/id]` abstract anchors
 5. Presents TC list via `AskUserQuestion` for interactive review
 6. Writes approved TCs to feature doc Section 8 (canonical TC registry)
-7. Records each TC's `IntegrationTest` field (test path or `Untested`)
+7. Records each TC's `CoveredBy` field (test path, test filter, manual-QC carrier, or `Untested`)
 
 **Output locations:**
 
@@ -1542,7 +1544,7 @@ TEST SPECIFICATION ARCHITECTURE
 
 **Scenario:** You want to implement a feature AND ensure integration test coverage — write specs first, refine the plan with test strategy, then implement and generate tests.
 
-> **Merged into `feature` (2026-06).** The former standalone `feature-with-integration-test` workflow was a ~85% subset of `feature`; it has been merged. The `feature` workflow now natively carries the spec-first integration-test path (`/integration-test → /integration-test-review → /integration-test-verify`) plus the entity-conditional `/domain-analysis` + `/review-domain-entities` steps. Use the `feature` workflow for this scenario.
+> **Merged into `feature` (2026-06).** The former standalone `feature-with-integration-test` workflow was a ~85% subset of `feature`; it has been merged. The `feature` workflow now natively carries the spec-first integration-test path (`/integration-test → /integration-test-review → /integration-test-verify`) plus the entity-conditional `/domain-analysis` + `/domain-entities-review` steps. Use the `feature` workflow for this scenario.
 
 **Key points:** `feature` writes and reviews test specs before implementation (spec-driven with tests by default, covering the former `tdd-feature` use case), includes a dedicated re-planning step after specs to refine the implementation plan with test infrastructure needs, and a `/spec [mode=sync]` step that keeps spec §8 TCs and integration-test code aligned.
 
@@ -1552,12 +1554,12 @@ TEST SPECIFICATION ARCHITECTURE
 
 ```
 feature:
-  scout → investigate → domain-analysis → why-review → spec →
+  scout → investigate → spec-discovery → domain-analysis → why-review → spec → spec-clarify →
   plan → plan-review → plan-validate → why-review →
-  spec [mode=tests] → why-review → review-artifact --type=spec-tests → plan → plan-review →
-  feature-implement → review-domain-entities → spec [mode=tests] → why-review → review-artifact --type=spec-tests →
+  spec [mode=tests] → why-review → artifact-review --type=spec-tests → plan → plan-review →
+  plan-execute → seed-test-data → domain-entities-review → spec [mode=tests] → why-review → artifact-review --type=spec-tests →
   spec [mode=sync] → integration-test → integration-test-review →
-  integration-test-verify → workflow-review-changes → production-readiness-review →
+  integration-test-verify → workflow-review-changes →
   security-review → changelog → test → docs-update → workflow-end → watzup
 ```
 
@@ -1565,9 +1567,9 @@ feature:
 
 ---
 
-#### Case 3: Sync §8 TCs ↔ Integration Test Code (Bidirectional)
+#### Case 3: Sync §8 TCs ↔ Test Code (Bidirectional)
 
-**Scenario:** Section 8 TCs and the integration test code have drifted — TCs exist with no covering test, or tests exist with no canonical §8 TC. Need to reconcile. Section 8 is canonical; test code implements it.
+**Scenario:** Section 8 TCs and the executing test code have drifted — TCs exist with no covering test, or tests exist with no canonical §8 TC. Need to reconcile. Section 8 is canonical; test code implements it.
 
 **Prompt examples:**
 
@@ -1585,7 +1587,7 @@ feature:
 **What happens (bidirectional via /spec [mode=sync]):**
 
 1. Reads feature doc Section 8 TCs (the canonical registry)
-2. Greps for TC annotations (e.g., test tags/traits) in the integration test code
+2. Greps for TC annotations (e.g., test tags/traits) across configured executing test tiers
 3. Builds a 2-way comparison:
 
 ```
@@ -1596,7 +1598,7 @@ feature:
 | TC-GM-030 | ❌              | ✅         | Back-fill §8 (emergency only)      |
 ```
 
-4. Forward (default): §8 is the source — flag every TC with no covering test; update each TC's `IntegrationTest` field once a test exists.
+4. Forward (default): §8 is the source — flag every TC with no covering test; update each TC's `CoveredBy` field once a test exists.
 5. Reverse (**emergency recovery only**): back-fill §8 for tests that exist without a canonical TC, with explicit user confirmation and a recovery report. §8 always wins conflicts.
 
 **Direction detection keywords:**
@@ -1637,13 +1639,13 @@ feature:
 4. Identifies: new commands/queries not covered, changed behaviors, removed features
 5. For bugfixes: adds a **regression TC** (e.g., `TC-GM-040: Regression — goal title validation bypass`)
 6. Generates gap analysis
-7. Updates feature docs Section 8 (canonical) and each affected TC's `IntegrationTest` field
+7. Updates feature docs Section 8 (canonical) and each affected TC's `CoveredBy` field
 8. Suggests: `/integration-test` to generate/update tests for changed TCs
 
 **spec-sync workflow sequence:**
 
 ```
-spec-sync: review-changes → spec [mode=tests] → spec [mode=sync] →
+spec-sync: changes-review → spec [mode=tests] → spec [mode=sync] →
                   integration-test → test → workflow-end
 ```
 
@@ -1687,7 +1689,7 @@ spec-sync: review-changes → spec [mode=tests] → spec [mode=sync] →
 
 ```
 write-integration-test: scout → investigate → spec [mode=tests] → why-review →
-                        review-artifact --type=spec-tests → integration-test →
+                        artifact-review --type=spec-tests → integration-test →
                         integration-test-review → integration-test-verify →
                         spec [mode=sync] → docs-update → workflow-end → watzup
 ```
@@ -2153,69 +2155,91 @@ Two complementary functions in `session-init-helpers.cjs`:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-#### Greenfield-Init Workflow (40 Steps: Inception + Implementation + Integration Testing)
+#### Greenfield-Init Workflow (60 Steps: Inception + Reviewed Foundation + Implementation + Integration Testing)
 
 ```
-greenfield-init: FULL WATERFALL INCEPTION → IMPLEMENTATION → INTEGRATION TESTING
-│
-├── RESEARCH PHASE (7 steps)
-│   ├── /idea ──────────────── Discovery interview: problem, vision, constraints
-│   ├── /web-research ──────── WebSearch: competitors, market, existing solutions
-│   ├── /deep-research ─────── WebFetch: extract findings from top sources
-│   ├── /business-evaluation ── Viability, risk matrix, value proposition
-│   ├── /domain-analysis ───── DDD: bounded contexts, aggregates, ERD
-│   ├── /tech-stack-research ── Compare top 3 options per layer with pros/cons
-│   └── /architecture-design ── Solution architecture
-│
-├── FIRST PLAN + REVIEWS (4 steps)
-│   ├── /plan ──────────────── Architecture plan from research + domain analysis
-│   ├── /security-review ──────────── Security architecture review
-│   ├── /performance-review ───────── Performance architecture review
-│   └── /plan-review ───────── Critical review
-│
-├── REFINEMENT + REVIEW GATES (6 steps)
-│   ├── /refine ────────────── Refine to PBI with acceptance criteria
-│   ├── /review-artifact --type=pbi ─────── PBI quality gate
-│   ├── /story ─────────────── Break into prioritized stories with dependencies
-│   ├── /review-artifact --type=story ──────── Story quality gate
-│   ├── /plan-validate ─────── 3-8 questions: confirm all decisions with user
-│   └── /spec [mode=tests] ──── Test strategy, spec generation
-│
-├── SECOND PLAN + SCAFFOLD (4 steps)
-│   ├── /review-artifact --type=spec-tests ──── Test spec quality gate
-│   ├── /plan ──────────────── Sprint-ready plan from concrete stories
-│   ├── /plan-review ───────── Review sprint plan
-│   └── /scaffold ──────────── Architecture scaffolding (CONDITIONAL)
-│
-├── IMPLEMENTATION (2 steps)
-│   ├── /why-review ────────── Validate design rationale before coding
-│   └── /feature-implement ─────────────── Implement feature (backend + frontend)
-│
-├── INTEGRATION TESTING (6 steps)
-│   ├── /spec [mode=tests] ──── Write test specs for implemented code
-│   ├── /review-artifact --type=spec-tests ──── Review spec coverage and correctness
-│   ├── /plan ──────────────── Plan integration test architecture (3rd round)
-│   ├── /plan-review ───────── Review integration test plan
-│   ├── /integration-test ──── Generate integration tests from specs
-│   └── /test ─────────────── Run tests, verify all TCs pass
-│
-└── QUALITY + WRAP-UP (11 steps)
-    ├── /code-simplifier ───── Simplify code for readability
-    ├── /review-changes ────── Review all uncommitted changes
-    ├── /code-review ───────── Code quality, patterns compliance
-    ├── /production-readiness-review ────────── Production readiness
-    ├── /security-review ──────────── Security review
-    ├── /performance-review ───────── Performance review
-    ├── /changelog ─────────── Update changelog
-    ├── /test ──────────────── Final regression run
-    ├── /docs-update ───────── Update documentation
-    ├── /workflow-end ──────── Close workflow state
-    └── /watzup ────────────── Summary report + understand handoff
+greenfield-init: FULL WATERFALL INCEPTION -> REVIEWED FOUNDATION -> IMPLEMENTATION -> INTEGRATION TESTING
+|
++-- RESEARCH & ARCHITECTURE (11 steps)
+|   |-- /idea -- Discovery interview: problem, vision, constraints
+|   |-- /web-research -- WebSearch: competitors, market, existing solutions
+|   |-- /deep-research -- WebFetch: extract findings from top sources
+|   |-- /business-evaluation -- Viability, risk matrix, value proposition
+|   |-- /spec-discovery -- Survey existing specs + related logic before authoring
+|   |-- /domain-analysis -- DDD: bounded contexts, aggregates, ERD
+|   |-- /why-review -- Rationale gate on domain/research
+|   |-- /tech-stack-research -- Compare top 3 options per layer with pros/cons
+|   |-- /architecture-design -- Solution architecture
+|   |-- /architecture-scalability-review -- Scalability scorecard feeds the first plan
+|   +-- /why-review -- Rationale gate on architecture
+|
++-- FIRST PLAN + ARCH REVIEWS (5 steps)
+|   |-- /plan -- Architecture plan from research + domain analysis
+|   |-- /plan-review -- Critical review
+|   |-- /security-review -- Security architecture review
+|   |-- /performance-review -- Performance architecture review
+|   +-- /plan-review -- Re-review after security/performance findings
+|
++-- REFINEMENT + PBI/STORY GATES (11 steps)
+|   |-- /refine -- Refine to PBI with acceptance criteria
+|   |-- /why-review -- Rationale gate on PBI
+|   |-- /artifact-review --type=pbi -- PBI quality gate
+|   |-- /story -- Break into prioritized stories with dependencies
+|   |-- /why-review -- Rationale gate on stories
+|   |-- /artifact-review --type=story -- Story quality gate
+|   |-- /pbi-challenge -- Dev BA PIC adversarial review
+|   |-- /dor-gate -- Definition-of-Ready validation
+|   |-- /pbi-mockup -- HTML mockup from PBI + stories
+|   |-- /plan-validate -- 3-8 questions: confirm all decisions with user
+|   +-- /why-review -- Rationale gate before test specs
+|
++-- TEST-SPEC AUTHORING (4 steps)
+|   |-- /spec [mode=tests] -- Section 8 TC-{FEATURE}-{NNN} test specifications
+|   |-- /why-review -- Rationale gate on test specs
+|   |-- /artifact-review --type=spec-tests -- Test spec quality gate
+|   +-- /spec-clarify -- Blocking clarification of spec decisions
+|
++-- SECOND PLAN + SCAFFOLD & REVIEWED FOUNDATION (11 steps)
+|   |-- /plan -- Sprint-ready plan from concrete stories
+|   |-- /plan-review -- Review sprint plan
+|   |-- /scaffold -- Base abstractions + golden-path example (CONDITIONAL)
+|   |-- /linter-setup -- Linters, formatters, static analysis, CI gates
+|   |-- /harness-setup -- Agent quality harness (feedforward guides + sensors)
+|   |-- /architecture-review-full -- Consolidated arch + scalability + prod-readiness audit
+|   |-- /scan --target=ui-system -- Capture scaffolded UI conventions as reference docs
+|   |-- /scan --target=backend-patterns -- Capture backend conventions
+|   |-- /scan --target=integration-tests -- Capture integration-test conventions
+|   |-- /scan --target=project-structure -- Capture structure conventions
+|   +-- /why-review -- Rationale gate before implementation
+|
++-- IMPLEMENTATION + DOMAIN REVIEW (5 steps)
+|   |-- /plan-execute -- Implement feature (backend + frontend)
+|   |-- /domain-entities-review -- DDD entity / value-object quality review
+|   |-- /spec [mode=tests] -- Test specs for implemented code
+|   |-- /why-review -- Rationale gate on test specs
+|   +-- /artifact-review --type=spec-tests -- Test spec coverage + correctness
+|
++-- THIRD PLAN + INTEGRATION TESTING (6 steps)
+|   |-- /plan -- Plan integration test architecture
+|   |-- /plan-review -- Review integration test plan
+|   |-- /integration-test -- Generate integration tests from specs
+|   |-- /integration-test-review -- Assertion quality + bug-protection review
+|   |-- /integration-test-verify -- Verify tests pass
+|   +-- /test -- Run tests, verify all TCs pass
+|
++-- QUALITY + WRAP-UP (7 steps)
+    |-- /workflow-review-changes -- Recursive review -> fix -> re-review of all changes
+    |-- /security-review -- Security review
+    |-- /changelog -- Update changelog
+    |-- /test -- Final regression run
+    |-- /docs-update -- Update documentation
+    |-- /workflow-end -- Close workflow state
+    +-- /watzup -- Summary report + understand handoff
 
 Every step saves artifacts to plans/{id}/ directory.
 Every step validates genuine product or architecture decision points when needed.
 Workflow activation is auto-selected by default.
-Uses triple planning rounds and conditional scaffold.
+Uses triple planning rounds and a reviewed-foundation gate (architecture-review-full + 4 project-reference scans) before any feature code.
 ```
 
 #### Solution Architect Agent
@@ -2282,53 +2306,71 @@ FEATURE COMPLEXITY SPECTRUM
 
 Without `big-feature`, developers faced a false choice: use `feature` (skip research, risk wrong architecture) or use `greenfield-init` (overkill for adding to an existing project).
 
-#### Workflow Sequence (31 Steps with Step-Selection Gate)
+#### Workflow Sequence (47 Steps with Step-Selection Gate)
 
 ```
-big-feature: RESEARCH-DRIVEN FEATURE DEVELOPMENT
-│
-├── RESEARCH PHASE (7 steps — skippable per feature)
-│   ├── /idea ──────────────── Discovery interview
-│   ├── /web-research ──────── Market/competitor analysis
-│   ├── /deep-research ─────── Deep-dive top sources
-│   ├── /business-evaluation ── Viability, risk, ROI
-│   ├── /domain-analysis ───── DDD: bounded contexts, aggregates, ERD
-│   ├── /tech-stack-research ── Compare top 3 options per tech layer
-│   └── /architecture-design ── Solution architecture
-│
-├── FIRST PLANNING ROUND (2 steps — high-level architecture plan)
-│   ├── /plan ──────────────── Architecture-level implementation plan
-│   └── /plan-review ───────── Critical review of architecture plan
-│
-├── REFINEMENT PHASE (4 steps — with review gates)
-│   ├── /refine ────────────── Acceptance criteria, PBI
-│   ├── /review-artifact --type=pbi ─────── PBI quality gate
-│   ├── /story ─────────────── User stories with dependencies
-│   └── /review-artifact --type=story ──────── Story quality gate
-│
-├── SECOND PLANNING ROUND (5 steps — sprint-ready plan + scaffold)
-│   ├── /plan ──────────────── Sprint-ready plan from stories
-│   ├── /plan-review ───────── Review sprint plan
-│   ├── /scaffold ──────────── Architecture scaffolding (CONDITIONAL)
-│   ├── /plan-validate ─────── 3-8 user questions
-│   └── /why-review ────────── Design rationale check
-│
-├── IMPLEMENTATION PHASE (5 steps)
-│   ├── /feature-implement ──────────────── Pattern-enforced coding
-│   ├── /integration-test ──── Generate integration tests
-│   ├── /code-simplifier ───── YAGNI/KISS/DRY pass
-│   ├── /review-changes ────── Pre-commit review
-│   └── /code-review ──────── Quality audit
-│
-└── QUALITY & WRAP PHASE (8 steps)
-    ├── /production-readiness-review ────────── Production readiness
-    ├── /security-review ──────────── Security review
-    ├── /performance-review ───────── Performance review
-    ├── /changelog ─────────── Changelog entry
-    ├── /test ──────────────── Test execution
-    ├── /docs-update ───────── Documentation sync
-    ├── /workflow-end ──────── Close workflow state
-    └── /watzup ────────────── Summary, doc staleness, understand handoff
+big-feature: RESEARCH-DRIVEN FEATURE DEVELOPMENT (REVIEWED FOUNDATION -> IMPLEMENT)
+|
++-- RESEARCH & ARCHITECTURE (11 steps -- skippable per feature)
+|   |-- /idea -- Discovery interview
+|   |-- /web-research -- Market/competitor analysis
+|   |-- /deep-research -- Deep-dive top sources
+|   |-- /business-evaluation -- Viability, risk, ROI
+|   |-- /spec-discovery -- Survey existing specs + related logic
+|   |-- /domain-analysis -- DDD: bounded contexts, aggregates, ERD
+|   |-- /why-review -- Rationale gate on domain/research
+|   |-- /tech-stack-research -- Compare top 3 options per tech layer
+|   |-- /architecture-design -- Solution architecture
+|   |-- /architecture-scalability-review -- Scalability scorecard feeds the first plan
+|   +-- /why-review -- Rationale gate on architecture
+|
++-- FIRST PLANNING ROUND (2 steps)
+|   |-- /plan -- Architecture-level implementation plan
+|   +-- /plan-review -- Critical review of architecture plan
+|
++-- REFINEMENT + PBI/STORY GATES (9 steps)
+|   |-- /refine -- Acceptance criteria, PBI
+|   |-- /why-review -- Rationale gate on PBI
+|   |-- /artifact-review --type=pbi -- PBI quality gate
+|   |-- /story -- User stories with dependencies
+|   |-- /why-review -- Rationale gate on stories
+|   |-- /artifact-review --type=story -- Story quality gate
+|   |-- /pbi-challenge -- Dev BA PIC adversarial review
+|   |-- /dor-gate -- Definition-of-Ready validation
+|   +-- /pbi-mockup -- HTML mockup from PBI + stories
+|
++-- SPEC AUTHORING + TEST SPECS (5 steps)
+|   |-- /spec -- Author tech-free 8-section Feature Spec
+|   |-- /spec [mode=tests] -- Section 8 TC-{FEATURE}-{NNN} test specifications
+|   |-- /why-review -- Rationale gate on test specs
+|   |-- /artifact-review --type=spec-tests -- Test spec quality gate
+|   +-- /spec-clarify -- Blocking clarification of spec decisions
+|
++-- SECOND PLAN + SCAFFOLD & REVIEWED FOUNDATION (5 steps)
+|   |-- /plan -- Sprint-ready plan from stories
+|   |-- /plan-review -- Review sprint plan
+|   |-- /scaffold -- Base abstractions + golden-path example (CONDITIONAL)
+|   |-- /architecture-review-full -- Consolidated arch + scalability + prod-readiness audit
+|   +-- /plan-validate -- 3-8 user questions
+|
++-- IMPLEMENTATION + DOMAIN & INTEGRATION TESTING (8 steps)
+|   |-- /why-review -- Design rationale check before coding
+|   |-- /plan-execute -- Pattern-enforced coding
+|   |-- /seed-test-data -- Seed realistic dev/QC data
+|   |-- /domain-entities-review -- DDD entity / value-object quality review
+|   |-- /integration-test -- Generate integration tests
+|   |-- /integration-test-review -- Assertion quality + bug-protection review
+|   |-- /integration-test-verify -- Verify tests pass
+|   +-- /spec [mode=sync] -- Reconcile Section 8 TCs <-> executing test code
+|
++-- QUALITY & WRAP PHASE (7 steps)
+    |-- /workflow-review-changes -- Recursive review -> fix -> re-review of all changes
+    |-- /security-review -- Security review
+    |-- /changelog -- Changelog entry
+    |-- /test -- Test execution
+    |-- /docs-update -- Documentation sync
+    |-- /workflow-end -- Close workflow state
+    +-- /watzup -- Summary, doc staleness, understand handoff
 ```
 
 #### Step-Selection Gate Pattern
@@ -2377,7 +2419,7 @@ Round 1 (after architecture-design):
   Purpose: High-level architecture plan based on research + domain analysis
   Output: Architecture decisions, service boundaries, tech choices
 
-Round 2 (after review-artifact --type=story):
+Round 2 (after artifact-review --type=story):
   /plan → /plan-review → /scaffold
   Purpose: Sprint-ready implementation plan from concrete stories
   Output: Phased steps, file lists, dependency ordering
@@ -2410,6 +2452,38 @@ The `/scaffold` step is **conditional** — the AI first self-investigates for e
 **Applied to:** `big-feature`, `greenfield-init` workflows
 
 **Why this matters:** Greenfield projects need scaffolding before feature code. Existing projects adding modules need to extend, not duplicate, existing abstractions. The conditional check prevents over-engineering in codebases that already have proper foundations.
+
+#### Reviewed Foundation Before Features (NEW)
+
+Scaffolding alone is not enough — an **unreviewed** foundation still lets flawed abstractions propagate into every feature built on top. Both workflows now gate the foundation before fanning out feature work:
+
+```
+FOUNDATION GATE (after /scaffold, before feature implementation)
+
+greenfield-init:
+  /scaffold → /linter-setup → /harness-setup
+    → /architecture-review-full          ← consolidated architecture +
+    → /scan --target=ui-system              scalability + production-readiness
+    → /scan --target=backend-patterns       audit of the scaffolded foundation
+    → /scan --target=integration-tests    ← capture scaffolded conventions as
+    → /scan --target=project-structure      durable project-reference docs
+    → /why-review → /plan-execute → …
+
+big-feature:
+  /architecture-design
+    → /architecture-scalability-review   ← scalability scorecard feeds the
+    → /why-review → /plan → …               first architecture plan
+  …
+  /scaffold → /architecture-review-full → /plan-validate → …
+```
+
+- **`/architecture-review-full`** runs immediately after the foundation is scaffolded (both workflows), bundling `architecture-review` + `architecture-scalability-review` + `production-readiness-review` into one consolidated Architecture Health Report — so base abstractions and golden-path example code are _reviewed_ before any feature depends on them.
+- **`greenfield-init`** additionally regenerates its project-reference doc set via four `/scan` passes, turning the freshly-scaffolded conventions into the reference docs that guide every later feature.
+- **`big-feature`** also runs **`/architecture-scalability-review`** right after `/architecture-design`, feeding scalability findings into the very first plan.
+
+**Net effect:** features never build on an unreviewed or undocumented foundation — the scaffolding-first rule in `CLAUDE.md`'s workflow-routing gate (bullet 7) is enforced by these two workflows' canonical sequences.
+
+**Applied to:** `big-feature`, `greenfield-init` workflows.
 
 ---
 
@@ -2608,7 +2682,7 @@ This section maps **established prompt engineering techniques** to specific fram
 │                                                                   │
 │  Workflow steps that force self-correction:                      │
 │                                                                   │
-│  /feature-implement ────────→ /code-simplifier ──→ /review-changes ──→       │
+│  /feature-implement ────────→ /code-simplifier ──→ /changes-review ──→       │
 │  (generate)      (simplify/clean)     (self-review)              │
 │                                                                   │
 │  /fix ─────────→ /prove-fix ────────→ /test                     │
@@ -2619,7 +2693,7 @@ This section maps **established prompt engineering techniques** to specific fram
 │                                                                   │
 │  Each pass uses a DIFFERENT evaluation lens:                     │
 │  • /code-simplifier: "Is this the simplest correct solution?"   │
-│  • /review-changes: "Does this follow project conventions?"     │
+│  • /changes-review: "Does this follow project conventions?"     │
 │  • /code-review: "Does this meet quality standards?"            │
 │  • /production-readiness-review: "Is this production-ready?"                     │
 │  • /security-review: "Are there vulnerabilities?"                      │
@@ -2986,7 +3060,7 @@ sequenceDiagram
 | **Sync**    | `/graph-build --scope=sync` | Sync graph with git state after pull/checkout                                            |
 | **Batch**   | `/graph-query batch`        | Multi-file deduplicated query                                                            |
 
-Skills that **automatically receive graph context** when graph.db exists: `/code-review`, `/review-changes`, `/review-architecture`, `/scout`, `/debug-investigate`, `/production-readiness-review`, `/investigate`, `/fix`, `/refactoring`, `/security-review`, `/performance-review`, `/code-simplifier`, `/prove-fix`.
+Skills that **automatically receive graph context** when graph.db exists: `/code-review`, `/changes-review`, `/architecture-review`, `/scout`, `/debug-investigate`, `/production-readiness-review`, `/investigate`, `/fix`, `/refactoring`, `/security-review`, `/performance-review`, `/code-simplifier`, `/prove-fix`.
 
 #### Auto-Maintenance
 
@@ -3027,7 +3101,7 @@ The graph requires **zero manual maintenance** after initial build:
 
 A key problem with generic code review: the reviewer doesn't know whether the PR touches backend, frontend, both, or only tooling — so it checks everything regardless. A BE-only fix still triggers SCSS reviews. An Angular-only change still spawns C# pattern checks.
 
-**Phase 0.7 Surface Detection** (added to `/review-changes`) classifies the git diff into surface buckets _before_ spawning any sub-agent:
+**Phase 0.7 Surface Detection** (added to `/changes-review`) classifies the git diff into surface buckets _before_ spawning any sub-agent:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -3091,7 +3165,7 @@ during review steps. The dedicated docs-update step handles all of this.
 TEST SPEC VERIFICATION above is READ-ONLY cross-reference only — flag gaps, do not write.
 ```
 
-**Effect:** Review steps are strictly read-only for docs. They may _flag_ staleness as a finding, but the actual write is deferred to `/docs-update` (step 15), which uses specialized sub-skills with evidence verification. Single point of write = no race conditions, no reviewer hallucinations in docs.
+**Effect:** Review steps are strictly read-only for docs. They may _flag_ staleness as a finding, but the actual write is deferred to the dedicated `/docs-update` step, which uses specialized sub-skills with evidence verification. Single point of write = no race conditions, no reviewer hallucinations in docs.
 
 #### docs-update v3.2.0 — Mandatory Task Table with Audit Trail
 
@@ -3130,7 +3204,7 @@ SPEC-DRIVEN FEEDBACK CHAIN
     → Feature Spec updated (canonical 8-section capability doc)
     → Feature doc Section 8 TCs updated (canonical TC registry)
     → Integration tests written with TC-{FEATURE}-{NNN} annotations
-    → §8 IntegrationTest field synced to the test method
+    → §8 CoveredBy field synced to the test method
     → SPEC-CHANGELOG.md entry written
 
   Every artifact updated in a single branch — no orphaned specs,
@@ -3152,9 +3226,9 @@ Each Feature Spec carries `last_reviewed` frontmatter. Keeping it current lets `
 
 #### Section 8 — Canonical Bidirectional Test Catalog
 
-The Feature Spec's **Section 8 is the cross-referenceable TC registry**. Each TC's `IntegrationTest` field links to the integration test method (`TestFile::MethodName`, or `Untested`). When integration tests exist but the corresponding §8 TC is not annotated, the `/integration-test-review` agent produces false-negative "no integration tests found" findings. (There is no separate QA dashboard — the retired `docs/specs/README.md` + `PRIORITY-INDEX.md` catalog was folded into §8.)
+The Feature Spec's **Section 8 is the cross-referenceable TC registry**. Each TC's `CoveredBy` field links to one or more covering tests, a test filter, manual-QC coverage, or `Untested`. When integration tests exist but the corresponding §8 TC is not annotated, the `/integration-test-review` agent produces false-negative "no integration tests found" findings. (There is no separate QA dashboard — the retired `docs/specs/README.md` + `PRIORITY-INDEX.md` catalog was folded into §8.)
 
-**Registration format:** Each §8 TC's `IntegrationTest` field carries the test method name (`TestFile::MethodName`). This enables future AI sessions to find the test via a single grep — no manual file tree traversal required.
+**Registration format:** Each §8 TC's `CoveredBy` field carries the covering test method name(s), a test filter, manual-QC coverage, or `Untested`. This enables future AI sessions to find the coverage carrier via a single grep — no manual file tree traversal required.
 
 The `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]` annotation in test code provides the bidirectional link:
 
@@ -3169,7 +3243,7 @@ Both directions are queryable without reading source code, making the spec-drive
 
 The hardest hallucination to catch is the one inside the review itself. A review agent that fabricates a finding — wrong `file:line`, inflated severity, a "bug" that re-traces as correct — poisons everything downstream: the fix targets nothing, the human burns trust, the audit trail records noise. Evidence gates (Section 8.6) protect the _implementation_; this gate protects the _review_.
 
-The mechanism is a **recursion-guarded self-review loop**: after any review produces findings, the reviewer re-reviews its own output once more in a terminal mode, and a bounded re-do loop reconciles until the findings are clean. It ships in `/why-review`; standalone `/review-changes` runs it in Phase 6, while `$workflow-review-changes` runs the findings-validation gate as parent step 2 before parallel reviewers and later fix planning.
+The mechanism is a **recursion-guarded self-review loop**: after any review produces findings, the reviewer re-reviews its own output once more in a terminal mode, and a bounded re-do loop reconciles until the findings are clean. It ships in `/why-review`; standalone `/changes-review` runs it in Phase 6. `$workflow-review-changes` launches a FULL-mode whole-target `/why-review` sub-agent in parallel with inline `/changes-review` (steps 1–2), then runs the parent findings-validation gate at step 3 over the `/changes-review` findings before specialist reviewers and fix planning.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -3203,12 +3277,12 @@ The mechanism is a **recursion-guarded self-review loop**: after any review prod
 
 A naive "review your review" instruction recurses forever — the validation pass is itself a review, which triggers another validation, and so on. Three rules make it terminate deterministically:
 
-| Rule                                                                                                                                            | What it prevents                                                               |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `validate-findings` is **terminal** — never calls `/why-review`, never re-runs the gate, never spawns a sub-agent                               | Infinite self-recursion                                                        |
-| The re-do loop lives in the **caller** (standalone `/review-changes` Phase 6 or `$workflow-review-changes` parent step 2), not in validate mode | Diffuse, unbounded looping across agents                                       |
-| **Bounded at max 2 re-dos**, then `AskUserQuestion` escalation                                                                                  | A finding the AI can neither prove nor drop silently looping forever           |
-| All passes run in the **same main-agent session** (never a spawned sub-agent)                                                                   | Context loss between validation rounds; the validator sees the real cited code |
+| Rule                                                                                                                                                                                | What it prevents                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `validate-findings` is **terminal** — never calls `/why-review`, never re-runs the gate, never spawns a sub-agent                                                                   | Infinite self-recursion                                                        |
+| The re-do loop lives in the **caller** (standalone `/changes-review` Phase 6, the initial whole-target reviewer, or `$workflow-review-changes` parent step 3), not in validate mode | Diffuse, unbounded looping across agents                                       |
+| **Bounded at max 2 re-dos**, then `AskUserQuestion` escalation                                                                                                                      | A finding the AI can neither prove nor drop silently looping forever           |
+| Each review's validation passes stay in that review's own session (the initial whole-target lane is a sub-agent; the parent step-3 lane is main-session)                            | Context loss between validation rounds; the validator sees the real cited code |
 
 #### Why this matters operationally
 
@@ -3411,7 +3485,7 @@ flowchart TB
 | **Context injection at decision points**       | Static path→patternsDoc guidance in CLAUDE.md / SKILL.md (was hook-injected)                             | Skills/Config |
 | **Reminder rules prevent forgetting**          | Static SYNC rules + the workflow catalog baked into CLAUDE.md, re-read every prompt                      | Skills/Config |
 | **Generic & configurable via config**          | project-config.json drives path→patternsDoc routing                                                      | Config        |
-| **Prompt engineering quality**                 | 156 skills with YAML frontmatter + behavior protocols                                                    | Skills        |
+| **Prompt engineering quality**                 | 163 skills with YAML frontmatter + behavior protocols                                                    | Skills        |
 | **Auto-select workflow path before acting**    | Model reads the static catalog → direct/skill/workflow/custom path                                       | Workflows     |
 | **Confirm plan with questions**                | /plan-validate asks 3-8 questions before implementation                                                  | Skills        |
 | **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug-investigate skill                                                    | Skills        |
@@ -3435,12 +3509,12 @@ flowchart TB
 | **DDD domain modeling**                        | /domain-analysis skill: bounded contexts, ERD, aggregates                                                | Skills        |
 | **Tech stack comparison with evidence**        | /tech-stack-research: top 3 per layer, confidence %                                                      | Skills        |
 | **Step-selection gate for long workflows**     | big-feature + greenfield preActions let user deselect                                                    | Workflows     |
-| **Workflow trigger shortcuts**                 | 18 workflow-\* skills for workflow activation and lifecycle control                                      | Skills        |
+| **Workflow trigger shortcuts**                 | 19 workflow-\* skills for workflow activation and lifecycle control                                      | Skills        |
 | **Prompt engineering (role + CoT + evidence)** | Skills use role prompting, chain-of-thought, few-shot                                                    | Skills        |
 | **Context engineering (JIT + dedup + budget)** | Hooks manage context window with precision injection                                                     | Hooks         |
 | **Skill chain navigation (Next Steps)**        | AskUserQuestion recommends logical next skill per step                                                   | Skills        |
 | **Plan-aware skills (Step 0)**                 | Skills read prior workflow outputs before starting work                                                  | Skills        |
-| **Review gates between artifacts**             | review-artifact (--type pbi/story/spec-tests) checkpoints                                                | Skills        |
+| **Review gates between artifacts**             | artifact-review (--type pbi/story/spec-tests) checkpoints                                                | Skills        |
 | **Agent negative-prompting guardrails**        | NEVER/ALWAYS rules per agent prevent role overstepping                                                   | Agents        |
 | **Dual planning rounds**                       | High-level arch plan → sprint-ready plan after stories                                                   | Workflows     |
 | **Conditional architecture scaffolding**       | /scaffold auto-skips when existing abstractions found                                                    | Skills        |
@@ -3453,7 +3527,7 @@ flowchart TB
 ├── ccstatusline.json ──── Status line display config (model, context, tokens, tok/s estimator)
 ├── .ck.json ──────────── Hook-specific config
 ├── .ckignore ─────────── Scout block patterns
-├── workflows.json ─────── 17 workflow definitions
+├── workflows.json ─────── 19 workflow definitions
 ├── workflows/ ──────────── Workflow definitions (primary-workflow.md, etc.)
 ├── hooks/ ─────────────── 15 top-level .cjs hooks (+ 1 .js helper) + 25 lib modules
 │   ├── session-init.cjs
@@ -3465,7 +3539,7 @@ flowchart TB
 │   │   ├── todo-state.cjs
 │   │   └── ...
 │   └── tests/ ────────── Test suites
-├── skills/ ────────────── 156 skill definitions
+├── skills/ ────────────── 163 skill definitions
 │   ├── {skill-name}/SKILL.md
 │   ├── shared/ ───────── 6 shared reference/protocol files
 │   └── _templates/ ───── Skill scaffolding
@@ -3650,21 +3724,22 @@ So the mirror is not a copy — it is a **transform** that converts hook-depende
 | ---------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`sync-codex`** | Full Claude → Codex mirror | `npm run codex:sync` (or the skill without npm). `disable-model-invocation: true` — **user-invoked only, never auto-runs.** Sequential, fail-fast stages. |
 
-**`sync-codex`'s stages** (mutate first, verify-only after, any failure aborts): **migrate** (agents/skills/notifications) → **hooks** (`.codex/hooks.json`) → **context** (`CODEX_CONTEXT.md` + `AGENTS.md`) → **tests** → **wf-cycle** → **sk-proto** → **residue** → **sdd**. The sync is not "done" until all five verifiers pass (four run as dedicated stages — wf-cycle, sk-proto, residue, sdd; the `verify-sync-divergence` oracle runs via its unit test in the `tests` stage) — a stale or non-portable mirror **fails the pipeline** rather than shipping silently.
+**`sync-codex`'s stages** (mutate first, verify-only after, any failure aborts): **migrate** (agents/skills/notifications) → **hooks** (`.codex/hooks.json`) → **context** (`CODEX_CONTEXT.md` + `AGENTS.md`) → **tests** → **scripts-tests** → **wf-cycle** → **sk-proto** → **residue** → **sdd** → **review-validate-coverage** → **sync-divergence**. The sync is not "done" until all six verifiers pass (each runs as its own dedicated verify-only stage; the `tests`/`scripts-tests` stages run those verifiers' unit tests) — a stale or non-portable mirror **fails the pipeline** rather than shipping silently.
 
 Mirror parity also enables **multi-AI execution**, not just portability: the **`dual-ai`** skill fans a single prompt out to **two fresh parallel sessions** — Claude Code and Codex CLI — each launched at xhigh reasoning effort in full-permission mode, with an `--orchestrate` mode that supervises both runs and collects a result comparison. It also accepts a workflow id, so `dual-ai workflow-review-changes` gives Claude `/workflow-review-changes` and Codex `$workflow-review-changes`, producing two independent reviews of the same working tree — possible only because the verified mirrors guarantee both tools execute the same workflow. The skill is `disable-model-invocation: true` — strictly user-invoked, since it spawns external sessions that consume quota.
 
 ### 13.4 Mirror Parity Is Mechanically Verified
 
-Five verifier scripts (`.claude/scripts/codex/verify-*.mjs`, each with a unit test) turn "keep the mirrors in sync" from a discipline into a **build gate**:
+Six verifier scripts (`.claude/scripts/codex/verify-*.mjs`, each with a unit test) turn "keep the mirrors in sync" from a discipline into a **build gate**:
 
-| Verifier                           | Asserts                                                                                                                                                                                                                                                                            |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `verify-sync-divergence`           | **Oracle gate** — re-runs the real mirror transform into a throwaway dir and diffs against the committed `.agents/skills`. Any difference = someone edited source without re-syncing, or hand-edited a mirror.                                                                     |
-| `verify-skill-protocol-compliance` | Bidirectional set-diff parity (every source skill has a mirror and vice-versa); the 6 strict-execution-contract sentences present in every mirror; **no Claude-isms** (`Agent(`, `subagent_type`) leak into Codex output; AGENTS.md context block byte-matches `CODEX_CONTEXT.md`. |
-| `verify-workflow-cycle-compliance` | Workflow step-sequences in `workflows.json` match the skill files in **both** `.claude/skills` AND `.agents/skills` ("paired-drift" detection); ordered gates (integration → review → verify; docs-update → workflow-end) intact.                                                  |
-| `verify-no-project-residue`        | **Portability enforcement** — scans the generic surfaces for the origin project's literal name and a denylist of its framework symbols (configured per-project). A reusable skill that hardcodes a project-specific name **fails the build**.                                      |
-| `verify-sdd-semantic-compliance`   | ~30 semantic assertions on the spec-driven cycle; Codex mirrors reference the _local_ shared-contract path, not the `.claude` source path.                                                                                                                                         |
+| Verifier                           | Asserts                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verify-sync-divergence`           | **Oracle gate** — re-runs the real mirror transform into a throwaway dir and diffs against the committed `.agents/skills`. Any difference = someone edited source without re-syncing, or hand-edited a mirror.                                                                                                                            |
+| `verify-skill-protocol-compliance` | Bidirectional set-diff parity (every source skill has a mirror and vice-versa); the 6 strict-execution-contract sentences present in every mirror; **no Claude-isms** (`Agent(`, `subagent_type`) leak into Codex output; AGENTS.md context block byte-matches `CODEX_CONTEXT.md`.                                                        |
+| `verify-workflow-cycle-compliance` | Workflow step-sequences in `workflows.json` match the skill files in **both** `.claude/skills` AND `.agents/skills` ("paired-drift" detection); ordered gates (integration → review → verify; docs-update → workflow-end) intact.                                                                                                         |
+| `verify-no-project-residue`        | **Portability enforcement** — scans the generic surfaces for the origin project's literal name and a denylist of its framework symbols (configured per-project). A reusable skill that hardcodes a project-specific name **fails the build**.                                                                                             |
+| `verify-sdd-semantic-compliance`   | ~30 semantic assertions on the spec-driven cycle; Codex mirrors reference the _local_ shared-contract path, not the `.claude` source path.                                                                                                                                                                                                |
+| `verify-review-validate-coverage`  | **Self-Review Convergence Loop sensor** — every review-family skill that produces findings carries the `/why-review --validate-findings` route (the ≥85% finding-survival bar lives there), and a validate-only grader never embeds the `double-round-trip-review` fix-loop. A review skill shipped without the gate **fails the build**. |
 
 `verify-no-project-residue` is the load-bearing one for "works for any project": it is impossible to merge a generic skill that leaked project-specific names, because the residue scan rejects it. Portability isn't a guideline — it's a gate.
 
@@ -3767,24 +3842,24 @@ The framework elevates the AI from a code autocomplete tool to a **strategic dev
 
 The framework succeeds because it aligns with how LLMs actually fail:
 
-| LLM Failure Mode               | Root Cause                                                  | Framework Counter                                                  |
-| ------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------ |
-| **Pattern invention**          | Training data generalizes; your project is specific         | Context injection puts real patterns in every prompt               |
-| **Context amnesia**            | Long conversations exceed attention; compaction drops state | External state files + recovery hooks restore progress             |
-| **Skipped steps**              | LLMs optimize for shortest path to output                   | Workflow enforcement makes process non-negotiable                  |
-| **Confident hallucination**    | LLMs can't distinguish recall from confabulation            | Evidence gates demand `file:line` proof for every claim            |
-| **Convention drift**           | Without reminders, AI reverts to generic patterns           | Hook injection re-injects project conventions on every edit        |
-| **Repeated mistakes**          | Each session starts fresh with no memory of past errors     | Lessons system persists errors and re-injects them as guardrails   |
-| **Wrong-surface reviews**      | Reviewers check FE patterns on BE-only PRs                  | Phase 0.7 surface detection routes to correct sub-agent set        |
-| **Reviewer writes stale docs** | Review agents update docs with unverified content           | DOC SYNC DEFERRAL: review=read-only; writes deferred to step 15    |
-| **Silent doc phase skips**     | /docs-update phases run without audit trail                 | Mandatory 8-task table: every phase tracked, skips logged          |
-| **Stale Feature Spec**         | AI sessions read outdated enum/model specs                  | `/spec [mode=update]` + `docs-update` keep `last_reviewed` current |
+| LLM Failure Mode               | Root Cause                                                  | Framework Counter                                                                         |
+| ------------------------------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Pattern invention**          | Training data generalizes; your project is specific         | Context injection puts real patterns in every prompt                                      |
+| **Context amnesia**            | Long conversations exceed attention; compaction drops state | External state files + recovery hooks restore progress                                    |
+| **Skipped steps**              | LLMs optimize for shortest path to output                   | Workflow enforcement makes process non-negotiable                                         |
+| **Confident hallucination**    | LLMs can't distinguish recall from confabulation            | Evidence gates demand `file:line` proof for every claim                                   |
+| **Convention drift**           | Without reminders, AI reverts to generic patterns           | Hook injection re-injects project conventions on every edit                               |
+| **Repeated mistakes**          | Each session starts fresh with no memory of past errors     | Lessons system persists errors and re-injects them as guardrails                          |
+| **Wrong-surface reviews**      | Reviewers check FE patterns on BE-only PRs                  | Phase 0.7 surface detection routes to correct sub-agent set                               |
+| **Reviewer writes stale docs** | Review agents update docs with unverified content           | DOC SYNC DEFERRAL: review=read-only; writes deferred to the dedicated `/docs-update` step |
+| **Silent doc phase skips**     | /docs-update phases run without audit trail                 | Mandatory 8-task table: every phase tracked, skips logged                                 |
+| **Stale Feature Spec**         | AI sessions read outdated enum/model specs                  | `/spec [mode=update]` + `docs-update` keep `last_reviewed` current                        |
 
 **The meta-principle:** Don't fight the LLM's nature — build infrastructure around it. Accept that it forgets, and build state persistence. Accept that it hallucinates, and build evidence gates. Accept that it drifts, and build convention injection. The framework doesn't make the AI smarter — it makes the AI's environment smarter.
 
 ### The Result
 
-**15 top-level hook files**, **156 skills**, **17 registered workflows**, and **29 specialized agents** working in concert to deliver:
+**16 top-level hook files**, **163 skills**, **19 registered workflows**, and **29 specialized agents** working in concert to deliver:
 
 - **Fewer hallucinations** — Evidence gates and proof traces catch AI fabrications before they reach files
 - **Better code quality** — Pattern injection ensures AI follows project conventions, not generic training data
@@ -3792,7 +3867,7 @@ The framework succeeds because it aligns with how LLMs actually fail:
 - **Consistent adherence** — Programmatic enforcement means quality doesn't degrade in long sessions or complex tasks
 - **Recovery from amnesia** — External state persistence means context compaction doesn't lose progress
 - **Persistent learning** — Mistakes captured once prevent recurrence across all future sessions
-- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 156 skills (Section 8.15)
+- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 163 skills (Section 8.15)
 - **Context engineering precision** — JIT injection, dedup, external memory, budget management, and recovery keep the AI informed without overwhelming its context window (Section 8.16)
 
 The framework is **generic and reusable**. Replace `project-config.json` with your project's specifics, and the entire system adapts — different tech stack, different patterns, different conventions, same quality enforcement.

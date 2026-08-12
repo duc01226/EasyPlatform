@@ -1,4 +1,4 @@
-<!-- Last scanned: 2026-06-12 -->
+<!-- Last scanned: 2026-08-12 -->
 
 # Backend Patterns Reference
 
@@ -313,6 +313,8 @@ public sealed class TextSnippetEntityDto : PlatformEntityDto<TextSnippetEntity, 
 }
 ```
 
+**Mode-gating is a decision, not a default.** A property mapped under `if (mode != MapToUpdateExistingEntity)` is silently DROPPED on update; one mapped only under the update branch is silently dropped on create. Gate a property only when the operation genuinely does not exist in that mode (e.g. `Status` is set by an explicit state-transition command, not by a generic update). A field that participates in a real operation in BOTH modes MUST be mapped unconditionally — `TextSnippetEntityDto.cs:230` maps `CategoryId` in both because assigning a snippet to a category on create and moving it between categories on update are both real operations, and `UpdateCategoryStatsOnSnippetChangeEventHandler` depends on it in both (its Created branch fires only when the new snippet HAS a category; its Updated branch keys off a `CategoryId` field-change event). Leaving it gated made both branches unreachable with no compile error and no failing test.
+
 ### With\* Fluent Methods for Optional Data
 
 MUST use `With*` pattern to populate optional/related data on DTOs:
@@ -427,6 +429,44 @@ public sealed class DemoSomethingHappenedEventBusMessage : PlatformTrackableBusM
 // Request message: src/Backend/.../FreeFormatMessages/RequestMessages/DemoAskDoSomethingRequestBusMessage.cs:13
 public sealed class DemoAskDoSomethingRequestBusMessage : PlatformTrackableBusMessage { }
 ```
+
+## Diagnostics & Observability
+
+**CRITICAL:** Anything written to an observability sink (log, trace tag, persisted diagnostic column) MUST go through the diagnostic serialization boundary. NEVER serialize a command, query, entity, bus message, or exception into a sink with `ToFormattedJson()`, `{@Request}` destructuring, `ex.Message`, or `BeautifyStackTrace()`.
+
+Diagnostic sinks fan out to a much wider audience than the data itself (log aggregators, APM traces, inbox/outbox rows), so the boundary is **payload-free**: it emits a fixed-shape envelope carrying only the type name (`{"DataType":"MyApp.SaveUserCommand"}`) and never walks the object graph. That is stronger than property allow/deny-listing, which fails open for every newly added member and for untyped containers (`Dictionary<,>`, anonymous objects). It also protects availability — traversing a caller-owned object runs caller-owned getters that can throw or block, replacing the real failure being logged.
+
+| Sink being written                           | Use                                                                          | Evidence                                                                 |
+| -------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| CQRS / persistence / background-job value    | `PlatformJsonSerializer.SerializeForDiagnostics<TValue>(value)`              | `Common/JsonSerialization/PlatformJsonSerializer.cs:186`                 |
+| Exception on a swallowed / persist-only path | `PlatformJsonSerializer.SerializeExceptionForDiagnostics(ex)`                | `Common/JsonSerialization/PlatformJsonSerializer.cs:214`                 |
+| Runtime bus message                          | `PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(msg)`            | `Infrastructures/MessageBus/PlatformMessageBusDiagnosticFormatter.cs:43` |
+| Persisted (inbox/outbox) bus message         | `PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(typeFullName)` | `Infrastructures/MessageBus/PlatformMessageBusDiagnosticFormatter.cs:59` |
+| Bus-path exception                           | `PlatformMessageBusDiagnosticFormatter.FormatException(ex)`                  | `Infrastructures/MessageBus/PlatformMessageBusDiagnosticFormatter.cs:86` |
+
+Exception serialization is the one deliberate exception to payload-free: it renders message, demystified stack trace, and inner TYPE chain, because on swallowed paths that envelope is the sole record of the failure. It still never reads `Exception.Data` and never traverses the observed payload.
+
+Normal transport, model binding, and persistence serialization stays on `PlatformJsonSerializer.Serialize<TValue>(value)` and is unaffected.
+
+### Opt-in redaction for typed diagnostic projections
+
+`[PlatformSensitiveData]` (`Common/JsonSerialization/PlatformSensitiveDataAttribute.cs:9`, property/field targets) marks members to omit from the few diagnostic projections that DO render real content — currently HTTP request-body capture (`Easy.Platform.AspNetCore/Middleware/PlatformHttpRequestBodyDiagnosticSerializer.cs:239`). That path fails closed: a request model it cannot classify ahead of time is omitted entirely rather than logged raw.
+
+**Enforcement:** `Easy.Platform.Tests.Unit/Common/JsonSerialization/PlatformDiagnosticSinkSourceShapeTests.cs` asserts on the SOURCE SHAPE of every known sink, so a new sink that bypasses this boundary fails the build. Behaviour (including hostile getters and converters) is covered by `PlatformDiagnosticJsonSerializerTests.cs`.
+
+## Persistence Failure Exceptions
+
+Application and domain code MUST react to store-level write failures through provider-neutral platform exceptions. NEVER catch `DbUpdateException`, `PostgresException`, or a Mongo write exception from the Application layer, and NEVER match on `ex.GetType().Name is "..."` — the string match keeps compiling after a rename or provider swap, silently degrading the handler into a no-op with no build error and no failing test.
+
+| Failure                         | Catch this                                         | Re-thrown by                                                                                                                                           |
+| ------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| UNIQUE index / PK violation     | `PlatformDomainUniqueConstraintViolationException` | `Easy.Platform.EfCore/PlatformEfCoreDbContext.cs:910` (SQLSTATE 23505), `Easy.Platform.MongoDB/PlatformMongoDbContext.cs:662,666` (DuplicateKey 11000) |
+| Optimistic-concurrency conflict | `PlatformDomainRowVersionConflictException`        | provider db contexts (pre-existing sibling pattern)                                                                                                    |
+| File missing in blob storage    | `PlatformFileStorageNotFoundException`             | `Easy.Platform.AzureFileStorage/PlatformAzureFileStorageService.cs:326`                                                                                |
+
+The provider-native exception is always preserved as `InnerException`, so constraint names and full diagnostics are not lost.
+
+**Blob URI host rewriting** is centralised in `Infrastructures/FileStorage/PlatformBlobUriRewriter.cs` — pure and static, used in both directions (internal→public when emitting client-visible URLs at `PlatformAzureFileStorageService.cs:761`, public→internal when a server re-fetches a stored public URL). `TryRewrite` fails closed for server-side fetch paths so an untrusted host is never contacted. Do NOT reimplement endpoint parsing at a call site.
 
 ## Background Jobs
 

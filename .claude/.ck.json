@@ -18,7 +18,7 @@
     ],
     "codeReview": {
         "enabled": true,
-        "injectOnSkills": ["code-review", "review", "review:codebase", "review-changes", "code-reviewer"],
+        "injectOnSkills": ["code-review", "review", "review:codebase", "changes-review", "code-reviewer"],
         "rulesPath": "docs/project-reference/code-review-rules.md"
     },
     "codingLevel": 3,

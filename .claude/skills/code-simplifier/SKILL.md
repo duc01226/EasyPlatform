@@ -18,12 +18,13 @@ context-budget: critical
 
 **Goal:** Lower the cost of the next change — cut coupling, hidden state, duplicated knowledge, unclear intent — by simplifying and refining code for clarity, consistency, and maintainability without altering any observable behavior. — why: every simplification serves future change cost, not aesthetics.
 
-**Summary:**
+**Summary:** (read-this-if-nothing-else digest — purpose + every main step)
 
-- Skeptical-first MUTATOR, not a suggester: grep all usages + trace consumers (graph downstream when graph.db exists) and cite `file:line` before touching anything — apply a simplification ONLY when certain it preserves behavior, never when unsure.
-- Detect artifact type in Phase 0 first; HARD-SKIP generated/migration/vendor files; reason by the 5 Simplification Dimensions (readability, DRY/abstraction ≥3 occurrences, right-responsibility-lowest-layer, complexity reduction, DB paging+indexes) — every technique answers one test: does this make the next change cheaper?
-- Apply one refactoring type at a time and verify tests after each change; then run the Self-Recursive Loop (analyze → simplify → verify) until zero findings remain or a no-progress/unsafe/owner-decision stop condition hits — do NOT spawn a fresh-context reviewer for your own findings.
-- This skill owns review of its own output: when it changed any file, run the Self-Review Gate by self-invoking `/code-review` scoped to ONLY those changed files (recursion-safe leaf — NEVER `/review-changes`); skip + log the reason when nothing changed.
+- **Purpose — skeptical-first MUTATOR, not a suggester:** grep all usages + trace consumers (graph downstream when graph.db exists) and cite `file:line` BEFORE touching anything; apply a simplification ONLY when certain it preserves behavior, never when unsure. — why: an unverified "safe" rewrite silently breaks a downstream consumer.
+- **Main steps, run in order:** (1) **Phase 0 Detect** artifact type (backend/frontend/test/config) + scope; (2) **Identify Targets** — recent git changes or named files, HARD-SKIP generated/migration/vendor; (3) **Analyze** via the 5 Simplification Dimensions; (4) **Apply** one refactoring type at a time (KISS/DRY/YAGNI, behavior-preserving); (5) **Verify** related tests after EACH change; (6) **Self-Recursive Loop** (analyze→simplify→verify) until zero findings or a no-progress/unsafe/owner-decision stop hits — do NOT spawn a fresh-context reviewer for your own findings; (7) **Self-Review Gate**.
+- **The 5 Simplification Dimensions (step 3):** readability · DRY/abstraction (≥3 occurrences, YAGNI gate) · right-responsibility-lowest-layer (Entity > Domain Service > App Service > Controller) · complexity reduction (flatten nesting, extract >20-line methods) · DB paging+indexes — every technique answers ONE test: does this make the next change cheaper?
+- **Self-Review Gate (step 7) — this skill owns review of its own output:** when it changed any file, self-invoke `/code-review` scoped to ONLY those changed files (recursion-safe leaf — NEVER `/changes-review`); skip + log the reason when nothing changed. — why: the simplifier rewrites code after the main review batch, so its output ships unreviewed without this gate.
+- **Read FIRST:** `docs/project-reference/code-review-rules.md` (anti-patterns/checklists) then `project-structure-reference.md` — before any modification.
 
 > **MANDATORY IMPORTANT MUST ATTENTION** Plan task to READ:
 >
@@ -233,17 +234,17 @@ After simplifications applied, verification requires a **self-recursive simplifi
 > 2. **Self-invoke `/code-review` scoped to ONLY the changed files.** Pass the explicit changed-file set as the review target — not the full diff, not unrelated files.
 > 3. **Integrate the `/code-review` findings.** If it surfaces blocking issues caused by the simplification, fix them (behavior-preserving only) and re-run the self-recursive loop + this gate. If issues are out of simplification scope, report them up — do not silently drop.
 >
-> **Recursion safety:** `/code-review` is a LEAF review skill — it does NOT invoke `/code-simplifier` back, so there is no cycle. Use `/code-review` here, NEVER `/review-changes` (the heavyweight workflow that itself contains `/code-simplifier` and would recurse).
+> **Recursion safety:** `/code-review` is a LEAF review skill — it does NOT invoke `/code-simplifier` back, so there is no cycle. Use `/code-review` here, NEVER `/changes-review` (the heavyweight workflow that itself contains `/code-simplifier` and would recurse).
 >
 > **Why this gate exists:** `/code-simplifier` rewrites code after the main review batch has already run. Without this gate, the simplifier's output would ship unreviewed. This gate moves that review responsibility into the mutator itself — so the `workflow-review-changes` workflow no longer needs a separate `/code-review` step after `/code-simplifier`.
 
-Used standalone (outside a review workflow), this self-review gate is sufficient for the simplifier's own changes; you may still finish with `/review-changes` or the active workflow's review gate for broader, whole-changeset coverage.
+Used standalone (outside a review workflow), this self-review gate is sufficient for the simplifier's own changes; you may still finish with `/changes-review` or the active workflow's review gate for broader, whole-changeset coverage.
 
 ## Workflow Recommendation
 
 > **MANDATORY — NO EXCEPTIONS:** If NOT already in workflow, use `AskUserQuestion` to ask user. Do NOT decide this is "simple enough to skip" — the user decides:
 >
-> 1. **Activate `workflow-review-changes` workflow** (Recommended) — full review-changes restart gate → validated fix cycle (plan → plan-review → feature-implement) → re-review → docs
+> 1. **Activate `workflow-review-changes` workflow** (Recommended) — full changes-review restart gate → validated fix cycle (plan → plan-review → feature-implement) → re-review → docs
 > 2. **Execute `/code-simplifier` directly** — run standalone (this skill self-reviews its own changes via the Self-Review Gate)
 
 ---
@@ -370,8 +371,9 @@ Rules:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -398,11 +400,6 @@ Rules:
 > **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
 
 <!-- /SYNC:understand-code-first -->
-
-<!-- SYNC:evidence-based-reasoning:reminder -->
-
-- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:design-patterns-quality -->
 
@@ -505,6 +502,11 @@ Rules:
 
 <!-- /SYNC:severity-rubric -->
 
+<!-- SYNC:evidence-based-reasoning:reminder -->
+
+- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
+  <!-- /SYNC:evidence-based-reasoning:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -523,6 +525,13 @@ Rules:
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
+<!-- SYNC:severity-rubric:reminder -->
+
+- **MANDATORY** Classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS until fixed or owner-accepted.
+- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
+
+<!-- /SYNC:severity-rubric:reminder -->
+
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
@@ -534,16 +543,11 @@ Rules:
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
-<!-- SYNC:severity-rubric:reminder -->
-
-- **MANDATORY** Classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS until fixed or owner-accepted.
-- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
-
-<!-- /SYNC:severity-rubric:reminder -->
-
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** lower the cost of the next change — cut coupling, hidden state, duplicated knowledge, unclear intent — by simplifying and refining code for clarity, consistency, maintainability WITHOUT altering any observable behavior. — why: every simplification serves future change cost, not aesthetics.
+
+**IMPORTANT MUST ATTENTION Main steps (run in declared order, never skip/merge):** (1) Phase 0 Detect artifact type + scope → (2) Identify Targets (skip generated/migration/vendor) → (3) Analyze via the 5 Dimensions → (4) Apply one refactoring type at a time → (5) Verify tests after EACH change → (6) Self-Recursive Loop until zero findings → (7) Self-Review Gate (`/code-review` on changed files). — why: AI keeps forgetting the skill's own steps; surfacing them here is the recency anchor.
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
@@ -570,7 +574,7 @@ Rules:
 - **MANDATORY IMPORTANT MUST ATTENTION** check DRY via OOP (same-suffix → base class), right responsibility (lowest layer), SOLID; grep ENTIRE scope for dangling refs after every extraction/move/rename — zero tolerance. — why: "primary file done" ≠ secondary files clean.
 - **MANDATORY IMPORTANT MUST ATTENTION** preserve ALL invariants — NEVER weaken, delete, or trivialize a property/mutation test guarding a `[HARD]` §4 rule or §5 invariant; a behavior change is a Dual-Feedback finding (feed spec AND tests, re-review) — report and stop, never ship silently. — why: green tests on a weakened bar are not a pass.
 - **MANDATORY IMPORTANT MUST ATTENTION** verify ALL affected outputs and tests pass after EACH change (apply one refactoring type at a time) — one build green ≠ all green. — why: multi-stack changes regress the stack you didn't check.
-- **MANDATORY IMPORTANT MUST ATTENTION** Self-Review Gate — when this skill changed code, self-invoke `/code-review` scoped to ONLY the changed files (recursion-safe leaf skill; NEVER `/review-changes` — it recurses into `/code-simplifier`); skip + log the reason when nothing changed. The simplifier owns review of its own output. — why: the simplifier rewrites code after the main review batch, so its output ships unreviewed without this gate.
+- **MANDATORY IMPORTANT MUST ATTENTION** Self-Review Gate — when this skill changed code, self-invoke `/code-review` scoped to ONLY the changed files (recursion-safe leaf skill; NEVER `/changes-review` — it recurses into `/code-simplifier`); skip + log the reason when nothing changed. The simplifier owns review of its own output. — why: the simplifier rewrites code after the main review batch, so its output ships unreviewed without this gate.
 - **MANDATORY** validate route decisions with the user via `AskUserQuestion` when outside a workflow — never auto-decide "simple enough to skip".
 
 **Anti-Rationalization:**

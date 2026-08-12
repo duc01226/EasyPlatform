@@ -1097,104 +1097,104 @@
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/visual-tooling-overview.md",
+                    "path": "skills/design/references/lane-marketing/visual-tooling-overview.md",
                     "checksum": "ae73535f8cd71c3b1e53b6f3cb1dece73847b27dc6c79119bff7108b3f6c3950",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/analysis-best-practices.md",
+                    "path": "skills/design/references/lane-marketing/analysis-best-practices.md",
                     "checksum": "61f370388d9cc1803927b1a8804e744266d4d45edd501f9704ae169dcac8857e",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/analysis-prompts.md",
+                    "path": "skills/design/references/lane-marketing/analysis-prompts.md",
                     "checksum": "0db7f84ad1fc380ac99009a7e4c294bd49907150d3bb9346b73ef100800774a1",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/analysis-techniques.md",
+                    "path": "skills/design/references/lane-marketing/analysis-techniques.md",
                     "checksum": "602d9a0a37c2566cd24531005acd36bdbecb32f6c4331621d53d7e53fe965edf",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/animejs.md",
+                    "path": "skills/design/references/lane-marketing/animejs.md",
                     "checksum": "9a8f57874ea054f2bc8661dbbda5b8132bd3196fc8300d099d4d62a90521359b",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/asset-generation.md",
+                    "path": "skills/design/references/lane-marketing/asset-generation.md",
                     "checksum": "583dbec1a9a182197fea1b1d9c9f9a4c0086959d78bb425d74600fdffc23077a",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/design-extraction-overview.md",
+                    "path": "skills/design/references/lane-marketing/design-extraction-overview.md",
                     "checksum": "e8ddc2947bc07a486858e3c174ad7e589d1241d6b15b40ee6892c9bdd35605f6",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/extraction-best-practices.md",
+                    "path": "skills/design/references/lane-marketing/extraction-best-practices.md",
                     "checksum": "c155ab69a55e9cbb72162d67d6c39597138a9a4601a949c03ece507914e67556",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/extraction-output-templates.md",
+                    "path": "skills/design/references/lane-marketing/extraction-output-templates.md",
                     "checksum": "56ce1c81310b9a667c146ce332f33f5df8de7a7f59ab43e3463dda535c345cab",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/extraction-prompts.md",
+                    "path": "skills/design/references/lane-marketing/extraction-prompts.md",
                     "checksum": "22e1836d0cf5a97ef21e70f313e3deb8e58606a531ad0645a380d9dc5606d55e",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/technical-accessibility.md",
+                    "path": "skills/design/references/lane-marketing/technical-accessibility.md",
                     "checksum": "0eb08a6fcfc2651d7c4bb87a33bc898918cf4bdc43f5601f9314b8e27c2edfc1",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/technical-best-practices.md",
+                    "path": "skills/design/references/lane-marketing/technical-best-practices.md",
                     "checksum": "c1fa9d8b15e95e870405977f702846c9cbe10cdbad4a0ae002585b8428fe3eae",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/technical-optimization.md",
+                    "path": "skills/design/references/lane-marketing/technical-optimization.md",
                     "checksum": "a46bc622c3a2a361c73f673681320a1cf777feb6ad62e8d9995d00cc6de378c6",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/technical-overview.md",
+                    "path": "skills/design/references/lane-marketing/technical-overview.md",
                     "checksum": "073fc8c7f7f7fbfa2305bbfc50c19f62dd383a400639d11e9f74d0183f60e43e",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/technical-workflows.md",
+                    "path": "skills/design/references/lane-marketing/technical-workflows.md",
                     "checksum": "f4cc6e127bf54935eb058c3112e08cfc682e1380b8d2c47996275e83a717b153",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/references/visual-analysis-overview.md",
+                    "path": "skills/design/references/lane-marketing/visual-analysis-overview.md",
                     "checksum": "de7f64143b4ae64a36d87de12c63bc094f1be30978feecbde69b53f67e367219",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },
                 {
-                    "path": "skills/frontend-design/SKILL.md",
-                    "checksum": "46df3b5a98b759c23378d6dffb11991ba95f0320a569e3757d5565ded35a20a6",
+                    "path": "skills/design/references/lane-marketing/lane-guide.md",
+                    "checksum": "d53ae0dabf6fe01062721ea5771a455359d85433ac5c94f629bdac75fd36fdab",
                     "ownership": "user",
                     "installedVersion": "v2.1.0"
                 },

@@ -1346,6 +1346,20 @@ public class ProcessTextSnippetEntityEventBusConsumer :
 }
 ```
 
+#### 🔒 Consume-failure logging contract — identity, never payload [BINDING on every service]
+
+**When a bus consumer throws, the platform logs the failure with the message's IDENTITY and never its CONTENT.** `PlatformMessageBusConsumer.LogError` emits the consumer type, the message type, the tracking id and the message's created-at instant, plus the exception — and explicitly states the payload was omitted. It does **not** destructure the message.
+
+This is a single funnel: the only three production call sites are `PlatformMessageBusConsumer.cs:268` (retry) and `:279` (retries exhausted), and `PlatformApplicationBusMessageConsumer.cs:328` — and no `{@Message}` destructure survives anywhere in `src/Platform` outside the test that guards against it. So the guarantee holds for **all 12+ services** without any of them opting in.
+
+**Why it is a contract and not a formatting preference.** Bus messages carry candidate names, email addresses, message bodies and attachment descriptions. A destructured payload in an error log puts that content into log storage, log shipping, and anywhere logs are forwarded — for an audience (whoever reads production errors) that is far wider than the audience authorised for the data itself, and with a retention nobody modelled. A consume failure is exactly when payloads are most likely to be unusual, so it is also when the volume of leaked content is highest.
+
+**What it costs, stated rather than glossed.** For a message type that does **not** implement `IPlatformTrackableBusMessage`, there is now no message identity in the log at all — consumer type, message type and exception only, because the payload used to serve as the identity. `TMessage` is constrained to `class, new()`, so that subset is real. Diagnosing one of those failures means reproducing it or adding a targeted log, not reading the error line. That is the accepted price; the guarded unit tests below deliberately include a "log nothing" counter-guard so the redaction cannot be satisfied by removing diagnosability altogether.
+
+**If you are adding a consumer or a log line on this path:** log identity, correlation and shape (counts, ids, type names). Never the payload, never a field lifted out of it. The content is not lost — for a trackable message the `TrackingId` addresses the full payload in the outbox/inbox store, which is access-controlled and reachable by right-to-erasure in a way a log sink is not. That is the whole design: the log carries the handle, the store keeps the data.
+
+**Guarded by** `Easy.Platform.Tests.Unit/Infrastructures/MessageBus/PlatformMessageBusConsumerLogErrorTests.cs`, which asserts on log **state** rather than formatted text, carries an explicit mutation-killer (`ReferenceEquals(kv.Value, message)` — a re-added destructure fails it), and covers the non-trackable path. Introduced 2026-08-07; recorded here rather than in a feature spec because it binds the framework and therefore every consumer in every service, not one feature.
+
 ### 🗄️ Data Migration
 
 ```csharp
@@ -1355,7 +1369,7 @@ public class InitializeSnippetDataMigration : PlatformDataMigrationExecutor<MyDb
     public override string Name => "20250101000001_InitializeSnippetData";
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 02, 01);
 
-    public override async Task Execute(MyDbContext dbContext)
+    protected override async Task InternalExecute(MyDbContext dbContext)
     {
         await InitializeCategories();
         await MigrateExistingSnippets();

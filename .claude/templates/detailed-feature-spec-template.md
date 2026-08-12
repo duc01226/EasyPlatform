@@ -6,6 +6,8 @@ entities: ['{Entity1}', '{Entity2}']
 status: draft | active | deprecated
 owner: '{Team or role that maintains this capability}'
 last_updated: '{YYYY-MM-DD}'
+# design_spec: '{path/to/companion-design-spec.md}'   # optional — companion deep UI/UX intent artifact
+# mockup: '{path/to/companion-mockup.html}'           # optional — companion visual mockup artifact
 ---
 
 # {FeatureName} — Feature Spec
@@ -24,7 +26,7 @@ last_updated: '{YYYY-MM-DD}'
 3. [User Stories & Acceptance Criteria](#3-user-stories--acceptance-criteria)
 4. [Business Rules](#4-business-rules)
 5. [Domain Model](#5-domain-model)
-6. [Process Flows](#6-process-flows)
+6. [Process Flows & Interaction Surface](#6-process-flows--interaction-surface)
 7. [Permissions & Roles](#7-permissions--roles)
 8. [Test Specifications](#8-test-specifications)
 
@@ -148,14 +150,22 @@ ELSE
 
 ---
 
-## 6. Process Flows
+## 6. Process Flows & Interaction Surface
+
+> **Purpose:** How the user moves through the capability — the journeys (6.1) and the tech-agnostic
+> interaction surface those journeys traverse (6.2–6.5). A reader visualizes how the feature works and could
+> rebuild it on any stack.
+> **M1 guardrail (applies to ALL of 6.1–6.5):** Use UX-role names and observable states only; cross-reference
+> `US-`/`OP-`/`BR-` logical IDs. NO framework, route, CSS, or component-class names.
+
+### 6.1 Process Flows
 
 > **Purpose:** The key user journeys as business steps.
 > **Instructions:** 3-5 most important flows (create, update, the key business process). Step tables and/or
 > simple diagrams. Describe screens as business steps/states, not component names.
 > **Anti-pattern:** No code files, no component names, no implementation flow.
 
-### Flow: {Process Name}
+#### Flow: {Process Name}
 
 ```
 ┌──────────┐    ┌──────────┐    ┌──────────┐
@@ -166,6 +176,60 @@ ELSE
 | Step | Actor   | Action   | System Response | Next |
 | ---- | ------- | -------- | --------------- | ---- |
 | 1    | {Actor} | {Action} | {Response}      | 2    |
+
+### 6.2 View Inventory
+
+> **Purpose:** The set of views (by UX role) the capability presents — the surface its flows traverse.
+> **Instructions:** One row per view. Name views by their UX role (e.g. "Goal List", "Goal Detail"), state
+> what they show in business terms (entities/fields), the primary actions available, and the user story or
+> operation that drives the view.
+> **M1 guardrail:** UX-role names + observable content only; cross-ref `US-`/`OP-`. NO framework, route, CSS,
+> or component-class names.
+
+| View (UX role) | Purpose         | Shows (entities/fields)   | Primary actions   | Driving US/OP |
+| -------------- | --------------- | ------------------------- | ----------------- | ------------- |
+| {View role}    | {Why it exists} | {Entities/fields visible} | {Actions offered} | US-{FC}-NN    |
+
+### 6.3 Navigation Map
+
+> **Purpose:** How views connect — the transitions between views and the business trigger for each.
+> **Instructions:** A simple flowchart of views as nodes and transitions as edges, each edge labeled with the
+> business trigger (an action or outcome), not a technical event.
+> **M1 guardrail:** Nodes are UX-role view names, edges are business triggers. NO routes, URLs, or
+> component/router names.
+
+```mermaid
+flowchart LR
+  ViewA[{View A role}] -->|{business trigger}| ViewB[{View B role}]
+  ViewB -->|{business trigger}| ViewC[{View C role}]
+```
+
+### 6.4 Key UI States
+
+> **Purpose:** The observable states each view can present, defined by what a user can SEE.
+> **Instructions:** One row per (view, state). Use the observable-state vocabulary — Default, Loading, Empty,
+> Error, Success, Permission-gated. Describe each by its observable markers (text, icon, color, position) and
+> name the operation or rule that triggers it.
+> **M1 guardrail:** Observable markers + business meaning only; cross-ref `OP-`/`BR-`. NO CSS classes,
+> component-state props, or framework names.
+
+| View        | State                                                          | Observable markers                 | Triggering OP/BR        |
+| ----------- | -------------------------------------------------------------- | ---------------------------------- | ----------------------- |
+| {View role} | Default / Loading / Empty / Error / Success / Permission-gated | {What the user sees in this state} | OP-{FC}-NN / BR-{FC}-NN |
+
+### 6.5 Per-Story Interaction Flow
+
+> **Purpose:** The concrete click-path for each user story — the actor's actions and the observable system
+> response at each step.
+> **Instructions:** Per `US-{FC}-NN`, a numbered click-path: each step is an actor action paired with the
+> observable system response. Reference the views from 6.2 and the states from 6.4.
+> **M1 guardrail:** Actor action -> observable system response only; cross-ref `US-`/`OP-`/`BR-` and the 6.2
+> view roles. NO framework, route, CSS, or component-class names.
+
+**US-{FC}-NN — {Story Title}**
+
+1. {Actor action} → {Observable system response} ({View role} / {state})
+2. {Actor action} → {Observable system response} ({View role} / {state})
 
 ---
 
@@ -239,7 +303,7 @@ And {additional verification}
 <!-- machine-only carrier — ignore when reading as BA/QA -->
 
 > `[Source: {namespace}/{service}/{id}]`
-> **IntegrationTest:** `{configured-test-path}/{TestFile}::{MethodName}` · **Status:** Tested | Untested | Planned
+> **CoveredBy:** `{configured-test-path}/{TestFile}::{MethodName}` · **Status:** Tested | Untested | Planned
 
 ---
 
@@ -248,8 +312,8 @@ And {additional verification}
 > **Tech-free:** Sections 1-8 prose contains zero technical terms — no API routes, command/handler names,
 > message-bus/event-contract schemas, code, or file paths. Technical detail lives in code (the technical
 > source of truth); an API reference can be regenerated from code if needed.
-> **Size:** Body (sections 1-7) target ≤1200 lines; whole file hard-cap ≤1800 lines. **Split** the capability
-> into two Feature Specs when the body exceeds 1200 lines OR the doc exceeds 40 test cases, OR when two
+> **Size:** No line-count cap applies. **Split** the capability
+> into two Feature Specs when the doc exceeds 40 test cases OR when two
 > distinct module-level capabilities emerge.
 > **IDs required:** Every user story (`US-{FC}-NN`), acceptance criterion (`AC-{FC}-NN`), business rule
 > (`BR-{FC}-NN`), and test case (`TC-{FC}-NNN`) has a unique ID.
@@ -259,4 +323,4 @@ And {additional verification}
 
 ---
 
-_Feature Spec — tech-free 8-section template v4.0_
+_Feature Spec — tech-free 8-section template v4.1 (§6 expanded to Process Flows & Interaction Surface)_

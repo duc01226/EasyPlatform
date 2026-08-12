@@ -1,9 +1,9 @@
 ---
 title: 'Canonical TC Format'
-version: 1.3.0
-last_reviewed: 2026-06-17
+version: 1.4.0
+last_reviewed: 2026-07-16
 authority: spec [mode=tests]
-consumers: [spec, spec [mode=tests], spec [mode=sync], integration-test, integration-test-review, review-artifact]
+consumers: [spec, spec [mode=tests], spec [mode=sync], integration-test, integration-test-review, artifact-review]
 ---
 
 # Canonical TC Format
@@ -59,21 +59,38 @@ consumers: [spec, spec [mode=tests], spec [mode=sync], integration-test, integra
 
 - {Required DB state, seeded data, or prior actions}
 
-**Test Steps:**
+**Real-World Reachability:** {how production actually reaches the Preconditions above — which actor performs which prior action, in what order, and the realistic elapsed gap between consecutive actor actions. "The data is simply there" is not reachability. Two distinct actor actions with no stated gap get generated as a back-to-back call, which manufactures a race production never has — so "instantaneous" is a claim to justify, never a default.}
+
+**Deliberate Impossible State (only when this TC intentionally constructs a state production should never reach):** {WHY that state is reachable at all — upstream defect, partial write, legacy/migrated data, external-system fault — and which repair or fail-safe behaviour the TC proves. Omit this field entirely for ordinary TCs; unlabelled, an unreachable setup is indistinguishable from a mis-specified one.}
+
+**Demo Flow:** {the actions a real user or QC performs, in order — this TC must be demoable}
 
 ```gherkin
-Given {initial context/state}
-And {additional context if needed}
-When {action performed}
+Given {a business precondition a user could set up through the product}
+And {additional business context if needed}
+When {the action a user or QC performs — a click-path, a submitted form, a business interface call}
 And {additional action if needed}
-Then {expected outcome}
-And {additional verification}
+Then {the outcome that user or QC can OBSERVE}
+And {additional observable verification}
 ```
+
+> **[HARD] The demo test — a business TC is one a user or QC can DEMO.** Every `Given` is state a user could arrange; every `When` is an action a user could take; every `Then` is an outcome a user could see. **A step that can only be performed or observed by inspecting a queue, a projection, a log, a DB row no screen reads, or a deployed component is TECHNICAL-ONLY** — it belongs to the technical spec tree, not here. If the `When` is "the consumer receives the event" or the `Then` is "the projection row is written", this is not a business TC. See `sdd-artifact-contract.md` → BUSINESS-VISIBLE vs TECHNICAL-ONLY.
+
+**Expected Result:** {what the demo SHOWS — fill every dimension that applies; omit with a reason, never silently}
+
+| Dimension               | Expectation                                                                 |
+| ----------------------- | --------------------------------------------------------------------------- |
+| **UI**                  | {what the user sees change — message, state, control, navigation}           |
+| **System behavior**     | {what the system observably does — notifies, blocks, permits, recalculates} |
+| **Business data state** | {what the business data reads AFTER, in business terms — not table/column}  |
+| **Data shown on UI**    | {what a list/report/query displays afterward — the value a user reads back} |
+
+> **Why these dimensions.** A business TC that asserts only "no exception thrown" or "the row exists" is not demoable and proves nothing a stakeholder values. **State the business data state in business language** ("the employee's approved leave balance reads 12 days"), never in storage language ("the `LeaveBalance` row's `Days` column = 12) — the same spec must survive re-implementation on a different store. Omit a dimension only when the feature genuinely has no such surface (e.g. no UI), and say so.
 
 **Acceptance Criteria:**
 
-- ✅ {Expected success behavior — what MUST happen}
-- ❌ {Expected failure behavior — what MUST NOT happen}
+- ✅ {Expected success behavior — what MUST happen, observable in a demo}
+- ❌ {Expected failure behavior — what MUST NOT happen, observable in a demo}
 
 **Test Data:**
 
@@ -96,15 +113,17 @@ boundaryCounterCase: 'amounts summing past the credit limit → order rejected, 
 
 > The three keys (`inputDomain`, `invariant`, `boundaryCounterCase`) are the canonical machine-readable property contract — a `[HARD]`/§5 TC's universality lives in these fields, never only in prose. `inputDomain` names a space (a generator), not a constant; `invariant` is "for ALL …"; `boundaryCounterCase` is the input just outside the domain that must be rejected. This block maps 1:1 to the Pattern 9 property test (`integration-test` → Required patterns per command type → invariant-owning branch).
 
-**Edge Cases:**
+**Edge Cases:** {business-observable edges ONLY — each must still pass the demo test above}
 
-- {Boundary: empty collection, max length, null values} → {expected behavior}
-- {Concurrency: simultaneous updates} → {expected behavior}
-- {Cross-service: message bus timing} → {expected behavior}
+- {Boundary: empty collection, max length, absent optional value} → {what the user sees}
+- {Competing users: two people act on the same record at once} → {what each one sees}
+- {Business timing: the action arrives after the window closed, or out of the expected order} → {expected behavior}
+
+> **[HARD] An edge case is not a licence to name architecture.** ⚠️ **This prompt previously read *"{Cross-service: message bus timing}"* and *"{Concurrency: simultaneous updates}"* — a **message bus** and a **write race** are mechanisms, not business edges, and prompting for them here is how a transport-timing test case enters a business spec wearing an edge-case label. **Ask what a user would SEE at the edge, never what the infrastructure does at it.\** "Two approvers submit at once → the second sees 'already approved'" is a business edge; "the consumer processes the event twice" is a technical one and belongs to the technical spec tree. *A business spec must yield the same edge cases whether the system is a monolith or microservices — a bus only exists in one of them.\*
 
 **Transition Invariants (when the entity has lifecycle states — §5):**
 
-- {Property domain — e.g. "for ALL legal transitions of {Entity}"} → assert the exact post-state field values (`Status = X`, `ExternalId = Y`) and that no orphan/side-effect is created downstream
+- {Property domain — e.g. "for ALL legal transitions of {Entity}"} → assert the exact post-state business facts the user or QC can verify
 - {Boundary counter-case — e.g. "for ALL illegal transitions of {Entity}"} → assert the transition is rejected with the named failure and the pre-state field values are left unchanged
 
 **Evidence:** `[Source: {namespace}/{service}/{id}]` or `TBD (pre-implementation)`
@@ -117,7 +136,7 @@ boundaryCounterCase: 'amounts summing past the credit limit → order rejected, 
 | Domain model | `component/{service}/{Feature}` |
 | Test | `test/{service}/{Feature}` |
 
-**IntegrationTest:** one or more covering tests for the configured test environment — `{configured-test-path}/{TestFile}::{MethodName}` (comma-separated **on one line** when several tests cover this TC), OR a test-filter expression that selects every test annotated with this TC (e.g. `TestSpec=TC-{FEATURE}-{NNN}`), OR `Untested`
+**CoveredBy:** one or more covering tests or approved coverage carriers for the configured environment — `{configured-test-path}/{TestFile}::{MethodName}` (comma-separated **on one line** when several tests cover this TC), OR a test-filter expression that selects every test annotated with this TC (e.g. `TestSpec=TC-{FEATURE}-{NNN}`), OR `Manual-QC`, OR `Untested`
 **Status:** Tested | Untested | Planned
 ````
 
@@ -127,12 +146,13 @@ boundaryCounterCase: 'amounts summing past the credit limit → order rejected, 
 > module/service (lowercased); id = the artifact concept with code suffixes stripped. Physical coordinates
 > are recoverable only through the provenance sidecar. This section is the canonical anchor-taxonomy contract.
 >
-> **`IntegrationTest` is the one exception** — it is operational QA glue (a traceability link to the actual
-> executable test(s), consumed by the `integration-test` skill and surfaced in the §8 TC's `IntegrationTest` field). It stays a physical
+> **`CoveredBy` is the one exception** — it is operational QA glue (a traceability link to the actual
+> executable test(s) or manual coverage carrier, consumed by test/sync skills and surfaced in the §8 TC's `CoveredBy` field). It stays a physical
 > test-file + test-method link (`{TestFile}::{MethodName}`, in the configured test layout), is exempt from the prose gate, and is
 > regenerated per-stack on rebuild. The field is
 > **representative, not exhaustive** — it may list several covering tests, but the authoritative complete set is whatever
 > carries the TC's test-spec annotation in code (see [TC ↔ Test Code Cardinality](#tc--test-code-cardinality-one-to-many)).
+> Legacy `IntegrationTest:` fields are accepted only as migration input; new templates MUST emit `CoveredBy:`.
 >
 > **Configurable roots (never donor paths).** When physical coordinates are emitted on rebuild, root them at the
 > project-configured roots — `{configured-source-path}` for source/evidence and `{configured-test-path}` for
@@ -142,13 +162,13 @@ boundaryCounterCase: 'amounts summing past the credit limit → order rejected, 
 
 > **A Section 8 TC is a business / user-story acceptance scenario — not a unit of code.** It is written tech-agnostic
 > (M1/M2/M5) and is verified by **one OR MANY** test methods. This section is the canonical cardinality contract; all
-> consumer skills (`spec [mode=tests]`, `spec`, `integration-test`, `integration-test-review`, `review-artifact`) defer to it.
+> consumer skills (`spec [mode=tests]`, `spec`, `integration-test`, `integration-test-review`, `artifact-review`) defer to it.
 
 **The rule (authoritative):**
 
 - **One TC → many tests.** A single `TC-{FEATURE}-{NNN}` MAY be covered by many test methods — integration tests, unit tests, across multiple components / services / layers. Every covering test carries the **same test-spec annotation** — key `TestSpec`, value `TC-{FEATURE}-{NNN}` — expressed in the configured test framework's syntax. That annotation is the **join key**; the cardinality of the join is **1 TC : N tests**.
 - **Coverage = ≥1.** A TC is `Tested` when **at least one** test carrying its annotation exists and passes. A TC does NOT need a dedicated, name-matching, or single-purpose test method.
-- **`IntegrationTest` field is representative.** It lists one or more covering tests (or a test-filter expression). Never assume it enumerates every covering test — the complete set is whatever carries the test-spec annotation in code.
+- **`CoveredBy` field is representative.** It lists one or more covering tests, a test-filter expression, or manual-QC coverage. Never assume it enumerates every covering test — the complete set is whatever carries the test-spec annotation in code. Legacy `IntegrationTest:` fields are migration input only.
 - **Direction of mapping.** Each test method maps to **one primary** business TC it verifies. Each TC maps to **one or more** test methods. So: test -> primary TC is N:1; TC -> test is 1:N. A test MAY carry additional `TestSpec` annotations only for documented alias/deprecation bridges, where an old TC ID and canonical TC ID intentionally point to the same executable behavior; document the alias in specs and remove the extra tag when the bridge retires.
 
 **FORBIDDEN (these break M1/M5 — the spec stops being business-readable):**
@@ -171,17 +191,17 @@ boundaryCounterCase: 'amounts summing past the credit limit → order rejected, 
 
 Group TCs by category using decade blocks to prevent collisions:
 
-| NNN Range | Category                             |
-| --------- | ------------------------------------ |
-| 001–009   | CRUD / Core operations (P0-P1)       |
-| 011–019   | Validation / Business rules (P1-P2)  |
-| 021–029   | Authorization / Permissions (P0-P1)  |
-| 031–039   | Events / Background jobs (P1-P2)     |
-| 041–049   | Cross-service / Integration (P1-P2)  |
-| 051–059   | Edge cases / Error scenarios (P2-P3) |
-| 061–069   | UI / User journey flows (P2-P3)      |
-| 071–079   | Invariant / Property TCs (P0-P2)     |
-| 081–099   | Reserved for feature-specific groups |
+| NNN Range | Category                                        |
+| --------- | ----------------------------------------------- |
+| 001–009   | CRUD / Core operations (P0-P1)                  |
+| 011–019   | Validation / Business rules (P1-P2)             |
+| 021–029   | Authorization / Permissions (P0-P1)             |
+| 031–039   | Business workflows / lifecycle outcomes (P1-P2) |
+| 041–049   | External business-facing outcomes (P1-P2)       |
+| 051–059   | Edge cases / Error scenarios (P2-P3)            |
+| 061–069   | UI / User journey flows (P2-P3)                 |
+| 071–079   | Invariant / Property TCs (P0-P2)                |
+| 081–099   | Reserved for feature-specific groups            |
 
 **Collision prevention:**
 
@@ -206,21 +226,21 @@ Organize TCs into named category sections. Minimum 3 named sections required, an
 
 (Role-based access, cross-tenant isolation, authorization checks)
 
-### Workflow Tests
+### Business Workflow Tests
 
-(Multi-step processes, state transitions, event handler side effects)
+(Multi-step user or QC-demoable processes and state transitions)
 
-### Edge Case Tests
+### Business Edge Case Tests
 
-(Boundary conditions, concurrent operations, data migration scenarios)
+(Boundary conditions, competing user actions, and business timing edges visible in the product)
 
 ### Invariant / Property Tests
 
 (Universally-quantified properties + boundary counter-cases per [HARD] §4 rule / §5 invariant — see "Invariant Categories to Probe")
 
-### Integration Tests
+### External Outcome Tests
 
-(Cross-service message bus flows, event handler chains)
+(Business outcomes that cross product boundaries and remain demoable without inspecting architecture)
 ```
 
 ## Preservation Tests (Bugfix Context)
@@ -238,20 +258,27 @@ When writing TCs for a bugfix, add a Preservation Tests section **before** the n
 
 **Business Intent / Invariant Guarded:** {Healthy behavior or invariant that must stay true before and after the bugfix}
 
-**Test Steps:**
+**Demo Flow:**
 
 ```gherkin
-Given {input state the CURRENT code handles correctly}
-And {concrete preserved-state assertion — e.g., "ExternalId = X", "Status = Y"}
-When {the fix-triggering operation runs}
-Then {preserved state MUST match pre-fix snapshot — assert exact field values}
-And {no orphan/side-effect created in downstream store}
+Given {a healthy business situation a user could arrange, that works correctly TODAY}
+And {the business fact that must stay true — in business language, e.g. "the candidate's application shows as Submitted"}
+When {the action a user takes that the bugfix also affects}
+Then {the same business outcome the user saw BEFORE the fix — stated as something they SEE}
+And {no other business behavior the user relies on has changed}
 ```
 ````
 
+> **[HARD] A bugfix is not automatically a business change.** Add a Preservation TC here **only** if the behavior it
+> protects is one a user or QC can **demo**. If the thing at risk is a downstream store, an orphaned record, a
+> consumer, a projection, or an exact field value, the preservation belongs in the technical spec tree
+> (`specRoots.technical`) — **not in this spec**. This is the single most common way technical TCs leak into a
+> business spec: the bug was technical, the business did not change, **and a TC got added anyway.**
+> **If the business behavior did not change, this spec does not change.**
+
 ````
 
-**Trigger:** Every bugfix spec MUST have ≥1 Preservation TC per "Healthy input" enumerated in the plan's Preservation Inventory.
+**Trigger:** Every business-visible bugfix spec MUST have ≥1 Preservation TC per "Healthy input" enumerated in the plan's Preservation Inventory. A technical-only bugfix with no changed user/QC-visible behavior produces zero business Preservation TCs; preserve that risk in the technical spec tree and executable tests instead.
 
 **Authoring rule:** Write from OLD code semantics BEFORE the fix lands. The TC MUST pass against pre-fix code AND post-fix code.
 

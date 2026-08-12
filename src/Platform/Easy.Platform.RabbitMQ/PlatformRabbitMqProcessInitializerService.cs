@@ -620,7 +620,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                 waitingAckMessages.TryAdd(waitingAckMessageKey, null);
 
                 // Retry acknowledging the message multiple times in case of transient errors.
-                await Util.TaskRunner.WaitRetryThrowFinalException(
+                await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                     async () =>
                     {
                         if (!channel.IsClosedPermanently(out _))
@@ -664,7 +664,8 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                                 rabbitMqMessageArgs.DeliveryTag
                             );
                         }
-                    }
+                    },
+                    cancellationToken: currentStartProcessCancellationToken
                 );
             },
             loggerFactory: () => Logger,
@@ -726,8 +727,17 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
     /// </summary>
     /// <param name="channel">The RabbitMQ channel the message was received on.</param>
     /// <param name="rabbitMqMessage">The received RabbitMQ message.</param>
-    /// <param name="busMessage">The deserialized message object.</param>
+    /// <param name="busMessage">
+    /// The deserialized message object. Used for its expiry timestamp and, for diagnostics, its TYPE only — the
+    /// requeue-warning and final-failure logs below route it through
+    /// <see cref="PlatformMessageBusDiagnosticFormatter" /> rather than serializing it.
+    /// </param>
     /// <returns>True if the message was successfully requeued; otherwise, false.</returns>
+    /// <remarks>
+    /// Requeue is the highest-volume logging path on the bus: a message that cannot be processed comes back around
+    /// and re-logs on every pass until it expires. Serializing the message body here therefore did not disclose it
+    /// once — it disclosed it once per redelivery, for as long as the poison message survived.
+    /// </remarks>
     private bool ProcessRequeueMessage(IChannel channel, BasicDeliverEventArgs rabbitMqMessage, object busMessage)
     {
         var messageCreatedDate = busMessage.As<IPlatformTrackableBusMessage>()?.CreatedUtcDate;
@@ -736,9 +746,9 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
             return false;
 
         // Requeue the message.
-        // References: https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue for WHY of multiple: true, requeue: true
-        // Summary: requeue: true =>  the broker will requeue the delivery (or multiple deliveries, as will be explained shortly) with the specified delivery tag
-        // Why multiple: true for Nack: to fix requeue true for multiple consumer instance by eject or requeue multiple messages at once.
+        // References: https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue.
+        // Requeue only this failed delivery. A range nack (multiple: true) would also requeue unrelated in-flight
+        // deliveries on the same channel whose tags are less than or equal to this delivery tag.
         // Because if all consumers requeue because they cannot process a delivery due to a transient condition, they will create a requeue/redelivery loop. Such loops can be costly in terms of network bandwidth and CPU resources
         Util.TaskRunner.QueueActionInBackground(
             async () =>
@@ -755,12 +765,12 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                                 if (channel.IsClosed)
                                     throw new Exception("Channel is temporarily closed. Try again later");
 
-                                await channel.BasicNackAsync(rabbitMqMessage.DeliveryTag, multiple: true, requeue: true, currentStartProcessCancellationToken);
+                                await channel.BasicNackAsync(rabbitMqMessage.DeliveryTag, multiple: false, requeue: true, currentStartProcessCancellationToken);
 
                                 Logger.LogWarning(
-                                    message: "RabbitMQ retry queue message for the routing key: {RoutingKey}. " + "Message: {BusMessage}",
+                                    message: "RabbitMQ retry queue message for the routing key: {RoutingKey}. MessageDiagnostics: {MessageDiagnostics}",
                                     rabbitMqMessage.RoutingKey,
-                                    busMessage.ToJson()
+                                    PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(busMessage)
                                 );
                             }
                             else
@@ -778,10 +788,10 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                     retryCount: options.ProcessRequeueMessageRetryCount,
                     finalEx =>
                         Logger.LogError(
-                            finalEx.BeautifyStackTrace(),
-                            message: "RabbitMQ retry queue failed message for the routing key: {RoutingKey}. " + "Message: {BusMessage}",
+                            message: "RabbitMQ retry queue failed message for the routing key: {RoutingKey}. MessageDiagnostics: {MessageDiagnostics}. ExceptionDiagnostics: {ExceptionDiagnostics}",
                             rabbitMqMessage.RoutingKey,
-                            busMessage.ToJson()
+                            PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(busMessage),
+                            PlatformMessageBusDiagnosticFormatter.FormatException(finalEx)
                         ),
                     onRetry: (ex, delayTime, retryAttempt, arg4) =>
                     {
@@ -816,7 +826,9 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
         if (deserializedBusMessage != null)
         {
             traceActivity?.SetTag("consumer", consumer.GetType().Name);
-            traceActivity?.SetTag("message", deserializedBusMessage.ToFormattedJson());
+            traceActivity?.SetTag(
+                "message",
+                PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(deserializedBusMessage));
 
             await PlatformMessageBusConsumer.InvokeConsumerAsync(consumer, deserializedBusMessage, rabbitMqMessageArgs.RoutingKey, messageBusConfig, Logger);
         }

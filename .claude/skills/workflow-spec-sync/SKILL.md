@@ -24,18 +24,20 @@ disable-model-invocation: false
 - MUST ATTENTION preserve `Business Intent / Invariant Guarded` when updating TCs; do not encode accidental implementation behavior.
 - NEVER skip mandatory workflow or skill gates.
 
-**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 > **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before updating test specs — Section 7 TC coverage mapping is the canonical baseline.
 
 Activate the `workflow-spec-sync` workflow. Run `/start-workflow workflow-spec-sync` with the user's prompt as context.
 
-**Steps:** /workflow-review-changes → /spec [mode=tests] → /why-review → /review-artifact --type=spec-tests → /spec [mode=sync] → /integration-test → /integration-test-review → /integration-test-verify → /test → /docs-update → /workflow-end
+> **UI-intent maintenance (conditional)** — runs alongside the `/spec [mode=sync]` step, **only when the change carries user-facing behavior** (else state the skip reason — backend-only change, no §6 change). When the changed behavior is user-facing, run `/spec` (ui-intent intent) to refresh the affected Feature Spec **§6** interaction surface — View Inventory, Key UI States, and the per-story (`US-`/`OP-`/`BR-`) click-path — and re-link the governing `/design-spec`/mockup in the spec frontmatter so §6 and the design artifact stay coupled to the synced behavior. The rules live in the shared block below (`SYNC:ui-intent-layer`) — follow it; do not restate it here.
+
+**Steps:** /workflow-review-changes → /spec [mode=tests] → /why-review → /artifact-review --type=spec-tests → /spec [mode=sync] → /integration-test → /integration-test-review → /integration-test-verify → /test → /docs-update → /workflow-end
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
+**IMPORTANT MANDATORY Steps:** /workflow-review-changes -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /test -> /docs-update -> /workflow-end
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -46,8 +48,9 @@ Activate the `workflow-spec-sync` workflow. Run `/start-workflow workflow-spec-s
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -121,6 +124,22 @@ Activate the `workflow-spec-sync` workflow. Run `/start-workflow workflow-spec-s
 
 <!-- /SYNC:subagent-return-contract -->
 
+<!-- SYNC:ui-intent-layer -->
+
+> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
+>
+> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
+> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
+> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
+> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
+> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
+>
+> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
+
+<!-- /SYNC:ui-intent-layer -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -139,6 +158,12 @@ Activate the `workflow-spec-sync` workflow. Run `/start-workflow workflow-spec-s
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- SYNC:ui-intent-layer:reminder -->
+
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+
+<!-- /SYNC:ui-intent-layer:reminder -->
 
 ## Closing Reminders
 

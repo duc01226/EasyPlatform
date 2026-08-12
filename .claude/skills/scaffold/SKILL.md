@@ -19,10 +19,11 @@ description: '[Architecture] Use when scaffolding reusable OOP/SOLID project fou
 
 **Summary:**
 
-- Gate-first skill: check Activation Guards before any work — proceed ONLY in `workflow-greenfield-init` / `workflow-big-feature` AND when grep finds NO existing base/abstract/infrastructure scaffolding; otherwise SKIP and mark the step completed.
-- Scope is architecture-infrastructure creation (base classes, interfaces, DI, repos, cross-cutting), NOT feature implementation — read the plan, adapt the Backend/Frontend/UI checklists to the detected tech stack, and confirm the final checklist via `AskUserQuestion` before generating code.
-- Stand up the production-readiness foundations (code-quality tooling, error handling, loading state, Docker, integration points) and delegate ALL sensor setup to `/linter-setup` then `/harness-setup` — never hand-configure linters/hooks here.
-- Enforce OOP/SOLID on every base class and HARD-BLOCK the handoff to `/feature-implement` until the Verification Gate passes — all 5 foundations verified plus `/linter-setup` and `/harness-setup` complete.
+- **Gate-first:** check Activation Guards before any work — proceed ONLY in `workflow-greenfield-init` / `workflow-big-feature` AND when grep finds NO existing base/abstract/infrastructure scaffolding; otherwise SKIP and mark the step completed.
+- **Main steps (do ALL, in order):** (1) Read Plan — parse tech stack, architecture decisions, domain model; (2) Generate Scaffolding Checklist from the Backend + Frontend/UI categories; (3) Validate Against Plan — every architecture decision has a scaffolding item; (4) Present to User via `AskUserQuestion` to confirm the checklist; (5) Scaffold — create all base classes, interfaces, abstractions, infra code + the 5 production-readiness foundations; (6) Verify — build/compile + OOP/SOLID compliance + Verification Gate. Then invoke `/linter-setup` → `/harness-setup`, then `AskUserQuestion` handoff.
+- **Scope:** architecture-infrastructure creation (base classes, interfaces, DI, repos, cross-cutting), NOT feature implementation — checklists are TEMPLATES: adapt naming to the detected tech stack, skip irrelevant items, add plan-specific ones.
+- **Production-readiness:** stand up all 5 foundations (code-quality tooling, error handling, loading state, Docker, integration points) and delegate ALL sensor setup to `/linter-setup` then `/harness-setup` — never hand-configure linters/hooks here. — why: a checklist of installs is not a harness.
+- **Hard gate:** enforce OOP/SOLID on every base class and HARD-BLOCK the handoff to `/feature-implement` until the Verification Gate passes — all 5 foundations verified plus `/linter-setup` and `/harness-setup` complete.
 
 **Purpose:** Scaffolded project copy-ready as starter template. All base code, utilities, interfaces, infrastructure services created — best-practice setup, generic functions any feature story reuses.
 
@@ -63,7 +64,7 @@ description: '[Architecture] Use when scaffolding reusable OOP/SOLID project fou
 
 ## Backend Scaffolding Categories
 
-AI must self-investigate the chosen tech stack and produce a checklist covering these categories. Names below are illustrative — adapt to match the project's language, framework conventions, and actual needs.
+AI must self-investigate chosen tech stack, produce a checklist covering these categories. Names below are illustrative — adapt to the project's language, framework conventions, and actual needs.
 
 ### Domain Layer
 
@@ -144,6 +145,38 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 #### Design System Documentation
 
 - [ ] Create `docs/project-reference/design-system/README.md` skeleton with: token naming conventions, component tier classification (Common/Domain-Shared/Page), usage examples
+- [ ] **Author `docs/project-reference/ui-review-principles.md`** (the project-adopted UI-review PRINCIPLES the later `/ui-review` gate reads — these are design-time decisions, hand-authored, NOT code-derived). Capture, as project-enforced principles, every UI-review dimension: **Overflow & scroll containment** (long-content truncation/wrap) · **Responsive & small-screen** (flex-wrap / row-to-column so it stays usable on small devices) · **Flex-vs-fixed sizing** (flex-grow vs hard-coded dimensions) · **z-index discipline** (a documented layering scale, no ad-hoc values) · **BEM on all elements** · **Async states** (loading indicator, user-visible error surface, empty state, in-flight disable) · **Nesting depth ≤ 3 / no magic numbers**. **Cross-link** to `design-system/README.md` and `scss-styling-guide` so the seeded principle doc and the scan-derived docs form one navigable set. Contains NO real endpoints/keys.
+    - **No-UI skip rule:** author this doc ONLY when a frontend/UI stack is scaffolded. Backend-only project → SKIP and log the reason.
+
+## Example / Golden-Path Reference Scaffolding (copy-me implementations — MANDATORY)
+
+> **MANDATORY when scaffolding a foundation:** beyond the empty base abstractions above, emit **ONE worked, compile-checked example per best-practice pattern** — a copy-me reference implementation per layer. Empty abstractions are unverified skeletons; a worked example built ON TOP turns each base class into demonstrated, reviewable usage. This example set is exactly what Phase-02's `/architecture-review-full` grades, so it must exist before that gate runs.
+
+### Location & lifecycle (isolated, production-excluded)
+
+- Examples live in a DEDICATED, ISOLATED `examples/` tree (project-root `examples/` or `docs/project-reference/examples/`) — **NEVER mixed into the production `src/` tree.**
+- Name every file `*.example.*` (e.g. `create-order.command.example.ts`, `Order.entity.example.cs`).
+- **CI-compiled/linted but EXCLUDED from the production build** via a project-appropriate mechanism (separate compile target / tsconfig references / test-only project / build-exclude glob).
+- Devs COPY an example into `src/` to start a real feature; the whole `examples/` tree is deleted wholesale once no longer needed.
+
+### One worked example per applicable pattern (target ≥ 11)
+
+- **Backend:** command · query · command/query handler · entity-with-invariants · value-object · repository (concrete impl) · domain event + event handler.
+- **Frontend (only if a UI stack is present):** form component · list component · state store · API service.
+- **Tests:** one example integration test exercising the example command/query on BOTH the happy path AND a failure path.
+- **Absent-layer skips:** render fewer ONLY when a layer is genuinely absent (e.g. a backend-only project skips the frontend examples) — LOG each skipped example and WHY.
+
+### Every example MUST
+
+1. Follow the project's detected patterns — read `docs/project-reference/*-patterns-reference.md` and mirror the exact shapes.
+2. USE the scaffolded base abstractions (demonstrate them in action; do NOT re-implement them).
+3. Compile/lint clean under the CI (non-production) target.
+4. Carry this header comment verbatim (adapt the comment syntax to the language): `GOLDEN-PATH EXAMPLE — copy into src/ for real features; the examples/ tree is deleted when unused; NOT compiled into the production build.`
+5. Contain **NO secrets, real credentials, or real endpoints** — use obvious placeholders ONLY (`EXAMPLE_API_KEY`, `example.invalid`, `00000000-0000-0000-0000-000000000000`).
+
+### Right-sizing
+
+Examples DEMONSTRATE patterns — NOT a feature. Honor the scale-tier guard: a tiny T0/B0 project gets the minimal applicable set, never speculative extras.
 
 ## Code Quality Gate Tooling (MANDATORY MUST ATTENTION — Setup Before Any Feature Code)
 
@@ -178,9 +211,7 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 - `/linter-setup` handles: tool research → install → configure → pre-commit hooks → CI gates
 - `/harness-setup` handles: full harness inventory (feedforward guides + all feedback types)
 
-**WHY:** Code quality tooling is part of the project's outer agent harness.
-A checklist of installs is not a harness. A harness is a system of guides and sensors
-where each control fires at the right lifecycle stage and produces signals the agent can consume.
+**WHY:** Code quality tooling is part of the project's outer agent harness. A checklist of installs is not a harness — a harness is a system of guides and sensors where each control fires at the right lifecycle stage and produces signals the agent can consume.
 
 **After scaffold, invoke (in order):**
 
@@ -193,7 +224,7 @@ where each control fires at the right lifecycle stage and produces signals the a
 
 > **Scaffold Production Readiness** — See `<!-- SYNC:scaffold-production-readiness -->` block above for full inline protocol.
 
-Every scaffolded project MUST ATTENTION include these 5 foundations. AI must detect the tech stack from the plan/architecture report and present 2-3 options per concern via `AskUserQuestion`.
+Every scaffolded project MUST ATTENTION include these 5 foundations. AI must detect tech stack from the plan/architecture report, present 2-3 options per concern via `AskUserQuestion`.
 
 ### 1. Code Quality Tooling
 
@@ -267,6 +298,7 @@ After scaffolding is complete:
 3. **Architecture Diagram** — Optional: generate diagram showing the base class hierarchy
 4. **Production Readiness Verification** — All 5 concern areas verified via protocol checklists
 5. **Config Files Generated** — Linter, formatter, pre-commit, Docker configs all created
+6. **Golden-Path Examples** — one worked, compile-checked example per applicable pattern emitted under the isolated, production-excluded `examples/` tree; absent-layer skips logged with reason
 
 ## Verification Gate (MANDATORY before proceeding to /feature-implement)
 
@@ -279,12 +311,13 @@ Run ALL verification checklists from the production readiness protocol:
 - [ ] Integration points verified (Section 5)
 - [ ] `/linter-setup` completed (linter + formatter + pre-commit + CI gate configured)
 - [ ] `/harness-setup` completed (harness-inventory.md produced, feedforward guides in place)
+- [ ] Golden-path examples present — one worked example per applicable pattern under an isolated, production-excluded `examples/` tree; each compiles/lints under the CI (non-production) target; every example carries the `GOLDEN-PATH EXAMPLE` header and NO secrets/real endpoints; absent-layer skips logged with reason
 
 **BLOCK proceeding to `/feature-implement` if ANY verification item fails.** Fix issues first, then re-verify.
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"/feature-implement (Recommended)"** — Begin implementing feature stories on top of the scaffolding
 - **"/workflow-review-changes"** — Review scaffolding code before proceeding
@@ -314,11 +347,11 @@ Run ALL verification checklists from the production readiness protocol:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `/project-init` or the narrow route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `/sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -397,8 +430,9 @@ Run ALL verification checklists from the production readiness protocol:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -434,8 +468,8 @@ Run ALL verification checklists from the production readiness protocol:
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -461,6 +495,8 @@ Run ALL verification checklists from the production readiness protocol:
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Produce a copy-ready, OOP/SOLID-compliant architecture foundation — base classes, infrastructure abstractions, and quality-gate tooling — that every feature story reuses before implementation starts.
+
+**MUST ATTENTION — Main steps (execute ALL, in order; AI keeps forgetting these):** (1) Read Plan → (2) Generate Scaffolding Checklist (Backend + Frontend/UI categories) → (3) Validate Against Plan → (4) Present to User via `AskUserQuestion` → (5) Scaffold base classes/interfaces/infra + 5 production-readiness foundations → (6) Verify (build + OOP/SOLID + Verification Gate) → invoke `/linter-setup` → `/harness-setup` → `AskUserQuestion` handoff. NEVER skip, reorder, or merge a step without explicit user approval.
 
 **MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 

@@ -19,6 +19,8 @@ description: '[Architecture] Use when you need to analyze business domain: bound
 
 **Summary:**
 
+- **Purpose:** turn business artifacts into a user-validated DDD domain model (bounded contexts, aggregates, entities, VOs, domain events, ERD) so downstream code builds on correct invariants — never re-cut boundaries after consumers depend on them.
+- **Ten ordered steps (do all, none skippable):** 0 locate active plan + `domain-entities-reference.md` → 1 load business context (nouns→entities, verbs→events) → 2 identify bounded contexts → 3 model entities & aggregates → 4 map relationships → 5 domain events → 6 generate Mermaid ERD → 7 user-validation interview → 8 entity-change assessment vs reference doc → 9 update `plan.md` `## Domain Model`.
 - Drive the model from business artifacts, not guesses: load plan/PBI/business-eval inputs and `domain-entities-reference.md`, then extract nouns→entities, verbs→events, roles, and processes before classifying anything.
 - Every concept passes the Entity-vs-VO matrix and aggregate boundary rules (≤5 entities, one transaction, reference-by-ID only, root is the sole mutation entry) — flag primitive obsession and anemic models as you go.
 - User validation is non-skippable: present bounded contexts and the Mermaid ERD, then run the 5-8 question `AskUserQuestion` interview to confirm boundaries, aggregate roots, and event flows before marking the model confirmed.
@@ -26,14 +28,16 @@ description: '[Architecture] Use when you need to analyze business domain: bound
 
 **Workflow:**
 
-1. **Load Business Context** — Read idea, business evaluation, refined PBI artifacts + domain-entities-reference.md
-2. **Identify Bounded Contexts** — Group related concepts, define context boundaries
+0. **Locate Active Plan & Domain Reference** — Glob `plans/*/plan.md`, read plan + prior research + `domain-entities-reference.md`; set `{plan-dir}`
+1. **Load Business Context** — Read idea, business evaluation, refined PBI artifacts; extract nouns→entities, verbs→events, roles, processes
+2. **Identify Bounded Contexts** — Group related concepts, define context boundaries (validate grouping with user)
 3. **Model Entities & Aggregates** — Define aggregates, entities, value objects per context
-4. **Map Relationships** — Entity relationships, cross-context integration points
-5. **Domain Events** — Identify events crossing context boundaries
+4. **Map Relationships** — Entity relationships, cross-context integration points (context map)
+5. **Domain Events** — Identify events crossing context boundaries, `{AggregateNoun}{PastTenseVerb}`
 6. **Generate ERD** — Mermaid ER diagram with all entities and relationships
-7. **User Validation** — Present model, ask 5-8 questions, confirm decisions
-8. **Domain Entity Change Assessment** — Compare against domain-entities-reference.md, update if needed
+7. **User Validation** — Present model, ask 5-8 questions, confirm decisions → `status: confirmed`
+8. **Domain Entity Change Assessment** — Compare against `domain-entities-reference.md`, update/create if needed
+9. **Update Main Plan** — Append/update `## Domain Model` section of `{plan-dir}/plan.md`
 
 **Key Rules:**
 
@@ -832,7 +836,7 @@ Report must be **≤250 lines**. Use tables over prose.
 
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, use `AskUserQuestion` to present these options:
 
-- **"/review-domain-entities (Recommended)"** — Review DDD quality of entities modeled/modified in this analysis (anemic model, VO classification, invariant enforcement, aggregate boundaries)
+- **"/domain-entities-review (Recommended)"** — Review DDD quality of entities modeled/modified in this analysis (anemic model, VO classification, invariant enforcement, aggregate boundaries)
 - **"/tech-stack-research"** — Research tech stack based on domain model
 - **"/plan"** — If tech stack already decided and entity quality already reviewed
 - **"Skip, continue manually"** — user decides
@@ -865,8 +869,9 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -910,6 +915,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Critical Thinking:** Traced proof per claim; confidence >80% to act, NEVER guess as fact.
 
+**IMPORTANT MUST ATTENTION** run ALL ten ordered steps, none skippable: 0 locate plan + reference → 1 load context → 2 bounded contexts → 3 entities/aggregates → 4 relationships → 5 domain events → 6 Mermaid ERD → 7 user-validation interview → 8 entity-change assessment → 9 update `plan.md` — why: AI keeps dropping Step 0 (plan load) and Step 9 (plan update), leaving the model un-anchored and un-persisted.
 **IMPORTANT MUST ATTENTION** validate EVERY bounded context + key relationship with user via `AskUserQuestion` — NEVER auto-decide a boundary — why: DDD boundaries are hard to reverse once consumers depend on them; one wrong cut costs days of rework.
 **IMPORTANT MUST ATTENTION** domain events ALWAYS follow `{AggregateNoun}{PastTenseVerb}` naming — NEVER command-style (`CancelOrder`) or generic (`OrderStatusChanged`) — why: command/generic names hide what happened and break consumer routing.
 **IMPORTANT MUST ATTENTION** NEVER place cross-service FK in the ERD — use ID reference (`{Entity}Id` string/ULID) + event-driven sync only — why: cross-service FK couples schemas and blocks independent deployment.

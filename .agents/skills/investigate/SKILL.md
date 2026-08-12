@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -51,6 +52,8 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
+- **Purpose:** read-only, evidence-backed map of how existing code works — the next decision/fix rests on verified flow, never assumption.
+- **Main steps (run in order):** Phase 0 Classify (quick / deep / debug / recommendation) → Discovery (Entities > Commands > Events > Controllers) → Graph Expand (2-3 key files, main agent only) → Knowledge Graph (per-file doc) → Flow Mapping (entry → exit + side effects) → Analysis (business rules / validation / authz / error paths) → Synthesis (deep scope → analysis file) → Present (structured findings + deeper-dive offer).
 - Classify scope FIRST (Phase 0: quick / deep / debug / recommendation) — depth and deliverables (analysis file, validation chain) flow from this, so never skip straight to grepping.
 - Graph is MANDATORY, not optional: the main agent MUST run at least one `code_graph` command on 2-3 key files before concluding — graph surfaces callers, bus consumers, and importers that grep alone misses (sub-agents cannot use graph).
 - Stay strictly READ-ONLY and cite `file:line` for every claim; unverified statements MUST be marked "inferred", and recommending any code change forces the full validation chain (all impls/registrations/usages/cross-service impact + confidence declaration).
@@ -106,7 +109,7 @@ Explain scope: same READ-ONLY evidence gate; deliverable is an in-chat developer
 
 ### Logical-ID Extraction & Business-Intent Rule (M3/M5)
 
-See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. When extracting operations, business rules, or events into findings:
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. When extracting operations, business rules, or events into findings:
 
 - Assign each extracted operation/rule/event a logical ID (FR-/BR- for operations and rules) as the PRIMARY identifier. Keep the `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths — those live only in the provenance sidecar) as a SEPARATE carrier — never fold the source link into the rule statement itself (M3).
 - For every rule, explain **WHY** it exists (the business intent / invariant it protects), not only **WHAT** the code does. State the rule in tech-agnostic business terms so the finding is reusable by a rebuild team on any stack (M5).
@@ -242,7 +245,7 @@ For bug, failed-verification, or behavior-changing investigations, MUST ATTENTIO
 ### Contract (read first)
 
 - **DERIVE SCOPE FROM THE PROMPT.** No target named → default to the **current working context**: active tasks (the current task list) + working-tree changes (`git diff --name-only` + untracked via `git ls-files --others --exclude-standard`) + active plan / latest `$watzup` summary if present.
-- **NEVER ASK THE USER A QUESTION.** Strictly one-way: no teach-back, no quiz, no a direct user question, no ambiguity question, no comprehension gate. Infer the most likely target, state the assumption in one line, proceed. (The pre-skill workflow-detection gate is a separate concern, already exempt when the developer explicitly invokes the skill.)
+- **NEVER ASK THE USER A QUESTION.** Strictly one-way: no teach-back, no quiz, no ask the user directly, no ambiguity question, no comprehension gate. Infer the most likely target, state the assumption in one line, proceed. (The pre-skill workflow-detection gate is a separate concern, already exempt when the developer explicitly invokes the skill.)
 - **OPT-IN, NEVER BLOCKS.** Explain and end. Never traps the developer in a loop; never gates commit/implementation/workflow progress.
 - **ALWAYS EXPLAIN IN FULL — REGARDLESS OF CODING LEVEL.** Always cover purpose + how + why. Coding level only tunes vocabulary/analogy density (ELI5 ↔ terse-for-experts) — it NEVER decides _whether_ to explain and NEVER trims the three sections.
 - **EXPLAIN THE WHOLE SCOPE, LEAD WITH THE NON-OBVIOUS.** Cover everything in scope, but order by leverage — open with highest-blast-radius / highest-future-change-cost / most-surprising parts; treat boilerplate/CRUD briefly. Nothing silently omitted.
@@ -305,7 +308,7 @@ Proactively offer a simpler restatement/analogy for any dense point. Responding 
 
 Mark ledger items `explained`. Close with a 2–3 line recap (purpose in one sentence, key mechanic in one, highest-leverage trade-off / blast-radius note in one). End there. Do NOT quiz, do NOT ask the developer to restate, do NOT loop, NEVER block the next step.
 
-**NOT for:** investigation/docs/design/research where nothing was built or planned to understand; forcing comprehension as a hard gate; reviewing code quality (use `$code-review`, `$review-changes`).
+**NOT for:** investigation/docs/design/research where nothing was built or planned to understand; forcing comprehension as a hard gate; reviewing code quality (use `$code-review`, `$changes-review`).
 
 **Anti-Rationalization:** "Senior dev, skip it" → NEVER skip by level. · "I'll quiz them" → one-way only, never ask. · "Ambiguous — I'll ask which" → infer + state assumption, proceed. · "Dump everything" → derive scope first, order by leverage. · "Skip trade-offs" → WHY-this-way is mandatory. · "Drop ledger by the skill" → only `tmp/understand/{branch}.md`. · "Write the doc and move on silently" → the chat is the deliverable; announce the ledger path.
 
@@ -420,11 +423,11 @@ Find working reference → compare implementations → identify differences → 
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -465,7 +468,7 @@ Find working reference → compare implementations → identify differences → 
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -566,8 +569,9 @@ Find working reference → compare implementations → identify differences → 
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -625,8 +629,8 @@ Find working reference → compare implementations → identify differences → 
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -671,6 +675,8 @@ Find working reference → compare implementations → identify differences → 
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; mark one `in_progress`, complete each immediately after its evidence lands.
 - **MANDATORY IMPORTANT MUST ATTENTION** Phase 0: classify scope (quick / deep / debug / recommendation) before acting — depth, analysis file, and validation chain all flow from this; DECLARE scope before skipping any step.
+- **MANDATORY IMPORTANT MUST ATTENTION** run the main steps in order — Classify → Discovery → Graph Expand → Knowledge Graph → Flow Mapping → Analysis → Synthesis → Present; quick scope may skip the analysis file but NEVER the graph command — why: each step feeds the next, and skipping graph leaves the call/event/import edges unmapped.
+- **MANDATORY IMPORTANT MUST ATTENTION** `--mode=explain` → deliver a one-way developer narrative (WHAT → PURPOSE → HOW → WHY-this-way → IMPACT), tuned by coding level, written to git-ignored `tmp/understand/{branch}.md` (the chat is the deliverable — announce the ledger path); NEVER ask the user a question, NEVER skip by coding level, NEVER relax the evidence/graph/READ-ONLY gate — why: explain mode changes only the deliverable shape, not the proof discipline.
 - **MANDATORY IMPORTANT MUST ATTENTION** read required project docs first (always `lessons.md`; `project-structure-reference.md` for architecture) — project conventions override generic framework assumptions — why: local patterns differ from framework defaults and silently invalidate generic reasoning.
 - **MANDATORY IMPORTANT MUST ATTENTION** grep 3+ similar patterns and read the actual implementations before concluding — NEVER assume code works as named; verify by reading — why: a name promises behavior the body may not deliver.
 - **MANDATORY IMPORTANT MUST ATTENTION** evaluate pattern FIT before reusing a nearby example — confirm the new context shares the same base classes, scope, lifetime, and preconditions — why: closest example ≠ matching constraints.
@@ -775,8 +781,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -787,6 +794,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

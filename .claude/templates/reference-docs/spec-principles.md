@@ -25,7 +25,8 @@ Implementation identifiers belong in evidence carriers only:
 
 - `[Source: namespace/service/id]`
 - `**Evidence:**`
-- `**IntegrationTest:**`
+- `**CoveredBy:**` — canonical test-coverage carrier
+- `**IntegrationTest:**` — legacy alias, still accepted as migration input; NOT emitted by current templates
 - frontmatter
 - diagrams
 

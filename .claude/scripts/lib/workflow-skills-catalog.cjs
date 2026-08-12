@@ -41,16 +41,40 @@ function safeCell(value) {
     .replace(/\|/g, "\\|");
 }
 
-// Strip one layer of surrounding YAML quotes from a frontmatter scalar.
+// Decode a YAML frontmatter scalar: strip the surrounding quotes AND undo the escaping that
+// quote style implies. Stripping the wrapper alone is NOT enough — a single-quoted scalar encodes
+// an apostrophe as a DOUBLED quote, so `'a bug''s root cause'` de-wrapped but not decoded renders
+// the artifact `a bug''s root cause` into every generated surface (CLAUDE.md, AGENTS.md, the Codex
+// mirrors) with nothing downstream to catch it.
+//
+// One of THREE copies of this contract: stripQuotes() in
+// .claude/scripts/codex/migrate-claude-to-codex.mjs and unquoteYamlScalar() in
+// .claude/scripts/skill-gc.cjs. They must stay behaviourally identical — the same description has
+// to render the same on every surface — and `decoder-parity.test.mjs` is what enforces that. The
+// single-quoted branch's repeat-until-stable collapse also absorbs the double-escaping that legacy
+// non-idempotent normalization left behind; its cost is that two GENUINE consecutive apostrophes
+// over-collapse to one, which is accepted (legacy double-escaping is observed; `don''''t` is not).
 function unquote(value) {
-  let s = String(value).trim();
-  if (
-    (s.startsWith("'") && s.endsWith("'")) ||
-    (s.startsWith('"') && s.endsWith('"'))
-  ) {
-    s = s.slice(1, -1);
+  const s = String(value).trim();
+  if (s.length < 2) return s;
+  if (s.startsWith("'") && s.endsWith("'")) {
+    let out = s.slice(1, -1);
+    let previous = "";
+    while (out !== previous) {
+      previous = out;
+      out = out.replace(/''/g, "'");
+    }
+    return out.trim();
   }
-  return s.trim();
+  if (s.startsWith('"') && s.endsWith('"')) {
+    // Double-quoted YAML escapes with a backslash; only the escapes a one-line description can
+    // realistically carry are decoded here.
+    return s
+      .slice(1, -1)
+      .replace(/\\(["\\/])/g, "$1")
+      .trim();
+  }
+  return s;
 }
 
 /**
@@ -87,7 +111,7 @@ function condenseWhenToUse(
   return out.replace(/\|/g, "\\|");
 }
 
-// The base skill token of a sequence step ("review-artifact --type=pbi" -> "review-artifact").
+// The base skill token of a sequence step ("artifact-review --type=pbi" -> "artifact-review").
 function baseSkill(step) {
   return String(step).split(/\s+/)[0];
 }

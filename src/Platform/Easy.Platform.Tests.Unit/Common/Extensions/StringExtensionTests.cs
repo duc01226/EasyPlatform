@@ -163,6 +163,21 @@ public class StringExtensionTests : PlatformUnitTestBase
         "hello.world".TakeUntilNextChar('.').Should().Be("hello");
     }
 
+    [Fact]
+    public void TakeUntilNextChar_WhenCharAbsent_ReturnsOriginalString()
+    {
+        // Contract: "If the character is not found in the string, the original string is returned." The prior
+        // implementation did Substring(0, IndexOf) → Substring(0, -1) → ArgumentOutOfRangeException. Guards the
+        // regression that broke IPlatformFileStorageDirectory.GetDirectChildDirectories on a top-level blob.
+        "no-separator-here".TakeUntilNextChar('/').Should().Be("no-separator-here");
+    }
+
+    [Fact]
+    public void TakeUntilNextChar_WhenCharIsFirst_ReturnsEmptyString()
+    {
+        "/leading".TakeUntilNextChar('/').Should().BeEmpty();
+    }
+
     // ── IsNullOrEmptyId ──
 
     [Theory]

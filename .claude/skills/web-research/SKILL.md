@@ -19,7 +19,9 @@ description: '[Research] Use when starting a web research task — discover, gat
 
 **Summary:**
 
-- Hard-cap fan-out at 10 `WebSearch` calls per invocation — generate 5-10 angle-varied queries (overview, current-state, comparison, data, expert, criticism) and stop searching at the cap; this is breadth-then-triage, not deep-dive.
+- **Purpose:** breadth-first source discovery + triage for `deep-research` — produce a tiered, deduplicated source map, NOT a synthesized report.
+- **Main steps (all 5, in order):** (1) Define scope — parse topic, generate 5-10 angle-varied queries (overview, current-state, comparison, data, expert, criticism); (2) Execute searches — run `WebSearch` per query (≤10 calls), record title/URL/snippet/source-type; (3) Source triage — classify each result Tier 1-4, filter duplicates; (4) Build source map — write to `.claude/tmp/_sources-{slug}.md` (sources table + Gaps Identified); (5) Identify gaps — note underexplored angles for `deep-research`.
+- Hard-cap fan-out at 10 `WebSearch` calls per invocation — generate 5-10 angle-varied queries and stop at the cap; this is breadth-then-triage, not deep-dive.
 - Classify every result into Tier 1-4 (.gov/.edu/official > industry reports > established blogs/Wikipedia > forums/social) and dedupe by URL/syndicated content before it counts as a source.
 - The deliverable is the intermediate source map at `.claude/tmp/_sources-{slug}.md` (sources table + Gaps Identified), NOT a synthesized report — hand it off to `deep-research`.
 - Mine the source set for gaps (missing perspectives, missing quantitative data, stale recency) so the next step knows what to dig deeper on.
@@ -166,8 +168,9 @@ Note gaps for the `deep-research` step.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -212,6 +215,7 @@ Note gaps for the `deep-research` step.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Critical Thinking:** Traced proof per claim, confidence >80% to act; NEVER present guess as fact.
 
+**IMPORTANT MUST ATTENTION** run ALL 5 main steps in order — (1) define scope + generate 5-10 angle-varied queries → (2) execute `WebSearch` (≤10 calls), record title/URL/snippet/type → (3) triage each result Tier 1-4 + dedupe → (4) build source map at `.claude/tmp/_sources-{slug}.md` → (5) identify gaps for `deep-research` — why: skipping a step (esp. triage or gaps) yields untiered, gap-blind feedstock that breaks the next stage.
 **IMPORTANT MUST ATTENTION** cap WebSearch at 10 calls per invocation; generate 5-10 angle-varied queries (overview, current-state, comparison, data, expert, criticism) then stop at the cap — why: bounded fan-out keeps this breadth-then-triage, not a deep-dive into one angle.
 **IMPORTANT MUST ATTENTION** rank every source by tier (Tier 1 .gov/.edu/official > Tier 2 industry reports > Tier 3 established blogs/Wikipedia > Tier 4 forums/social) and dedupe by URL/syndicated content before it counts — why: tier ranking + dedupe keep the feedstock high-signal for deep-research.
 **MANDATORY IMPORTANT MUST ATTENTION** NEVER cite a Tier 4 / single source as authoritative — cross-validate every factual claim against 2+ independent sources and declare confidence (95/80/60/<60%) — why: one unverified source = a hallucination-amplifier downstream.

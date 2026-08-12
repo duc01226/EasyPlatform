@@ -15,6 +15,13 @@ import zipfile
 from pathlib import Path
 from quick_validate import validate_skill
 
+# Emoji/unicode output must not crash on legacy consoles (e.g. Windows cp1252).
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 
 def package_skill(skill_path, output_dir=None):
     """

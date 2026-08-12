@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -60,9 +61,10 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
-- This skill is a ROUTER, not an author — start with Phase 0 triage (git diff → categorize → dedup modules) and delegate each doc type to its owner (`$spec`, `$spec [mode=tests]`, `$spec [mode=sync]`, `$spec-index`); NEVER write §8 or `docs/specs/` content directly.
-- Create ALL 8 tasks via task tracking before touching any file; run the fixed phase order `0 → 1 → 2 → 2.5 → 3 → 4 → 5 → final review` and mark every skipped phase `completed` with a reason — fast-exit is a decision, never a silent omission.
-- The final pass (Step 2.4) is the workflow's last gate: per touched module verify the shipped code against §3 ACs, §4 BRs, and §8 TCs — a removed/weakened [HARD] BR is a code-vs-spec contradiction that BLOCKS completion.
+- This skill is a ROUTER, not an author — start with Phase 0 triage (git diff → categorize → dedup modules → check existing docs) and delegate each doc type to its owner (`$spec`, `$spec [mode=tests]`, `$spec [mode=sync]`, `$spec-index`, `$tech-spec` for derived technical views); NEVER write §8, `docs/specs/`, or derived technical spec content directly. — why: dual authorship diverges spec from index/view.
+- **Main steps (each impact-gated; skipped phase → mark `completed` with reason):** Phase 0 triage (git diff → categorize → dedup modules → record existing-doc state) → Phase 1 project docs (`project-structure-reference.md`, `README.md` via `docs-manager`) → Phase 2 `$spec` (§1–§7 Feature Spec; doc-first BLOCK when feature behavior changed but no Spec exists) → Phase 2.5 `$spec-index` (derived bucket INDEX/ERD refresh, optional) → Phase 2.6 `$tech-spec` (derived technical view refresh/audit, optional when technical tree is affected) → Phase 3 `$spec [mode=tests]` (§8 TCs) → Phase 4 `$spec [mode=sync]` (§8 ↔ test code) → Phase 5 summary report → final review (#8 runs the Step 2.4 code↔spec sync-verify).
+- Create ALL 8 tasks via task tracking before touching any file; run the fixed phase order `0 → 1 → 2 → 2.5/2.6 → 3 → 4 → 5 → final review` — fast-exit is a decision, never a silent omission.
+- The final pass (Step 2.4) is the workflow's last gate: per touched module verify shipped code against §3 ACs, §4 BRs, §8 TCs — a removed/weakened [HARD] BR is a code-vs-spec contradiction that BLOCKS completion.
 - Output is tech-agnostic prose (no framework/product names outside evidence fields) and traceability-first (update `FR-`/`BR-`/`OP-`/`TC-` logical IDs before prose); ALWAYS write the Phase 5 summary report as the audit trail.
 
 **Orchestration Model:**
@@ -71,6 +73,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 git diff → Triage → Phase 1: Project Docs (inline)
                   → Phase 2: $spec (business feature docs)
                   → Phase 2.5: $spec-index (derived index/ERD refresh) [optional]
+                  → Phase 2.6: $tech-spec (derived technical view refresh/audit) [optional]
                   → Phase 3: $spec [mode=tests] (§8 test specifications)
                   → Phase 4: $spec [mode=sync] (§8 ↔ test code sync)
                   → Phase 5: Summary Report
@@ -86,8 +89,8 @@ git diff → Triage → Phase 1: Project Docs (inline)
 - MUST ATTENTION dedup module list — backend + frontend changes for same module = ONE entry
 - MUST ATTENTION track step state live: `in_progress` -> execute -> `completed` (or `completed` with skip reason)
 - For `.claude` skills/hooks/workflows/sync tooling changes, flag generated mirror sync status (`npm run codex:sync` completed or explicit N/A). `docs-update` routes and reports this check; it does not edit generated mirrors directly.
-- **[BLOCKING] Tech-agnostic output:** when updating spec/specs/README/INDEX, do NOT introduce framework/product/language/design-pattern names into prose or headings — preserve the evidence-field exception (`**Evidence**`, `IntegrationTest`, `[Source:]`, frontmatter, Mermaid). Authority: `docs/project-reference/spec-principles.md` §3.
-- **[BLOCKING] M3 Traceability Update:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. When syncing docs after code changes, update the logical-ID mappings (`FR-`/`BR-`/`OP-`/`TC-`) FIRST, then the prose. The `[Source: namespace/service/id]` abstract-anchor evidence is re-resolved ONLY if the logical artifact was renamed/split — a file move or stack change does NOT change the anchor (physical coords live only in the provenance sidecar) — and the logical-ID spine stays stable across the change — never drop or renumber a logical ID just because the code moved. Keep all synced prose M1/M2-clean.
+- **[BLOCKING] Tech-agnostic output:** when updating spec/specs/README/INDEX, do NOT introduce framework/product/language/design-pattern names into prose or headings — preserve the evidence-field exception (`**Evidence**`, `CoveredBy`, legacy `IntegrationTest`, `[Source:]`, frontmatter, Mermaid). Authority: `docs/project-reference/spec-principles.md` §3.
+- **[BLOCKING] M3 Traceability Update:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. When syncing docs after code changes, update the logical-ID mappings (`FR-`/`BR-`/`OP-`/`TC-`) FIRST, then the prose. The `[Source: namespace/service/id]` abstract-anchor evidence is re-resolved ONLY if the logical artifact was renamed/split — a file move or stack change does NOT change the anchor (physical coords live only in the provenance sidecar) — and the logical-ID spine stays stable across the change — never drop or renumber a logical ID just because the code moved. Keep all synced prose M1/M2-clean.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80%.**
 
@@ -102,8 +105,8 @@ git diff → Triage → Phase 1: Project Docs (inline)
 | 1   | `[docs-update] Phase 0 — Triage: collect git diff, categorize files, detect modules, check existing docs`                                                                                      | No — always first                                                                           |
 | 2   | `[docs-update] Phase 1 — Update project docs (project-structure-reference.md, README.md)`                                                                                                      | Yes — only if configured framework/shared source paths or architectural changes are in diff |
 | 3   | `[docs-update] Phase 2 — Invoke $spec: update business feature docs`                                                                                                                           | Yes — service/frontend files changed AND module has existing feature docs                   |
-| 4   | `[docs-update] Phase 2.5 — Invoke $spec-index [mode=index]: refresh derived bucket INDEX/ERD`                                                                                                  | Yes — a Feature Spec changed AND the bucket maintains a derived index/ERD                   |
-| 5   | `[docs-update] Phase 3 — Invoke $spec [mode=tests]: update/add §8 test specifications`                                                                                                         | Yes — new functionality added OR existing behavior changed                                  |
+| 4   | `[docs-update] Phase 2.5/2.6 — Refresh derived views via $spec-index and/or $tech-spec`                                                                                                        | Yes — Feature Spec changed and bucket maintains INDEX/ERD, OR technical tree is affected    |
+| 5   | `[docs-update] Phase 3 — Invoke $spec [mode=tests]: update/add §8 business test specifications`                                                                                                | Yes — business-visible functionality added OR existing business-visible behavior changed    |
 | 6   | `[docs-update] Phase 4 — Invoke $spec [mode=sync]: sync §8 ↔ test code`                                                                                                                        | Yes — Phase 3 changed §8 TCs                                                                |
 | 7   | `[docs-update] Phase 5 — Write summary report to plans/reports/docs-update-{YYMMDD}-{HHMM}.md`                                                                                                 | No — always                                                                                 |
 | 8   | `[docs-update] Final review — verify all impacted docs updated, no phases skipped without justification, AND run the Step 2.4 code↔spec sync-verify (AC/BR/TC drift) for every touched module` | No — always                                                                                 |
@@ -122,16 +125,16 @@ git diff → Triage → Phase 1: Project Docs (inline)
 
 ## Step-Skill Call Order (Do Not Reorder)
 
-| Order | Task ID | Step / Phase                     | Skill Call                             | Tracking Rule                                                                                 |
-| ----- | ------- | -------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 1     | 1       | Phase 0: Triage                  | Inline triage logic in this skill      | Set Task 1 `in_progress` before diff scan; set `completed` after module + impact map recorded |
-| 2     | 2       | Phase 1: Project Docs            | `docs-manager` sub-agent (if impacted) | Set Task 2 `in_progress` before spawn/update; `completed` with updated docs or skip reason    |
-| 3     | 3       | Phase 2: Business Feature Docs   | `$spec`                                | Set Task 3 `in_progress` before invocation; `completed` after output review                   |
-| 4     | 4       | Phase 2.5: Derived Index Refresh | `$spec-index [mode=index]`             | Set Task 4 `in_progress` before invocation; `completed` after INDEX rows match Feature Specs  |
-| 5     | 5       | Phase 3: §8 Test Specs           | `$spec [mode=tests]`                   | Set Task 5 `in_progress` before invocation; `completed` after TC review                       |
-| 6     | 6       | Phase 4: §8 ↔ Test Code Sync     | `$spec [mode=sync]`                    | Set Task 6 `in_progress` before invocation; `completed` after sync validation                 |
-| 7     | 7       | Phase 5: Summary Report          | Inline report write                    | Set Task 7 `in_progress` before report write; `completed` after file path confirmed           |
-| 8     | 8       | Final Review                     | Inline verification gate               | Set Task 8 `in_progress` before final audit; `completed` after all phases justified           |
+| Order | Task ID | Step / Phase                        | Skill Call                                                   | Tracking Rule                                                                                 |
+| ----- | ------- | ----------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1     | 1       | Phase 0: Triage                     | Inline triage logic in this skill                            | Set Task 1 `in_progress` before diff scan; set `completed` after module + impact map recorded |
+| 2     | 2       | Phase 1: Project Docs               | `docs-manager` sub-agent (if impacted)                       | Set Task 2 `in_progress` before spawn/update; `completed` with updated docs or skip reason    |
+| 3     | 3       | Phase 2: Business Feature Docs      | `$spec`                                                      | Set Task 3 `in_progress` before invocation; `completed` after output review                   |
+| 4     | 4       | Phase 2.5/2.6: Derived View Refresh | `$spec-index [mode=index]` and/or `$tech-spec [mode=generate | audit]`                                                                                       | Set Task 4 `in_progress` before invocation; `completed` after derived outputs are refreshed or skipped with reason |
+| 5     | 5       | Phase 3: §8 Test Specs              | `$spec [mode=tests]`                                         | Set Task 5 `in_progress` before invocation; `completed` after TC review                       |
+| 6     | 6       | Phase 4: §8 ↔ Test Code Sync        | `$spec [mode=sync]`                                          | Set Task 6 `in_progress` before invocation; `completed` after sync validation                 |
+| 7     | 7       | Phase 5: Summary Report             | Inline report write                                          | Set Task 7 `in_progress` before report write; `completed` after file path confirmed           |
+| 8     | 8       | Final Review                        | Inline verification gate                                     | Set Task 8 `in_progress` before final audit; `completed` after all phases justified           |
 
 **Enforcement:** If a required step cannot run, STOP and ask user before adapting order. Never continue with untracked steps.
 
@@ -263,11 +266,12 @@ Mode: update (existing docs only, do not create from scratch).
 
 For each module touched in this run, diff the changed code against its Feature Spec and check three sets:
 
-| Spec set (Feature Spec section)                               | Sync check against changed code                                                                                  | On drift                                                                       |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| **§3 Acceptance Criteria** (AC-{FC}-NN)                       | Every changed user-facing behavior maps to an AC; new behavior with no AC = missing AC.                          | Report drift; re-invoke `$spec` to add the AC.                                 |
-| **§4 Business Rules** (BR-{FC}-NNN, [HARD]/[SOFT])            | Each changed validation/invariant matches a BR; a [HARD] rule whose code path was removed/weakened = regression. | **BLOCK** — surface as a code-vs-spec contradiction for the author to resolve. |
-| **§8 Test Specifications** (TC-{FC}-NNN + `IntegrationTest:`) | Each new/changed behavior has a TC; each `Tested` TC's `IntegrationTest: {File}::{Method}` still resolves.       | Report; route to `$spec [mode=sync]`.                                          |
+| Spec set (Feature Spec section)                          | Sync check against changed code                                                                                                                                                                       | On drift                                                                       |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | -------- |
+| **§3 Acceptance Criteria** (AC-{FC}-NN)                  | Every changed user-facing behavior maps to an AC; new behavior with no AC = missing AC.                                                                                                               | Report drift; re-invoke `$spec` to add the AC.                                 |
+| **§4 Business Rules** (BR-{FC}-NNN, [HARD]/[SOFT])       | Each changed validation/invariant matches a BR; a [HARD] rule whose code path was removed/weakened = regression.                                                                                      | **BLOCK** — surface as a code-vs-spec contradiction for the author to resolve. |
+| **§8 Test Specifications** (TC-{FC}-NNN + `CoveredBy:`)  | Each new/changed business-visible behavior has a TC; each `Tested` TC's `CoveredBy: {File}::{Method}` or approved coverage carrier still resolves. Legacy `IntegrationTest:` is migration input only. | Report; route to `$spec [mode=sync]`.                                          |
+| **Derived technical views** (`specRoots.technical.path`) | Technical-only coverage or component topology changes may require a regenerated/audited derived view. The view is generated from code/tests and is never hand-authored.                               | Report; route to `$tech-spec [mode=generate                                    | audit]`. |
 
 **Output:** a short sync-verify table (module · AC drift · BR drift/contradiction · TC drift) appended to the docs-update report. Clean = no drift across all three. A [HARD]-BR contradiction blocks workflow completion until resolved or explicitly accepted by the owner.
 
@@ -314,7 +318,7 @@ Output: regenerated DERIVED docs/specs/{Bucket}/INDEX.md (+ {Bucket}.erd.md if m
 
 ## Phase 3: Test Specifications — Invoke `$spec [mode=tests]`
 
-**When to run:** New functionality added (commands, queries, endpoints, components) OR existing behavior changed.
+**When to run:** New business-visible functionality added OR existing business-visible behavior changed. Technical-only changes with no changed user/QC-visible outcome produce no business Section 8 edits; route any technical coverage need to tests and `$tech-spec` for the derived technical view.
 
 **When to skip:** Changes purely cosmetic (styling, comments, docs-only) with no behavioral impact.
 
@@ -336,7 +340,7 @@ Output: regenerated DERIVED docs/specs/{Bucket}/INDEX.md (+ {Bucket}.erd.md if m
 $spec [mode=tests] Mode: {detected mode}.
 Modules: {detected modules}.
 Changed files: {list from triage}.
-New functionality detected: {new commands/queries/endpoints from diff analysis}.
+Business-visible functionality detected: {new or changed user/QC-visible outcomes from diff analysis}.
 ```
 
 **What `$spec [mode=tests]` handles (DO NOT duplicate here):**
@@ -348,11 +352,11 @@ New functionality detected: {new commands/queries/endpoints from diff analysis}.
 - Phase-mapped coverage (plan phases → TCs)
 - Graph context analysis for cross-service impact
 - Evidence verification per TC
-- Write to feature doc Section 8 (canonical TC registry)
+- Write to feature doc Section 8 (canonical business TC registry)
 
 ### Step 3.3: Review `$spec [mode=tests]` Output
 
-1. New TCs cover all new functionality from triage
+1. New TCs cover all new business-visible functionality from triage
 2. TC IDs don't collide with existing ones
 3. Evidence fields populated (not template placeholders)
 
@@ -368,17 +372,17 @@ New functionality detected: {new commands/queries/endpoints from diff analysis}.
 
 ```
 $spec [mode=sync] Sync test specs for capabilities: {detected features}.
-Direction: forward (Feature Spec §8 Test Specifications → integration test code).
+Direction: forward (Feature Spec §8 Test Specifications → executing test code).
 Updated TCs from Phase 3: {list of new/changed TC IDs}.
 ```
 
 **What `$spec [mode=sync]` handles (DO NOT duplicate here):**
 
-- Forward/reverse sync: §8 Test Specifications ↔ integration test code
+- Forward/reverse sync: §8 Test Specifications ↔ executing test code
 - 2-way comparison: Feature Spec §8 vs test code (code is the technical source of truth)
-- Integration test cross-reference (configured test-spec annotation key `TestSpec` and the per-TC `IntegrationTest:` field)
+- Test cross-reference (configured test-spec annotation key `TestSpec` across all executing test tiers and the per-TC `CoveredBy:` field; legacy `IntegrationTest:` is migration input only)
 
-> The retired QA dashboards (`docs/specs/README.md`, `docs/specs/PRIORITY-INDEX.md`) and the `A-E`/`M##` engineering tree no longer exist — §8 is the canonical TC registry. The only derived TC roll-up is the bucket `INDEX.md` count, refreshed in Phase 2.5.
+> The retired QA dashboards (`docs/specs/README.md`, `docs/specs/PRIORITY-INDEX.md`) and the hand-maintained `A-E`/`M##` engineering tree no longer exist — §8 is the canonical business TC registry. Derived aids are the bucket `INDEX.md` count (Phase 2.5) and the regenerable technical view under `specRoots.technical.path` (Phase 2.6).
 
 ### Step 4.2: Review Sync Results
 
@@ -391,12 +395,13 @@ Updated TCs from Phase 3: {list of new/changed TC IDs}.
 
 **Which skill owns which doc sections** — `docs-update` delegates only, NEVER writes directly:
 
-| Section                         | Owner Skill              | docs-update Role                                      |
-| ------------------------------- | ------------------------ | ----------------------------------------------------- |
-| §1–§7 (Feature Spec, tech-free) | `$spec`                  | Pass triage context; review output                    |
-| §8 (Test Specifications)        | `$spec [mode=tests]`     | Pass TC mode + changed files; NEVER write TCs here    |
-| §8 ↔ test code sync             | `$spec [mode=sync]`      | Pass capability list + direction; NEVER edit directly |
-| Derived bucket `INDEX.md` / ERD | `$spec-index` (optional) | Pass bucket scope; NEVER hand-edit the derived index  |
+| Section                         | Owner Skill              | docs-update Role                                                         |
+| ------------------------------- | ------------------------ | ------------------------------------------------------------------------ |
+| §1–§7 (Feature Spec, tech-free) | `$spec`                  | Pass triage context; review output                                       |
+| §8 (Test Specifications)        | `$spec [mode=tests]`     | Pass TC mode + changed files; NEVER write TCs here                       |
+| §8 ↔ test code sync             | `$spec [mode=sync]`      | Pass capability list + direction; NEVER edit directly                    |
+| Derived bucket `INDEX.md` / ERD | `$spec-index` (optional) | Pass bucket scope; NEVER hand-edit the derived index                     |
+| Derived technical spec view     | `$tech-spec` (optional)  | Pass service/component scope; NEVER hand-edit the derived technical file |
 
 ---
 
@@ -490,7 +495,7 @@ $ARGUMENTS
 ---
 
 > **[BLOCKING]** Create ALL 8 tasks via task tracking BEFORE any action — see **Mandatory Task Creation** table. NEVER skip, batch-complete, or mark done without invoking sub-skill.
-> **[BLOCKING]** Follow fixed step-skill order: `Phase 0 -> Phase 1 -> Phase 2 -> Phase 2.5 -> Phase 3 -> Phase 4 -> Phase 5 -> Final review`. NEVER reorder, merge, or skip without explicit user approval.
+> **[BLOCKING]** Follow fixed step-skill order: `Phase 0 -> Phase 1 -> Phase 2 -> Phase 2.5/2.6 -> Phase 3 -> Phase 4 -> Phase 5 -> Final review`. NEVER reorder, merge, or skip without explicit user approval.
 > **[BLOCKING]** Per-step task lock: BEFORE each step, mark task `in_progress`; AFTER each step, mark task `completed` with evidence or explicit skip reason.
 > **[BLOCKING]** If Task tool unavailable, create equivalent 8-step plan tracker and keep statuses synced for every step.
 
@@ -565,8 +570,9 @@ $ARGUMENTS
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -591,11 +597,11 @@ $ARGUMENTS
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -634,8 +640,8 @@ $ARGUMENTS
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -672,7 +678,7 @@ $ARGUMENTS
 - **Project Reference Docs:** Read required project-reference docs (always `lessons.md`) before target work.
 - **Task Tracking:** Bootstrap tasks, one active, persist findings to `plans/reports/` incrementally.
 
-**IMPORTANT MUST ATTENTION** create ALL 8 tasks via task tracking BEFORE any action, then run the FIXED order `0 -> 1 -> 2 -> 2.5 -> 3 -> 4 -> 5 -> final review` — NEVER reorder, merge, or skip without explicit user approval — why: phase order is the gate that catches drift; a skipped phase ships silent staleness
+**IMPORTANT MUST ATTENTION** create ALL 8 tasks via task tracking BEFORE any action, then run the FIXED order `0 -> 1 -> 2 -> 2.5/2.6 -> 3 -> 4 -> 5 -> final review` — NEVER reorder, merge, or skip without explicit user approval — why: phase order is the gate that catches drift; a skipped phase ships silent staleness
 **IMPORTANT MUST ATTENTION** `docs-update` is a ROUTER ONLY — delegate to `$spec`, `$spec [mode=tests]`, `$spec [mode=sync]`, `$spec-index`; NEVER write §8 content, edit Feature Spec / derived-index files, or duplicate sub-skill logic — why: dual authorship causes the two sources to diverge
 **IMPORTANT MUST ATTENTION** every skip is a DECISION with evidence — mark the task `completed` with a `file:line`-backed reason; NEVER silently omit a phase — why: an unjustified skip is indistinguishable from a missed update
 **MUST ATTENTION** Nested Task Expansion Contract — when invoked inside a workflow, STILL expand internal phases via task tracking with `[N.M] $skill-name — phase` prefix and `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` linkage — why: the workflow row is a container, not a substitute for phase tracking
@@ -681,10 +687,11 @@ $ARGUMENTS
 **MUST ATTENTION** evidence gate — every claim, detected module, and impact mapping needs `file:line` / git-diff proof, confidence >80% to act, <60% DO NOT act; "Module unchanged" without proof is NOT a valid skip — why: speculation routes the wrong docs and misses real drift
 **MUST ATTENTION** search-existing-patterns BEFORE asserting a doc shape — read the bucket's existing Feature Spec / INDEX layout and project-reference docs; build the module map from `docs/project-config.json`, NEVER from hard-coded skill paths — why: local doc conventions override generic assumptions
 **MUST ATTENTION** evaluate fit before reusing a nearby pattern — a module with backend + frontend changes is ONE deduped entry, not two; verify the change actually alters behavior before routing to `$spec` — why: duplicate or behavior-free invocations waste passes and corrupt the audit
-**MUST ATTENTION** validate ambiguous routing decisions with the user via a direct user question — surface the options, NEVER silently auto-decide which phases run
+**MUST ATTENTION** validate ambiguous routing decisions with the user by asking the user directly — surface the options, NEVER silently auto-decide which phases run
 **MUST ATTENTION** tech-agnostic output — when updating spec/specs/README/INDEX, introduce NO framework/product/language/pattern names in prose or headings; update logical IDs (`FR-`/`BR-`/`OP-`/`TC-`) FIRST, then prose; preserve the evidence-field exception — why: prose is the portable contract, evidence carriers hold the physical coords (spec-principles §3)
 **MUST ATTENTION** Step 2.4 final code↔spec sync-verify per touched module — a removed/weakened [HARD] BR is a code-vs-spec contradiction that BLOCKS completion until resolved or owner-accepted; AC drift re-invokes `$spec`, TC drift routes to `$spec [mode=sync]`
-**MUST ATTENTION** Phase 2.5 `$spec-index [mode=index]` OPTIONALLY refreshes the derived bucket INDEX/ERD from Feature Specs (never re-extracts an A-E tree); Phase 3 `$spec [mode=tests]` syncs §8 TCs; Phase 4 `$spec [mode=sync]` syncs §8 TCs ↔ integration test code (no QA dashboard exists)
+**MUST ATTENTION** Phase 0 triage ALWAYS runs first (git diff → categorize → dedup modules → record existing-doc state); Phase 1 updates project docs (`project-structure-reference.md`, `README.md`) ONLY on framework/shared/architectural changes; Phase 2 `$spec` updates §1–§7 and BLOCKS doc-first when a changed module has feature behavior but no Feature Spec — why: skipping triage or the doc-first gate ships undocumented behavior
+**MUST ATTENTION** Phase 2.5 `$spec-index [mode=index]` OPTIONALLY refreshes the derived bucket INDEX/ERD from Feature Specs (never re-extracts an A-E tree); Phase 2.6 `$tech-spec` OPTIONALLY refreshes/audits the derived technical view; Phase 3 `$spec [mode=tests]` syncs §8 TCs; Phase 4 `$spec [mode=sync]` syncs §8 TCs ↔ executing test code (no QA dashboard exists)
 **MUST ATTENTION** for `.claude` skills/hooks/workflows/sync-tooling changes, flag generated-mirror sync status (`npm run codex:sync` completed or explicit N/A) — `docs-update` routes/reports this check, NEVER edits generated mirrors directly
 **MUST ATTENTION** ALWAYS write the Phase 5 summary report to `plans/reports/docs-update-{YYMMDD}-{HHMM}.md` and the final review task (#8) — the report is the audit trail, the review verifies all impacted docs updated with no unjustified skips
 
@@ -703,7 +710,7 @@ $ARGUMENTS
 | "[HARD] BR weakened but tests pass"          | BLOCK — code-vs-spec contradiction; resolve or owner-accept, never wave through. |
 
 **IMPORTANT MUST ATTENTION** create ALL 8 tasks via task tracking (or equivalent tracker) BEFORE any action and track each step live — `in_progress` before, `completed` after with evidence.
-**IMPORTANT MUST ATTENTION** router ONLY — delegate every §8 / Feature Spec / derived-index write; NEVER author them here — why: dual authorship diverges the spec from its index.
+**IMPORTANT MUST ATTENTION** router ONLY — delegate every §8 / Feature Spec / derived-index / derived technical view write; NEVER author them here — why: dual authorship diverges the spec from its generated views.
 **IMPORTANT MUST ATTENTION** every skip needs `file:line` evidence and a `completed` task with reason; run the fixed phase order — NEVER silently omit a phase.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
@@ -786,8 +793,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -798,6 +806,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

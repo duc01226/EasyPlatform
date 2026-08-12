@@ -76,8 +76,9 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
                 'Plan directory: `{plan-dir}/plan.md` + `{plan-dir}/research/*.md`.',
                 'Run /simplify after implementation.',
                 'Agent({ subagent_type: "architect", prompt: "review" })',
-                'Agent(review-architecture, subagent_type="code-reviewer", ...)',
+                'Agent(architecture-review, subagent_type="code-reviewer", ...)',
                 'Use the specialized subagent_type when one exists.',
+                'STOP and `AskUserQuestion` whether integration-test-verify ran.',
                 ''
             ].join('\n'),
             'utf8'
@@ -183,8 +184,10 @@ test('migrate-claude-to-codex mirrors skills and injects protocol block', async 
         assert.doesNotMatch(mirroredSkill, /\{plan-dir\}\$plan\.md|\{plan-dir\}\$research/);
         assert.match(mirroredSkill, /Run \$code-simplifier after implementation\./);
         assert.match(mirroredSkill, /spawn_agent\(\{ agent_type: "architect"/);
-        assert.match(mirroredSkill, /spawn_agent\(review-architecture, agent_type="code-reviewer"/);
+        assert.match(mirroredSkill, /spawn_agent\(architecture-review, agent_type="code-reviewer"/);
         assert.match(mirroredSkill, /Use the specialized agent_type when one exists\./);
+        assert.match(mirroredSkill, /STOP and ask the user directly whether integration-test-verify ran\./);
+        assert.doesNotMatch(mirroredSkill, /a direct user question/);
         assert.doesNotMatch(mirroredSkill, /\bAgent\(|\bsubagent_type\b/);
         assert.equal(mirroredReadme, 'Legacy $code-simplifier note.\n');
         assert.equal(mirroredPackageLock, '{\n  "lockfileVersion": 3\n}\n');

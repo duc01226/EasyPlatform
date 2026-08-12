@@ -20,7 +20,7 @@ test('TC-SKILLFIX-010: flags a denylisted project symbol in a non-allowlisted fi
 // TC-SKILLFIX-011 — the SAME symbol is exempt in an allowlisted file (per-file exemption).
 test('TC-SKILLFIX-011: allowlisted file+symbol is not flagged', () => {
     const content = '- API services MUST extend `PlatformApiService` (BLOCKED)';
-    const violations = findProjectSymbolViolations(content, '.claude/skills/review-architecture/SKILL.md');
+    const violations = findProjectSymbolViolations(content, '.claude/skills/architecture-review/SKILL.md');
     assert.equal(violations.length, 0);
 });
 

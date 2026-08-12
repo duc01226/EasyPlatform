@@ -26,7 +26,7 @@ internal sealed class DemoMigrateDataCrossDb : PlatformDataMigrationExecutor<Tex
     // Demo can override this to allow DataMigration execution parallel in background thread, allow not wait, do not block the application start
     public override bool AllowRunInBackgroundThread => true;
 
-    public override async Task Execute(TextSnippetMultiDbDemoDbContext dbContext)
+    protected override async Task InternalExecute(TextSnippetMultiDbDemoDbContext dbContext)
     {
         var demoApplicationMigrationEntity = demoMigrateDataCrossDbContext.GetQuery<TextSnippetEntity>()
             .FirstOrDefault(p => p.SnippetText == "DemoMigrateApplicationDataDbContext Entity");

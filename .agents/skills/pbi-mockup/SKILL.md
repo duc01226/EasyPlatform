@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -56,29 +57,38 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Give stakeholders a realistic, system-matching visual preview of every story's UI — by generating a self-contained HTML mock-up file (one per PBI covering all stories) from finalized PBI/story artifacts, styled from the project's reference design docs, existing UI, components, and real domain entity data — before implementation begins, so layout/UX/state gaps surface while changes are still cheap.
+**Goal:** Give stakeholders a clickable, self-narrating MVP prototype of every story's main-flow UI — by generating a self-contained interactive HTML mock-up file (one per PBI covering all stories) from finalized PBI/story artifacts, styled from the project's reference design docs, existing UI, components, and real domain entity data — before implementation begins, so layout/UX/flow/state gaps surface while changes are still cheap.
 
 **Summary:**
 
-- This is a PRE-implementation preview tool, not a UI builder: only run on finalized PBIs/stories (reviewed, gated); for backend-only PBIs with no UI sections, skip generation and tell the user — do NOT use it for production UI, design specs, or scratch wireframes.
+- PRE-implementation preview tool, not a UI builder: run ONLY on finalized PBIs/stories (reviewed, gated); backend-only PBI with no UI sections → skip generation and tell the user; NEVER use for production UI, design specs, or scratch wireframes — why: it previews the wrong thing otherwise.
+- **Main pipeline (run in order):** locate PBI/stories (1) → extract UI specs (2) → **[BLOCKING] plan demo flows into flow-specs + one todo each (2b)** → load design system (3) → **[BLOCKING] inventory existing UI + map connected flows (3b)** → load domain entities (3c) → generate the self-contained HTML prototype (4) → save beside the PBI (5) → report (6) → **[BLOCKING] fidelity validation (7)** → **[BLOCKING] demo-quality gate (8)**. The three BLOCKING gates (2b · 3b+7 · 8) must NEVER be skipped.
+- Plan first, generate second: enumerate the PBI's main-story/MVP flows into flow-specs and create one todo per flow (Step 2b) BEFORE generating; sign off with a final Demo-Quality review gate (Step 8) auditing the generated prototype.
 - Output is exactly ONE self-contained HTML file per PBI (all stories as tabs/sections), inline CSS/JS, no external deps except Google Fonts, saved alongside the PBI artifact as `{pbi-filename}-mockup.html`.
+- The mock-up is a **scripted clickable prototype** — each main-story flow clicks through end-to-end ("click X → see Y → move to Z") with guided narration (▶ Play / ⏭ Next / ⏮ Prev / ↺ Reset / ⏏ Exit), an explanation panel, and a visible "⚠ Simulated" banner; interactivity is **scripted/simulated only** (canned transitions, illustrative data) — NEVER real auth, persistence, or backend.
 - Fidelity is the whole point — the mock-up must LOOK like the existing app: load the canonical + matched per-app design-system docs (NEW→canonical, REFACTOR→per-app), read real shared/module components for layout patterns, and populate with real domain entity fields and realistic sample data, never Lorem ipsum.
 - Render every defined component state (default/loading/empty/error) as toggleable, keep any accompanying prose/captions tech-agnostic (business terms, not framework/CSS class names) per the M1/M2 mandates, even though the rendered HTML may use real class names internally.
 
 **Workflow:**
 
-1. **Locate Artifacts** — Find PBI and story files in `team-artifacts/pbis/`
-2. **Extract UI Specs** — Parse UI Layout, Wireframe, Components, States sections
-3. **Load Design System** — Read module-specific design tokens, colors, typography
-4. **Load Existing UI** — Read existing components, page layouts, and patterns from the project
-5. **Load Domain Entities** — Read entity fields, relationships, and enums for realistic sample data
-6. **Generate HTML** — Create self-contained HTML mockup matching the current system's look and feel
-7. **Save** — Write HTML file alongside the PBI artifact
+1. **Locate PBI Artifact** — find PBI + story files in `team-artifacts/pbis/`; read fully
+2. **Extract UI Specs** — parse UI Layout/Wireframe, Components, States, Interaction Flow, Acceptance Criteria + priority/rank
+   2b. **[BLOCKING] Plan the Demo Flows** — enumerate main-story/MVP flows, author one flow-spec per flow, task tracking one todo per flow BEFORE generating
+3. **Load Design System** — baseline + matched per-app design tokens, colors, typography (NEW→canonical, REFACTOR→per-app)
+   3b. **[BLOCKING] Inventory Existing UI + Map Connected Flows** — read real shared/module components + map entry/exit flows so the mock-up matches the current system
+   3c. **Load Domain Entities** — entity fields, relationships, enums for realistic sample data
+4. **Generate HTML** — one self-contained scripted clickable prototype + guided walkthrough matching the app's look and feel
+5. **Save** — write `{pbi-filename}-mockup.html` beside the PBI artifact
+6. **Report** — path, priority, stories, demo flows, components, states, fidelity + demo-quality verdicts
+7. **[BLOCKING] Fidelity Validation** — mock-up matches inventoried UI (tokens/components/layout/connected flows); record PASS/FAIL
+8. **[BLOCKING] Demo-Quality Review Gate** — every flow clicks end-to-end, no dead controls, narration + "⚠ Simulated" banner, offline, real data, iframe-safe; record PASS/FAIL
 
 **Key Rules:**
 
-- Ask AI to generate an **HTML mock-up** for UI PBIs; do not stop at an ASCII-only mockup.
+- Ask AI to generate an **interactive HTML mock-up** for UI PBIs; do not stop at an ASCII-only or static mockup — every main-story flow is a scripted clickable prototype with guided narration.
 - One HTML file per PBI (all stories shown as sections/tabs)
+- Plan the demo flows (Step 2b) BEFORE generating; sign off with the Demo-Quality gate (Step 8) AFTER
+- Interactivity is **scripted/simulated only** (canned transitions, illustrative data, "⚠ Simulated" banner) — NEVER real `fetch`/auth/persistence/backend; self-contained so it runs inside the deck's `<iframe srcdoc>`
 - Self-contained: inline CSS/JS, no external dependencies except Google Fonts
 - **Must resemble the project's current UI** — read existing component templates and page layouts
 - Design must be based on project reference design docs: `docs/project-reference/design-system/README.md`, `docs/project-reference/design-system/design-system-canonical.md`, and the matched per-app design-system doc from `docs/project-config.json`
@@ -87,7 +97,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - Include component states (default, loading, empty, error)
 - Responsive layout with mobile/desktop preview
 - Save in same directory as the PBI artifact
-- **Tech-agnostic descriptive prose (M1/M2):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Any narrative, captions, annotations, generation notes, or component/state descriptions accompanying the mock-up describe components and states by business/observable terms (e.g., "status indicator", "record list", "loading placeholder"), NOT by framework component names or CSS class names. The rendered HTML itself may use real class names internally (that is implementation, not prose), but the human-readable descriptions stay tech-agnostic per `docs/project-reference/spec-principles.md` §3.
+- **Tech-agnostic descriptive prose (M1/M2):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. Any narrative, captions, annotations, generation notes, or component/state descriptions accompanying the mock-up describe components and states by business/observable terms (e.g., "status indicator", "record list", "loading placeholder"), NOT by framework component names or CSS class names. The rendered HTML itself may use real class names internally (that is implementation, not prose), but the human-readable descriptions stay tech-agnostic per `docs/project-reference/spec-principles.md` §3.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -146,18 +156,29 @@ Generate visual HTML mockup reports from PBI and user story artifacts.
 
 From the PBI and story artifacts, extract:
 
-| Section                            | What to Extract                       |
-| ---------------------------------- | ------------------------------------- |
-| `## UI Layout` / `## UI Wireframe` | ASCII wireframe, layout description   |
-| `### Components`                   | Component names, behaviors, tiers     |
-| `### States`                       | Default, Loading, Empty, Error states |
-| `### Interaction Flow`             | User actions and system responses     |
-| `## Acceptance Criteria`           | GIVEN/WHEN/THEN scenarios for context |
-| `## Description`                   | User role, capability, business value |
+| Section                            | What to Extract                                                                                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `## UI Layout` / `## UI Wireframe` | ASCII wireframe, layout description                                                                                                                     |
+| `### Components`                   | Component names, behaviors, tiers                                                                                                                       |
+| `### States`                       | Default, Loading, Empty, Error states                                                                                                                   |
+| `### Interaction Flow`             | User actions and system responses                                                                                                                       |
+| `## Acceptance Criteria`           | GIVEN/WHEN/THEN scenarios for context                                                                                                                   |
+| `## Description`                   | User role, capability, business value                                                                                                                   |
+| frontmatter `priority` / `rank`    | PBI priority label + numeric rank — render in the header (Step 4). MANDATORY when present; the mockup MUST carry the same priority info as the backlog. |
 
 If no UI sections exist (backend-only PBI), inform user and skip mockup generation:
 
 > "This PBI has no UI sections (marked as backend-only). No mockup generated."
+
+### Step 2b: [BLOCKING] Plan the Demo Flows (think → plan → many todos BEFORE generating)
+
+> **[BLOCKING] Do NOT generate the mock-up until every main-story flow is planned as a flow-spec and a todo exists per flow.** The mock-up is a clickable, self-narrating prototype of the PBI's main user-story happy paths — plan the journeys first, generate second.
+
+1. **Enumerate the main-story / MVP flows** — from `### Interaction Flow`, the `## Acceptance Criteria` GIVEN/WHEN/THEN scenarios, and each story's "As a / I want / So that". One flow per main user story (MVP happy path) — not every edge case.
+2. **Author one flow-spec per flow** — fill the `references/interactive-demo.md` §1 schema: `id`, business-language `title`, `persona`, `trigger`, ordered `steps[]` where each step = `{ action: "user clicks/selects/types X", result: "screen/state Y appears", explain: "plain-language why" }`, and `endState`. The `explain`/`title` prose stays tech-agnostic (business terms, not class names) per M1/M2.
+3. **task tracking one todo per flow** — so each journey is generated and later verified (Step 8) individually; add the Step 8 Demo-Quality review as the final todo.
+
+> See `references/interactive-demo.md` §1 for the flow-spec schema + a worked example.
 
 ### Step 3: Load Design System Context
 
@@ -178,9 +199,11 @@ If no UI sections exist (backend-only PBI), inform user and skip mockup generati
 
 4. Optionally read `docs/project-reference/scss-styling-guide.md` (first 100 lines) for BEM patterns
 
-### Step 3b: Load Existing UI Components (match current system UI)
+### Step 3b: [BLOCKING] Inventory Existing UI + Map Connected Flows (match current system UI)
 
-The mockup should resemble the project's actual UI, not generic HTML. Discover existing components:
+> **[BLOCKING] Do NOT generate the mockup until this inventory + connected-flow map is done** (canonical: `SYNC:existing-ui-research`). The mockup must faithfully match the current UI system, not generic HTML.
+
+The mockup should resemble the project's actual UI, not generic HTML. Discover existing components AND map the flows that connect to this screen:
 
 1. Read `docs/project-reference/frontend-patterns-reference.md` (first 200 lines) — extract base component classes, common UI patterns, form patterns, table/grid patterns, dialog/modal patterns
 2. Glob the project's shared component library (if exists):
@@ -194,6 +217,7 @@ The mockup should resemble the project's actual UI, not generic HTML. Discover e
     - **Common components:** Table with pagination, filter bar, action buttons, status chips, breadcrumbs
     - **Form patterns:** Form groups, validation display, multi-step forms
     - **Navigation:** Tab bars, breadcrumbs, sidebar menus
+5. **Map connected feature flows** — identify every existing feature/screen that links to, embeds, includes, or navigates to/from this new screen; note the entry/exit flows so the mockup fits the surrounding navigation, not just a standalone page.
 
 > **Key principle:** Mimic existing system UI. If the project has a table with specific column patterns, use that pattern. If it has card-based layouts, use cards. The mockup should feel like it belongs in the existing application.
 
@@ -236,21 +260,36 @@ Generate a **single self-contained HTML file** with the following structure:
         <!-- Navigation tabs (one per story) -->
         <!-- Story sections with mockup UI -->
         <!-- Component state toggles (default/loading/empty/error) -->
+        <!-- Interactive prototype: screens/states + hotspots + demo control bar + explanation panel + "⚠ Simulated" banner -->
         <script>
             /* Tab navigation */
             /* State toggles */
             /* Theme toggle */
             /* Responsive preview toggle */
+            /* Prototype engine: goTo(stateId) router + hotspots + simulated submit — see references/interactive-demo.md §2 */
+            /* Guided walkthrough: ▶ Play ⏭ Next ⏮ Prev ↺ Reset ⏏ Exit — see references/interactive-demo.md §3 */
         </script>
     </body>
 </html>
 ```
+
+#### Interactive Prototype + Guided Walkthrough
+
+The mock-up is a **scripted clickable prototype** of each planned flow (Step 2b), not a still image. For EVERY flow-spec, render the journey so a stakeholder can click through it and watch it narrate. Mechanics are delegated — do NOT inline the engine here:
+
+1. **Screen/state router + hotspots** — render each flow's screens/states as DOM sections and wire clickable hotspots that `goTo` the next state (`references/interactive-demo.md §2`). Simulated submit → success toast → in-memory row insert; NO real `fetch`/persistence/backend.
+2. **Demo controls + guided walkthrough** — a control bar (`▶ Play · ⏭ Next · ⏮ Prev · ↺ Reset · ⏏ Exit`) auto-/step-walks the flow, spotlighting the active hotspot (`references/interactive-demo.md §3`).
+3. **Explanation panel + "⚠ Simulated" banner** — a persistent panel names the current flow + step (`n / total`) + the step's plain-language `explain`; a visible "⚠ Simulated — illustrative data, no real actions are performed" banner is the scope guard (`references/interactive-demo.md §4`).
+4. **Affordances + a11y** — hotspots visibly highlighted (pulse/outline), disabled controls show a tooltip, demo never traps the user, `prefers-reduced-motion` respected (`references/interactive-demo.md §5`).
+
+> **Scope guard:** interactivity is **scripted/simulated only** (canned transitions, illustrative data) — never real auth, persistence, or backend calls; self-contained so it runs inside the deck's `<iframe srcdoc>` sandbox (`references/interactive-demo.md §6`).
 
 #### HTML Structure Requirements
 
 1. **Header Section:**
     - PBI ID and title
     - Module badge
+    - **Priority badge** — the PBI's priority label + numeric rank from frontmatter (e.g. "Priority: Must Have · Rank #2"). MANDATORY when the PBI carries `priority`/`rank`; the mockup MUST surface the same priority info as the backlog so stakeholders see it on the prototype itself. Omit only when the PBI genuinely has no priority assigned yet.
     - Story count summary
     - Generation date
 
@@ -276,27 +315,27 @@ Generate a **single self-contained HTML file** with the following structure:
 - Follow BEM naming: `mockup__header`, `mockup__nav`, `mockup__panel`
 - Match the project's color palette, typography, and spacing
 - Include both light and dark theme (toggle button in header)
-- Responsive: mobile (< 768px) and desktop layout
+- Responsive: mobile (< 768px) and desktop layout — mobile must stay usable: reflow where possible (stack rows, collapse grids to one column); where a block genuinely can't reflow (tables, wide grids) give it `overflow: auto` scroll rather than letting it clip; nothing broken or cut off
 - Use realistic placeholder data (names, dates, numbers) — not "Lorem ipsum"
 
 #### Component Rendering
 
-Map wireframe components to HTML elements:
+Map wireframe components to HTML elements AND to their scripted demo interaction (the hotspot/transition that advances the flow — `references/interactive-demo.md §2`):
 
-| Wireframe Component | HTML Rendering                             |
-| ------------------- | ------------------------------------------ |
-| Table/Grid          | `<table>` with design system styles        |
-| Form                | `<form>` with labeled inputs               |
-| Button              | `<button>` with primary/secondary variants |
-| Card                | `<div class="card">` with shadow           |
-| List                | `<ul>` or data list                        |
-| Modal/Dialog        | Overlay `<div>` (toggleable)               |
-| Tab panel           | Tab navigation with content panels         |
-| Search/Filter       | Input with icon                            |
-| Status badge        | `<span>` with color coding                 |
-| Empty state         | Centered message with icon                 |
-| Loading state       | Skeleton placeholder or spinner            |
-| Error state         | Error banner with message                  |
+| Wireframe Component | HTML Rendering                             | Demo Interaction (scripted/simulated)                     |
+| ------------------- | ------------------------------------------ | --------------------------------------------------------- |
+| Table/Grid          | `<table>` with design system styles        | Row click → `goTo` detail screen/state                    |
+| Form                | `<form>` with labeled inputs               | Submit → simulated success toast + in-memory row insert   |
+| Button              | `<button>` with primary/secondary variants | Hotspot → advances the demo to the next screen/state      |
+| Card                | `<div class="card">` with shadow           | Card click → `goTo` the card's detail screen/state        |
+| List                | `<ul>` or data list                        | Item click → `goTo` selected-item screen/state            |
+| Modal/Dialog        | Overlay `<div>` (toggleable)               | Trigger → open dialog state; confirm/cancel → `goTo` next |
+| Tab panel           | Tab navigation with content panels         | Tab → switch panel (no nav away)                          |
+| Search/Filter       | Input with icon                            | Apply → simulated filtered result state                   |
+| Status badge        | `<span>` with color coding                 | Non-interactive (illustrative state indicator)            |
+| Empty state         | Centered message with icon                 | Primary CTA → `goTo` the create/first-action screen/state |
+| Loading state       | Skeleton placeholder or spinner            | Transient → auto-advances to the loaded screen/state      |
+| Error state         | Error banner with message                  | Retry → `goTo` back to the prior screen/state             |
 
 ### Step 5: Save HTML File
 
@@ -310,12 +349,61 @@ After generation, output:
 
 ```
 Mockup generated: {path}
+- PBI priority: {priority label} · Rank #{rank}  (or "not yet prioritized")
 - Stories covered: {count}
+- Demo flows: {count} ({flow titles})
 - Components rendered: {list}
 - States included: {default, loading, empty, error}
+- Fidelity vs existing UI: PASS | FAIL
+- Demo quality: PASS | FAIL
 
-Open in browser to preview. Use theme toggle for dark/light mode.
+Open in browser to preview. Click highlighted hotspots or press ▶ Play to walk a flow. Use theme toggle for dark/light mode.
 ```
+
+---
+
+### Step 7: [BLOCKING] Fidelity Validation — Mockup Matches Existing UI
+
+> **[BLOCKING] After the HTML is generated, validate it faithfully matches the existing UI inventoried in Step 3b before handing off.** Do NOT report the mockup as done until this validation records a result — a mockup that does not match the current system is not done.
+
+Validate the produced mockup against the inventoried existing UI and record an explicit pass/fail:
+
+1. **Design tokens** — colors, typography, spacing match the project design system (Step 3).
+2. **Component patterns** — tables, forms, dialogs, status chips, and navigation reuse the existing component patterns (Step 3b), not generic HTML.
+3. **Layout/structure** — the screen layout matches the existing pages of the related feature (sidebar / toolbar / card-grid conventions).
+4. **Connected flows** — entry/exit navigation matches the connected feature flows mapped in Step 3b.
+
+Record the outcome in the Step 6 report:
+
+```
+Fidelity vs existing UI: PASS | FAIL — tokens / components / layout / flows matched? If FAIL: what diverged + the fix.
+```
+
+If **FAIL**, revise the mockup to match the existing UI and re-validate before handoff.
+
+---
+
+### Step 8: [BLOCKING] Demo-Quality Review Gate
+
+> **[BLOCKING] This is the final review todo (Step 2b created it).** After fidelity passes, audit the GENERATED interactive prototype's demo quality before handoff. Do NOT report the mock-up as done until this records a result — a prototype with a dead control or a flow that does not click through is not done. Full checklist: `references/interactive-demo.md §7`.
+
+**First, confirm the result SATISFIES the PBI's intent** (not merely that it renders): every main user story in the PBI's `## Acceptance Criteria` / `### Interaction Flow` is represented by a flow-spec demo (coverage — no main story missing), AND each prototype faithfully demonstrates that story's intended behavior end-to-end. Then audit the produced prototype against every planned flow-spec and record an explicit pass/fail:
+
+0. **Satisfies the PBI intent** — every main-story/MVP flow from the acceptance criteria is present and its demo conveys the intended behavior; if a story has no demo or the demo misrepresents it, this gate FAILS regardless of the items below.
+1. **Every main-story flow clicks end-to-end** — each flow's `steps[]` reach its `endState` via real hotspots; no path dead-ends.
+2. **No dead controls** — every button/hotspot advances the demo or is visibly disabled-with-tooltip.
+3. **Narration present + tech-agnostic** — every step shows its plain-language `explain`; copy is business-language (M1/M2), not class names; the "⚠ Simulated — illustrative data, no real actions are performed" banner is visible on every flow.
+4. **Opens offline standalone** — no external `<script src>`; Google Fonts CSS only; no JS console errors.
+5. **Real domain data** — screens/rows use real entity field names + realistic values, never Lorem ipsum.
+6. **iframe-safe** — works self-contained inside an `<iframe srcdoc>` sandbox (no parent-document or network dependency) so the deck can embed it.
+
+Record the outcome in the Step 6 report:
+
+```
+Demo quality: PASS | FAIL — satisfies PBI intent (every main story demoed + faithful) / flows click end-to-end / no dead controls / narration tech-agnostic + banner / offline / real data / iframe-safe? If FAIL: what broke + the fix.
+```
+
+If **FAIL**, fix the prototype (re-author from the flow-spec — cheap) and re-audit before handoff.
 
 ---
 
@@ -325,13 +413,17 @@ Before completing:
 
 - [ ] HTML file is self-contained (opens correctly without a server)
 - [ ] All stories from PBI are represented as sections/tabs
+- [ ] Every main-story flow (Step 2b) is rendered as a scripted clickable prototype with guided narration
 - [ ] Design is based on `design-system-canonical.md` plus the matched per-app design-system doc when available
 - [ ] Design system colors and typography match the project
 - [ ] Component states are toggleable (where defined in artifact)
-- [ ] Responsive layout works for mobile and desktop
+- [ ] Responsive layout works for mobile and desktop — usable on small screens with nothing clipped/cut-off/unreachable (reflow preferred; `overflow: auto` scroll acceptable where a block can't reflow)
 - [ ] Realistic placeholder data used (not Lorem ipsum)
 - [ ] PBI metadata shown in header (ID, title, module, date)
+- [ ] PBI priority shown in header (priority label + numeric rank from frontmatter) when the PBI is prioritized — the mockup carries the same priority info as the backlog
 - [ ] File saved alongside the PBI artifact
+- [ ] Fidelity validation (Step 7) recorded PASS — mockup matches existing UI tokens, components, layout, and connected flows
+- [ ] Demo-Quality gate (Step 8) recorded PASS — every flow clicks end-to-end, no dead controls, narration + "⚠ Simulated" banner present, offline, iframe-safe
 
 ---
 
@@ -349,19 +441,20 @@ Before completing:
 
 ## Anti-Patterns
 
-| Anti-Pattern                     | Correct Approach                         |
-| -------------------------------- | ---------------------------------------- |
-| Production-quality CSS framework | Simple inline CSS matching design tokens |
-| External dependencies (CDN libs) | Self-contained except Google Fonts       |
-| Pixel-perfect implementation     | Approximate visual representation        |
-| Interactive functionality        | Static mockup with state toggles only    |
-| Lorem ipsum placeholder text     | Realistic domain-specific sample data    |
+| Anti-Pattern                                              | Correct Approach                                                                                                                           |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Production-quality CSS framework                          | Simple inline CSS matching design tokens                                                                                                   |
+| External dependencies (CDN libs)                          | Self-contained except Google Fonts                                                                                                         |
+| Pixel-perfect implementation                              | Approximate visual representation                                                                                                          |
+| Real backend/business logic (auth, live API, persistence) | Scripted/simulated prototype interactivity only — clickable nav, simulated transitions, guided demo; NO real business logic or data writes |
+| Dead / non-wired buttons                                  | Every control either advances the demo or is visibly disabled-with-tooltip                                                                 |
+| Lorem ipsum placeholder text                              | Realistic domain-specific sample data                                                                                                      |
 
 ---
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use ask the user directly to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
 > 1. **Activate `workflow-idea-to-pbi` workflow** (Recommended) — includes mockup as final step
 > 2. **Execute `$pbi-mockup` directly** — run this skill standalone on an existing PBI
@@ -370,7 +463,7 @@ Before completing:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use ask the user directly to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"$prioritize (Recommended)"** — Prioritize the PBI in the backlog
 - **"$design-spec"** — Create detailed design specification from mockup
@@ -381,6 +474,19 @@ Before completing:
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
+<!-- SYNC:existing-ui-research -->
+
+> **[BLOCKING] Understand the existing UI before you design or spec a new/updated screen.** Before producing any wireframe, mockup, screen design, or UI spec:
+>
+> 1. **Inventory existing related UI** — search the project for screens, pages, and components already serving this feature or its domain (consult design-system docs + the real component inventory).
+> 2. **Map connected flows** — identify every feature that links to, embeds, includes, or navigates to/from the new screen; trace its entry and exit flows so the new screen fits them.
+> 3. **Reuse before invent** — prefer existing components, patterns, and layout conventions; justify any new component against what already exists.
+> 4. **Record findings** — note the matched existing screens/components + connected flows in the artifact so downstream design faithfully matches the current UI system.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that explicitly.
+
+<!-- /SYNC:existing-ui-research -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -390,8 +496,9 @@ Before completing:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -428,7 +535,7 @@ Before completing:
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Give stakeholders a realistic, system-matching visual preview of every story's UI — built from real domain data and the project's actual design system — before implementation begins, so layout/UX/state gaps surface while changes are still cheap.
+**IMPORTANT MUST ATTENTION Goal:** Give stakeholders a clickable, self-narrating MVP prototype of every story's main-flow UI — built from real domain data and the project's actual design system — before implementation begins, so layout/UX/flow/state gaps surface while changes are still cheap.
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
@@ -436,10 +543,15 @@ Before completing:
 - **Critical Thinking:** MUST ATTENTION traced proof per claim, confidence >80% to act, NEVER guess.
 
 **IMPORTANT MUST ATTENTION** run ONLY on finalized PBIs/stories (reviewed, challenged, gated); for a backend-only PBI with no UI sections, SKIP generation and tell the user — never fabricate UI — why: a mock-up of an unfinished or UI-less PBI previews the wrong thing.
+**IMPORTANT MUST ATTENTION** run the FULL step pipeline in order — locate (1) → extract UI (2) → plan flows [BLOCKING] (2b) → load design system (3) → inventory existing UI [BLOCKING] (3b) → load domain entities (3c) → generate HTML (4) → save (5) → report (6) → fidelity validation [BLOCKING] (7) → demo-quality gate [BLOCKING] (8); NEVER skip the three BLOCKING gates (2b plan · 3b inventory + 7 fidelity · 8 demo-quality) — why: each guards a distinct failure (no plan → incomplete demo; no inventory/fidelity → generic-HTML mismatch; no demo-quality audit → dead controls ship).
+**IMPORTANT MUST ATTENTION** PLAN the demo flows BEFORE generating — Step 2b enumerates the PBI's main-story/MVP flows into flow-specs and task trackings one todo per flow; Step 8 [BLOCKING] Demo-Quality gate signs off AFTER — why: think → plan → many todos → generate → final review is the discipline that makes the prototype complete and click-through-verified.
+**IMPORTANT MUST ATTENTION** render each main-story flow as a **scripted clickable prototype** with guided narration (▶ Play · ⏭ Next · ⏮ Prev · ↺ Reset · ⏏ Exit), an explanation panel, and a visible "⚠ Simulated — illustrative data, no real actions are performed" banner; interactivity is **scripted/simulated only** (canned transitions) — NEVER real `fetch`/auth/persistence/backend; self-contained so it runs inside the deck's `<iframe srcdoc>` (mechanics: `references/interactive-demo.md §2–§4`) — why: a clickable prototype conveys behavior at the lowest cost, but a real backend breaks the offline preview-before-code purpose.
 **IMPORTANT MUST ATTENTION** emit exactly ONE self-contained HTML file per PBI (all stories as tabs/sections), inline CSS/JS, no external deps except Google Fonts, saved as `{pbi-filename}-mockup.html` beside the PBI artifact — why: stakeholders open one file with no server, no build step.
 
+**IMPORTANT MUST ATTENTION** render the PBI's priority in the header (priority label + numeric rank from frontmatter) whenever the PBI is prioritized — why: the mockup is a stakeholder-facing prototype and MUST carry the same priority info as the backlog, not just the title; downstream `feature-presentation` reuses it.
+
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; add a final review todo to verify quality.
-**MANDATORY IMPORTANT MUST ATTENTION** validate route/next-step decisions with the user via a direct user question — never auto-decide complexity for the user.
+**MANDATORY IMPORTANT MUST ATTENTION** validate route/next-step decisions with the user by asking the user directly — never auto-decide complexity for the user.
 
 **Domain rules this skill must not skip:**
 
@@ -453,18 +565,22 @@ Before completing:
 
 **Anti-Rationalization:**
 
-| Evasion                                           | Rebuttal                                                                                     |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| "PBI looks ready, skip the gated/finalized check" | Run only on reviewed-and-gated PBIs. An unfinished PBI previews the wrong thing.             |
-| "Lorem ipsum is faster"                           | Fake data hides real overflow/state gaps. Use real entity field names + realistic values.    |
-| "Generic clean HTML is good enough"               | Fidelity is the point — read design-system docs + 2-3 real components, mimic the actual UI.  |
-| "Class names in the notes are fine"               | Prose stays tech-agnostic (M1/M2). Real class names live in the rendered HTML, not captions. |
-| "Only need the default state"                     | Render every defined state (default/loading/empty/error) as toggleable.                      |
-| "Already know the entity fields"                  | Show `file:line` from the domain-entities reference. No proof = no read.                     |
+| Evasion                                           | Rebuttal                                                                                                                                                                   |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "PBI looks ready, skip the gated/finalized check" | Run only on reviewed-and-gated PBIs. An unfinished PBI previews the wrong thing.                                                                                           |
+| "A static mockup is faster than a clickable one"  | Static conveys layout only, not behavior — the user asked for an MVP demo. Render each flow as a scripted clickable prototype (regenerated from the §1 flow-spec — cheap). |
+| "Skip the flow planning, just generate"           | Step 2b (flow-specs + one todo per flow) is BLOCKING; planning the journeys first is what makes the prototype complete and click-through-verifiable.                       |
+| "Wire it to a real endpoint so it feels real"     | Interactivity is scripted/simulated only — canned transitions, illustrative data, "⚠ Simulated" banner. NO real `fetch`/auth/persistence/backend.                          |
+| "Lorem ipsum is faster"                           | Fake data hides real overflow/state gaps. Use real entity field names + realistic values.                                                                                  |
+| "Generic clean HTML is good enough"               | Fidelity is the point — read design-system docs + 2-3 real components, mimic the actual UI.                                                                                |
+| "Class names in the notes are fine"               | Prose stays tech-agnostic (M1/M2). Real class names live in the rendered HTML, not captions.                                                                               |
+| "Only need the default state"                     | Render every defined state (default/loading/empty/error) as toggleable.                                                                                                    |
+| "Already know the entity fields"                  | Show `file:line` from the domain-entities reference. No proof = no read.                                                                                                   |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
-**IMPORTANT MUST ATTENTION Goal:** realistic, system-matching UI preview from real domain data + the actual design system, BEFORE implementation — so gaps surface while cheap.
+**IMPORTANT MUST ATTENTION Goal:** clickable, self-narrating MVP prototype of every story's main-flow UI from real domain data + the actual design system, BEFORE implementation — so flow/UX/state gaps surface while cheap.
+**IMPORTANT MUST ATTENTION** PLAN flows first (Step 2b flow-specs + one todo per flow), then the Demo-Quality gate signs off (Step 8); each flow is a scripted clickable prototype with guided narration + "⚠ Simulated" banner — interactivity scripted/simulated only, NEVER real backend.
 **IMPORTANT MUST ATTENTION** ONE self-contained HTML per PBI (Google Fonts only), real domain data not Lorem ipsum, every component state toggleable, prose tech-agnostic (M1/M2).
 **IMPORTANT MUST ATTENTION** read design-system docs + real components + domain-entities reference first; cite `file:line` (>80% confidence) — NEVER guess fields or tokens.
 
@@ -548,8 +664,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -560,6 +677,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

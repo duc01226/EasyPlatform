@@ -22,7 +22,7 @@ public class PlatformAzureFileStorageFileItem : IPlatformFileStorageFileItem
         return FullFilePath.Substring(RootDirectory.Length).TrimStart('/');
     }
 
-    public static PlatformAzureFileStorageFileItem Create(BlobItem blobItem, BlobContainerClient blobContainerClient)
+    public static PlatformAzureFileStorageFileItem Create(BlobItem blobItem, BlobContainerClient blobContainerClient, string publicBlobEndpoint = null)
     {
         var result = new PlatformAzureFileStorageFileItem
         {
@@ -33,10 +33,23 @@ public class PlatformAzureFileStorageFileItem : IPlatformFileStorageFileItem
             Etag = blobItem.Properties.ETag?.ToString(),
             Size = blobItem.Properties.ContentLength ?? 0,
             Description = GetMetadata(blobItem.Metadata, BlobDescriptionKey),
-            AbsoluteUri = blobContainerClient.Uri.ConcatRelativePath(blobItem.Name).AbsoluteUri
+            AbsoluteUri = string.IsNullOrWhiteSpace(publicBlobEndpoint)
+                ? blobContainerClient.Uri.ConcatRelativePath(blobItem.Name).AbsoluteUri
+                : BuildPublicAbsoluteUri(publicBlobEndpoint, blobContainerClient.Name, blobItem.Name).AbsoluteUri
         };
 
         return result;
+    }
+
+    public static Uri BuildPublicAbsoluteUri(string publicBlobEndpoint, string rootDirectory, string blobName = null)
+    {
+        var endpoint = publicBlobEndpoint.TrimEnd('/');
+        var rootPath = rootDirectory.Trim('/');
+        var blobPath = blobName?.TrimStart('/');
+
+        return string.IsNullOrWhiteSpace(blobPath)
+            ? new Uri($"{endpoint}/{rootPath}")
+            : new Uri($"{endpoint}/{rootPath}/{blobPath}");
     }
 
     public static string GetFullFilePath(BlobClient blobClient)

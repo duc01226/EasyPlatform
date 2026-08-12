@@ -33,7 +33,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -57,22 +58,24 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Facilitate a structured PO/BA brainstorming session via the Double Diamond process (diverge to discover problems and opportunities, then converge to validate and prioritize) to deliver a scored, ranked shortlist of 3-5 candidate ideas — each carrying a problem + value hypothesis, an identified riskiest assumption, and the cheapest validation test designed — so the team commits to the right problem AND the right solution before building, never to a flat unvalidated idea list.
+**Goal:** Facilitate a structured PO/BA brainstorming session via the Double Diamond process (diverge to discover problems and opportunities, then converge to validate and prioritize) to deliver a scored, ranked shortlist of 3-5 candidate ideas — each carrying a problem + value hypothesis, an identified riskiest assumption, and the cheapest validation test designed — so the team commits to the right problem AND the right solution before building, never to a flat unvalidated idea list. The default flow converges to ONE opinionated recommendation; the EXCEPTION is **Multi-Opportunity Discovery mode**, which instead outputs a ranked 3–8-item RICE opportunity map for user multi-select (each selected item becomes a separate PBI downstream).
 
 **Summary:**
 
-- Run a direct user question Phase 0 FIRST to detect scenario (Problem-Solving / New Product / Enhancement), role (PO / BA / Mixed), and how-much-is-known — each scenario routes a different technique sequence (see Scenario Cheat Sheets), so misclassifying here derails everything downstream.
+- **Main steps (Phases 0→7) — the read-this-if-nothing-else map:** **P0 Session Setup** (ask the user directly to detect scenario + role + how-much-known) → **P1 Problem Framing / Diamond-1 diverge** (POV statement → 5 Whys/Fishbone → JTBD job stories → 5–10 HMW) → **P2 Opportunity Framing / Diamond-1 converge** (OST / Lean Canvas / Blue-Ocean ERRC / Value-Prop Canvas) → **P3 Ideation / Diamond-2 diverge** (SCAMPER → Crazy 8s → Brainwriting 6-3-5 → Impact Mapping → Analogy = 25–40 raw ideas, zero judgment) → **P4 Evaluation / Diamond-2 converge** (Dot Vote → RICE → Kano → 2×2 → MoSCoW = ranked 3–5 shortlist) → **P5 Hypothesis Validation** (Problem + Value card + Riskiest-Assumption Test + cheapest test + Build-Measure-Learn per top-3) → **P6 Decision** (ONE opinionated recommendation + trade-offs) → **P7 Documentation & Handoff**. Multi-Opportunity Discovery mode swaps P6 for a ranked 3–8-item RICE opportunity map.
+- Run ask the user directly Phase 0 FIRST to detect scenario (Problem-Solving / New Product / Enhancement / Multi-Opportunity Discovery), role (PO / BA / Mixed), and how-much-is-known — each scenario routes a different technique sequence (see Scenario Cheat Sheets) — why: misclassifying here derails every downstream phase.
 - Strictly separate diverge (Phases 1 & 3 — generate, "Yes, and…", zero judgment) from converge (Phases 2 & 4 — narrow, RICE/Kano/MoSCoW scoring); mixing the two modes is the Golden Rule violation that kills idea output.
 - Never stop at a raw or flat idea list: every top-3 candidate MUST carry a problem + value hypothesis card, an identified riskiest assumption (RAT), and the single cheapest validation test designed before any build commitment.
-- Close with an opinionated decision (Phase 6 — recommend ONE option with trade-offs, not a menu), every claim evidence-backed at >80% confidence, then offer handoff via a direct user question to `$idea`, `$refine`, `$plan`, etc.
+- Close with an opinionated decision (Phase 6 — recommend ONE option with trade-offs, not a menu), every claim evidence-backed at >80% confidence, then offer handoff by asking the user directly to `$idea`, `$refine`, `$plan`, etc. — EXCEPT in **Multi-Opportunity Discovery mode**, where convergence RANKS the opportunity map (3–8 RICE-scored items) and hands off via multi-select to a per-opportunity PBI loop instead of picking ONE winner.
 
-**Three Scenarios:**
+**Four Scenarios:**
 
-| Scenario                | Entry Trigger                                          | Primary Methods                                                                |
-| ----------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| **Problem-Solving**     | "Something is broken / users complain / metric is bad" | 5 Whys → Fishbone → HMW → SCAMPER → Hypothesis RAT                             |
-| **New Product**         | "Greenfield idea / new market / no codebase yet"       | JTBD → Lean Canvas → Crazy 8s → Opportunity Scoring → Lean Hypothesis          |
-| **Feature Enhancement** | "Existing product / add capability / improve flow"     | Opportunity Solution Tree → SCAMPER → Impact Mapping → RICE → Value Hypothesis |
+| Scenario                        | Entry Trigger                                                                     | Primary Methods                                                                |
+| ------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Problem-Solving**             | "Something is broken / users complain / metric is bad"                            | 5 Whys → Fishbone → HMW → SCAMPER → Hypothesis RAT                             |
+| **New Product**                 | "Greenfield idea / new market / no codebase yet"                                  | JTBD → Lean Canvas → Crazy 8s → Opportunity Scoring → Lean Hypothesis          |
+| **Feature Enhancement**         | "Existing product / add capability / improve flow"                                | Opportunity Solution Tree → SCAMPER → Impact Mapping → RICE → Value Hypothesis |
+| **Multi-Opportunity Discovery** | "Raw product vision / problem statement spanning multiple distinct opportunities" | JTBD / OST → SCAMPER → RICE opportunity map (3–8 items) → user multi-select    |
 
 **Double Diamond (master meta-framework):**
 
@@ -97,7 +100,7 @@ Discover ──► Define               Develop ──► Deliver
 
 ## Phase 0: Session Setup (MANDATORY)
 
-Use a direct user question to detect scenario, role, and constraints before any technique.
+Use ask the user directly to detect scenario, role, and constraints before any technique.
 
 ### 0.1 — Scenario Detection
 
@@ -107,7 +110,10 @@ Ask:
     - Problem-solving — something is broken, users struggle, a metric is bad
     - New product — greenfield, no existing product in this space
     - Feature enhancement — existing product, add/improve/remove capability
+    - Multi-opportunity discovery — a raw product vision / problem statement spanning MULTIPLE distinct opportunities that should each become a separate PBI (do NOT converge to one — produce a ranked RICE opportunity map for multi-select; see [Multi-Opportunity Discovery Mode](#multi-opportunity-discovery-mode))
     - Mixed — multiple of the above
+
+> **Mode routing:** If the input is a broad vision/problem spanning several distinct opportunities (typically driven by `workflow-idea-to-pbi`'s MULTI-OPPORTUNITY DISCOVERY MODE), select **Multi-opportunity discovery** — it changes Phase 6 convergence from "pick ONE" to "rank a 3–8-item RICE opportunity map for multi-select." All other scenarios keep the single-recommendation default.
 
 2. **"What is the primary role in this session?"**
     - Product Owner — outcome-focused, business value, user outcomes
@@ -154,7 +160,7 @@ because peak-season backlogs delay fulfillment,
 but the current system shows raw order data with no ranking or comparison.
 ```
 
-Use a direct user question to validate:
+Use ask the user directly to validate:
 
 - "Is this the core problem, or a symptom of a deeper problem?"
 - "Who specifically experiences this? How often? What's the cost?"
@@ -577,6 +583,35 @@ Time to validation: [Days/weeks]
 
 ---
 
+## Multi-Opportunity Discovery Mode
+
+> **Selected in Phase 0.1 when the input is a raw product vision / problem statement spanning MULTIPLE distinct opportunities.** This is an ADDITIONAL mode, not a replacement — every other scenario keeps the single-recommendation default of Phase 6.
+
+**When to use:** the user hands off a broad vision, problem statement, or "explore this whole area" brief where several distinct, independently-shippable opportunities are expected — and each opportunity should become its own PBI downstream. This is the mode `workflow-idea-to-pbi`'s **MULTI-OPPORTUNITY DISCOVERY MODE** drives.
+
+**How convergence differs (the defining difference):** the default flow converges to ONE opinionated recommendation (Phase 6). This mode does NOT. Instead, the SAME convergence techniques (RICE / Kano / 2×2 from Phase 4) are used to **RANK and present a map of 3–8 distinct opportunities** — NOT to pick a single winner. The user then multi-selects which opportunities to develop. Picking one winner here would discard the other PBIs the downstream workflow exists to produce.
+
+**Technique flow:** run Phases 1–4 as normal (problem framing → opportunity framing → ideation → convergence), but in Phase 2 lean on JTBD / Opportunity Solution Tree to surface the FULL opportunity landscape (not a single focus area), and in Phase 4 use RICE / Kano / 2×2 to SCORE and RANK every distinct opportunity rather than collapse to a top recommendation.
+
+**Output contract (must match what `workflow-idea-to-pbi` consumes):**
+
+- An **opportunity map of 3–8 distinct, RICE-scored opportunities**, ranked descending by RICE.
+- Documented in **`plans/{plan-dir}/brainstorm-opportunity-map.md`**.
+- Each opportunity carries: a one-line problem/value framing, RICE components (Reach × Impact × Confidence / Effort) + RICE score, and (where known) a Kano class — so each can seed a downstream PBI.
+
+```markdown
+# Opportunity Map: [Vision/Problem]
+
+| Rank | Opportunity | Problem/Value (1 line) | Reach | Impact | Confidence | Effort | RICE | Kano      |
+| ---- | ----------- | ---------------------- | ----- | ------ | ---------- | ------ | ---- | --------- |
+| 1    | ...         | ...                    | 1000  | 2      | 0.8        | 5      | 320  | Delighter |
+| 2    | ...         | ...                    | ...   | ...    | ...        | ...    | ...  | ...       |
+```
+
+**Multi-select handoff:** present the ranked map by asking the user directly with `multiSelect: true` — "Which opportunities should we develop into PBIs?". The selected opportunities feed the **per-opportunity PBI loop** in `workflow-idea-to-pbi` (each selected opportunity → idea → refine → review → story → challenge → DoR → mockup, then a final cross-PBI prioritize). Do NOT author PBIs, specs, or plans inside this skill — the discovery mode's deliverable is the scored, multi-selected opportunity map only.
+
+---
+
 ## Phase 7: Documentation & Handoff
 
 ### Report Output
@@ -745,6 +780,18 @@ Create markdown summary report:
 → 8. Value Hypothesis + RAT → 9. Recommend + next experiment
 ```
 
+### Scenario D: Multi-Opportunity Discovery
+
+```
+1. Job Stories (JTBD) → 2. Opportunity Solution Tree (FULL landscape, not one focus)
+→ 3. HMW Questions → 4. SCAMPER → 5. RICE-score EVERY opportunity
+→ 6. Rank into a 3–8-item opportunity map (do NOT pick ONE)
+→ 7. Write plans/{plan-dir}/brainstorm-opportunity-map.md
+→ 8. ask the user directly multiSelect → hand selected opportunities to the per-opportunity PBI loop
+```
+
+> **Key difference from A/B/C:** converge to a RANKED MAP for multi-select, never a single recommendation. See [Multi-Opportunity Discovery Mode](#multi-opportunity-discovery-mode).
+
 ---
 
 ## Anti-Patterns to Avoid
@@ -776,7 +823,7 @@ Create markdown summary report:
 
 ## Workflow Integration
 
-After brainstorm session concludes, use a direct user question to present next steps:
+After brainstorm session concludes, use ask the user directly to present next steps:
 
 | Next Step              | When                                                        | Skill/Workflow          |
 | ---------------------- | ----------------------------------------------------------- | ----------------------- |
@@ -787,6 +834,8 @@ After brainstorm session concludes, use a direct user question to present next s
 | `$design-spec`         | UI-heavy idea, need wireframes before spec                  | `design-spec` skill     |
 | `$domain-analysis`     | Idea touches domain entities, need model first              | `domain-analysis` skill |
 | Continue brainstorming | More scenarios to explore                                   | Stay in this session    |
+
+**Multi-Opportunity Discovery handoff:** when run in discovery mode, do NOT pick a single next step — instead present the ranked 3–8-item RICE opportunity map (written to `plans/{plan-dir}/brainstorm-opportunity-map.md`) by asking the user directly with `multiSelect: true`, then hand the selected opportunities to `workflow-idea-to-pbi`'s per-opportunity PBI loop. `workflow-idea-to-pbi` consumes this opportunity map directly.
 
 ---
 
@@ -803,8 +852,9 @@ After brainstorm session concludes, use a direct user question to present next s
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -832,7 +882,7 @@ After brainstorm session concludes, use a direct user question to present next s
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -872,6 +922,7 @@ After brainstorm session concludes, use a direct user question to present next s
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION Goal:** Deliver a scored, ranked shortlist of 3-5 candidate ideas — each carrying a problem + value hypothesis, an identified riskiest assumption, and the cheapest validation test designed — so the team commits to the right problem AND the right solution before building, never to a flat unvalidated idea list.
+- **IMPORTANT MUST ATTENTION Main steps (run in order, track each):** P0 Session Setup (detect scenario + role + known) → P1 Problem Framing/diverge (POV → 5 Whys/Fishbone → JTBD → HMW) → P2 Opportunity Framing/converge (OST / Lean Canvas / ERRC / Value-Prop) → P3 Ideation/diverge (SCAMPER → Crazy 8s → Brainwriting → Impact Map → Analogy, 25–40 ideas) → P4 Evaluation/converge (Dot Vote → RICE → Kano → 2×2 → MoSCoW, shortlist 3–5) → P5 Hypothesis Validation (Problem + Value card + RAT + cheapest test + Build-Measure-Learn) → P6 Decision (ONE recommendation) → P7 Documentation & Handoff — why: the skill's own phases are the steps AI most often forgets; re-anchor to them before each phase.
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
@@ -879,25 +930,25 @@ After brainstorm session concludes, use a direct user question to present next s
 - **Critical Thinking:** traced `file:line` proof; confidence >80% to act; never guess.
 - **Sequential Thinking:** multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS markers, confidence closer.
 
-- **MANDATORY IMPORTANT MUST ATTENTION** detect scenario + role + how-much-known via a direct user question Phase 0 FIRST — each scenario routes a different technique sequence — why: misclassifying scenario derails every downstream phase.
+- **MANDATORY IMPORTANT MUST ATTENTION** detect scenario + role + how-much-known by asking the user directly Phase 0 FIRST — each scenario routes a different technique sequence — why: misclassifying scenario derails every downstream phase.
 - **MANDATORY IMPORTANT MUST ATTENTION** separate diverge (Phases 1 & 3, generate, "Yes, and…", zero judgment) from converge (Phases 2 & 4, narrow + score) — NEVER evaluate ideas while generating them — why: mixing the two modes is the Golden Rule violation that kills creative output.
 - **MANDATORY IMPORTANT MUST ATTENTION** NEVER stop at a raw or flat idea list — every top-3 candidate carries a problem + value hypothesis card, an identified riskiest assumption (RAT), and the single cheapest validation test designed before any build commitment — why: 42% of features fail from no market need; validate before building.
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; mark each `completed` immediately, add a final review todo — why: long brainstorm sessions lose context without external task tracking.
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns first — read `docs/specs/` for domain (codebase) or `WebSearch` for market/competitor context (greenfield) before ideating — why: ideas ungrounded in domain or market evidence score on gut feel, not fit.
 - **MANDATORY IMPORTANT MUST ATTENTION** cite evidence for every claim, confidence >80% to recommend; RICE Confidence is a multiplier, not optional — why: low-evidence ideas without a Confidence score get over-ranked.
-- **MANDATORY IMPORTANT MUST ATTENTION** close with ONE opinionated recommendation + trade-offs (Phase 6) — never a flat menu of options — why: a menu pushes the decision back on the team and invites HiPPO bias.
-- **MANDATORY IMPORTANT MUST ATTENTION** use a direct user question for all user decisions and handoff routing (`$idea`, `$refine`, `$plan`) — never auto-decide — why: the user owns scenario, prioritization, and next-step choices.
+- **MANDATORY IMPORTANT MUST ATTENTION** close with ONE opinionated recommendation + trade-offs (Phase 6) — never a flat menu of options — why: a menu pushes the decision back on the team and invites HiPPO bias. EXCEPTION — **Multi-Opportunity Discovery mode** (selected in Phase 0): do NOT pick ONE; instead RANK a 3–8-item RICE opportunity map, write it to `plans/{plan-dir}/brainstorm-opportunity-map.md`, and hand off by asking the user directly `multiSelect: true` to `workflow-idea-to-pbi`'s per-opportunity PBI loop — why: each opportunity becomes a separate downstream PBI, so collapsing to one would discard the backlog the discovery workflow exists to produce.
+- **MANDATORY IMPORTANT MUST ATTENTION** use ask the user directly for all user decisions and handoff routing (`$idea`, `$refine`, `$plan`) — never auto-decide — why: the user owns scenario, prioritization, and next-step choices.
 
 **Anti-Rationalization:**
 
-| Evasion                                         | Rebuttal                                                                                      |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| "Scenario is obvious, skip Phase 0 detection"   | Misclassified scenario routes the wrong technique sequence. Run a direct user question first. |
-| "Just list the ideas, evaluation can wait"      | A flat idea list is the deliverable failure. Score, rank, and hypothesis-test the top 3.      |
-| "Skip the RAT — the idea is clearly good"       | "Clearly good" is HiPPO bias. Design the cheapest test before any build commitment.           |
-| "Diverge and converge together to save time"    | Mixing modes kills creative output — the Golden Rule violation. Keep phases separate.         |
-| "RICE without Confidence is close enough"       | No Confidence multiplier over-ranks low-evidence ideas. Always score Confidence.              |
-| "Already know the domain, skip context loading" | Show `docs/specs/` read or `WebSearch` evidence. No proof = ungrounded ideation.              |
+| Evasion                                         | Rebuttal                                                                                     |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| "Scenario is obvious, skip Phase 0 detection"   | Misclassified scenario routes the wrong technique sequence. Run ask the user directly first. |
+| "Just list the ideas, evaluation can wait"      | A flat idea list is the deliverable failure. Score, rank, and hypothesis-test the top 3.     |
+| "Skip the RAT — the idea is clearly good"       | "Clearly good" is HiPPO bias. Design the cheapest test before any build commitment.          |
+| "Diverge and converge together to save time"    | Mixing modes kills creative output — the Golden Rule violation. Keep phases separate.        |
+| "RICE without Confidence is close enough"       | No Confidence multiplier over-ranks low-evidence ideas. Always score Confidence.             |
+| "Already know the domain, skip context loading" | Show `docs/specs/` read or `WebSearch` evidence. No proof = ungrounded ideation.             |
 
 **MUST ATTENTION** Phase 0 scenario detection FIRST · diverge/converge strictly separated · every top-3 idea carries a hypothesis + RAT + cheapest test — these three survive long sessions; re-anchor to them before recommending.
 
@@ -981,8 +1032,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -993,6 +1045,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

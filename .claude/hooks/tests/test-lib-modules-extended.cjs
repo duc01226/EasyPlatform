@@ -574,9 +574,20 @@ logSection('describeSchema');
     logResult('shows required markers', output.includes('required'));
     logResult('shows optional markers', output.includes('optional'));
 
-    // Conciseness check — should be under 300 lines for AI context
+    // Spec-system authoring guidance — the AI must learn how to populate these from
+    // any project's source (derivation notes emitted as `#` comments per field).
+    logResult('shows techSpecScan section', output.includes('techSpecScan'));
+    logResult('shows techSpecScan.annotationPattern field', output.includes('annotationPattern'));
+    logResult('shows annotationPattern 2-capture-group contract', output.includes('two capture'));
+    logResult('shows specRoots section', output.includes('specRoots'));
+    logResult('shows _techSpecScanNote omission carrier', output.includes('_techSpecScanNote'));
+    logResult('emits per-field derivation notes', output.includes('# '));
+
+    // Conciseness check — soft bound so `--describe` stays manageable in AI context.
+    // Raised from 300 → 400 when specRoots + techSpecScan and their per-field
+    // derivation notes were added; still a runaway-bloat guard, not a suppression.
     const lineCount = output.split('\n').length;
-    logResult('output under 300 lines', lineCount < 300, `${lineCount} lines`);
+    logResult('output under 400 lines', lineCount < 400, `${lineCount} lines`);
 }
 
 // ════════════════════════════════════════════════════════════════════════════

@@ -12,7 +12,7 @@ const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(thisDir, '..', '..', '..', '..');
 const normalizeEol = text => text.replace(/\r\n/g, '\n');
 
-test('TC-WFPROTO-005: redundant why-review sweep preserves review-changes validation gate', async () => {
+test('TC-WFPROTO-005: redundant why-review sweep preserves changes-review validation gate', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'wfproto-sweep-'));
     try {
         const tempScriptDir = path.join(tempRoot, '.claude', 'scripts');
@@ -30,9 +30,9 @@ test('TC-WFPROTO-005: redundant why-review sweep preserves review-changes valida
             JSON.stringify(
                 {
                     workflows: {
-                        'review-changes': {
+                        'changes-review': {
                             sequence: [
-                                'review-changes',
+                                'changes-review',
                                 'why-review',
                                 'security-review',
                                 'why-review',
@@ -52,7 +52,7 @@ test('TC-WFPROTO-005: redundant why-review sweep preserves review-changes valida
             [
                 '# Workflow Test',
                 '',
-                '**Steps:** /review-changes -> /why-review -> /security-review -> /why-review -> /docs-update',
+                '**Steps:** /changes-review -> /why-review -> /security-review -> /why-review -> /docs-update',
                 ''
             ].join('\n'),
             'utf8'
@@ -66,13 +66,13 @@ test('TC-WFPROTO-005: redundant why-review sweep preserves review-changes valida
             await fs.readFile(path.join(tempRoot, '.claude', 'workflows.json'), 'utf8')
         );
         assert.deepEqual(
-            workflowConfig.workflows['review-changes'].sequence,
-            ['review-changes', 'why-review', 'security-review', 'docs-update'],
-            'sweep must preserve review-changes -> why-review while removing a redundant control pair'
+            workflowConfig.workflows['changes-review'].sequence,
+            ['changes-review', 'why-review', 'security-review', 'docs-update'],
+            'sweep must preserve changes-review -> why-review while removing a redundant control pair'
         );
 
         const skillText = normalizeEol(await fs.readFile(path.join(tempSkillDir, 'SKILL.md'), 'utf8'));
-        assert.match(skillText, /\/review-changes -> \/why-review -> \/security-review -> \/docs-update/);
+        assert.match(skillText, /\/changes-review -> \/why-review -> \/security-review -> \/docs-update/);
         assert.doesNotMatch(skillText, /\/security-review -> \/why-review/);
     } finally {
         await fs.rm(tempRoot, { recursive: true, force: true });
@@ -83,15 +83,15 @@ test('TC-WFPROTO-007: prompt surfaces do not retain stale review workflow guidan
     const promptSurfacePaths = [
         '.claude/workflows.json',
         '.claude/workflows/primary-workflow.md',
-        '.claude/skills/review-architecture/SKILL.md',
-        '.claude/skills/review-ui/SKILL.md',
-        '.agents/skills/review-architecture/SKILL.md',
-        '.agents/skills/review-ui/SKILL.md',
+        '.claude/skills/architecture-review/SKILL.md',
+        '.claude/skills/ui-review/SKILL.md',
+        '.agents/skills/architecture-review/SKILL.md',
+        '.agents/skills/ui-review/SKILL.md',
         '.codex/CODEX_CONTEXT.md',
         'AGENTS.md'
     ];
-    const obsoleteWorkflowSummary = /code-simplifier\s*(?:->|→|\+)\s*review-changes\s*(?:->|→|\+)\s*review-architecture\s*(?:->|→|\+)\s*code-review\s*(?:->|→|\+)\s*performance/;
-    const obsoleteReviewUiSibling = /(?:review-ui[`$]?[^.\n]*parallel-batch sibling|Sibling of [`$]?review-architecture)/;
+    const obsoleteWorkflowSummary = /code-simplifier\s*(?:->|→|\+)\s*changes-review\s*(?:->|→|\+)\s*architecture-review\s*(?:->|→|\+)\s*code-review\s*(?:->|→|\+)\s*performance/;
+    const obsoleteReviewUiSibling = /(?:ui-review[`$]?[^.\n]*parallel-batch sibling|Sibling of [`$]?architecture-review)/;
 
     for (const promptSurfacePath of promptSurfacePaths) {
         const text = normalizeEol(await fs.readFile(path.join(repoRoot, promptSurfacePath), 'utf8'));
@@ -103,7 +103,7 @@ test('TC-WFPROTO-007: prompt surfaces do not retain stale review workflow guidan
         assert.doesNotMatch(
             text,
             obsoleteReviewUiSibling,
-            `${promptSurfacePath} must not describe review-ui as an external sibling reviewer`
+            `${promptSurfacePath} must not describe ui-review as an external sibling reviewer`
         );
     }
 });
@@ -120,7 +120,72 @@ test('TC-WFPROTO-008: review workflow batch prompt uses canonical skill ids and 
     assert.doesNotMatch(combined, /subagent_type(?:`|":\s*)\s*`?code-reviewer`?[^.\n]*Steps 3[–-]7/);
     assert.match(combined, /`performance-review`, `integration-test-review`, `security-review`/);
     assert.match(combined, /Agent\(security-review, subagent_type="security-auditor"/);
-    assert.match(combined, /Agent\(review-architecture, subagent_type="architect"/);
+    assert.match(combined, /Agent\(architecture-review, subagent_type="architect"/);
+});
+
+test('TC-WFADV-022: whole-target why-review starts in parallel with changes-review and preserves the final gate', async () => {
+    const workflows = JSON.parse(
+        await fs.readFile(path.join(repoRoot, '.claude', 'workflows.json'), 'utf8')
+    ).workflows;
+    const workflow = workflows['workflow-review-changes'];
+    const skillText = normalizeEol(
+        await fs.readFile(path.join(repoRoot, '.claude', 'skills', 'workflow-review-changes', 'SKILL.md'), 'utf8')
+    );
+    const codexContextText = normalizeEol(
+        await fs.readFile(path.join(repoRoot, '.codex', 'CODEX_CONTEXT.md'), 'utf8')
+    );
+    const loopSkillText = normalizeEol(
+        await fs.readFile(path.join(repoRoot, '.claude', 'skills', 'workflow-review-changes-loop', 'SKILL.md'), 'utf8')
+    );
+    const workflowVerifierText = normalizeEol(
+        await fs.readFile(path.join(repoRoot, '.claude', 'scripts', 'codex', 'verify-workflow-cycle-compliance.mjs'), 'utf8')
+    );
+
+    assert.deepEqual(
+        workflow.sequence.slice(0, 3),
+        ['changes-review', 'why-review --target=whole-review-target', 'why-review'],
+        'initial whole-target review must be a distinct sequence occurrence before findings validation'
+    );
+    assert.deepEqual(
+        workflow.parallelGroups.find(group => group.id === 'initial-reviews'),
+        {
+            id: 'initial-reviews',
+            members: ['changes-review', 'why-review --target=whole-review-target'],
+            conditionalMembers: [],
+            barrier: true
+        },
+        'changes-review and whole-target why-review must share an unconditional all-return barrier'
+    );
+    assert.deepEqual(
+        workflow.stepMeta['why-review --target=whole-review-target'],
+        { executionMode: 'subagent', contextBudget: 'high' },
+        'whole-target why-review must run out-of-band so changes-review can remain inline'
+    );
+    assert.equal(
+        workflow.sequence.at(-4),
+        'why-review',
+        'the settled-state final holistic why-review must remain after the conditional re-review'
+    );
+    assert.match(skillText, /Initial Parallel Phase \(Steps 1[–-]2\)/);
+    assert.match(skillText, /fresh `code-reviewer` sub-agent[^\n]*FULL mode/);
+    assert.match(skillText, /Advance only after BOTH return/);
+    assert.match(skillText, /step 16[^\n]*settled[^\n]*whole target/i);
+    assert.match(
+        codexContextText,
+        /plan-execute -> changes-review -> why-review -> docs-update/,
+        'generated guidance must preserve the later conditional changes-review occurrence'
+    );
+    assert.match(loopSkillText, /full 19-step sequence/);
+    assert.doesNotMatch(loopSkillText, /full 18-step sequence/);
+    assert.match(loopSkillText, /fix cycle, steps 12[–-]15/);
+    assert.doesNotMatch(loopSkillText, /fix cycle, steps 11[–-]14/);
+    assert.doesNotMatch(
+        loopSkillText,
+        /workflow-review-changes\/SKILL\.md:\d/,
+        'loop protocol must use stable named-section references instead of shifted line coordinates'
+    );
+    assert.match(workflowVerifierText, /step-15 re-review is inline by design/);
+    assert.doesNotMatch(workflowVerifierText, /step-12 re-review is inline by design/);
 });
 
 test('TC-WFADV-021: parallelGroups structural guards reject malformed barrier configs (no silent false-pass)', async () => {

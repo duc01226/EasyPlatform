@@ -12,7 +12,7 @@ internal sealed class DemoMigrationForMongo : PlatformMongoMigrationExecutor<Tex
     /// </summary>
     public override DateTime? ExpirationDate => new DateTime(2025, 1, 1);
 
-    public override async Task Execute(TextSnippetDbContext dbContext)
+    protected override async Task InternalExecute(TextSnippetDbContext dbContext)
     {
         await dbContext.EnsureIndexesAsync(true);
     }

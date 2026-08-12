@@ -226,6 +226,20 @@ public abstract class PlatformServiceIntegrationTestBase<TServiceModule>
     /// Executes a command using CQRS pattern with proper scope and request context.
     /// This method provides a generic platform approach that delegates project-specific
     /// context setup to the BeforeExecuteCommandAsync virtual method.
+    /// <para>
+    /// <strong>Optimistic-concurrency resilience.</strong> The whole scoped execution is wrapped in
+    /// <see cref="PlatformIntegrationTestHelper.ExecuteWithConcurrencyRetryAsync{T}"/> so a command that loses a
+    /// transient row-version race against the REAL background consumers / entity-event handlers / jobs that the
+    /// deliberately-additive integration suite runs concurrently (e.g. a freshly-created entity's Created event
+    /// fanning out to a read-model sync that writes back the same row) is retried on a FRESH DI scope / unit of work
+    /// instead of surfacing as a flaky test failure. Each retry re-creates the scope (fresh <see cref="IPlatformCqrs"/>
+    /// + request context + UoW) via <c>ServiceProvider.ExecuteInjectScopedAsync</c> and re-reads the latest row
+    /// version, so it is idempotent by construction. Retry is scoped to optimistic-concurrency
+    /// conflicts ONLY: every other exception propagates immediately on first occurrence (never retried, never
+    /// swallowed), and a conflict still present after the attempt budget is re-thrown as a genuine, non-transient
+    /// contention failure. This never masks an assertion failure (assertions run in the caller's
+    /// <c>WaitUntilAsync</c> blocks, AFTER this returns) or a real handler bug.
+    /// </para>
     /// </summary>
     /// <param name="command">The command to execute</param>
     /// <param name="userContext">Optional user context for flexible testing scenarios (user roles, companies, etc.)</param>
@@ -236,12 +250,13 @@ public abstract class PlatformServiceIntegrationTestBase<TServiceModule>
         CancellationToken cancellationToken = default)
         where TResult : PlatformCqrsCommandResult, new()
     {
-        return await ServiceProvider.ExecuteInjectScopedAsync<TResult>(async (IPlatformCqrs cqrs, IPlatformApplicationRequestContextAccessor requestContextAccessor) =>
-            {
-                await BeforeExecuteCommandAsync(requestContextAccessor, userContext, cancellationToken);
-                return await cqrs.SendCommand(command, cancellationToken);
-            }
-        );
+        return await PlatformIntegrationTestHelper.ExecuteWithConcurrencyRetryAsync(
+            () => ServiceProvider.ExecuteInjectScopedAsync<TResult>(async (IPlatformCqrs cqrs, IPlatformApplicationRequestContextAccessor requestContextAccessor) =>
+                {
+                    await BeforeExecuteCommandAsync(requestContextAccessor, userContext, cancellationToken);
+                    return await cqrs.SendCommand(command, cancellationToken);
+                }
+            ));
     }
 
     /// <summary>

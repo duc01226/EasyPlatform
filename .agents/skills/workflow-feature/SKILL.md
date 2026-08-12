@@ -33,7 +33,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -75,14 +76,14 @@ This workflow has steps that appear multiple times. When creating tasks, use the
 
 | Step                                 | Occurrence   | Task Description                                 |
 | ------------------------------------ | ------------ | ------------------------------------------------ |
-| `$plan`                              | 1st (pos 6)  | PLAN₁: Feature Spec-backed implementation plan   |
-| `$plan`                              | 2nd (pos 13) | PLAN₂: Sprint-ready plan incorporating TDD specs |
-| `$plan-review`                       | 1st (pos 7)  | Review PLAN₁                                     |
-| `$plan-review`                       | 2nd (pos 14) | Review PLAN₂                                     |
-| `$spec [mode=tests]`                 | 1st (pos 10) | TDD-SPEC₁: Pre-implementation test specs         |
-| `$spec [mode=tests]`                 | 2nd (pos 17) | TDD-SPEC₂: Post-implementation test spec update  |
-| `$review-artifact --type=spec-tests` | 1st (pos 12) | Review TDD-SPEC₁                                 |
-| `$review-artifact --type=spec-tests` | 2nd (pos 19) | Review TDD-SPEC₂                                 |
+| `$plan`                              | 1st (pos 8)  | PLAN₁: Feature Spec-backed implementation plan   |
+| `$plan`                              | 2nd (pos 15) | PLAN₂: Sprint-ready plan incorporating TDD specs |
+| `$plan-review`                       | 1st (pos 9)  | Review PLAN₁                                     |
+| `$plan-review`                       | 2nd (pos 16) | Review PLAN₂                                     |
+| `$spec [mode=tests]`                 | 1st (pos 12) | TDD-SPEC₁: Pre-implementation test specs         |
+| `$spec [mode=tests]`                 | 2nd (pos 20) | TDD-SPEC₂: Post-implementation test spec update  |
+| `$artifact-review --type=spec-tests` | 1st (pos 14) | Review TDD-SPEC₁                                 |
+| `$artifact-review --type=spec-tests` | 2nd (pos 22) | Review TDD-SPEC₂                                 |
 
 **NEVER deduplicate** — each occurrence is a distinct task with a different purpose.
 
@@ -108,11 +109,13 @@ Every step = `TaskUpdate in_progress` → skill invocation → complete skill �
 
 > **Goal Contract propagation (workflow-owned):** At workflow start, resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the feature request). Before `$plan-execute`, verify the plan's feature success criteria map to the saved criteria. Pass the same goal file reference to every child step — child skills read the SAME saved goal, never a re-derived one from chat memory. Before `$workflow-end`, emit the final Goal Satisfaction matrix (PASS/FAIL/BLOCKED); workflow completion requires every required criterion PASS or BLOCKED with a user-facing escalation.
 
-**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $domain-analysis -> $why-review -> $spec -> $plan -> $plan-review -> $plan-validate -> $why-review -> $spec [mode=tests] -> $why-review -> $review-artifact --type=spec-tests -> $plan -> $plan-review -> $plan-execute -> $seed-test-data -> $review-domain-entities -> $spec [mode=tests] -> $why-review -> $review-artifact --type=spec-tests -> $spec [mode=sync] -> $integration-test -> $integration-test-review -> $integration-test-verify -> $workflow-review-changes -> $production-readiness-review -> $security-review -> $changelog -> $test -> $docs-update -> $workflow-end -> $watzup
+**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $spec-discovery -> $domain-analysis -> $why-review -> $spec -> $spec-clarify -> $plan -> $plan-review -> $plan-validate -> $why-review -> $spec [mode=tests] -> $why-review -> $artifact-review --type=spec-tests -> $plan -> $plan-review -> $plan-execute -> $seed-test-data -> $domain-entities-review -> $spec [mode=tests] -> $why-review -> $artifact-review --type=spec-tests -> $spec [mode=sync] -> $integration-test -> $integration-test-review -> $integration-test-verify -> $workflow-review-changes -> $security-review -> $changelog -> $test -> $docs-update -> $demo-guide -> $workflow-end -> $watzup
 
 ---
 
-**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $domain-analysis -> $why-review -> $spec -> $plan -> $plan-review -> $plan-validate -> $why-review -> $spec [mode=tests] -> $why-review -> $review-artifact --type=spec-tests -> $plan -> $plan-review -> $plan-execute -> $seed-test-data -> $review-domain-entities -> $spec [mode=tests] -> $why-review -> $review-artifact --type=spec-tests -> $spec [mode=sync] -> $integration-test -> $integration-test-review -> $integration-test-verify -> $workflow-review-changes -> $production-readiness-review -> $security-review -> $changelog -> $test -> $docs-update -> $workflow-end -> $watzup
+**IMPORTANT MANDATORY Steps:** $scout -> $investigate -> $spec-discovery -> $domain-analysis -> $why-review -> $spec -> $spec-clarify -> $plan -> $plan-review -> $plan-validate -> $why-review -> $spec [mode=tests] -> $why-review -> $artifact-review --type=spec-tests -> $plan -> $plan-review -> $plan-execute -> $seed-test-data -> $domain-entities-review -> $spec [mode=tests] -> $why-review -> $artifact-review --type=spec-tests -> $spec [mode=sync] -> $integration-test -> $integration-test-review -> $integration-test-verify -> $workflow-review-changes -> $security-review -> $changelog -> $test -> $docs-update -> $demo-guide -> $workflow-end -> $watzup
+
+> **Single-pass steps are self-loop-backed (convergence lives in the skill, not the sequence):** `$domain-entities-review` and both `$artifact-review --type=spec-tests` occurrences appear once each in the flat sequence with no repeat wired — intentionally. Each carries the full `SYNC:double-round-trip-review` self-loop (review → validate findings → fix validated findings → full re-review until a clean pass), so a single sequence occurrence still converges to zero findings on its own. The workflow relies on that per-skill loop; it does NOT re-list the step to force convergence. (Contrast the six specialists in `$workflow-review-changes` steps 3–8, whose scoped-re-run note lives in that skill.)
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
@@ -120,13 +123,15 @@ Activate the `workflow-feature` workflow. Run `$start-workflow workflow-feature`
 
 > **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
 
-**Steps:** $scout → $investigate → $domain-analysis → $why-review → $spec → $plan → $plan-review → $plan-validate → $why-review → $spec [mode=tests] → $why-review → $review-artifact --type=spec-tests → $plan → $plan-review → $plan-execute → $seed-test-data → $review-domain-entities → $spec [mode=tests] → $why-review → $review-artifact --type=spec-tests → $spec [mode=sync] → $integration-test → $integration-test-review → $integration-test-verify → $workflow-review-changes → $production-readiness-review → $security-review → $changelog → $test → $docs-update → $workflow-end → $watzup
+**Steps:** $scout → $investigate → $spec-discovery → $domain-analysis → $why-review → $spec → $spec-clarify → $plan → $plan-review → $plan-validate → $why-review → $spec [mode=tests] → $why-review → $artifact-review --type=spec-tests → $plan → $plan-review → $plan-execute → $seed-test-data → $domain-entities-review → $spec [mode=tests] → $why-review → $artifact-review --type=spec-tests → $spec [mode=sync] → $integration-test → $integration-test-review → $integration-test-verify → $workflow-review-changes → $security-review → $changelog → $test → $docs-update → $demo-guide → $workflow-end → $watzup
 
 > **[PERFORMANCE-SDD ROUTE]** If this feature is a performance enhancement (latency, throughput, memory, query speed, load behavior), run `$performance-review` and require SLA/benchmark evidence: target metric, baseline, measurement command, and acceptable regression budget. Run `$plan-execute` even on the performance route — never skip it. If behavior can change, run `$test` and any relevant functional no-regression checks. Update docs/specs for changed SLA, performance constraints, or behavior boundaries. Use project-specific performance docs from `docs/project-config.json` / `docs/project-reference/` when available.
 
 > **[AI-SDD CLOSURE]** Before `$workflow-end`, confirm changed behavior, unchanged behavior, TCs/tests, docs/specs, and generated mirror sync are either completed or explicitly skipped with evidence.
 >
-> **[AI-SDD CLOSURE — POST-IMPLEMENTATION SPEC RE-VERIFY (MANDATORY)]** The `$spec` authored at step 5 (before `$plan`) captured _intended_ behavior. After `$plan-execute`, re-verify Feature Spec **§1-7** (not only §8 TCs) against what was _actually built_ and adjudicate every divergence per `shared/sdd-artifact-contract.md` → Drift Gates (`SYNC:spec-drift-adjudication`): **CODE-WRONG** → fix code/test against the spec; **SPEC-STALE** → run `$spec [update]` to record the new intended behavior, then `$spec [mode=tests] [update]` + `$spec [mode=sync]`; **AMBIGUOUS** → escalate to the spec owner. A feature that shipped behavior the spec does not describe leaves the spec stale and is NOT closure-ready. This re-verify is not optional cleanup — it is the "after implement, verify and create/update specs again" half of the SDD cycle.
+> **[AI-SDD CLOSURE — POST-IMPLEMENTATION SPEC RE-VERIFY (MANDATORY)]** The `$spec` authored at step 6 (before `$plan`) captured _intended_ behavior. After `$plan-execute`, re-verify Feature Spec **§1-7** (not only §8 TCs) against what was _actually built_ and adjudicate every divergence per `shared/sdd-artifact-contract.md` → Drift Gates (`SYNC:spec-drift-adjudication`): **CODE-WRONG** → fix code/test against the spec; **SPEC-STALE** → run `$spec [update]` to record the new intended behavior, then `$spec [mode=tests] [update]` + `$spec [mode=sync]`; **AMBIGUOUS** → escalate to the spec owner. A feature that shipped behavior the spec does not describe leaves the spec stale and is NOT closure-ready. This re-verify is not optional cleanup — it is the "after implement, verify and create/update specs again" half of the SDD cycle.
+
+> **UI-intent maintenance (conditional)** — runs alongside the `$spec [mode=sync]` step, **only when the change carries user-facing behavior** (else state the skip reason — backend-only change, no §6 change). When user-facing behavior is present, run `$spec` (ui-intent intent) to refresh the affected Feature Spec **§6** interaction surface — View Inventory, Key UI States, and the per-story (`US-`/`OP-`/`BR-`) click-path the feature touched — and link the governing `$design-spec`/mockup in the spec frontmatter so §6 and the design artifact stay coupled to what was actually built. The rules live in the shared block below (`SYNC:ui-intent-layer`) — follow it; do not restate it here.
 
 <!-- SYNC:end-to-start-debugger-trace -->
 
@@ -176,8 +181,9 @@ Activate the `workflow-feature` workflow. Run `$start-workflow workflow-feature`
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -229,6 +235,22 @@ Activate the `workflow-feature` workflow. Run `$start-workflow workflow-feature`
 
 <!-- /SYNC:subagent-return-contract -->
 
+<!-- SYNC:ui-intent-layer -->
+
+> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
+>
+> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
+> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
+> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
+> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
+> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
+>
+> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
+
+<!-- /SYNC:ui-intent-layer -->
+
 <!-- SYNC:end-to-start-debugger-trace:reminder -->
 
 **IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
@@ -248,6 +270,12 @@ Activate the `workflow-feature` workflow. Run `$start-workflow workflow-feature`
 - **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
 
 <!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
+
+<!-- SYNC:ui-intent-layer:reminder -->
+
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+
+<!-- /SYNC:ui-intent-layer:reminder -->
 
 ## Closing Reminders
 
@@ -347,8 +375,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -359,6 +388,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

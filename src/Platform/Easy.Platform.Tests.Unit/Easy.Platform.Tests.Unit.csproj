@@ -13,15 +13,19 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Easy.Platform\Easy.Platform.csproj" />
+    <ProjectReference Include="..\Easy.Platform.AspNetCore\Easy.Platform.AspNetCore.csproj" />
+    <ProjectReference Include="..\Easy.Platform.AzureFileStorage\Easy.Platform.AzureFileStorage.csproj" />
     <ProjectReference Include="..\Easy.Platform.Benchmark\Easy.Platform.Benchmark.csproj" />
     <ProjectReference Include="..\Easy.Platform.EfCore\Easy.Platform.EfCore.csproj" />
     <ProjectReference Include="..\Easy.Platform.MongoDB\Easy.Platform.MongoDB.csproj" />
+    <ProjectReference Include="..\Easy.Platform.RabbitMQ\Easy.Platform.RabbitMQ.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoFixture" Version="4.18.1" />
     <PackageReference Include="AutoFixture.AutoMoq" Version="4.18.1" />
     <PackageReference Include="AutoFixture.Xunit2" Version="4.18.1" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="[7.0.0]" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />

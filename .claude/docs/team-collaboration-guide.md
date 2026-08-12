@@ -27,9 +27,9 @@ Claude Code uses a **three-pillar architecture** to assist every role:
 
 | Pillar                        | What It Does                                                          | Count                   |
 | ----------------------------- | --------------------------------------------------------------------- | ----------------------- |
-| **Hooks** (Enforcement)       | Enforce quality gates, block unsafe actions, manage session lifecycle | 15 top-level hook files |
-| **Skills** (Intelligence)     | Prompt-engineered protocols loaded on demand via `/skill-name`        | 156 skills              |
-| **Workflows** (Orchestration) | Multi-step sequences of skills with progress tracking                 | 17 workflows            |
+| **Hooks** (Enforcement)       | Enforce quality gates, block unsafe actions, manage session lifecycle | 16 top-level hook files |
+| **Skills** (Intelligence)     | Prompt-engineered protocols loaded on demand via `/skill-name`        | 163 skills              |
+| **Workflows** (Orchestration) | Multi-step sequences of skills with progress tracking                 | 19 workflows            |
 
 ### Workflow Detection
 
@@ -153,7 +153,7 @@ Project knowledge — backend/frontend patterns, design tokens, code-review rule
 2. **Review against design system**
    Spec auto-maps to tokens in `docs/project-reference/design-system/`
 
-**Workflow trigger:** Say "design spec for" → runs **/design-spec** then **/interface-design** (or **/frontend-design**)
+**Workflow trigger:** Say "design spec for" → runs **/design-spec** then **/design --lane=product** (or **/design --lane=marketing**)
 
 ---
 
@@ -171,7 +171,7 @@ Project knowledge — backend/frontend patterns, design tokens, code-review rule
 
 2. **Review artifact quality**
     ```
-    /review-artifact {artifact-path}
+    /artifact-review {artifact-path}
     ```
 
 **Workflow trigger:** Say "quality check" → run `/quality-gate-review` directly
@@ -224,12 +224,12 @@ Project knowledge — backend/frontend patterns, design tokens, code-review rule
 
 ### Design & Frontend
 
-| Skill                    | Purpose                              | Example                   |
-| ------------------------ | ------------------------------------ | ------------------------- |
-| `/design-spec`           | Create UI/UX design specification    | `/design-spec {pbi-file}` |
-| `/frontend-design`       | Production-grade frontend interfaces | `/frontend-design`        |
-| `/ui-ux-pro-max`         | Advanced UI/UX design intelligence   | `/ui-ux-pro-max`          |
-| `/web-design-guidelines` | WCAG 2.2, responsive, best practices | `/web-design-guidelines`  |
+| Skill                    | Purpose                              | Example                    |
+| ------------------------ | ------------------------------------ | -------------------------- |
+| `/design-spec`           | Create UI/UX design specification    | `/design-spec {pbi-file}`  |
+| `/design`                | Production-grade frontend interfaces | `/design --lane=marketing` |
+| `/ui-ux-pro-max`         | Advanced UI/UX design intelligence   | `/ui-ux-pro-max`           |
+| `/web-design-guidelines` | WCAG 2.2, responsive, best practices | `/web-design-guidelines`   |
 
 ### Process & Collaboration
 
@@ -285,18 +285,18 @@ QC:                              /quality-gate-review ──→ [PASS/FAIL repor
 
 ---
 
-### Workflow 3: Design (`/design-spec` → `/interface-design` or `/frontend-design`)
+### Workflow 3: Design (`/design-spec` → `/design --lane=product` or `/design --lane=marketing`)
 
 **Trigger:** "ui spec", "component spec", "design the", "landing page", "screenshot"
 **Roles:** UX Designer, Developer
-**IMPORTANT MANDATORY Steps:** `/design-spec` → `/interface-design` | `/frontend-design` → `/code-review`
+**IMPORTANT MANDATORY Steps:** `/design-spec` → `/design --lane=product` | `/design --lane=marketing` → `/code-review`
 
 ```
 UX:   [PBI] ──→ /design-spec ──→ [component spec + states + tokens]
                                         │
                               DESIGN IMPLEMENTATION GATE:
-                              Product UIs → /interface-design
-                              Marketing/Creative → /frontend-design
+                              Product UIs → /design --lane=product
+                              Marketing/Creative → /design --lane=marketing
                                         │
 Dev:                             /code-review ──→ Implementation
 ```
@@ -326,7 +326,7 @@ Claude provides end-to-end workflows that span multiple roles:
 
 | Workflow              | Roles | Trigger          | Steps                                                                        |
 | --------------------- | ----- | ---------------- | ---------------------------------------------------------------------------- |
-| `idea-to-pbi` (PO→BA) | PO→BA | "hand off to BA" | `/idea` → `/review-artifact` → `/refine` → `/story` (conditional first step) |
+| `idea-to-pbi` (PO→BA) | PO→BA | "hand off to BA" | `/idea` → `/artifact-review` → `/refine` → `/story` (conditional first step) |
 
 Each workflow tracks progress across roles so the next role has full visibility into upstream artifacts.
 
@@ -490,8 +490,8 @@ PLANNING
 | PO   | `/idea`, `/prioritize`                             | idea-to-pbi            |
 | BA   | `/refine`, `/story`                                | idea-to-pbi            |
 | QA   | `/spec [mode=tests]`, `/integration-test`, `/test` | write-integration-test |
-| QC   | `/quality-gate-review`, `/review-artifact`         | —                      |
-| UX   | `/design-spec`, `/frontend-design`                 | —                      |
+| QC   | `/quality-gate-review`, `/artifact-review`         | —                      |
+| UX   | `/design-spec`, `/design`                          | —                      |
 | PM   | `/project-manager`, `/dependency`                  | —                      |
 
 ### Workflow Quick Triggers
@@ -500,7 +500,7 @@ PLANNING
 | ------------------------------ | ---------------------------- | ------------------------------------------------------- |
 | "new idea" / "feature request" | idea-to-pbi                  | /idea → /refine → /story → /prioritize                  |
 | "test this PBI" / "test cases" | `/spec [mode=tests]` (skill) | /spec [mode=tests] → /quality-gate-review               |
-| "design spec for"              | `/design-spec`               | /design-spec → /interface-design                        |
+| "design spec for"              | `/design-spec`               | /design-spec → /design --lane=product                   |
 | "TDD" / "test-first"           | feature                      | /plan → /spec [mode=tests] → /feature-implement → /test |
 
 ### Common Patterns
@@ -578,7 +578,7 @@ PLANNING
 
 1. Ensure the sending role's artifacts (idea, PBI, story, design spec, test spec) are complete and saved before the next role picks up
 2. Run `/quality-gate-review` to verify artifact completeness before the transition
-3. Use `/review-artifact` to validate quality of the upstream artifact
+3. Use `/artifact-review` to validate quality of the upstream artifact
 
 ---
 

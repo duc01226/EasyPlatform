@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Validations.Extensions;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.BackgroundJob;
@@ -46,12 +47,29 @@ public abstract class PlatformApplicationBackgroundJobExecutor<TParam> : Platfor
         return ApplicationSettingContext.IsDebugInformationMode;
     }
 
+    /// <summary>
+    /// Runs the job inside a trace activity and a request-context scope, opening a unit of work when configured.
+    /// </summary>
+    /// <param name="param">
+    /// Job parameter. Frequently <c>null</c> — parameterless recurring jobs are invoked with a null param — which the
+    /// diagnostic tag below tolerates by falling back to the declared type.
+    /// </param>
+    /// <remarks>
+    /// The <c>Param</c> trace tag carries the parameter's TYPE only. Job parameters routinely identify the specific
+    /// tenant, user, or record a run targets, and trace backends retain tags for every execution of every recurring
+    /// job — so serializing the parameter turned each schedule tick into a durable record of what it operated on.
+    /// </remarks>
     protected override async Task InternalExecuteAsync(TParam param)
     {
         using (var activity = IPlatformApplicationBackgroundJobExecutor.ActivitySource.StartActivity($"BackgroundJob.{nameof(InternalExecuteAsync)}"))
         {
             activity?.SetTag("Type", GetType().FullName);
-            activity?.SetTag("Param", param?.ToFormattedJson());
+            activity?.SetTag(
+                "Param",
+                PlatformJsonSerializer.SerializeForDiagnostics(
+                    param,
+                    forceUseRuntimeType: true,
+                    writeIndented: true));
 
             RequestContextAccessor.Current.SetValue(
                 BackgroundJobNameRequestContextValue(),
@@ -63,7 +81,8 @@ public abstract class PlatformApplicationBackgroundJobExecutor<TParam> : Platfor
                 BackgroundJobNameRequestContextValue()
             );
 
-            EnsureNoCircularPipeLine();
+            if (ShouldSkipDueToCircularPipeLine())
+                return;
 
             if (ApplicationSettingContext.IsDebugInformationMode)
                 Logger.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(InternalExecuteAsync));
@@ -103,51 +122,36 @@ public abstract class PlatformApplicationBackgroundJobExecutor<TParam> : Platfor
     /// <para>• Retrieves the current pipeline from RequestContext (list of all jobs/handlers/consumers in the call chain)</para>
     /// <para>• Checks if pipeline length exceeds 2x the configured max circular count threshold</para>
     /// <para>• Counts occurrences of the current background job in the pipeline (excluding the current call)</para>
-    /// <para>• Throws validation error if count >= configured threshold (default: 3)</para>
+    /// <para>• Returns <c>true</c> and logs an Error if count >= configured threshold (default: 3)</para>
     ///
     /// <para><strong>Configuration:</strong></para>
     /// <para>Maximum circular count is controlled by:</para>
     /// <para><see cref="IPlatformApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount"/></para>
     /// <para>Default value: <see cref="IPlatformApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCountDefaultValue"/> = 3</para>
     ///
-    /// <para><strong>When Validation Fails:</strong></para>
-    /// <para>• A <see cref="PlatformDomainRowLevelSecurityViolationException"/> is thrown</para>
-    /// <para>• The exception message includes the full pipeline trace for debugging</para>
+    /// <para><strong>When A Circular Pipeline Is Detected:</strong></para>
+    /// <para>• One Error is logged (<c>[CircularPipeLineSkipped]</c>) including the full pipeline trace and routing key</para>
+    /// <para>• The method returns <c>true</c> so the job body is skipped and the job completes as success (not failed/retried)</para>
     /// <para>• Background job execution is halted to prevent infinite loops</para>
     ///
     /// <para><strong>Pipeline Tracking:</strong></para>
     /// <para>The pipeline is tracked via <see cref="PlatformApplicationCommonRequestContextKeys.ConsumerOrEventHandlerPipeLineKey"/>
     /// and includes all components in the execution chain: CQRS commands, event handlers, message consumers, and background jobs.</para>
     /// </summary>
-    /// <exception cref="PlatformDomainRowLevelSecurityViolationException">
-    /// Thrown when circular pipeline is detected (same background job called >= threshold times)
-    /// </exception>
-    private void EnsureNoCircularPipeLine()
+    /// <returns>
+    /// <c>true</c> when a circular pipeline is detected (the caller must skip the job body); otherwise <c>false</c>.
+    /// </returns>
+    private bool ShouldSkipDueToCircularPipeLine()
     {
         var requestContextPipeLine =
             RequestContextAccessor.Current.ConsumerOrEventHandlerPipeLine();
         var pipelineRoutingKey = BackgroundJobNameRequestContextValue();
 
-        // Prevent circular calls: BackgroundJob A => [Event B, Event B => Handler C, Handler C => BackgroundJob A] => BackgroundJob A (circular)
-        if (
-            requestContextPipeLine.Count
-            >= ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount * 2
-        )
-        {
-            // Check if the current background job appears in the pipeline more than the allowed threshold
-            // Example: If threshold is 3, and this job appears 3+ times in the pipeline (excluding current call), it's circular
-            requestContextPipeLine
-                .ValidateNot(
-                    mustNot: p =>
-                        p.Take(p.Count - 1).Count(item => item == pipelineRoutingKey)
-                        >= ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount,
-                    $"The current [RequestContextBackgroundJobPipeLine:{requestContextPipeLine.ToJson()}] leads to {pipelineRoutingKey} and has a circular call error. "
-                        + $"This background job has been triggered {requestContextPipeLine.Count(item => item == pipelineRoutingKey)} times in the execution pipeline, "
-                        + $"which exceeds the maximum allowed threshold of {ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount}. "
-                        + $"This likely indicates an infinite loop where the background job is triggering events or operations that eventually re-trigger itself."
-                )
-                .EnsureValid();
-        }
+        return requestContextPipeLine.ShouldSkipDueToCircularPipeLine(
+            pipelineRoutingKey,
+            ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount,
+            Logger,
+            "background job execution");
     }
 }
 

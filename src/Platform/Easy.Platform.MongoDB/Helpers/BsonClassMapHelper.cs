@@ -5,8 +5,6 @@ namespace Easy.Platform.MongoDB.Helpers;
 
 internal static class BsonClassMapHelper
 {
-    private static readonly Lock RegisterClassMapLock = new();
-
     public static void DefaultClassMapInitializer<TClassMap>(BsonClassMap<TClassMap> cm)
     {
         cm.AutoMap();
@@ -18,7 +16,10 @@ internal static class BsonClassMapHelper
 
     public static void TryRegisterClassMapWithDefaultInitializer<TClassMap>()
     {
-        lock (RegisterClassMapLock)
+        // Shares PlatformMongoDbPersistenceModuleCache.RegistrationLock rather than owning a private lock: a private lock
+        // would serialize only this method against itself while the OTHER registration entry points hold a different lock,
+        // and two locks over one process-global registry give no mutual exclusion at all.
+        lock (PlatformMongoDbPersistenceModuleCache.RegistrationLock)
         {
             if (!BsonClassMap.IsClassMapRegistered(typeof(TClassMap)))
                 BsonClassMap.RegisterClassMap<TClassMap>(DefaultClassMapInitializer);

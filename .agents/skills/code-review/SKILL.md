@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -58,9 +59,9 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Goal:** Ensure reviewed code is correct, easy to change, convention-aligned, and verification-backed before acceptance or handoff — via receiving feedback with verification (not performative agreement), requesting targeted systematic reviews through the code-reviewer subagent, and enforcing verification gates before completion claims.
 
-> **Routing boundary:** If the user asks to review current changes, uncommitted work, staged/unstaged diffs, or a branch-to-branch diff, use `review-changes` instead.
+> **Routing boundary:** If the user asks to review current changes, uncommitted work, staged/unstaged diffs, or a branch-to-branch diff, use `changes-review` instead.
 
-> **Shared engine (keep in sync):** `code-review` and `review-changes` share the same review-protocol `SYNC:` blocks. Canonical source: `.claude/skills/shared/sync-inline-versions.md`; policy: `SYNC:shared-protocol-duplication-policy`. When you change a shared block in one skill, update the canonical file AND the sibling skill so the two never drift. The skills differ only in entry intent (explicit scope / feedback / completion-gate vs git diff) — not in review quality.
+> **Shared engine (keep in sync):** `code-review` and `changes-review` share the same review-protocol `SYNC:` blocks. Canonical source: `.claude/skills/shared/sync-inline-versions.md`; policy: `SYNC:shared-protocol-duplication-policy`. When you change a shared block in one skill, update the canonical file AND the sibling skill so the two never drift. The skills differ only in entry intent (explicit scope / feedback / completion-gate vs git diff) — not in review quality.
 
 > **MANDATORY** Before reviewing, search for project-specific reference docs:
 >
@@ -75,13 +76,14 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 1. **Create Review Report** — Init `plans/reports/code-review-{date}-{slug}.md`
 2. **Phase 0: Blast Radius** — Run graph analysis first if `.code-graph/graph.db` exists
-3. **Phase 0.3: Risk Detection** — Detect dependency, migration, bus/event, API, security, config, and infra risks
-4. **Phase 0.5: Plan Compliance** — Verify changed files and tests against active plan when present
-5. **Phase 0.7: Surface Detection** — Classify files by language + directory semantics + change nature → route sub-agents; invoke `$review-ui` when frontend/UI files are present
-6. **Phase 1: File-by-File** — Review each file, update report with correctness, convention, DRY, intent, test, and docs checks
-7. **Phase 2: Holistic** — Re-read accumulated report, assess overall approach, architecture, duplication, and cross-boundary behavior
-8. **Phase 3: Final Result** — Update report with overall assessment, critical issues, recommendations, docs staleness, and test gaps
-9. **Fix Loop: Validate → Fix → Full Re-Review** — When findings exist, validate them first, fix only validated findings, then restart the full review after the fix cycle
+3. **Phase 0.1: Change Context & Full-Pipeline Impact Trace (MANDATORY comprehension-first)** — Note the change context, then holistically trace the main affected area's full pipeline across BOTH boundaries — client↔server tier (FE↔BE) AND service/event/external — classifying each seam/touchpoint NONE/ADDITIVE/BREAKING (explicit N/A for single-tier or monolith)
+4. **Phase 0.3: Risk Detection** — Detect dependency, migration, bus/event, API, security, config, and infra risks
+5. **Phase 0.5: Plan Compliance** — Verify changed files and tests against active plan when present
+6. **Phase 0.7: Surface Detection** — Classify files by language + directory semantics + change nature → route sub-agents; invoke `$ui-review` when frontend/UI files are present
+7. **Phase 1: File-by-File** — Review each file, update report with correctness, convention, DRY, intent, test, and docs checks
+8. **Phase 2: Holistic** — Re-read accumulated report, assess overall approach, architecture, duplication, and cross-boundary behavior
+9. **Phase 3: Final Result** — Update report with overall assessment, critical issues, recommendations, docs staleness, and test gaps
+10. **Fix Loop: Validate → Fix → Full Re-Review** — When findings exist, validate them first, fix only validated findings, then restart the full review after the fix cycle
 
 **Key Rules:**
 
@@ -90,7 +92,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - **Easy to Change for Code**: Treat future change cost as the primary code-quality metric; DRY, SOLID, abstraction, and patterns are tools only when they reduce change amplification
 - **No Performative Agreement**: Technical evaluation only ("You're right!" banned)
 - **Verification Gates**: Evidence required before completion claims
-- **Review Current Diffs Elsewhere**: Current changes, staged/unstaged diffs, and branch diffs belong to `review-changes`
+- **Review Current Diffs Elsewhere**: Current changes, staged/unstaged diffs, and branch diffs belong to `changes-review`
 - **A clean review pass ENDS the review.** Do not spend a fresh-context pass re-reviewing known findings before validation/fix; only re-review after fixes change the target.
 
 # Code Review
@@ -160,19 +162,20 @@ below — if a downstream rule would raise change cost, this principle wins.
 
 **MANDATORY FIRST: Create Todo Tasks**
 
-| Task                                                                                                 | Status      |
-| ---------------------------------------------------------------------------------------------------- | ----------- |
-| `[Review] Create report file`                                                                        | in_progress |
-| `[Review Phase 0] Run graph blast-radius if available`                                               | pending     |
-| `[Review Phase 0.3] Detect high-risk change types`                                                   | pending     |
-| `[Review Phase 0.5] Plan compliance check (skip if no active plan)`                                  | pending     |
-| `[Review Phase 0.7] Detect categories + route sub-agents`                                            | pending     |
-| `[Review Phase 0.7b] $review-ui sub-review — skip if no frontend/UI files in changeset`              | pending     |
-| `[Review Phase 1] File-by-file review + update report`                                               | pending     |
-| `[Review Phase 2] Holistic assessment`                                                               | pending     |
-| `[Review Phase 3] Final findings, docs triage, and test sync findings`                               | pending     |
-| `[Review Fix Loop] Validate findings, fix validated issues, and full re-review if fixes are applied` | pending     |
-| `[Review Final] Consolidate all rounds`                                                              | pending     |
+| Task                                                                                                                                                                                                                                                                        | Status      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| `[Review] Create report file`                                                                                                                                                                                                                                               | in_progress |
+| `[Review Phase 0] Run graph blast-radius if available`                                                                                                                                                                                                                      | pending     |
+| `[Review Phase 0.1] Note change context + holistic full-pipeline trace across BOTH boundaries — client↔server tier (FE↔BE) AND service/event/external — classify each seam/touchpoint NONE/ADDITIVE/BREAKING (MANDATORY comprehension-first; N/A for single-tier/monolith)` | pending     |
+| `[Review Phase 0.3] Detect high-risk change types`                                                                                                                                                                                                                          | pending     |
+| `[Review Phase 0.5] Plan compliance check (skip if no active plan)`                                                                                                                                                                                                         | pending     |
+| `[Review Phase 0.7] Detect categories + route sub-agents`                                                                                                                                                                                                                   | pending     |
+| `[Review Phase 0.7b] $ui-review sub-review — skip if no frontend/UI files in changeset`                                                                                                                                                                                     | pending     |
+| `[Review Phase 1] File-by-file review + update report`                                                                                                                                                                                                                      | pending     |
+| `[Review Phase 2] Holistic assessment`                                                                                                                                                                                                                                      | pending     |
+| `[Review Phase 3] Final findings, docs triage, and test sync findings`                                                                                                                                                                                                      | pending     |
+| `[Review Fix Loop] Validate findings, fix validated issues, and full re-review if fixes are applied`                                                                                                                                                                        | pending     |
+| `[Review Final] Consolidate all rounds`                                                                                                                                                                                                                                     | pending     |
 
 **Step 0: Create Report File**
 
@@ -186,7 +189,13 @@ If `.code-graph/graph.db` exists, run graph impact analysis before reviewing:
 - Record impacted files count, untested changed functions, and risk level in the report
 - Prioritize high-impact files during Phase 1
 
-If graph data is unavailable, record "Graph not available — skipping blast radius" and continue.
+If graph data is unavailable, record "Graph not available — skipping blast radius" and proceed to Phase 0.1.
+
+**Phase 0.1: Change Context Comprehension & Full-Pipeline Impact Trace (MANDATORY — comprehension-first)**
+
+> **IMPORTANT MANDATORY MUST ATTENTION:** First _comprehension_ step — before any file-by-file or dimensional review. Blast radius (Phase 0) gathers impact data; here holistically UNDERSTAND the change, trace main affected area's full pipeline across every boundary it crosses. Apply BOTH the **Cross-Stack Impact Trace** and **Cross-Service Check** protocols (bodies in the SYNC section below). This holistic first-pass map FEEDS the later Phase 0.3 change-type risk tasks and the Phase 2 holistic cross-boundary assessment — does not replace them.
+
+Write a one-paragraph **Change Context** note (what changed · intent · originating tier · main affected feature/flow), then run both traces per the **Cross-Stack Impact Trace** and **Cross-Service Check** protocols (SYNC blocks below).
 
 **Phase 0.3: Detect High-Risk Change Types**
 
@@ -218,13 +227,13 @@ Before any review — classify the changeset and route sub-agents:
 | Auth/permission/token/encryption files                                           | `security-auditor`                                      |
 | Query files, caching, batch processing                                           | `performance-optimizer`                                 |
 | Source code (logic, handlers, services)                                          | `code-reviewer`                                         |
-| Frontend/UI files (components, templates, `.html`/`.scss`/`.css`, design-system) | `$review-ui` skill (see Phase 0.7b)                     |
+| Frontend/UI files (components, templates, `.html`/`.scss`/`.css`, design-system) | `$ui-review` skill (see Phase 0.7b)                     |
 | Docs, plans, specs, markdown                                                     | `general-purpose`                                       |
 | Mixed changeset with security/perf files                                         | Spawn specialized sub-agent first, then `code-reviewer` |
 
-**Phase 0.7b: Frontend/UI Sub-Review (CONDITIONAL — `$review-ui`)**
+**Phase 0.7b: Frontend/UI Sub-Review (CONDITIONAL — `$ui-review`)**
 
-If the changeset contains any frontend/UI files matching the project's configured UI patterns (components, templates, `.html`/`.scss`/`.css`, design-system tokens), invoke the `$review-ui` skill as a sub-review so UI-specific concerns are covered — long-content overflow (wrap vs ellipsis+tooltip), responsive multi-screen flex, flex-grow with min/max over fixed px, semantic z-index discipline (no raw numbers, no `!important`), and BEM classes on all template elements. Fold its findings into this report's Phase 3 results.
+If the changeset contains any frontend/UI files matching the project's configured UI patterns (components, templates, `.html`/`.scss`/`.css`, design-system tokens), invoke the `$ui-review` skill as a sub-review so UI-specific concerns are covered — long-content overflow (wrap vs ellipsis+tooltip), responsive multi-screen flex, flex-grow with min/max over fixed px, semantic z-index discipline (no raw numbers, no `!important`), and BEM classes on all template elements. Fold its findings into this report's Phase 3 results.
 
 **Skip (record reason)** when no frontend/UI files are present in the changeset — log "Skipped Phase 0.7b — no frontend/UI files in changeset".
 
@@ -278,7 +287,7 @@ Common staleness patterns: count/limit changed → docs embedding that number | 
 
 **Phase 3: Final Review Result**
 
-Update report: Overall Assessment, Critical Issues, High Priority, Architecture Recommendations, Documentation Staleness, Positive Observations.
+Update report: Overall Assessment, Critical Issues, High Priority, Architecture Recommendations, Cross-Boundary Impact (from Phase 0.1 — per client↔server seam AND per service/event/external touchpoint: NONE / ADDITIVE / BREAKING with routed fix; or explicit "Single-tier / monolith — N/A"), Documentation Staleness, Positive Observations.
 
 If documentation staleness is detected, recommend `docs-update` and list exact stale sections; do not silently pass stale docs.
 
@@ -297,7 +306,7 @@ After sub-agent returns:
 1. **Read** report from `plans/reports/code-review-rerun{N}-{date}.md`
 2. **Integrate** findings as `## Re-Review {N} Findings` — DO NOT filter or override
 3. **If findings remain:** validate the new finding set before any additional fixes
-4. **Repeat only after another fix cycle:** restart the full review again after validated fixes are applied; if the same blocker repeats across 3 full invocations with no progress, escalate via a direct user question
+4. **Repeat only after another fix cycle:** restart the full review again after validated fixes are applied; if the same blocker repeats across 3 full invocations with no progress, escalate by asking the user directly
 
 ## Clean Code Rules (MUST ATTENTION CHECK)
 
@@ -415,7 +424,7 @@ SITUATION?
 
 ## Workflow Recommendation
 
-> **MANDATORY — NO EXCEPTIONS:** If NOT already in a workflow, use a direct user question to ask user:
+> **MANDATORY — NO EXCEPTIONS:** If NOT already in a workflow, use ask the user directly to ask user:
 >
 > 1. **Activate `workflow-review-changes` workflow** (Recommended) — full review → validated fix cycle → re-review until clean
 > 2. **Execute `$code-review` directly** — run standalone
@@ -462,7 +471,7 @@ If `architectureRules` absent in project-config.json → skip silently.
 
 ## Next Steps
 
-**MANDATORY — NO EXCEPTIONS** after completing, use a direct user question:
+**MANDATORY — NO EXCEPTIONS** after completing, use ask the user directly:
 
 - **"$fix (Recommended)"** — review found issues needing fixes
 - **"$watzup"** — review clean, wrap up session
@@ -489,6 +498,44 @@ If `architectureRules` absent in project-config.json → skip silently.
 > **Evidence Gate:** MANDATORY — every claim, finding, recommendation requires `file:line` proof + confidence % (>80% act, <80% verify first).
 
 > **OOP & DRY:** MANDATORY — flag patterns extractable to base class/generic/helper. Same-suffix/lifecycle/responsibility classes share common base. Apply idiomatic abstraction (base class, mixin, trait, protocol) for project's language. Verify linting/analyzer configured.
+
+<!-- SYNC:cross-stack-impact-trace -->
+
+> **Cross-Stack Impact Trace** — FIRST review action: comprehend change holistically, THEN judge files. Every reviewed diff: note change context, trace full pipeline of main affected area end-to-end across client↔server seam, so a change on one tier can never silently break the other. (Distinct from `SYNC:cross-service-check`, which owns service-to-service / event boundary — this owns client↔server tier seam inside one app; pair both for full-pipeline coverage.)
+>
+> 1. **Comprehend context FIRST** — before file-by-file review, write short **Change Context** note: what changed, intent (why), originating tier (frontend / backend / shared / infra), main affected feature/flow. Do before flagging anything.
+> 2. **Identify cross-stack seam(s)** — for main affected area, locate contract seam(s) between client and server: API route/endpoint + verb, request/response DTO or payload shape, shared type/schema, event/message contract, query/route params. Infer tier layout from `docs/project-config.json` and project conventions.
+> 3. **Trace full pipeline end-to-end, in change's direction:**
+>     - **Backend change → trace FORWARD to every frontend consumer:** handler/controller → response DTO/serializer → API client/service → store/state → component/template rendering or submitting it.
+>     - **Frontend change → trace BACKWARD to backend contract:** component/form → API client call → route/endpoint → request DTO/validation → handler/domain.
+>     - When `.code-graph/graph.db` exists, use `$graph-connect-api` and `python .claude/scripts/code_graph trace <file> --direction both --json` to map connection; otherwise grep route path, DTO/type name, each field name across BOTH tiers.
+> 4. **Verify BOTH sides still agree** — for every changed seam confirm other tier matches: route path & verb, field names & types, nullability/optionality, required vs optional params, enum values, auth/permission, error/status shape. Any mismatch = **BREAKING** finding (backend change breaks a frontend consumer, or frontend now sends what backend rejects).
+> 5. **Classify each seam:** NONE (no contract change) / ADDITIVE (backward-compatible) / BREAKING (consumer on other tier must change too). BREAKING seam whose other-tier consumer NOT updated in same diff = HIGH severity minimum (CRITICAL for auth/money/data-integrity paths).
+>
+> **Skip ONLY** when change has no cross-tier seam — pure docs, pure styling with no data contract, or single-tier tooling. State explicitly: `Single-tier change — no cross-stack seam`. Backend-only or single-tier repo still traces internal consumers (`SYNC:cross-service-check` for service/event boundaries).
+>
+> **BLOCKED until:** Change Context noted · seam(s) identified or explicit N/A · full pipeline traced in change direction · every changed seam classified NONE / ADDITIVE / BREAKING.
+
+<!-- /SYNC:cross-stack-impact-trace -->
+
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
 
 <!-- SYNC:systematic-review-batching -->
 
@@ -662,11 +709,11 @@ If `architectureRules` absent in project-config.json → skip silently.
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -707,7 +754,7 @@ If `architectureRules` absent in project-config.json → skip silently.
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -816,6 +863,14 @@ If `architectureRules` absent in project-config.json → skip silently.
 
 > **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
 >
+> _aka **Self-Review Convergence Loop**._ The name is historical — there is **NO 2-round cap**; "double-round-trip" only means a validated-finding fix cycle forces at least one fresh re-review. It runs until a clean pass, bounded by the **5-round ceiling** below.
+>
+> **Round cap — 5 rounds MAX (a ceiling, NEVER a target).** A clean pass ENDS the loop immediately at ANY round — round 1 included; the cap never obliges you to keep spinning. Hitting round 5 with validated findings still open → **STOP and escalate by asking the user directly** with the still-open findings listed; NEVER emit a silent "good enough" PASS on cap exhaustion, and NEVER let the cap substitute for the clean-review requirement. The 3-repeated-no-progress blocker rule stays an EARLIER exit — escalate at whichever trips first.
+>
+> **Universal scope (any new output/judgment):** any newly produced output or judgment gets **≥1 self-review**; any **new judgment** gets **≥1 `$why-review --validate-findings` pass**; anything flagged to re-check is re-checked **≥1 time** — before that output is treated as final. This loop is the default convergence contract for ANY work-producing skill, not review skills only.
+>
+> **Routing invariant (author-facing):** a skill that validates findings MUST route them through `$why-review --validate-findings` (the terminal validator) — NEVER fork an inline finding-validation. Routing through why-review is what makes the finding-survival bar and this loop apply; the `verify-review-validate-coverage` sensor enforces this exact route mechanically.
+>
 > **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
 >
 > **Decision after Round 1:**
@@ -832,16 +887,18 @@ If `architectureRules` absent in project-config.json → skip silently.
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues. If the same validated finding repeats for 3 full invocations with no progress, or a fix requires product/owner input, escalate via a direct user question.
+> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues, **capped at 5 rounds**. Escalate by asking the user directly at whichever comes first: the same validated finding repeats for 3 full invocations with no progress · a fix requires product/owner input · round 5 completes with validated findings still open. NEVER loop past 5 rounds, and NEVER convert cap exhaustion into a PASS.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
 > - NEVER fix unvalidated findings; validate first using the caller's validation gate
+> - Every surviving finding must additionally clear the **finding-survival bar** defined in why-review's Findings Validation Routine (a deliberately higher bar than the generic act-gate — "keep this finding?" is a stricter question than "act on this evidence?"); a finding below the bar is demoted or dropped, not kept
 > - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
 > - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - No arbitrary sub-agent-round cap replaces the clean-review requirement; use the 3 repeated-no-progress blocker rule only to avoid infinite spinning
+> - The 5-round cap NEVER replaces the clean-review requirement — it bounds runaway looping, it does not authorize shipping an un-clean review; a clean pass ends the loop early at any round, and cap exhaustion escalates rather than passes
+> - Enforce the round cap of 5 alongside the 3 repeated-no-progress blocker rule; both are escalation triggers, neither is a completion criterion
 > - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
@@ -870,7 +927,7 @@ If `architectureRules` absent in project-config.json → skip silently.
 > - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
 > - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `spawn_agent` call
-> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via a direct user question
+> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate by asking the user directly
 > - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
@@ -1152,8 +1209,9 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -1178,6 +1236,46 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:severity-rubric -->
 
+<!-- SYNC:goal-contract-satisfaction-loop -->
+
+> **Goal Contract Satisfaction Loop** — Persist the user goal in an external file, execute against it, and loop review/fix until every saved required criterion passes or a blocker escalates. Bounded closed loop — NEVER open-ended autonomous exploration.
+>
+> 1. **Resolve the active goal** (in order): active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create a new Goal Contract from the current user request (template: `.claude/templates/goal-contract-template.md`).
+> 2. **Required sections:** Original Request, Purpose, Success Criteria (checkboxes; mark required vs optional), Constraints, Evidence Required, Iteration Log, Goal Satisfaction matrix.
+> 3. **Before work:** read the active goal and map planned work to saved success criteria — execution serves the saved criteria, never chat memory alone.
+> 4. **After execution/verification:** append an Iteration Log entry — result, evidence references (`file:line`, command output, report path), remaining gaps.
+> 5. **Review gate:** emit a Goal Satisfaction matrix — `| Success Criterion | Evidence | Status |` with PASS/FAIL/BLOCKED. Overall PASS requires every required criterion PASS.
+> 6. **Loop rule (retry):** required criterion FAIL → validate the gap is real → fix → re-review only the affected criteria. Stop cleanly when all required criteria PASS.
+> 7. **Escalation rule (stop):** two consecutive iterations with no criterion progressing, or a blocker needing user input → mark the criterion BLOCKED with a user-facing reason and escalate. NEVER loop indefinitely.
+> 8. **Skip rule:** tiny conversational tasks may skip the goal file ONLY with a recorded one-line reason. User-accepted gate skips are recorded in the goal file with reason and scope.
+> 9. **Security:** NEVER store secrets, tokens, credentials, or private customer data in goal files — store evidence references and redact sensitive values.
+>
+> **Blocked until:** active goal resolved (or skip reason recorded) · saved success criteria read before edits · iteration evidence appended after execution · Goal Satisfaction matrix emitted before any PASS verdict.
+
+<!-- /SYNC:goal-contract-satisfaction-loop -->
+
+<!-- SYNC:trade-off-interrogation-gate -->
+
+> **Trade-Off Interrogation Gate** — ALWAYS ask these THREE questions before ANY verdict, score, finding, or recommendation — about the thing under review AND about every recommendation YOU make. — why: naming a benefit without its price is an endorsement, not a review; the costliest trade-offs are the ones nobody wrote down.
+>
+> 1. **Is there any trade-off?** Name what it SACRIFICES. "None" / "pure win" is an unfinished analysis, NOT an answer — to claim none, state which dimensions you checked and why each is unaffected: future change cost · complexity · performance/latency · memory/cost · coupling · reversibility · migration burden · operational load · blast radius · security posture · testability · team skill/ramp · delivery time · UX.
+> 2. **Is it worth it?** Weigh gain against sacrifice EXPLICITLY — what is gained (with a metric) · what it costs · WHO pays · WHEN it comes due — then emit **WORTH IT / NOT WORTH IT / UNCLEAR**. "Better" with no metric and no cost FAILS this question. NOT WORTH IT → withdraw or replace the recommendation, never keep it as-is.
+> 3. **Is the trade-off material enough to CONFIRM WITH THE USER?** A material trade-off is the user's call, never yours. **MATERIAL** when ANY holds: irreversible / one-way door (data migration, public contract, storage format, vendor lock-in) · cost shifted onto someone else (another team, ops/on-call, future maintainer, end user) · one quality attribute traded for another (correctness↔speed, security↔convenience, latency↔cost, simplicity↔flexibility) · a boundary crossed (client↔server tier, service contract, event contract, shared library) · a high-consequence path (auth, money, data integrity, breaking change, High/Medium residual risk) · the worth-it verdict is UNCLEAR.
+>
+> **MATERIAL → STOP and confirm by asking the user directly BEFORE the verdict stands** — state the trade-off, both options, what each sacrifices, and your recommendation. **NOT material →** record it inline with a one-line justification and proceed.
+>
+> **Non-asking execution contexts — ESCALATE BY HANDOFF, never by silence.** ask the user directly reaches only the main interactive agent: a sub-agent cannot ask the user, and a terminal/verdict-only mode asks nothing by design. When you are running in such a context, the obligation is **redirected, never waived** — do ALL of: (a) complete questions 1 and 2 normally; (b) decide materiality and record it in the Trade-Off Assessment row with `confirmed? = NO — cannot ask from this context`; (c) **name the unconfirmed MATERIAL trade-off explicitly in your returned summary/verdict so the CALLER (or parent orchestrator) escalates it by asking the user directly on your behalf** — a material trade-off mentioned only inside a report file on disk is NOT a handoff; (d) do not emit an unqualified PASS — mark the verdict as carrying an unconfirmed material trade-off, so the caller's gate stays closed until the user answers. The caller inherits the escalation duty the moment it reads your return.
+>
+> This carve-out is about **reachability, not convenience**: it applies ONLY where the tool genuinely cannot reach the user (spawned sub-agent, terminal validate/verdict-only mode, non-interactive/headless run). It is NEVER a licence to skip the question, to self-approve a one-way door, or to downgrade materiality because asking is inconvenient — if you CAN ask, you MUST ask.
+>
+> **Emit a Trade-Off Assessment row** per reviewed decision and per recommendation: `| decision | sacrifices | gain (metric) | who pays, when | WORTH IT/NOT/UNCLEAR | material? | confirmed? |`.
+>
+> **BLOCKED until:** trade-off named (or dimensions-checked justification given) · worth-it verdict emitted · materiality decided · every MATERIAL trade-off either confirmed with the user OR — in a non-asking context — handed off in the returned verdict for the caller to confirm. A MATERIAL trade-off that is neither confirmed nor handed off can NEVER be PASS, and NEVER gets buried as a Low-severity note.
+>
+> **NEVER** answer "no trade-off" without checking · decide a material trade-off silently on the user's behalf · let convergence/delivery pressure authorize walking through a one-way door · bundle several material trade-offs into one vague "proceed?".
+
+<!-- /SYNC:trade-off-interrogation-gate -->
+
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
 - **MANDATORY MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
@@ -1195,8 +1293,10 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:double-round-trip-review:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review.
-  <!-- /SYNC:double-round-trip-review:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop (aka **Self-Review Convergence Loop**): review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review. Any newly produced output/judgment gets ≥1 self-review; any new judgment gets ≥1 `$why-review --validate-findings` pass before it is treated as final.
+- **MANDATORY** enforce the **round cap of 5 — a ceiling, NEVER a target**: a clean pass ends the loop immediately at any round (round 1 included), and round 5 completing with validated findings still open → **STOP & escalate by asking the user directly**, never a silent PASS. The 3-repeated-no-progress blocker rule is an earlier exit — escalate at whichever trips first. NEVER loop open-ended.
+
+<!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:rationalization-prevention:reminder -->
 
@@ -1227,6 +1327,18 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 - **MANDATORY MUST ATTENTION** for multilingual frontend/UI text changes, verify translation updates are present (or explicitly accepted by user as risk) before PASS.
   <!-- /SYNC:translation-sync-check:reminder -->
+
+<!-- SYNC:cross-stack-impact-trace:reminder -->
+
+**MUST ATTENTION** FIRST review action — note change context + holistically trace full pipeline of main affected area across client↔server seam (BE→FE forward, FE→BE backward). Verify both tiers still agree on route/DTO/field/type/nullability/auth; any mismatch = BREAKING finding. Skip only for single-tier / docs-only changes (state so).
+
+<!-- /SYNC:cross-stack-impact-trace:reminder -->
+
+<!-- SYNC:cross-service-check:reminder -->
+
+**IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
+
+<!-- /SYNC:cross-service-check:reminder -->
 
 <!-- SYNC:fix-layer-accountability:reminder -->
 
@@ -1268,8 +1380,8 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -1294,17 +1406,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
-
 <!-- SYNC:systematic-review-batching:reminder -->
 
 - **MANDATORY** Large changeset → batch by size cap (≤8 files OR ≤2000 diff-lines), one parallel sub-agent per batch; never review many files one-by-one.
@@ -1318,6 +1419,25 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
 
 <!-- /SYNC:severity-rubric:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:trade-off-interrogation-gate:reminder -->
+
+- **MANDATORY MUST ATTENTION ALWAYS ASK THE 3 TRADE-OFF QUESTIONS** — on the thing under review AND on every recommendation you make: (1) **is there any trade-off?** name what it SACRIFICES (change cost · complexity · perf · coupling · reversibility · migration · ops load · blast radius · security · testability · delivery time · UX) — "none"/"pure win" is an unfinished analysis, so state the dimensions checked; (2) **is it worth it?** gain (with a metric) vs cost, WHO pays, WHEN → emit **WORTH IT / NOT WORTH IT / UNCLEAR**; NOT WORTH IT → withdraw or replace it; (3) **is it material enough to confirm with the user?** irreversible/one-way door · cost shifted onto another team/ops/maintainer/user · one quality attribute traded for another · a tier/service/event/library boundary crossed · auth/money/data-integrity/breaking-change/High-or-Medium-risk path · verdict UNCLEAR → **STOP and confirm by asking the user directly BEFORE the verdict**.
+- **MANDATORY** A MATERIAL trade-off with no user confirmation can NEVER be PASS; NEVER bury one as a Low-severity note, NEVER decide it silently, and NEVER let delivery or convergence pressure authorize a one-way door. — why: an un-walked-back one-way door is the user's call to make, not the reviewer's.
+- **MANDATORY — non-asking contexts escalate BY HANDOFF, never by silence.** ask the user directly reaches only the main interactive agent: a sub-agent cannot ask the user, and a terminal/verdict-only mode asks nothing by design. There the duty is REDIRECTED, not waived — still name the trade-off, still decide materiality, record `confirmed? = NO — cannot ask from this context`, **state the unconfirmed MATERIAL trade-off in your RETURNED verdict/summary so the CALLER escalates it** (a note only in an on-disk report is not a handoff), and never emit an unqualified PASS. Applies ONLY where the user is genuinely unreachable (spawned sub-agent, terminal validate mode, headless run) — if you CAN ask, you MUST ask.
+
+<!-- /SYNC:trade-off-interrogation-gate:reminder -->
 
 ## Closing Reminders
 
@@ -1352,7 +1472,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 - **MANDATORY** Nested Task Expansion Contract — when invoked inside a workflow, STILL expand internal phases via task tracking with `[N.M] $skill-name — phase` prefix and `TaskUpdate(parentTaskId, addBlockedBy: [childIds])` linkage. Workflow row is container, not substitute.
 - **MANDATORY** break work into small todo tasks using task tracking BEFORE starting
-- **MANDATORY** validate decisions with user via a direct user question — never auto-decide
+- **MANDATORY** validate decisions with user by asking the user directly — never auto-decide
 - **MANDATORY** add final review task to verify work quality
 - **MANDATORY MUST ATTENTION** search for project-specific reference docs BEFORE reviewing (coding standards, architecture, test conventions)
 - **MANDATORY MUST ATTENTION** Phase 0: detect change type FIRST — route auth/perf files to specialized sub-agents before general review
@@ -1455,8 +1575,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -1467,6 +1588,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

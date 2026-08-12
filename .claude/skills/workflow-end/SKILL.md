@@ -19,10 +19,11 @@ description: '[Process] Use when you need to end the active workflow and clear s
 
 **Summary:**
 
-- This is the penultimate state-closure step (runs before `/watzup`); workflow end is model-driven — it completes when all TaskList items are done, NO hook clears state on completion (residual `.ck-workflow-state.json` is only cleared by `session-init` on explicit `/clear`).
-- Gate before closing: run the integration-test coverage check on changed business-logic files (handlers/commands/services/controllers) — if any lacks a matching test, MUST surface via `AskUserQuestion`, never silent-skip.
-- When a diff exists, ALWAYS print the one-way four-part comprehension recap (what changed / purpose / how / why), depth throttled by `codingLevel` (`CK_CODING_LEVEL` → `.claude/.ck.json` → default 3); skip only when there are no changes. The recap never quizzes and never blocks — deeper explanation is the standalone `/understand` skill.
-- Sync the knowledge graph only if `.code-graph/` exists, then announce `Workflow [name] completed` so the next prompt gets fresh detection.
+- **Purpose:** penultimate state-closure step (runs before `/watzup`) — close the active workflow cleanly so the next prompt gets fresh detection, AND leave the developer understanding what changed without re-reading the diff.
+- **Main steps (ordered):** (1) integration-test coverage check on changed business-logic files; (2) spec ↔ TDD-test sync gate (`spec-tdd-test-sync-gate`) BEFORE task-completion verification; (3) sync knowledge graph if `.code-graph/` exists; (4) mark this task `completed`; (5) print the diff-gated one-way comprehension recap (what / purpose / how / why); (6) announce `Workflow [name] completed`; (7) confirm state cleared.
+- **Blocking gates:** coverage gap (changed handler/command/service/controller with no matching test) OR unadjudicated spec-vs-code drift → MUST surface via `AskUserQuestion`, NEVER silent-skip; workflow MUST NOT report `completed` while drift is unadjudicated.
+- **Model-driven close:** completes once ALL TaskList items done AND the sync gate recorded synced-or-accepted-as-is; NO hook clears state (residual `.ck-workflow-state.json` cleared only by `session-init` on explicit `/clear`).
+- **Recap depth** throttled by `codingLevel` (`CK_CODING_LEVEL` → `.claude/.ck.json` → default 3); skip recap ONLY when there is no diff. The recap never quizzes and never blocks — deeper explanation is the standalone `/understand` skill.
 
 **Workflow:**
 
@@ -64,7 +65,7 @@ This skill is the **workflow state-closure step**. In workflows including `/watz
 
     The feedback half of the loop closes HERE — a workflow MUST NOT report completed while the spec still diverges from the code that just changed. Green tests do NOT normalize that drift.
     - Scope to the behavior-changing files in the diff (same surface the coverage check above scanned — handlers/commands/queries/services/controllers/entities/event processors and behavior-bearing frontend logic).
-    - Run `/spec [mode=sync]` over the §8 TCs ↔ integration tests for those files: reconcile every §8 TC against its covering test, and surface any §8 TC with no covering test or any test guarding behavior with no §8 TC.
+    - Run `/spec [mode=sync]` over the §8 TCs ↔ executing tests for those files: reconcile every §8 TC against its covering test, and surface any §8 TC with no covering test or any business `TestSpec` guarding behavior with no §8 TC.
     - Re-check for **unadjudicated spec-vs-code drift**: any behavior-changing file whose divergence from the canonical Feature Spec was never classified CODE-WRONG / SPEC-STALE / AMBIGUOUS / in-sync (per `SYNC:spec-drift-adjudication`).
     - If `/spec [mode=sync]` finds an unsynced §8 TC, OR any behavior-vs-spec divergence is unadjudicated → **MANDATORY**: surface via `AskUserQuestion`:
         - Option A: "Reconcile now — run `/spec [mode=sync]` / `/spec [update]` to close the drift" (Recommended)
@@ -139,8 +140,9 @@ Finalize and close the active workflow, clearing state so the next user prompt t
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -157,11 +159,11 @@ Finalize and close the active workflow, clearing state so the next user prompt t
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `/project-init` or the narrow route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `/sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -179,9 +181,9 @@ Finalize and close the active workflow, clearing state so the next user prompt t
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
-- **MANDATORY** If project config, root instruction files, or any required reference doc is missing, stop and run or ask the user to run `/project-init`.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
+- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
 
@@ -206,6 +208,7 @@ Finalize and close the active workflow, clearing state so the next user prompt t
 - **Critical Thinking:** MUST ATTENTION traced `file:line` proof per claim; confidence >80% to act; NEVER guess as fact.
 - **Project Reference Docs Guide:** MUST ATTENTION read required project-reference docs (ALWAYS `lessons.md`) before target work.
 
+**IMPORTANT MUST ATTENTION Main steps (run in order, NEVER skip/merge):** (1) integration-test coverage check → (2) spec ↔ TDD-test sync gate BEFORE task-completion verification → (3) sync knowledge graph if `.code-graph/` exists → (4) mark this task `completed` → (5) diff-gated comprehension recap → (6) announce `Workflow [name] completed` → (7) confirm state cleared — why: AI keeps forgetting the skill's own steps; surfacing the ordered list prevents silent step-loss under long context.
 **IMPORTANT MUST ATTENTION** when the workflow changed code (diff present), print the comprehension recap — what changed / purpose / how it works / why — grouped by behaviour not file, optimized for easiest learning; depth throttled by `codingLevel` (`CK_CODING_LEVEL` → `.claude/.ck.json` → default 3), NEVER fully skip when changes exist — why: the developer must understand the work without re-reading the diff
 **IMPORTANT MUST ATTENTION** the spec ↔ TDD-test sync gate runs BEFORE task-completion verification — NEVER report the workflow `completed` while a behavior-vs-spec divergence is unadjudicated; reconcile via `/spec [mode=sync]` or capture an explicit accept-as-is reason — why: green tests do not normalize spec drift; the feedback half of the loop closes here
 **IMPORTANT MUST ATTENTION** run the integration-test coverage check on changed business-logic files (handlers/commands/queries/services/controllers/resolvers/event processors) — if ANY lacks a matching test, surface via `AskUserQuestion`; NEVER silent-skip — why: business-logic change without coverage ships an unguarded regression path

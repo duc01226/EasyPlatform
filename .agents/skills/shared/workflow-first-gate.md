@@ -31,5 +31,6 @@
 >     - **Direct route →** build the task list yourself, then proceed.
 >       In every case the route must be activated BEFORE the first edit, sub-agent, or command.
 > 6. **Direct execution is a legitimate route** for trivial, one-off, or simple straightforward work — but the declare-route and activate steps still apply.
+> 7. **Scaffolding-first for new foundations.** `workflow-greenfield-init` and `workflow-big-feature` scaffold a REVIEWED (`architecture-review-full`), example-rich, convention-bearing foundation — base abstractions + golden-path example code + a project-reference doc set — BEFORE fanning out feature work; features never build on an unreviewed foundation.
 
 <!-- /CK:WORKFLOW-GATE -->

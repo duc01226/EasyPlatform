@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -60,11 +61,12 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
-- Slice VERTICALLY (thin end-to-end), never horizontally (backend/frontend split) — apply SPIDR (Spike/Paths/Interfaces/Data/Rules) to break anything SP >8 (MUST) or >5 (SHOULD) until each story is INVEST-valid.
-- Every story is tech-agnostic and rebuild-from-scratch (AI-SDD M1-M5): no framework/class/file names in prose, carry the inherited `FR-`/`BR-` logical ID plus a `[Source: namespace/service/id]` abstract anchor — reject and rework on any STOP condition.
-- Write min 3 GIVEN/WHEN/THEN scenarios (happy + edge + error) PLUS a mandatory authorization scenario per story; every criterion has exactly one observable interpretation.
-- Estimate bottom-up (phase-hours → days × productivity factor; SP DERIVED, never the driver) with explicit test*count and blast-radius pass; emit the full `man_days*_`/`risk\__`/`blast_radius` frontmatter.
-- Always emit a Story Dependencies table (no orphan stories) and run the MANDATORY a direct user question validation interview before handoff.
+- **Main steps (the pipeline):** (1) read PBI + active plan, load domain context — module, entities, BR-IDs; (2) identify VERTICAL end-to-end slices; (3) SPIDR-split anything SP >8 (MUST) / >5 (SHOULD) until INVEST-valid; (4) write each story with min 3 GWT scenarios + 1 authorization scenario; (5) estimate bottom-up (Blast-Radius pre-pass → phase-hours → days; SP DERIVED) and emit full estimate frontmatter; (6) emit Story Dependencies table (no orphans); (7) run MANDATORY ask the user directly validation; (8) save to `team-artifacts/pbis/stories/{YYMMDD}-ba-story-{slug}.md`; (9) suggest `$spec [mode=tests]` next.
+- Slice VERTICALLY (thin end-to-end), NEVER horizontally (backend/frontend split) — apply SPIDR (Spike/Paths/Interfaces/Data/Rules) until each story is INVEST-valid — why: horizontal slices delay deliverable user value.
+- Every story is tech-agnostic + rebuild-from-scratch + demoable (AI-SDD M1-M5 and M7): no framework/class/file names in prose, carry the inherited `FR-`/`BR-` logical ID plus a `[Source: namespace/service/id]` abstract anchor (NEVER `file:line`), and every criterion states an outcome a stakeholder could SEE — reject and rework on any STOP condition.
+- Min 3 GIVEN/WHEN/THEN scenarios (happy + edge + error) PLUS a mandatory authorization scenario per story; every criterion has exactly ONE observable interpretation.
+- Estimate bottom-up (phase-hours → days × productivity factor; SP DERIVED, never the driver) with explicit `test_count` and Blast-Radius pass; emit full `man_days_*` / `risk_*` / `blast_radius` / `estimate_reasoning` frontmatter — why: SP-first anchors to a guess, downstream `$prioritize`+`$plan` read these fields.
+- Story Dependencies table is mandatory (no orphan stories) and the ask the user directly validation interview runs before handoff — NEVER auto-decide slicing/scope/effort.
 
 > **MANDATORY IMPORTANT MUST ATTENTION** Plan ToDo Task to READ the following project-specific reference docs:
 >
@@ -309,14 +311,17 @@ Scenario: Unauthorized user cannot {perform action}
 
 ---
 
-## AI-SDD Mandate Gate (M1-M5) — BLOCKING
+## AI-SDD Mandate Gate (M1-M5 and M7) — BLOCKING
 
-See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Every generated story MUST satisfy M1-M5:
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. Every generated story MUST satisfy M1-M5 and M7:
 
 - **Separate intent from implementation (M1/M2):** The story narrative and acceptance criteria stay tech-agnostic — describe observable business behavior, no framework/product/language/design-pattern names, no source identifiers. Keep optional hints in `## Technical Notes` and source references in evidence carriers as stack-portable abstract anchors (`[Source: namespace/service/id]`, never `file:line`). Prose follows `docs/project-reference/spec-principles.md` §3.
 - **Logical Requirement ID (M3):** Each story carries a logical requirement ID (`FR-`/`BR-`) inherited from its parent PBI as the PRIMARY citation spine; keep the `[Source: namespace/service/id]` abstract anchor as a SECONDARY, stack-portable carrier — KEEP it, never remove it and never replace it with `file:line` (physical coordinates live only in the provenance sidecar).
 - **Testable GWT/EARS criteria (M4):** Every Given/When/Then or EARS criterion has ONE valid interpretation, observable completion states, and named failure modes — no vague phrasing ("fast", "user-friendly", "handle appropriately") and no implementation details.
 - **Rebuild-from-scratch (M5):** A team with zero codebase knowledge can implement identical behavior on ANY stack from the story alone.
+- **Business-visibility (M7):** Apply the demo test to each criterion's BODY: _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY and drop it from the story. Every `GIVEN` = a state a user could arrange; every `WHEN` = an action a user could take; every `THEN` = an outcome a user could see. FAIL a `WHEN` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `THEN` asserting schema/type/nullability/call-count. Judge the BODY, never the story's title or ID. Never derive the story or scenario count from an architecture inventory (handlers, consumers, jobs) — that count moves when the system is re-architected though no business behavior changed, falsifying M5.
+
+> **M1 governs vocabulary; M7 governs subject matter.** A technical story in impeccably tech-free prose satisfies M1 while violating M7 — _"the system correctly synchronizes the record"_ names no framework and is still a technical case in a business costume. That gap is the most common way business specs rot. Ask what a user could SEE, not which words were used.
 
 > **[STOP — rework before emitting]** Reject and rework a story when ANY of these failure conditions holds:
 >
@@ -325,6 +330,7 @@ See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6
 > 3. Missing logical ID or evidence — no `FR-`/`BR-` ID, OR a requirement/rule with no `[Source: namespace/service/id]` abstract-anchor evidence (or explicit `TBD (pre-implementation)` marker).
 > 4. Vague acceptance criteria — non-testable, non-observable, or more than one valid interpretation.
 > 5. Not implementable from the artifact alone — a reader would have to read source or guess a rule, limit, role, or failure mode.
+> 6. Not demoable (M7) — a criterion's body fails the demo test: its `WHEN` is an invocation, or its `THEN` asserts schema/type/nullability/call-count, or no stakeholder-visible change answers _"what would they SEE?"_ — it is TECHNICAL-ONLY and belongs to the technical tree, not this story.
 
 ---
 
@@ -542,7 +548,7 @@ After creating user stories, validate with user.
 ### Process
 
 1. Generate 2-4 questions focused on slicing quality, scenarios, and dependencies
-2. Use a direct user question tool to interview
+2. Use ask the user directly tool to interview
 3. Document in story artifact under `## Validation Summary`
 4. Update stories based on answers (split if needed)
 
@@ -601,7 +607,7 @@ Example for a "Create Invoice" story:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use ask the user directly to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 - **"$spec [mode=tests] (Recommended)"** — Generate test specifications from stories
 - **"$pbi-mockup"** — Generate HTML mockup report from PBI and stories
 - **"$plan-validate"** — If stories need validation against plan
@@ -820,7 +826,7 @@ Example for a "Create Invoice" story:
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -837,8 +843,9 @@ Example for a "Create Invoice" story:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -885,6 +892,8 @@ Example for a "Create Invoice" story:
 
 **IMPORTANT MUST ATTENTION Goal:** produce sprint-ready, INVEST-valid user stories — tech-agnostic, testable GWT criteria, evidence-cited estimates, dependency-mapped — that a team with zero codebase knowledge can implement on any stack.
 
+**IMPORTANT MUST ATTENTION Main steps (execute in order, NEVER skip):** read PBI + active plan + domain context → identify VERTICAL slices → SPIDR-split (SP >8 MUST / >5 SHOULD) → write INVEST stories with min 3 GWT + 1 auth scenario → estimate bottom-up (Blast-Radius pre-pass, SP DERIVED) + full frontmatter → emit Story Dependencies table (no orphans) → MANDATORY ask the user directly validation → save to `team-artifacts/pbis/stories/` → suggest `$spec [mode=tests]`.
+
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries) — MUST ATTENTION honor each canonical body, NEVER skip one:**
 
 - **Estimation Framework:** Bottom-up phase hours drive man-days; SP DERIVED; UI usually dominates.
@@ -894,7 +903,8 @@ Example for a "Create Invoice" story:
 - **Sequential Thinking:** Multi-step Thought N/M with revision/branch/hypothesis markers; confidence closer.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
-**IMPORTANT MUST ATTENTION** every story MUST satisfy AI-SDD mandates M1-M5 — tech-agnostic prose, `FR-`/`BR-` logical ID + `[Source: namespace/service/id]` abstract anchor (NEVER `file:line` in story prose), testable GWT criteria, rebuild-from-scratch — reject and rework on any STOP condition — why: stories drive implementation on any stack, so a leaked framework/class name breaks portability.
+**IMPORTANT MUST ATTENTION** every story MUST satisfy AI-SDD mandates M1-M5 and M7 — tech-agnostic prose, `FR-`/`BR-` logical ID + `[Source: namespace/service/id]` abstract anchor (NEVER `file:line` in story prose), testable GWT criteria, rebuild-from-scratch, demoable business outcomes — reject and rework on any STOP condition — why: stories drive implementation on any stack, so a leaked framework/class name breaks portability.
+**IMPORTANT MUST ATTENTION** apply the M7 demo test to every criterion's BODY — _"what would a stakeholder SEE change?"_; no answer → TECHNICAL-ONLY, drop it. FAIL a `WHEN` that is an invocation (handler runs, consumer receives, job fires, data syncs) or a `THEN` asserting schema/type/nullability/call-count; NEVER derive the story/scenario count from an architecture inventory — why: M1 governs vocabulary, M7 governs subject matter — a technical story in tech-free prose passes M1 and still rots the business tree.
 **IMPORTANT MUST ATTENTION** every story set includes a Story Dependencies table with no orphan stories; SP >8 MUST split, >5 SHOULD split via SPIDR — why: ordering feeds `$prioritize` and `$plan` and oversized stories miss the sprint.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; mark one `in_progress` and `completed` immediately — why: long story files exhaust context and lose findings without external tracking.
 **MANDATORY IMPORTANT MUST ATTENTION** estimation is bottom-up — phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`), SP DERIVED never the driver; run the Blast Radius pre-pass and compute `test_count` explicitly per driver — NEVER hand-wave "+tests" (the #1 failure) — why: SP-first estimates anchor to a guess, not the work.
@@ -903,7 +913,7 @@ Example for a "Create Invoice" story:
 **MANDATORY IMPORTANT MUST ATTENTION** slice VERTICALLY (thin end-to-end), NEVER horizontally (backend/frontend split) — why: horizontal slices delay deliverable user value.
 **MANDATORY IMPORTANT MUST ATTENTION** search existing component libraries and domain vocabulary BEFORE proposing new components/entities (>=80% match = reuse); use the project's own entity names — why: duplicate UI/domain code = wrong tier and fragments the codebase.
 **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` (or grep/graph) evidence with a confidence % for every claim about existing code/entities — >80% to act, <80% verify first — why: AI hallucinates entity/API names; unverified scoping mis-slices the story.
-**MANDATORY IMPORTANT MUST ATTENTION** validate stories with the user via a direct user question before handoff — NEVER auto-decide slicing/scope/effort — why: silent assumptions on ambiguous scope ship the wrong stories.
+**MANDATORY IMPORTANT MUST ATTENTION** validate stories with the user by asking the user directly before handoff — NEVER auto-decide slicing/scope/effort — why: silent assumptions on ambiguous scope ship the wrong stories.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify every story against its AC scenarios, the dependency table, and the Quality Checklist.
 
 **Anti-Rationalization:**
@@ -915,9 +925,9 @@ Example for a "Create Invoice" story:
 | "Happy path is enough"                    | Min 3 scenarios + a mandatory authorization scenario per story. Edge + error + auth are NOT optional. |
 | "+tests covers the test cost"             | Compute `test_count` explicitly per driver (auth matrix, validation, states). Hand-wave is the #1 estimate failure. |
 | "Independent story, skip the dep table"   | No orphan stories — every story appears in the dependency table, even if `independent`.        |
-| "Slicing is obvious, skip validation"     | a direct user question validation is MANDATORY, not optional. The user confirms slicing/scope/effort. |
+| "Slicing is obvious, skip validation"     | ask the user directly validation is MANDATORY, not optional. The user confirms slicing/scope/effort. |
 
-**IMPORTANT MUST ATTENTION** AI-SDD M1-M5 tech-agnostic + dependency table + bottom-up estimate are the three rules this skill must never skip — re-anchored here (recency) and in the Quick Summary (primacy).
+**IMPORTANT MUST ATTENTION** AI-SDD M1-M5/M7 (tech-agnostic + demoable) + dependency table + bottom-up estimate are the three rules this skill must never skip — re-anchored here (recency) and in the Quick Summary (primacy).
 ````
 
 **MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
@@ -1006,8 +1016,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -1018,6 +1029,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

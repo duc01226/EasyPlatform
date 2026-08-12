@@ -91,6 +91,15 @@ public static class StringExtension
         return string.IsNullOrWhiteSpace(strValue);
     }
 
+    /// <summary>
+    /// Returns null when the string is null, empty, or whitespace; otherwise returns the original value.
+    /// Useful for normalizing optional values so blank strings collapse to null before persistence.
+    /// </summary>
+    public static string? NullIfWhiteSpace(this string? strValue)
+    {
+        return string.IsNullOrWhiteSpace(strValue) ? null : strValue;
+    }
+
 
     /// <summary>
     /// Removes special characters from the given string, which is intended to be used as a URI.
@@ -148,7 +157,12 @@ public static class StringExtension
     /// <returns>A substring from the start of the string up to the next occurrence of the specified character. If the character is not found in the string, the original string is returned.</returns>
     public static string TakeUntilNextChar(this string str, char beforeChar)
     {
-        return str.Substring(0, str.IndexOf(beforeChar));
+        // Honor the documented contract: when the char is absent, IndexOf returns -1 and Substring(0, -1) would throw
+        // ArgumentOutOfRangeException — return the original string instead (e.g. a blob sitting directly in a
+        // directory, with no further '/' segment, in IPlatformFileStorageDirectory.GetDirectChildDirectories).
+        var beforeCharIndex = str.IndexOf(beforeChar);
+
+        return beforeCharIndex < 0 ? str : str.Substring(0, beforeCharIndex);
     }
 
     public static string? ToBase64String(this string? str)

@@ -77,14 +77,28 @@ public static partial class Util
 
         public static int DefaultParallelIoTaskMaxConcurrent { get; set; } = GetDefaultParallelIoTaskMaxConcurrent();
 
-        public static int DefaultParallelComputeTaskMaxConcurrent { get; set; } = GetDefaultNumberOfParallelIoTaskMaxConcurrent();
+        public static int DefaultParallelComputeTaskMaxConcurrent { get; set; } = GetDefaultParallelComputeTaskMaxConcurrent();
 
+        /// <summary>
+        /// I/O-bound default: <c>EffectiveProcessorCount * <see cref="DefaultNumberOfParallelIoTasksPerCpuRatio" /></c> (ratio 10).
+        /// Use for work that spends most of its time waiting (DB, HTTP, queue, file).
+        /// </summary>
         public static int GetDefaultParallelIoTaskMaxConcurrent()
         {
             return PlatformEnvironment.EffectiveProcessorCount * DefaultNumberOfParallelIoTasksPerCpuRatio;
         }
 
-        public static int GetDefaultNumberOfParallelIoTaskMaxConcurrent()
+        /// <summary>
+        /// CPU-bound default: <c>EffectiveProcessorCount * <see cref="DefaultNumberOfParallelComputeTasksPerCpuRatio" /></c> (ratio 2).
+        /// Use for work that keeps a core busy; over-subscribing compute work causes context-switch thrash, not throughput.
+        /// </summary>
+        /// <remarks>
+        /// Renamed from <c>GetDefaultNumberOfParallelIoTaskMaxConcurrent</c>: the old name said "Io" while the body used the
+        /// COMPUTE ratio, so anyone reusing it as the I/O default silently got ProcessorCount * 2 instead of * 10 — a 5x
+        /// under-parallelisation with no compile error. The value was always correct for its only caller
+        /// (<see cref="DefaultParallelComputeTaskMaxConcurrent" />); only the name was wrong.
+        /// </remarks>
+        public static int GetDefaultParallelComputeTaskMaxConcurrent()
         {
             return PlatformEnvironment.EffectiveProcessorCount * DefaultNumberOfParallelComputeTasksPerCpuRatio;
         }

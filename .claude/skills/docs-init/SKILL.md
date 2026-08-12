@@ -69,13 +69,16 @@ Use `AskUserQuestion` to present:
 
 For each selected scan target, invoke it via the Skill tool (e.g., `/scan --target=backend-patterns`).
 
-## Step 4: M1-M5 Compliance Gate (BLOCKING)
+## Step 4: M1-M5/M7 Compliance Gate (BLOCKING)
 
-See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. After the scan skills generate/populate the reference docs, gate the generated output:
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. After the scan skills generate/populate the reference docs, gate the generated output:
 
 - **M1/M2 — tech-agnostic prose:** Spec/feature-facing docs (and any populated `spec-principles.md` extension) keep narrative and headings free of framework/product/language/design-pattern names and source identifiers; those appear only in evidence carriers (`[Source: namespace/service/id]`, `**Evidence**`), frontmatter, and Mermaid. Authority: `docs/project-reference/spec-principles.md` §3.
 - **M3 — logical-IDs-first:** Where docs carry requirements/rules/TCs, the logical IDs (`FR-`/`BR-`/`OP-`/`TC-`) are the primary spine and `[Source: namespace/service/id]` (a stack-portable abstract anchor — never physical code coordinates or repository-root paths; physical coords live only in the provenance sidecar) is the secondary carrier.
 - **M4/M5 — implementability:** Generated content is testable, observable, one-interpretation, and sufficient to rebuild the described behavior on any stack.
+- **M7 — business-visibility:** Where generated docs carry business-tree cases or TCs, apply the demo test to each case's BODY: _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY. Every `Given` = a state a user could arrange; every `When` = an action a user could take; every `Then` = an outcome a user could see. FAIL a `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count, and FAIL any TC count derived from an architecture inventory. Judge the BODY, never the title or ID.
+
+> **M1 vs M7 — distinct gates.** M1 governs **vocabulary**; M7 governs **subject matter**. A technical case in impeccably tech-free prose satisfies M1 while violating M7 — that gap is the most common way business specs rot. Ask what a user could SEE, not which words were used.
 
 **Verification step (run after generation):** Run the exact SDD compliance verifier documented by the project and resolve any failures before declaring init complete. Do not invent a verifier command; if the verifier or project config is not yet initialized, record that and re-run once available.
 
@@ -96,8 +99,9 @@ Reference doc definitions are in `docs/project-config.json` under `referenceDocs
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

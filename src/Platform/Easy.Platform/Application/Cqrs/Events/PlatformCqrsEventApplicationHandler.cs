@@ -7,6 +7,7 @@ using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Cqrs.Events;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations.Exceptions;
 using Easy.Platform.Common.Validations.Extensions;
@@ -207,7 +208,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     /// <strong>Error Handling:</strong>
     /// Context transfer failures are logged as warnings but do not interrupt event processing,
     /// ensuring system resilience when request context data is corrupted or unavailable.
-    /// The error logging includes full event details for debugging and monitoring purposes.
+    /// The error logging includes bounded event diagnostics for debugging and monitoring purposes.
     /// </para>
     ///
     /// <para>
@@ -227,14 +228,25 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
             }
             catch (Exception e)
             {
-                Logger.Value.LogError(
-                    e,
-                    "[WARNING-AS_ERROR] ExecuteHandleInBackgroundNewScopeBeforeExecuteFn failed. EventHandler:{EventHandler} Event:{Event}",
-                    GetType().GetFullNameOrGenericTypeFullName(),
-                    @event.ToJson()
-                );
+                LogRequestContextTransferFailure(@event, e);
             }
         };
+
+    /// <summary>
+    /// Records a request-context transfer failure without traversing the event payload.
+    /// </summary>
+    protected void LogRequestContextTransferFailure(TEvent @event, Exception exception)
+    {
+        Logger.Value.LogError(
+            exception,
+            "[WARNING-AS_ERROR] ExecuteHandleInBackgroundNewScopeBeforeExecuteFn failed. EventHandler:{EventHandler} EventId:{EventId} EventDiagnostics:{EventDiagnostics}",
+            GetType().GetFullNameOrGenericTypeFullName(),
+            TryReadDiagnosticEventId(@event),
+            PlatformJsonSerializer.SerializeForDiagnostics(
+                @event,
+                forceUseRuntimeType: true,
+                writeIndented: false));
+    }
 
     /// <summary>
     /// Gets a value indicating whether a new Unit of Work should be automatically opened for handling the event.
@@ -655,8 +667,14 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     ///
     /// <para>
     /// <strong>Monitoring and Observability:</strong>
-    /// Regardless of exception throwing behavior, all failures are logged with
-    /// comprehensive details to support monitoring, alerting, and debugging workflows.
+    /// Regardless of exception throwing behaviour, every failure is logged with the exception type, message,
+    /// demystified stack trace, inner exception TYPE chain, and the event's correlation id — enough to locate and
+    /// reproduce it. This matters most precisely when this property is <c>false</c>, which is the default outside an
+    /// inbox consumer: the exception is then swallowed, and that log line is the ONLY record the failure occurred.
+    /// <para />
+    /// Deliberately NOT logged: the event payload itself (only its type name), inner exception messages, and
+    /// <see cref="System.Exception.Data" />. "Comprehensive" describes the EXCEPTION, never the event — see
+    /// <c>PlatformDiagnosticJsonSerializer</c> for the boundary and its rationale.
     /// </para>
     /// </remarks>
     public override bool ThrowExceptionOnHandleFailed
@@ -991,7 +1009,8 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                         if (ApplicationSettingContext.IsDebugInformationMode)
                             Logger.Value.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(ExecuteHandleAsync));
 
-                        EnsureNoCircularPipeLine(@event);
+                        if (ShouldSkipDueToCircularPipeLine(@event))
+                            return;
 
                         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                             () =>
@@ -1548,7 +1567,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     ///
     /// <para>
     /// <strong>Circular Dependency Detection:</strong>
-    /// The tracked pipeline information is used by <see cref="EnsureNoCircularPipeLine"/> to detect
+    /// The tracked pipeline information is used by <see cref="ShouldSkipDueToCircularPipeLine"/> to detect
     /// and prevent circular event processing scenarios that could lead to infinite loops
     /// and system resource exhaustion.
     /// </para>
@@ -1567,18 +1586,18 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     }
 
     /// <summary>
-    /// Ensures that event processing does not result in circular pipeline execution that could
-    /// lead to infinite loops and system resource exhaustion. This method implements sophisticated
-    /// circular dependency detection to maintain system stability in complex event-driven workflows.
+    /// Detects whether the current event processing has entered a circular pipeline that could
+    /// lead to infinite loops and system resource exhaustion. On detection it logs one Error
+    /// (full pipeline trace + routing key) and returns <c>true</c> so the caller skips the handler
+    /// logic and completes the event as success — instead of throwing and marking the event failed.
     /// </summary>
     /// <param name="event">
     /// The event being processed, whose request context contains the pipeline tracking information
-    /// used for circular dependency detection and prevention.
+    /// used for circular dependency detection.
     /// </param>
-    /// <exception cref="PlatformDomainException">
-    /// Thrown when a circular pipeline is detected, indicating that the same handler has been
-    /// invoked more times than the configured safety threshold within the current request context.
-    /// </exception>
+    /// <returns>
+    /// <c>true</c> when a circular pipeline is detected (the caller must skip handling); otherwise <c>false</c>.
+    /// </returns>
     /// <remarks>
     /// <para>
     /// <strong>Circular Dependency Detection Algorithm:</strong>
@@ -1615,24 +1634,17 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     /// data conditions that could otherwise consume system resources and impact performance.
     /// </para>
     /// </remarks>
-    private void EnsureNoCircularPipeLine(TEvent @event)
+    private bool ShouldSkipDueToCircularPipeLine(TEvent @event)
     {
         var requestContextEventHandlerPipeLine =
             @event.RequestContext.GetRequestContextValue<List<string>>(PlatformApplicationCommonRequestContextKeys.ConsumerOrEventHandlerPipeLineKey) ?? [];
         var pipelineRoutingKey = GetPipelineRoutingKey(@event);
 
-        // Prevent: A => [B, B => C, B => C => D] => A.
-        if (requestContextEventHandlerPipeLine.Count >= ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount * 2)
-        {
-            // p => p.Take(p.Count - 1).Count(p => p == pipelineRoutingKey) >= ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount => circular ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount times => could be forever
-            requestContextEventHandlerPipeLine
-                .ValidateNot(
-                    mustNot: p => p.Take(p.Count - 1).Count(p => p == pipelineRoutingKey) >=
-                                  ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount,
-                    $"The current [RequestContextEventHandlerPipeLine:{requestContextEventHandlerPipeLine.ToJson()}] lead to {pipelineRoutingKey} has circular call error."
-                )
-                .EnsureValid();
-        }
+        return requestContextEventHandlerPipeLine.ShouldSkipDueToCircularPipeLine(
+            pipelineRoutingKey,
+            ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount,
+            Logger.Value,
+            "event handler logic");
     }
 
     /// <summary>
@@ -1757,12 +1769,40 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                 Math.Min(RetryEventInboxBusMessageConsumerOnFailedDelaySeconds + retryAttempt, RetryEventInboxBusMessageConsumerOnFailedDelayMaxSeconds).Seconds(),
             cancellationToken: cancellationToken,
             onRetry: (exception, retryTime, retryAttempt, context) =>
-                Logger.Value.LogError(
-                    exception.BeautifyStackTrace(),
-                    "Execute inbox consumer for EventType:{EventType}; Event:{@Event}.",
-                    @event.GetType().FullName,
-                    @event)
+                LogInboxConsumerRetry(@event, exception)
         );
+    }
+
+    /// <summary>
+    /// Records an inbox-consumer retry without handing the event object to structured logging.
+    /// </summary>
+    protected void LogInboxConsumerRetry(TEvent @event, Exception exception)
+    {
+        Logger.Value.LogError(
+            exception.BeautifyStackTrace(),
+            "Execute inbox consumer for EventHandler:{EventHandler}; EventId:{EventId}; EventDiagnostics:{EventDiagnostics}.",
+            GetType().GetFullNameOrGenericTypeFullName(),
+            TryReadDiagnosticEventId(@event),
+            PlatformJsonSerializer.SerializeForDiagnostics(
+                @event,
+                forceUseRuntimeType: true,
+                writeIndented: false));
+    }
+
+    private static string TryReadDiagnosticEventId(TEvent @event)
+    {
+        try
+        {
+            var eventId = @event.Id;
+
+            return string.IsNullOrWhiteSpace(eventId) ? "unknown" : eventId;
+        }
+        catch (Exception)
+        {
+            // A diagnostic event id is optional metadata; reading it must never mask or replace the original
+            // failure this sink exists to report, so every exception degrades to "unknown" instead of propagating.
+            return "unknown";
+        }
     }
 
     /// <summary>

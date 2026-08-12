@@ -33,6 +33,13 @@ const {
 const SESSION_INIT = getHookPath('session-init.cjs');
 const SESSION_END = getHookPath('session-end.cjs');
 
+// session-init spawns 3 git/python grandchildren per run; under full-suite resource
+// contention a single spawn can exceed hook-runner's 10s default and hit SIGKILL —
+// a flaky, environmental timeout (see plans/reports/debug-investigate-260711-lifecycle-timeouts.md).
+// Give these spawn-based lifecycle tests a wider per-call ceiling, matching the
+// per-call precedent at test-all-hooks.cjs:334/348. Not a global DEFAULT_TIMEOUT change.
+const SPAWN_TIMEOUT_MS = 20000;
+
 // ============================================================================
 // session-init.cjs Tests
 // ============================================================================
@@ -44,7 +51,7 @@ const sessionInitTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createSessionStartInput('startup', 'test-session-123');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should not block');
                 assertTrue(result.stdout === '', 'SessionStart hooks must not inject stdout context');
             } finally {
@@ -58,7 +65,7 @@ const sessionInitTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createSessionStartInput('resume', 'test-session-123');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should not block');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -71,7 +78,7 @@ const sessionInitTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createSessionStartInput('clear');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should not block');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -84,7 +91,7 @@ const sessionInitTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createSessionStartInput('compact');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should not block');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -98,7 +105,7 @@ const sessionInitTests = [
             try {
                 createMockFile(tmpDir, 'package.json', '{"name": "test-project"}');
                 const input = createSessionStartInput('startup');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code);
                 assertTrue(result.stdout === '', 'Project detection must stay silent on SessionStart');
             } finally {
@@ -113,7 +120,7 @@ const sessionInitTests = [
             try {
                 createMockFile(tmpDir, 'Project.sln', 'Microsoft Visual Studio Solution File');
                 const input = createSessionStartInput('startup');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code);
             } finally {
                 cleanupTempDir(tmpDir);
@@ -125,7 +132,7 @@ const sessionInitTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
-                const result = await runHook(SESSION_INIT, {}, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, {}, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should not block on empty input');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -147,7 +154,7 @@ const sessionEndTests = [
                 // Create state files
                 setupTodoState(tmpDir, { hasTodos: true, taskCount: 2 });
                 const input = createSessionEndInput('clear');
-                const result = await runHook(SESSION_END, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_END, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code);
             } finally {
                 cleanupTempDir(tmpDir);
@@ -160,7 +167,7 @@ const sessionEndTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createSessionEndInput('exit');
-                const result = await runHook(SESSION_END, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_END, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code);
             } finally {
                 cleanupTempDir(tmpDir);
@@ -173,7 +180,7 @@ const sessionEndTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createSessionEndInput('clear');
-                const result = await runHook(SESSION_END, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_END, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should not fail on missing files');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -197,7 +204,7 @@ const configEdgeCaseTests = [
                 fs.mkdirSync(claudeDir, { recursive: true });
 
                 const input = createSessionStartInput('startup');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should not crash without config file');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -214,7 +221,7 @@ const configEdgeCaseTests = [
                 fs.writeFileSync(path.join(claudeDir, '.ck.json'), '{}');
 
                 const input = createSessionStartInput('startup');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should handle empty config');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -231,7 +238,7 @@ const configEdgeCaseTests = [
                 fs.writeFileSync(path.join(claudeDir, '.ck.json'), '{ broken json');
 
                 const input = createSessionStartInput('startup');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should not crash on malformed JSON');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -257,7 +264,7 @@ const configEdgeCaseTests = [
                 );
 
                 const input = createSessionStartInput('startup');
-                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should handle config with wrong types');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -281,7 +288,7 @@ const configEdgeCaseTests = [
 
                 // Run from subdirectory
                 const input = createSessionStartInput('startup');
-                const result = await runHook(SESSION_INIT, input, { cwd: subDir });
+                const result = await runHook(SESSION_INIT, input, { cwd: subDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code, 'Should handle config search path');
             } finally {
                 cleanupTempDir(tmpDir);

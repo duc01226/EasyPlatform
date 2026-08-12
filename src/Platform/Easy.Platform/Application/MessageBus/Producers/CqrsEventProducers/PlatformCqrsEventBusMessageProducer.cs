@@ -67,16 +67,34 @@ public abstract class PlatformCqrsEventBusMessageProducer<TEvent, TMessage>
         await SendMessage(@event, cancellationToken);
     }
 
+    /// <summary>
+    /// Logs a send failure using payload-free MESSAGE diagnostics (type name only) and detailed EXCEPTION
+    /// diagnostics (type, message, stack trace, inner type chain).
+    /// </summary>
+    /// <param name="notification">The source event; used as the diagnostic subject when no bus message was built.</param>
+    /// <param name="exception">
+    /// The RAW exception — pass it unmodified. Its type, message, stack trace, and inner type chain are emitted;
+    /// <see cref="Exception.Data" /> and inner exception messages are not. See the base handler's LogError.
+    /// </param>
+    /// <param name="loggerFactory">Factory for the categorized logger.</param>
+    /// <param name="prefix">Optional category prefix, e.g. <c>"Retry"</c>.</param>
+    /// <remarks>
+    /// The subject is resolved before logging: a <see cref="PlatformMessageBusException{TMessage}" /> carries the bus
+    /// message that actually failed to send, which is the more precise thing to name; only when the failure happened
+    /// before a message existed does it fall back to the source event. Both are reduced to a type name, so this
+    /// choice affects WHICH type is reported, never how much is disclosed.
+    /// </remarks>
     public override void LogError(TEvent notification, Exception exception, ILoggerFactory loggerFactory, string prefix = "")
     {
+        var failedMessage = (object)exception.As<PlatformMessageBusException<TMessage>>()?.EventBusMessage ?? notification;
+
         CreateLogger(loggerFactory)
             .LogError(
-                exception.BeautifyStackTrace(),
-                "[PlatformCqrsEventBusMessageProducer] {Prefix} Failed to send {MessageName}. [[Error:{Error}]]. EventBusMessageOrEventNotification: {@EventBusMessageOrEventNotification}.",
+                "[PlatformCqrsEventBusMessageProducer] {Prefix} Failed to send {MessageName}. ExceptionDiagnostics:{ExceptionDiagnostics}. MessageDiagnostics:{MessageDiagnostics}.",
                 prefix,
                 typeof(TMessage).FullName,
-                exception.Message,
-                (object)exception.As<PlatformMessageBusException<TMessage>>()?.EventBusMessage ?? notification);
+                PlatformMessageBusDiagnosticFormatter.FormatException(exception),
+                PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(failedMessage));
     }
 
     protected virtual async Task SendMessage(TEvent @event, CancellationToken cancellationToken)

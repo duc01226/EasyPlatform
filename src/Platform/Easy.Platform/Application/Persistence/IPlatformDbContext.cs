@@ -122,8 +122,8 @@ public interface IPlatformDbContext : IDisposable
                                 .Or(p => p.Status == PlatformDataMigrationHistory.Statuses.SkipFailed)
                                 .AndAlso(p => p.Name == previousMigrationName))))
                 {
-                    Logger.LogInformation("DataMigration {MigrationExecutionName} STARTED.", migrationExecution.Name);
-
+                    // STARTED/FINISHED logging is owned by PlatformDataMigrationExecutor.Execute so it covers EVERY
+                    // caller of a migration, not just this orchestrator. Do not re-log it here.
                     var toUpsertMigrationHistory = existingMigrationHistory ?? new PlatformDataMigrationHistory(migrationExecution.Name);
 
                     await UpsertOneDataMigrationHistorySaveChangesImmediatelyAsync(
@@ -170,12 +170,14 @@ public interface IPlatformDbContext : IDisposable
                                     Logger.LogError(ex.BeautifyStackTrace(), "Upsert DataMigrationHistory Status=Processed failed");
                             },
                             cancellationToken: CancellationToken.None);
-
-                        this.As<TDbContext>().Logger.LogInformation("DataMigration {MigrationExecutionName} FINISHED.", migrationExecution.Name);
                     }
                     catch (Exception e)
                     {
-                        Logger.LogError(e.BeautifyStackTrace(), "DataMigrationHistory execution failed");
+                        // Message only, no stack trace: PlatformDataMigrationExecutor.Execute already logged this exact exception with a
+                        // full trace before rethrowing it, and the outer handler logs the terminal one. A third copy of the same trace
+                        // makes a failed migration harder to read, not easier. This line exists for its POSITION — it marks that the body
+                        // failed and the Failed-status write is about to be attempted, so a following ledger-write error has context.
+                        Logger.LogError("DataMigrationHistory execution failed. [Error:{Error}]", e.Message);
 
                         // Retry in case interval ping make it failed for concurrency token
                         await Util.TaskRunner.WaitRetryAsync(

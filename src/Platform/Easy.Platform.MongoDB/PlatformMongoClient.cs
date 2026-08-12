@@ -21,6 +21,9 @@ public class PlatformMongoClient : IPlatformMongoClient
             new MongoUrlBuilder(options.Value.ConnectionString)
                 .WithIf(options.Value.MinConnectionPoolSize.HasValue, p => p.MinConnectionPoolSize = options.Value.MinConnectionPoolSize!.Value)
                 .WithIf(options.Value.MaxConnectionPoolSize.HasValue, p => p.MaxConnectionPoolSize = options.Value.MaxConnectionPoolSize!.Value)
+                // Only when explicitly set — a null leaves whatever the connection string carried (or the driver default 2),
+                // so this never silently overrides a maxConnecting= already present in the configured connection string.
+                .WithIf(options.Value.MaxConnecting.HasValue, p => p.MaxConnecting = options.Value.MaxConnecting!.Value)
                 .WithIf(options.Value.MaxConnectionIdleTimeSeconds.HasValue, p => p.MaxConnectionIdleTime = options.Value.MaxConnectionIdleTimeSeconds!.Value.Seconds())
                 .ToMongoUrl());
 

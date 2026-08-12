@@ -38,6 +38,13 @@ def read_canonical_block(tag):
 def find_target_files():
     patterns = [
         os.path.join(PROJECT_DIR, ".claude", "skills", "*", "SKILL.md"),
+        # A skill's reference bodies are loaded as procedure and duplicate across skills
+        # exactly like SKILL.md does. Excluding them made a SYNC: block there inert —
+        # written once, propagated never, and invisible to sync-carrier-parity, which
+        # derives its carrier set the same way. Both scopes must match — and that match is
+        # ASSERTED by the PARITY test in sync-carrier-parity.test.cjs, which shells this
+        # function and compares the two sets. A comment is not a sensor; that test is.
+        os.path.join(PROJECT_DIR, ".claude", "skills", "*", "references", "*.md"),
         os.path.join(PROJECT_DIR, ".claude", "agents", "*.md"),
     ]
     files = []
@@ -94,7 +101,7 @@ def main(argv):
         return 2
 
     files = find_target_files()
-    print(f"Found {len(files)} target files (SKILL.md + agent .md)")
+    print(f"Found {len(files)} target files (SKILL.md + skill references/*.md + agent .md)")
 
     overall_changed = 0
     overall_errors = []

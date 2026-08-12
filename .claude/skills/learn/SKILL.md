@@ -7,12 +7,20 @@ disable-model-invocation: false
 
 ## Quick Summary
 
-**Goal:** Teach Claude lessons that persist across sessions by saving to the most relevant reference doc.
+**Goal:** Teach Claude lessons that persist across sessions by generalizing each lesson to its failure mode and saving it to the carrier a future session will actually read — the best-fit prose reference doc, or `docs/project-config.json` when the lesson is really a machine-readable project fact.
+
+**Summary:** read-this-if-nothing-else digest of the main steps —
+
+- **Generalize before anything else** — climb from the incident to the reusable failure mode; a lesson naming this ticket's files/services/tools is not a lesson yet.
+- **Triage (recurrence + auto-fix) BEFORE routing** — a lesson a review skill already catches is noise.
+- **Classify the carrier, don't default to prose:** a lesson stating a project FACT (path, run-command, module map, convention, tooling choice) belongs in `docs/project-config.json`, the machine-readable map every skill reads first; a lesson stating a RULE or pattern belongs in the matching `docs/project-reference/` doc. Both can apply — write the fact to config AND the rule to prose. To learn what the config holds and its exact field names, read the file or use `/project-config` (it runs `--describe`).
+- **Assess prevention depth** — doc/config update, prompt rule, static protocol lesson, hook, test, or skill update.
+- **Confirm target with the user, save, then run the 3 mandatory end tasks** — Learn Review → `/why-review` → `/prompt-enhance`.
 
 **Workflow:**
 
 1. **Capture** -- Identify the lesson from user instruction or experience
-2. **Route** -- Analyze lesson content against Reference Doc Catalog, select best target file
+2. **Route** -- Analyze lesson content against the Reference Doc Catalog AND `docs/project-config.json`, select the best target carrier (prose doc, config field, or both)
 3. **Save** -- Append lesson to the selected file
 4. **Confirm** -- Acknowledge what was saved and where
 5. **Learn Review** -- Run the mandatory 2-step end gate (`Learn Review` + `/why-review`)
@@ -24,6 +32,8 @@ disable-model-invocation: false
 - Triggers on "remember this", "always do X", "never do Y"
 - **Triage first:** pass Recurrence gate + Auto-fix gate BEFORE routing or saving
 - Smart-route to the most relevant file, NOT always `docs/project-reference/lessons.md`
+- **Consider `docs/project-config.json` on EVERY routing decision** — a lesson that is really a project fact (path, run-command, module map, tooling choice) belongs in the machine-readable map, not in prose; read it or use `/project-config` to know its schema before deciding
+- Use exact config schema field names (`node .claude/hooks/lib/project-config-schema.cjs --describe`) and prefer an existing field — NEVER invent a key, and route config writes through `/project-config`
 - Check for existing entries before creating duplicates
 - Confirm target file with user before writing
 
@@ -79,6 +89,32 @@ Each `docs/project-reference/` file is auto-initialized by `session-init-docs.cj
 
 **Key insight:** `lessons.md` and `code-review-rules.md` are the highest-recurrence routing targets — read them on every relevant task. Place high-recurrence lessons where the matching **Read Trigger** guarantees a future session opens them.
 
+### Also a routing destination: `docs/project-config.json` (machine-readable, NOT prose)
+
+The catalog above is prose. `docs/project-config.json` is the project's **machine-readable map** — modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns — and it is what `CLAUDE.md` and the `docs/project-reference/**` docs are generated from. Every skill is told to read it BEFORE investigating, planning, or coding, so a fact recorded there reaches more sessions than the same fact written into one prose doc.
+
+**Read Trigger:** every task, ahead of the prose docs. **Owned by:** `/project-config`.
+
+**Learn its shape before routing anything into it** — either read `docs/project-config.json` directly, or invoke `/project-config`, which knows the schema and its exact field names:
+
+```bash
+node .claude/hooks/lib/project-config-schema.cjs --describe   # exact field names + per-field derivation notes
+```
+
+| Lesson really is…                                                                                                                                                                                    | Carrier                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| A project **FACT** a schema field already models — a path, glob, run-command, module/service map, framework or tooling choice, doc root, test/E2E/integration setup, startup or health-check command | `docs/project-config.json` (via `/project-config`) |
+| A **RULE, pattern, or anti-pattern** an agent must reason with                                                                                                                                       | the matching `docs/project-reference/` doc         |
+| Both — a new fact AND the rule for using it                                                                                                                                                          | write the fact to config AND the rule to prose     |
+
+Rules:
+
+- MUST check `docs/project-config.json` as a candidate on EVERY routing decision — why: a project fact written only as prose is invisible to the tooling that reads the config, and is silently overwritten the next time the generated docs regenerate from it.
+- MUST use exact schema field names (`--describe`, copy verbatim) and prefer an EXISTING field over a new one — why: unknown keys are accepted as warnings (`project-config-schema.cjs:618,688`), so an invented key looks like it worked while no consumer ever reads it.
+- No existing field fits → do NOT invent a top-level key silently. Route the lesson to prose and surface the gap to the user as a proposed schema addition — why: a schema change is a framework decision, not a side effect of `/learn`.
+- Prefer routing the config write through `/project-config` (Plan → Review → Execute + validation) over hand-editing the JSON — why: it validates after each phase and knows the field names this skill would otherwise guess.
+- Config carries FACTS, never prose lessons — NEVER paste a narrative lesson into a config string field. — why: the config is consumed by tooling and by every skill's prefetch; prose there bloats every session and belongs in a reference doc.
+
 ---
 
 ## Smart File Routing (CRITICAL)
@@ -98,20 +134,21 @@ Each `docs/project-reference/` file is auto-initialized by `session-init-docs.cj
 
 Route to the **most relevant file** based on lesson content:
 
-| If lesson is about...                                                                                                                      | Route to                                                | Section hint                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | --------------------------------------------------------------- |
-| Code review rules, anti-patterns, review checklists, YAGNI/KISS/DRY, naming conventions, review process                                    | `docs/project-reference/code-review-rules.md`           | Add to most relevant section (anti-patterns, rules, checklists) |
-| Backend/hook patterns: modules, CQRS, repositories, entities, validation, message bus, background jobs, migrations, configured persistence | `docs/project-reference/backend-patterns-reference.md`  | Add to relevant section or Anti-Patterns section                |
-| Frontend patterns: components, state stores, forms, API services, styling conventions, directives, pipes                                   | `docs/project-reference/frontend-patterns-reference.md` | Add to relevant section or Anti-Patterns section                |
-| Integration/unit tests: test base classes, fixtures, test helpers, test patterns, assertions, test runners                                 | `docs/project-reference/integration-test-reference.md`  | Add to relevant section                                         |
-| E2E tests: Playwright, Cypress, Selenium, page objects, E2E config, browser automation, visual regression                                  | `docs/project-reference/e2e-test-reference.md`          | Add to relevant section                                         |
-| Domain entities, data models, DTOs, aggregates, entity relationships, cross-service data sync, ER diagrams                                 | `docs/project-reference/domain-entities-reference.md`   | Add to Entity Catalog or Relationships section                  |
-| Project structure, directory organization, module boundaries, tech stack choices, service architecture                                     | `docs/project-reference/project-structure-reference.md` | Add to relevant architecture section                            |
-| SCSS/CSS styling, BEM methodology, mixins, variables, theming, responsive design, CSS conventions                                          | `docs/project-reference/scss-styling-guide.md`          | Add to relevant styling section                                 |
-| Design system, design tokens, component library, UI kit conventions, Figma-to-code patterns                                                | `docs/project-reference/design-system/README.md`        | Add to relevant design section                                  |
-| Feature documentation, doc templates, doc structure conventions, app-to-service doc mapping                                                | `docs/project-reference/feature-spec-reference.md`      | Add to relevant conventions section                             |
-| Documentation indexing, doc organization, doc-to-code relationships, doc lookup patterns                                                   | `docs/project-reference/docs-index-reference.md`        | Add to relevant section                                         |
-| General lessons, workflow tips, tooling, AI behavior, project conventions, anything not matching above                                     | `docs/project-reference/lessons.md`                     | Append as dated list entry                                      |
+| If lesson is about...                                                                                                                                                                                                                                             | Route to                                                | Section hint                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Code review rules, anti-patterns, review checklists, YAGNI/KISS/DRY, naming conventions, review process                                                                                                                                                           | `docs/project-reference/code-review-rules.md`           | Add to most relevant section (anti-patterns, rules, checklists)             |
+| Backend/hook patterns: modules, CQRS, repositories, entities, validation, message bus, background jobs, migrations, configured persistence                                                                                                                        | `docs/project-reference/backend-patterns-reference.md`  | Add to relevant section or Anti-Patterns section                            |
+| Frontend patterns: components, state stores, forms, API services, styling conventions, directives, pipes                                                                                                                                                          | `docs/project-reference/frontend-patterns-reference.md` | Add to relevant section or Anti-Patterns section                            |
+| Integration/unit tests: test base classes, fixtures, test helpers, test patterns, assertions, test runners                                                                                                                                                        | `docs/project-reference/integration-test-reference.md`  | Add to relevant section                                                     |
+| E2E tests: Playwright, Cypress, Selenium, page objects, E2E config, browser automation, visual regression                                                                                                                                                         | `docs/project-reference/e2e-test-reference.md`          | Add to relevant section                                                     |
+| Domain entities, data models, DTOs, aggregates, entity relationships, cross-service data sync, ER diagrams                                                                                                                                                        | `docs/project-reference/domain-entities-reference.md`   | Add to Entity Catalog or Relationships section                              |
+| Project structure, directory organization, module boundaries, tech stack choices, service architecture                                                                                                                                                            | `docs/project-reference/project-structure-reference.md` | Add to relevant architecture section                                        |
+| SCSS/CSS styling, BEM methodology, mixins, variables, theming, responsive design, CSS conventions                                                                                                                                                                 | `docs/project-reference/scss-styling-guide.md`          | Add to relevant styling section                                             |
+| Design system, design tokens, component library, UI kit conventions, Figma-to-code patterns                                                                                                                                                                       | `docs/project-reference/design-system/README.md`        | Add to relevant design section                                              |
+| Feature documentation, doc templates, doc structure conventions, app-to-service doc mapping                                                                                                                                                                       | `docs/project-reference/feature-spec-reference.md`      | Add to relevant conventions section                                         |
+| Documentation indexing, doc organization, doc-to-code relationships, doc lookup patterns                                                                                                                                                                          | `docs/project-reference/docs-index-reference.md`        | Add to relevant section                                                     |
+| **Project FACTS the config models:** source/module paths, globs, service or app maps, framework + search keywords, test / E2E / integration run-commands, system startup or health-check commands, doc roots, design-system or styling locations, tooling choices | `docs/project-config.json` **via `/project-config`**    | Existing schema field, exact name from `--describe` — NEVER an invented key |
+| General lessons, workflow tips, tooling, AI behavior, project conventions, anything not matching above                                                                                                                                                            | `docs/project-reference/lessons.md`                     | Append as dated list entry                                                  |
 
 ---
 
@@ -119,14 +156,15 @@ Route to the **most relevant file** based on lesson content:
 
 Before saving any lesson, critically evaluate whether a doc update alone is sufficient or a deeper prevention mechanism is needed:
 
-| Prevention Layer                                       | When to use                                                        | Example                                                                                     |
-| ------------------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| **Doc update only**                                    | One-off awareness, rare edge case, team convention                 | "Always use fluent validation API" → `docs/project-reference/backend-patterns-reference.md` |
-| **Prompt rule** (`development-rules.md`)               | Rule that ALL agents must follow on every task                     | "Grep after bulk edits" → `.claude/docs/development-rules.md`                               |
-| **Static protocol lesson** (`sync-inline-versions.md`) | Universal AI mistake, high recurrence, silent failure, any project | "Re-read files after context compaction" → `.claude/skills/shared/sync-inline-versions.md`  |
-| **Hook** (`.claude/hooks/`)                            | Automated enforcement, must never be forgotten                     | "Dedup markers must match" → `lib/dedup-constants.cjs` + consistency test                   |
-| **Test** (`.claude/hooks/tests/`)                      | Regression prevention, verifiable invariant                        | "All hooks import from shared module" → test in `test-all-hooks.cjs`                        |
-| **Skill update** (`.claude/skills/`)                   | Workflow step that should always include this check                | "Review changes must check doc staleness" → skill SKILL.md update                           |
+| Prevention Layer                                       | When to use                                                                              | Example                                                                                                                                |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Doc update only**                                    | One-off awareness, rare edge case, team convention                                       | "Always use fluent validation API" → `docs/project-reference/backend-patterns-reference.md`                                            |
+| **Project config field** (`docs/project-config.json`)  | The lesson is a machine-readable project FACT every skill should ground on before acting | "Integration tests need the system started first" → `integrationTestVerify.startupScript` / `systemCheckCommand` via `/project-config` |
+| **Prompt rule** (`development-rules.md`)               | Rule that ALL agents must follow on every task                                           | "Grep after bulk edits" → `.claude/docs/development-rules.md`                                                                          |
+| **Static protocol lesson** (`sync-inline-versions.md`) | Universal AI mistake, high recurrence, silent failure, any project                       | "Re-read files after context compaction" → `.claude/skills/shared/sync-inline-versions.md`                                             |
+| **Hook** (`.claude/hooks/`)                            | Automated enforcement, must never be forgotten                                           | "Dedup markers must match" → `lib/dedup-constants.cjs` + consistency test                                                              |
+| **Test** (`.claude/hooks/tests/`)                      | Regression prevention, verifiable invariant                                              | "All hooks import from shared module" → test in `test-all-hooks.cjs`                                                                   |
+| **Skill update** (`.claude/skills/`)                   | Workflow step that should always include this check                                      | "Review changes must check doc staleness" → skill SKILL.md update                                                                      |
 
 **Decision flow:**
 
@@ -227,11 +265,12 @@ Run these 2 tasks at the end of every `/learn` operation:
 1. **Run Triage Gate** — recurrence + auto-fix filters; stop here if either fails
 2. **Read the lesson text** — identify keywords and domain
 3. **Apply Lesson Quality Gate** — analyze root cause, generalize, verify universality
-4. **Run Prevention Depth Assessment** — determine if doc-only or deeper prevention needed
-5. **Match against Routing Table** — pick the best-fit file
-6. **Tell the user:** "This lesson fits best in `docs/{file}`. Confirm? [Y/n]"
-7. **On confirm** — read target file, find the right section, append the lesson
-8. **On reject** — ask user which file to use instead
+4. **Classify the carrier — FACT vs RULE (do this BEFORE the Routing Table).** Ask: _"Is this a machine-readable project fact, or a rule an agent must reason with?"_ Fact → `docs/project-config.json`; rule → a prose reference doc; both → both. To decide, read the config or use `/project-config` (`--describe`) so the judgment rests on the real schema, never on a guess about what the config holds. — why: skipping this step is how a project fact ends up as prose that no tooling reads and the next regeneration contradicts.
+5. **Run Prevention Depth Assessment** — determine if doc/config-only or deeper prevention needed
+6. **Match against Routing Table** — pick the best-fit file (or config field)
+7. **Tell the user:** "This lesson fits best in `docs/{file}`. Confirm? [Y/n]"
+8. **On confirm** — read target file, find the right section, append the lesson (config target → route through `/project-config`)
+9. **On reject** — ask user which file to use instead
 
 ### Format by Target File
 
@@ -252,12 +291,12 @@ Run these 2 tasks at the end of every `/learn` operation:
 
 `docs/project-reference/lessons.md` is a static project-reference carrier read during project work. Token budget must be controlled.
 
-**Hard limit:** 10000 characters (~3333 tokens). Check BEFORE saving any new lesson.
+**Hard limit:** 20000 characters (~6666 tokens). Check BEFORE saving any new lesson.
 
 **Workflow when adding to `docs/project-reference/lessons.md`:**
 
 1. Read file, count characters (`wc -c docs/project-reference/lessons.md`)
-2. If current + new lesson > 10000 chars → trigger **Budget Trim** before saving
+2. If current + new lesson > 20000 chars → trigger **Budget Trim** before saving
 3. If under budget → save normally
 
 **Budget Trim process:**
@@ -348,8 +387,9 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -382,10 +422,26 @@ After saving a lesson to any target file, run `/prompt-enhance` on the modified 
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Critical Thinking:** critical + sequential thinking, traced proof, confidence >80%, NEVER guess as fact.
 
+**IMPORTANT MUST ATTENTION Goal:** Persist each lesson at its failure-mode level into the carrier a future session will actually read — the best-fit prose reference doc, or `docs/project-config.json` when the lesson is really a machine-readable project fact.
+
+**IMPORTANT MUST ATTENTION** main steps, in order: generalize → Triage Gate → Lesson Quality Gate → **classify carrier (FACT → config · RULE → prose · both → both)** → Prevention Depth Assessment → Routing Table → confirm with user → save → Learn Review → `/why-review` → `/prompt-enhance`.
 **IMPORTANT MUST ATTENTION** run Triage Gate FIRST — if recurrence is low OR review skills can catch it, skip `/learn` entirely
 **IMPORTANT MUST ATTENTION** check Reference Doc Catalog to find the best target file — NOT always `lessons.md`
+**IMPORTANT MUST ATTENTION** consider `docs/project-config.json` as a candidate carrier on EVERY routing decision, alongside the prose docs — read it directly or use `/project-config` to learn its sections and exact field names first — why: a project fact written only as prose is invisible to the tooling that reads the config and is contradicted the next time the generated docs regenerate from it.
+**IMPORTANT MUST ATTENTION** when routing into the config, copy field names verbatim from `node .claude/hooks/lib/project-config-schema.cjs --describe`, prefer an EXISTING field, and route the write through `/project-config`; no field fits → surface a proposed schema addition to the user instead of inventing a key — why: unknown keys only warn (`project-config-schema.cjs:618,688`), so an invented key looks applied while no consumer reads it.
+**IMPORTANT MUST ATTENTION** keep the config to FACTS — NEVER paste a narrative lesson into a config string field; the rule belongs in the matching prose reference doc.
 **IMPORTANT MUST ATTENTION** mandatory end tasks are ALWAYS: `Learn Review` → `/why-review` → `/prompt-enhance <modified-file>` (in order)
 **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
 **IMPORTANT MUST ATTENTION** prefer auto-injected files for high-recurrence lessons (higher visibility)
+
+**Anti-Rationalization:**
+
+| Evasion                                          | Rebuttal                                                                                                                                   |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| "It's a lesson, so it goes in a lessons doc"     | Classify FACT vs RULE first. A path, run-command, or module map is config data — prose hides it from every consumer that reads the config. |
+| "I know roughly what the config holds"           | Read it or run `/project-config` (`--describe`). Routing on a guessed schema writes a field nobody reads.                                  |
+| "No field fits, I'll add a sensible key"         | Unknown keys only warn. Surface a proposed schema addition to the user — never invent one silently.                                        |
+| "Saving the user's exact words is most faithful" | Verbatim is the default failure mode. Climb to the failure mode; strip this ticket's nouns.                                                |
+| "Small lesson, skip the end gate"                | Learn Review → `/why-review` → `/prompt-enhance` run on every save, no exceptions.                                                         |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

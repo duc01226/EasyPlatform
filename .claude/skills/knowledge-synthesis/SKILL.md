@@ -10,10 +10,11 @@ description: '[Research] Use when you need to synthesize research findings into 
 
 **Summary:**
 
-- Synthesizes a report FROM an existing evidence base (`.claude/tmp/_evidence-{slug}.md` + `_sources-{slug}.md` from deep-research) — this skill does not gather sources, it consolidates them into `docs/knowledge/research/{slug}.md`.
-- The enforced template (`.claude/templates/research-report-template.md`) is non-negotiable: every section MUST appear, and the Knowledge Gaps section can never be omitted — a missing gaps section manufactures false confidence.
-- Citation discipline is the core gate: every factual claim carries an inline `[N]`, every Sources-table entry is referenced at least once, and there are zero orphan citations or orphan sources.
-- Close with an honest confidence rollup (weighted average of finding scores) that prominently flags any <60% finding, then clean up `.claude/tmp/` working files.
+- **Purpose:** consolidate an EXISTING evidence base (`.claude/tmp/_evidence-{slug}.md` + `_sources-{slug}.md` from deep-research) into one fully-cited report at `docs/knowledge/research/{slug}.md` — this skill does NOT gather sources, it synthesizes them — why: gathering already happened upstream; re-researching here invents findings.
+- **Main steps, in order:** (1) **Load evidence** — inventory findings, confidence scores, unresolved discrepancies, remaining gaps; (2) **Load template** (`.claude/templates/research-report-template.md`) — every section required; (3) **Synthesize** — map findings into each section with inline `[N]` citations + per-finding confidence, note cross-cutting patterns/contradictions in Analysis; (4) **Citation audit** — zero orphan citations, zero orphan sources; (5) **Confidence summary** — importance-weighted rollup flagging every <60% finding; then clean up `.claude/tmp/` working files.
+- Enforced template is non-negotiable — every section MUST appear, Knowledge Gaps NEVER omitted — why: a missing gaps section manufactures false confidence.
+- Citation discipline is the core gate — every claim inline `[N]`, every Sources-table row referenced ≥1×, Tier 4 (unverified) NEVER cited as fact, 2+ independent sources per factual claim.
+- Synthesize FROM evidence only — NEVER fabricate, add, or upgrade findings beyond gathered evidence — why: invented findings poison the report's trust.
 
 **Workflow:**
 
@@ -97,8 +98,9 @@ Clean up working files from `.claude/tmp/` after successful synthesis.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -60,30 +61,31 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
-- **Context-aware (Phase 0):** detects which artifact it is validating — `AUTHORED-SPEC` (idea-to-spec: a freshly-authored, `provisional: true` §1-8), `EXISTING-SPEC` (spec-to-pbi: a non-provisional canonical §1-8 headed for decomposition), or `TEST-SPEC` (idea-to-pbi deep mode: a refined idea + §8 TCs, no §1-7 draft) — and tunes which sections/categories it audits. The detection precedence + ambiguous→a direct user question fallback are in Phase 0; the category catalog + per-context audit matrix live in `references/clarify-interview.md`.
-- Runs in the validation slot of its flow — AFTER the artifact exists (and, for AUTHORED, after `$review-artifact` checks the spec in isolation against the M1-M6 mandates and `$why-review` checks rationale). This skill adds the two things neither does: completeness-vs-the-discovered-system, and a BLOCKING user-confirmation loop on every non-obvious decision.
-- It is NOT a duplicate of `review-artifact`: that one judges the artifact against itself (sections present, ACs testable, M1-M6 prose clean). `spec-clarify` judges it against the SYSTEM (does it reflect every related spec, every existing invariant, every operation the idea implies) and against the USER (are the encoded assumptions actually what the user wants).
+- **Context-aware (Phase 0):** detects which artifact it is validating — `AUTHORED-SPEC` (idea-to-spec: a freshly-authored, `provisional: true` §1-8), `EXISTING-SPEC` (spec-to-pbi: a non-provisional canonical §1-8 headed for decomposition), or `TEST-SPEC` (idea-to-pbi deep mode: a refined idea + §8 TCs, no §1-7 draft) — and tunes which sections/categories it audits. The detection precedence + ambiguous→ask the user directly fallback are in Phase 0; the category catalog + per-context audit matrix live in `references/clarify-interview.md`.
+- **Main steps (read-this-if-nothing-else — run in order, never skip/merge):** Phase 0 detect context + resolve budget → Step 0 resolve the 4 inputs (artifact, `spec-discovery` landscape, originating idea, domain-analysis), flag any missing as a finding → Step 1 completeness pass vs the discovered SYSTEM (cross-ref, implied coverage, §8 TCs, invariants, UI interaction surface) → Step 2 category-driven hypothesis/decision audit — walk EVERY applicable category, classify each item OBVIOUS / NON-OBVIOUS / CONFLICTS → Step 3 brainstorm materially-changing open questions + adversarial pre-mortem → Step 4 BLOCKING ask the user directly gate on NON-OBVIOUS + CONFLICTS + high-impact within the MIN-MAX budget → Step 5 apply confirmed decisions to the artifact + Decisions Log → Step 6 validate own findings via `$why-review --validate-findings`, emit CLARIFIED / NEEDS-AUTHORING-FIX.
+- Runs in the validation slot of its flow — AFTER the artifact exists (and, for AUTHORED, after `$artifact-review` checks the spec in isolation against the artifact-facing mandates (M1-M5 + M7) and `$why-review` checks rationale). This skill adds the two things neither does: completeness-vs-the-discovered-system, and a BLOCKING user-confirmation loop on every non-obvious decision.
+- It is NOT a duplicate of `artifact-review`: that one judges the artifact against itself (sections present, ACs testable, M1-M5 + M7 clean). `spec-clarify` judges it against the SYSTEM (does it reflect every related spec, every existing invariant, every operation the idea implies) and against the USER (are the encoded assumptions actually what the user wants).
 - **Exhaustive within a budget:** walk EVERY applicable validation category (per the matrix), classify every assumption/default/scope-boundary/ambiguity the artifact encodes as **OBVIOUS** (document and proceed), **NON-OBVIOUS** (must confirm with the user), or **CONFLICTS** (disagrees with a discovered spec or invariant → must reconcile), then route NON-OBVIOUS + CONFLICTS + high-impact items to the gate up to a configured `Spec Validation: questions=MIN-MAX` budget (per-context defaults when absent). NEVER silently pick a NON-OBVIOUS decision — the whole value is the active question; the budget (not "ask only a few") is the fatigue control.
-- Runs INLINE on the main agent (NOT a sub-agent): the Step 4 clarification gate is a BLOCKING a direct user question loop, and a direct user question only works on the main interactive agent — a sub-agent cannot ask the user. Before applying confirmed decisions, validate this skill's OWN findings through the terminal `$why-review --validate-findings` gate, at parity with the other review-family skills.
+- Runs INLINE on the main agent (NOT a sub-agent): the Step 4 clarification gate is a BLOCKING ask the user directly loop, and ask the user directly only works on the main interactive agent — a sub-agent cannot ask the user. Before applying confirmed decisions, validate this skill's OWN findings through the terminal `$why-review --validate-findings` gate, at parity with the other review-family skills.
 
 **Workflow:**
 
-0. **Phase 0 — Spec-Context Detection** — detect `AUTHORED-SPEC` / `EXISTING-SPEC` / `TEST-SPEC` and resolve the question budget; ambiguous context → 1 a direct user question to confirm
+0. **Phase 0 — Spec-Context Detection** — detect `AUTHORED-SPEC` / `EXISTING-SPEC` / `TEST-SPEC` and resolve the question budget; ambiguous context → 1 ask the user directly to confirm
 1. **Completeness pass** — cross-reference the artifact against the discovered system landscape (per-context emphasis); find missing stories/AC/rules/TCs and uncovered invariants
 2. **Hypothesis & decision audit (category-driven)** — walk every applicable category in `references/clarify-interview.md`; enumerate and classify every encoded assumption as OBVIOUS / NON-OBVIOUS / CONFLICTS
 3. **Brainstorm open questions** — questions whose answers would change the artifact + a pre-mortem
-4. **Clarification gate** — BLOCKING a direct user question on NON-OBVIOUS + CONFLICTS + high-impact items, exhaustive within the MIN-MAX budget (≤4/call, recommended-first)
+4. **Clarification gate** — BLOCKING ask the user directly on NON-OBVIOUS + CONFLICTS + high-impact items, exhaustive within the MIN-MAX budget (≤4/call, recommended-first)
 5. **Apply** — write confirmed decisions back into the artifact + a Decisions Log
 6. **Report + verdict** — CLARIFIED or NEEDS-AUTHORING-FIX, after validating own findings
 
 **Key Rules:**
 
-- Detect the validation context FIRST (Phase 0); it tunes which sections/categories are audited and the question budget. Ambiguous → confirm with one a direct user question.
+- Detect the validation context FIRST (Phase 0); it tunes which sections/categories are audited and the question budget. Ambiguous → confirm with one ask the user directly.
 - Completeness is judged against the SYSTEM, not the artifact alone — every related/affected behavior must be reflected.
 - Walk EVERY applicable category (breadth is mandatory); route NON-OBVIOUS + CONFLICTS + high-impact items to the gate up to the configured/default budget. The budget — not "surface only a few" — is the fatigue control.
 - NON-OBVIOUS and CONFLICTS decisions MUST go to the user; only OBVIOUS decisions are documented-and-proceeded.
-- Runs INLINE (no `execution-mode: subagent`) because the clarification gate needs a direct user question, which requires the main interactive agent.
-- This complements — never duplicates — `review-artifact` (isolation / M1-M6) and `why-review` (rationale).
+- Runs INLINE (no `execution-mode: subagent`) because the clarification gate needs ask the user directly, which requires the main interactive agent.
+- This complements — never duplicates — `artifact-review` (isolation / M1-M5 + M7) and `why-review` (rationale).
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -95,23 +97,23 @@ A Feature Spec can be internally perfect — all 8 sections present, every AC te
 2. It encodes a default, scope boundary, or ambiguous behavior that the AUTHOR picked but the USER never confirmed (the most expensive specs fail not on what they said, but on what they assumed without asking).
 3. It leaves open questions whose answers would materially change §1-8 — and nobody surfaced them before code started.
 
-`review-artifact --type=spec-tests` and `--type=design` check the spec **in isolation** against the M1-M6 mandates and an adversarial section-quality checklist. `why-review` checks the **rationale** of decisions already made. Neither one (a) cross-references the spec against the broader discovered system, nor (b) actively ASKS THE USER to confirm the non-obvious choices. `spec-clarify` is the gate that does both — completeness-vs-system plus a blocking human-confirmation loop — so the spec is finalized confirmed, not merely well-formed.
+`artifact-review --type=spec-tests` and `--type=design` check the spec **in isolation** against the artifact-facing mandates (M1-M5 + M7 — M6 binds the reviewer, not the artifact) and an adversarial section-quality checklist. `why-review` checks the **rationale** of decisions already made. Neither one (a) cross-references the spec against the broader discovered system, nor (b) actively ASKS THE USER to confirm the non-obvious choices. `spec-clarify` is the gate that does both — completeness-vs-system plus a blocking human-confirmation loop — so the spec is finalized confirmed, not merely well-formed.
 
 **Delineation from sibling skills (so reviewers see NO duplication):**
 
-| Skill                                                 | Judges the spec against…                                                          | Output                                 | Asks the user?                                        |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------- |
-| `review-artifact --type=spec-tests` / `--type=design` | ITSELF — M1-M6 mandates, AC testability, adversarial section quality              | PASS / WARN / FAIL                     | No (AI self-review)                                   |
-| `why-review`                                          | the RATIONALE of its decisions                                                    | PASS / NEEDS-WORK + validated findings | Only to escalate (a direct user question)             |
-| `spec-clarify` (this skill)                           | the SYSTEM + the USER — completeness vs discovered landscape, confirmed decisions | CLARIFIED / NEEDS-AUTHORING-FIX        | **YES — blocking gate on every non-obvious decision** |
+| Skill                                                 | Judges the spec against…                                                                    | Output                                 | Asks the user?                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------- |
+| `artifact-review --type=spec-tests` / `--type=design` | ITSELF — artifact-facing mandates (M1-M5 + M7), AC testability, adversarial section quality | PASS / WARN / FAIL                     | No (AI self-review)                                   |
+| `why-review`                                          | the RATIONALE of its decisions                                                              | PASS / NEEDS-WORK + validated findings | Only to escalate (ask the user directly)              |
+| `spec-clarify` (this skill)                           | the SYSTEM + the USER — completeness vs discovered landscape, confirmed decisions           | CLARIFIED / NEEDS-AUTHORING-FIX        | **YES — blocking gate on every non-obvious decision** |
 
-**Why not just extend `review-artifact`?** Self-review cannot ask the user, and adding a blocking interactive gate to a skill designed to run as a fresh sub-agent breaks the sub-agent contract (a sub-agent cannot run a direct user question). The completeness-vs-system pass and the human-confirmation loop need a distinct, inline invocation point.
+**Why not just extend `artifact-review`?** Self-review cannot ask the user, and adding a blocking interactive gate to a skill designed to run as a fresh sub-agent breaks the sub-agent contract (a sub-agent cannot run ask the user directly). The completeness-vs-system pass and the human-confirmation loop need a distinct, inline invocation point.
 
 ## Alternatives Considered
 
 | Approach                                                                    | Pros                                                 | Cons                                                                                                                                                                 | Decision                                                                                                                                                          |
 | --------------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Add a "completeness + confirm" phase to `review-artifact --type=spec-tests` | No new skill; one place to maintain                  | `review-artifact` runs fresh sub-agents for re-review; a sub-agent cannot run a direct user question, so the confirm loop is impossible there                        | Rejected — the blocking user gate is structurally incompatible with the sub-agent re-review model                                                                 |
+| Add a "completeness + confirm" phase to `artifact-review --type=spec-tests` | No new skill; one place to maintain                  | `artifact-review` runs fresh sub-agents for re-review; a sub-agent cannot run ask the user directly, so the confirm loop is impossible there                         | Rejected — the blocking user gate is structurally incompatible with the sub-agent re-review model                                                                 |
 | Fold the open-questions brainstorm into `why-review`                        | `why-review` already does adversarial rationale work | `why-review` validates decisions already MADE; it does not surface decisions the author never realized they made, nor confirm them with the user                     | Rejected — different purpose (rationale of made decisions vs surfacing+confirming unmade ones)                                                                    |
 | Fully autonomous — AI resolves every ambiguity by best-guess, no user gate  | Fastest; no human round-trip                         | Automation bias: a silently-picked NON-OBVIOUS default ships a spec the user never agreed to; the failure surfaces only in code                                      | Rejected — the cost of a wrong silent default exceeds one confirmation round                                                                                      |
 | Run BEFORE authoring instead of after                                       | Catches gaps earlier                                 | Before authoring there is no concrete artifact to audit for hypotheses/conflicts; the assumptions are not yet encoded                                                | Rejected — this gate operates on a CONCRETE artifact; earlier discovery is `scout`/`spec-discovery`'s job                                                         |
@@ -120,26 +122,26 @@ A Feature Spec can be internally perfect — all 8 sections present, every AC te
 
 ## Risk Assessment
 
-| Risk                                                                                                               | Likelihood | Impact | Mitigation                                                                                                                                                                                                                                                                                                                                                                                              |
-| ------------------------------------------------------------------------------------------------------------------ | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Silent decision** — AI classifies a NON-OBVIOUS choice as OBVIOUS to avoid asking                                | High       | High   | Step 2 forces an explicit OBVIOUS/NON-OBVIOUS/CONFLICTS label per item; the Anti-Rationalization table rebuts "it's obvious"; ambiguity defaults to NON-OBVIOUS                                                                                                                                                                                                                                         |
-| **Overlap creep** — drifts into re-checking M1-M6 / AC testability and duplicates `review-artifact`                | Medium     | Medium | Scope is fixed to completeness-vs-system + confirmation; `[HARD]`→§8 coverage is a CROSS-CHECK only — the detailed TC quality audit is deferred to `review-artifact --type=spec-tests`                                                                                                                                                                                                                  |
-| **Question fatigue** — the widened, category-driven audit asks too many questions                                  | Medium     | Medium | The configured `Spec Validation: questions=MIN-MAX` budget (per-context default when absent) is the hard cap; ask ≥MIN only when ≥MIN genuine decisions exist, never invent filler; ≤4 options per a direct user question call; recommended option first. Only NON-OBVIOUS + CONFLICTS + high-impact items become questions — breadth of _probing_ is exhaustive, breadth of _asking_ is budget-bounded |
-| **Context mis-detection** — Phase 0 picks the wrong context and audits the wrong sections                          | Medium     | High   | Explicit detection-precedence table (provisional flag + §-presence + active workflow); ambiguous → 1 a direct user question to confirm before auditing                                                                                                                                                                                                                                                  |
-| **Unvalidated findings applied** — AI rewrites §1-8 from a phantom completeness gap                                | Medium     | High   | Step 6 runs `$why-review --validate-findings` on this skill's own findings BEFORE applying any decision                                                                                                                                                                                                                                                                                                 |
-| **Stale landscape** — the discovered-system report is outdated, so completeness is judged against a wrong baseline | Low        | Medium | Step 0 verifies the discovery inputs exist and are current; a missing/stale landscape is itself a NEEDS-AUTHORING-FIX finding                                                                                                                                                                                                                                                                           |
+| Risk                                                                                                               | Likelihood | Impact | Mitigation                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------ | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Silent decision** — AI classifies a NON-OBVIOUS choice as OBVIOUS to avoid asking                                | High       | High   | Step 2 forces an explicit OBVIOUS/NON-OBVIOUS/CONFLICTS label per item; the Anti-Rationalization table rebuts "it's obvious"; ambiguity defaults to NON-OBVIOUS                                                                                                                                                                                                                                        |
+| **Overlap creep** — drifts into re-checking M1-M5 + M7 / AC testability and duplicates `artifact-review`           | Medium     | Medium | Scope is fixed to completeness-vs-system + confirmation; `[HARD]`→§8 coverage is a CROSS-CHECK only — the detailed TC quality audit is deferred to `artifact-review --type=spec-tests`                                                                                                                                                                                                                 |
+| **Question fatigue** — the widened, category-driven audit asks too many questions                                  | Medium     | Medium | The configured `Spec Validation: questions=MIN-MAX` budget (per-context default when absent) is the hard cap; ask ≥MIN only when ≥MIN genuine decisions exist, never invent filler; ≤4 options per ask the user directly call; recommended option first. Only NON-OBVIOUS + CONFLICTS + high-impact items become questions — breadth of _probing_ is exhaustive, breadth of _asking_ is budget-bounded |
+| **Context mis-detection** — Phase 0 picks the wrong context and audits the wrong sections                          | Medium     | High   | Explicit detection-precedence table (provisional flag + §-presence + active workflow); ambiguous → 1 ask the user directly to confirm before auditing                                                                                                                                                                                                                                                  |
+| **Unvalidated findings applied** — AI rewrites §1-8 from a phantom completeness gap                                | Medium     | High   | Step 6 runs `$why-review --validate-findings` on this skill's own findings BEFORE applying any decision                                                                                                                                                                                                                                                                                                |
+| **Stale landscape** — the discovered-system report is outdated, so completeness is judged against a wrong baseline | Low        | Medium | Step 0 verifies the discovery inputs exist and are current; a missing/stale landscape is itself a NEEDS-AUTHORING-FIX finding                                                                                                                                                                                                                                                                          |
 
 ## Phase 0: Spec-Context Detection (run FIRST)
 
 Before resolving inputs, detect WHICH artifact is being validated — the context tunes which sections/categories are audited and the question budget. The full per-context audit matrix + category catalog live in [`references/clarify-interview.md`](./references/clarify-interview.md).
 
-| Context         | Signals                                                                   | Artifact under validation   | Audit emphasis                                                                                               |
-| --------------- | ------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `AUTHORED-SPEC` | active `idea-to-spec`; full §1-8 present; `provisional: true` frontmatter | the freshly-authored §1-8   | full §1-8                                                                                                    |
-| `EXISTING-SPEC` | active `spec-to-pbi`; full §1-8 present; NOT provisional                  | the existing canonical §1-8 | full §1-8, weighted to decomposition-driving decisions (§3 US/AC, §4 BR, §5 ERD, §6 flows, §7 perms, §8 TCs) |
-| `TEST-SPEC`     | active `idea-to-pbi` deep mode; refined idea + §8 TCs, no §1-7 draft      | refined idea + §8 TCs       | refined-idea coverage + §8 TC decisions + implied rules                                                      |
+| Context         | Signals                                                                   | Artifact under validation   | Audit emphasis                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTHORED-SPEC` | active `idea-to-spec`; full §1-8 present; `provisional: true` frontmatter | the freshly-authored §1-8   | full §1-8                                                                                                                          |
+| `EXISTING-SPEC` | active `spec-to-pbi`; full §1-8 present; NOT provisional                  | the existing canonical §1-8 | full §1-8, weighted to decomposition-driving decisions (§3 US/AC, §4 BR, §5 ERD, §6 flows & interaction surface, §7 perms, §8 TCs) |
+| `TEST-SPEC`     | active `idea-to-pbi` deep mode; refined idea + §8 TCs, no §1-7 draft      | refined idea + §8 TCs       | refined-idea coverage + §8 TC decisions + implied rules                                                                            |
 
-**Detection precedence:** full §1-8 + `provisional: true` → `AUTHORED-SPEC`; full §1-8 + NOT provisional → `EXISTING-SPEC`; only §8 / refined-idea (no §1-7 draft) → `TEST-SPEC`. **Ambiguous → 1 a direct user question** to confirm the context before auditing.
+**Detection precedence:** full §1-8 + `provisional: true` → `AUTHORED-SPEC`; full §1-8 + NOT provisional → `EXISTING-SPEC`; only §8 / refined-idea (no §1-7 draft) → `TEST-SPEC`. **Ambiguous → 1 ask the user directly** to confirm the context before auditing.
 
 **Question budget:** read the injected `Spec Validation: questions=MIN-MAX` line (workflow `injectContext` supplies it per flow). When absent (standalone run), fall back to the per-context defaults in `references/clarify-interview.md` — `AUTHORED-SPEC` 5-10, `EXISTING-SPEC` 4-8, `TEST-SPEC` 3-6. The budget bounds the Step 4 gate: ask ≥MIN when ≥MIN genuine decisions exist, never exceed MAX.
 
@@ -149,7 +151,7 @@ State `Context: {AUTHORED-SPEC | EXISTING-SPEC | TEST-SPEC} | Budget: {MIN-MAX} 
 
 Resolve and confirm these inputs exist BEFORE the completeness pass. A missing input is a finding, not a reason to guess.
 
-1. **The artifact under validation** — resolved per the detected context: `AUTHORED-SPEC` / `EXISTING-SPEC` → the full §1-8 Feature Spec (§1 Overview, §2 Glossary, §3 User Stories & Acceptance Criteria, §4 Business Rules with `[HARD]`/`[SOFT]` markers, §5 Domain Model, §6 Process Flows, §7 Permissions & Roles, §8 Test Specifications `TC-{FEATURE}-{NNN}`); `TEST-SPEC` → the refined idea + the §8 TC set (no §1-7 draft yet). Read `docs/project-reference/feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md` first.
+1. **The artifact under validation** — resolved per the detected context: `AUTHORED-SPEC` / `EXISTING-SPEC` → the full §1-8 Feature Spec (§1 Overview, §2 Glossary, §3 User Stories & Acceptance Criteria, §4 Business Rules with `[HARD]`/`[SOFT]` markers, §5 Domain Model, §6 Process Flows & Interaction Surface, §7 Permissions & Roles, §8 Test Specifications `TC-{FEATURE}-{NNN}`); `TEST-SPEC` → the refined idea + the §8 TC set (no §1-7 draft yet). Read `docs/project-reference/feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md` first.
 2. **The `spec-discovery` landscape report** — `plans/{plan-dir}/research/spec-discovery-{slug}.md` (Related Specs, Related Code, Affected Specs, Gaps, Invariant Landscape, Open Questions), the investigation of related/overlapping/affected specs + code. This is the baseline against which completeness is judged. For `TEST-SPEC` the landscape also comes from `spec-discovery` (present in the `idea-to-pbi` deep-mode sequence). If it is absent (skill run standalone), fall back to `scout` + `investigate` plus the derived `$spec-index` artifacts (index / ERD / reimplementation guide) under `docs/specs/`, and flag the absence as a finding.
 3. **The originating idea / brainstorm** — the requirement that the artifact is meant to satisfy; its implied operations and edge cases drive the missing-coverage check.
 4. **The domain-analysis output** — bounded contexts, aggregates, entities, domain events, and the invariants the artifact must respect.
@@ -165,16 +167,20 @@ Run **Phase 0 (Spec-Context Detection)** above first — it sets the context + b
     - **Cross-reference completeness** — every related/affected spec from the landscape is reflected (a behavior the system already owns and this feature touches must appear, or its absence must be deliberate and noted). For `TEST-SPEC`, judge the refined idea + §8 set against the landscape.
     - **Implied coverage** — missing user stories / acceptance criteria / business rules the originating idea implies but the artifact omits.
     - **Test-coverage completeness** — missing §8 TCs versus the implied operations + their edge cases (presence/scope only).
-    - **Invariant coverage** — every NEEDED invariant (this feature must establish) AND every EXISTING invariant the artifact must respect (from domain-analysis / adjacent specs) is captured; each `[HARD]` §4 rule has at least one §8 property/invariant TC. This is a CROSS-CHECK that the property TC exists — defer the detailed TC-quality audit (universally-quantified property, boundary counter-case, etc.) to `review-artifact --type=spec-tests`.
+    - **Invariant coverage** — every NEEDED invariant (this feature must establish) AND every EXISTING invariant the artifact must respect (from domain-analysis / adjacent specs) is captured; each `[HARD]` §4 rule has at least one §8 property/invariant TC. This is a CROSS-CHECK that the property TC exists — defer the detailed TC-quality audit (universally-quantified property, boundary counter-case, etc.) to `artifact-review --type=spec-tests`.
+    - **Interaction surface completeness (UI-bearing specs)** — judge §6's interaction surface against the implied UI: every view a user story needs is in the §6.2 view inventory by UX role; navigation between views (§6.3) has no dangling entry/exit; each view's observable states (§6.4 — empty/loading/populated/error/success/permission-denied) are present or deliberately absent; every UI-bearing user story has a §6.5 click-path. Backend-only specs must state the §6 skip reason. Presence/scope only — visual fidelity stays in the companion design artifact.
 2. **Hypothesis & decision audit (category-driven)** — walk EVERY applicable category for the detected context (the 9-category catalog + per-context matrix in [`references/clarify-interview.md`](./references/clarify-interview.md)); for each, run its audit prompts to surface every assumption, default value, scope boundary, and ambiguous behavior the artifact encodes. Classify each:
     - **OBVIOUS** — a single reasonable reading any competent reader shares → document it in the Decisions Log and proceed.
     - **NON-OBVIOUS** — more than one defensible reading, or a default the user has not confirmed → candidate for the Step 4 gate.
     - **CONFLICTS** — disagrees with a discovered landscape spec or an existing invariant → MUST be reconciled (and surfaced to the user). Default to NON-OBVIOUS when the classification itself is unclear.
       Probing breadth is exhaustive (every applicable category); asking breadth is the budget.
 3. **Brainstorm open questions** — questions whose answers would MATERIALLY change the artifact (scope, a default, an invariant boundary, an actor/permission). Run an adversarial **pre-mortem**: "this artifact ships and the feature fails in production within 3 months — what spec gap caused it?" Each pre-mortem failure that maps to a real gap becomes either a NON-OBVIOUS question or a completeness finding.
-4. **Clarification gate (BLOCKING a direct user question)** — present the NON-OBVIOUS + CONFLICTS + high-impact items to the user as structured options, **exhaustive within the MIN-MAX budget** from Phase 0: ask ≥MIN questions when ≥MIN genuine decisions exist, never exceed MAX, ≤4 options per call, the recommended option FIRST, issue multiple a direct user question calls when there are more than 4 decisions. When fewer than MIN genuine decisions exist, ask only the genuine ones and record "below-MIN: only N real decisions" — NEVER invent filler. Capture each answer. **NEVER silently pick a NON-OBVIOUS decision** — the active question is the entire point of this gate.
+
+    > **Interaction Surface category (UI-bearing specs):** treat each of these as a gate candidate — an ambiguous view (its UX role or purpose has more than one defensible reading), a missing observable state (a view whose error/empty/permission-denied behavior the spec leaves unstated), and an unmapped click-path (a UI-bearing user story with no §6.5 step path, or a navigation transition with no business trigger). Classify each OBVIOUS / NON-OBVIOUS / CONFLICTS like any other; route NON-OBVIOUS + CONFLICTS to the gate within the budget. Ask about UX intent only — never about framework/route/CSS/component-class detail (that belongs to the companion design artifact).
+
+4. **Clarification gate (BLOCKING ask the user directly)** — present the NON-OBVIOUS + CONFLICTS + high-impact items to the user as structured options, **exhaustive within the MIN-MAX budget** from Phase 0: ask ≥MIN questions when ≥MIN genuine decisions exist, never exceed MAX, ≤4 options per call, the recommended option FIRST, issue multiple ask the user directly calls when there are more than 4 decisions. When fewer than MIN genuine decisions exist, ask only the genuine ones and record "below-MIN: only N real decisions" — NEVER invent filler. Capture each answer. **NEVER silently pick a NON-OBVIOUS decision** — the active question is the entire point of this gate.
 5. **Apply** — write the confirmed decisions back into the relevant artifact sections AND record them in an **"Open Questions / Decisions Log"** (resolved decisions with the user's choice + rationale, plus residual items still below 80% confidence). For `AUTHORED-SPEC`/`EXISTING-SPEC`, when the confirmed answers reveal material gaps, loop the spec author via `$spec [mode=update]` to re-author the affected sections, then re-run Step 1 against the updated spec. For `EXISTING-SPEC` this skill does NOT itself re-author — confirmed changes route through `$spec [mode=update]`; for `TEST-SPEC` the decisions feed PBI decomposition + any `$spec [mode=tests]` refinement.
-6. **Report + verdict** — before applying decisions, run `$why-review --validate-findings <report-path>` on THIS skill's own findings (validate-before-fix discipline, at parity with `review-artifact` / `plan-review`); fix/drop any finding the gate flags, then apply only validated decisions. Write the report to `plans/reports/spec-clarify-{date}.md` and emit a verdict:
+6. **Report + verdict** — before applying decisions, run `$why-review --validate-findings <report-path>` on THIS skill's own findings (validate-before-fix discipline, at parity with `artifact-review` / `plan-review`); fix/drop any finding the gate flags, then apply only validated decisions. Write the report to `plans/reports/spec-clarify-{date}.md` and emit a verdict:
     - **CLARIFIED** — every NON-OBVIOUS/CONFLICTS decision confirmed by the user, completeness gaps resolved or accepted, no residual blocking question.
     - **NEEDS-AUTHORING-FIX** — material completeness gap or unreconciled conflict requires re-authoring via `$spec [mode=update]` before the spec can be finalized.
 
@@ -209,9 +215,9 @@ Run **Phase 0 (Spec-Context Detection)** above first — it sets the context + b
 
 ### Decisions Log
 
-| Decision               | User's confirmed choice            | Applied to | Residual confidence     |
-| ---------------------- | ---------------------------------- | ---------- | ----------------------- |
-| {non-obvious decision} | {answer via ask the user directly} | §{n}       | {>=80% / <80% residual} |
+| Decision               | User's confirmed choice              | Applied to | Residual confidence     |
+| ---------------------- | ------------------------------------ | ---------- | ----------------------- |
+| {non-obvious decision} | {answer by asking the user directly} | §{n}       | {>=80% / <80% residual} |
 
 ### Verdict
 
@@ -220,13 +226,13 @@ Run **Phase 0 (Spec-Context Detection)** above first — it sets the context + b
 
 ## Key Rules
 
-- **Detect the context FIRST (Phase 0)** — `AUTHORED-SPEC` / `EXISTING-SPEC` / `TEST-SPEC` tunes which sections/categories are audited and the question budget; ambiguous → 1 a direct user question to confirm before auditing.
+- **Detect the context FIRST (Phase 0)** — `AUTHORED-SPEC` / `EXISTING-SPEC` / `TEST-SPEC` tunes which sections/categories are audited and the question budget; ambiguous → 1 ask the user directly to confirm before auditing.
 - **Walk every applicable category, ask within the budget** — probing breadth is exhaustive (the 9-category catalog × the per-context matrix in `references/clarify-interview.md`); the `Spec Validation: questions=MIN-MAX` budget (per-context default when absent) caps how many reach the gate. Never invent filler to hit MIN; never exceed MAX.
 - **Completeness is judged against the SYSTEM** — every related/affected behavior from the discovered landscape must be reflected, or its absence deliberately noted. The artifact passing in isolation is NOT enough.
 - **NON-OBVIOUS and CONFLICTS go to the user** — only OBVIOUS decisions are documented-and-proceeded; ambiguity in the classification itself defaults to NON-OBVIOUS.
-- **NEVER silently pick a non-obvious decision** — the blocking a direct user question gate is the entire value of this skill.
-- **Runs INLINE, not as a sub-agent** — the clarification gate needs a direct user question, which only the main interactive agent can run; do NOT add `execution-mode: subagent`.
-- **Complements, never duplicates** — `review-artifact` owns isolation/M1-M6, `why-review` owns rationale; cross-check the `[HARD]`→§8 mapping only and defer the detailed TC-quality audit to `review-artifact --type=spec-tests`.
+- **NEVER silently pick a non-obvious decision** — the blocking ask the user directly gate is the entire value of this skill.
+- **Runs INLINE, not as a sub-agent** — the clarification gate needs ask the user directly, which only the main interactive agent can run; do NOT add `execution-mode: subagent`.
+- **Complements, never duplicates** — `artifact-review` owns isolation/M1-M5 + M7, `why-review` owns rationale; cross-check the `[HARD]`→§8 mapping only and defer the detailed TC-quality audit to `artifact-review --type=spec-tests`.
 - **Validate before applying** — run `$why-review --validate-findings` on this skill's own findings before rewriting any §1-8 section.
 - **Evidence-based** — every completeness gap, classification, and conflict cites `file:line` / a spec section / an invariant ref with a confidence percentage.
 
@@ -256,11 +262,11 @@ Run **Phase 0 (Spec-Context Detection)** above first — it sets the context + b
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -317,43 +323,6 @@ Run **Phase 0 (Spec-Context Detection)** above first — it sets the context + b
 
 <!-- /SYNC:understand-code-first -->
 
-<!-- SYNC:double-round-trip-review -->
-
-> **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
->
-> **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
->
-> **Decision after Round 1:**
->
-> - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → run the active review skill's findings-validation gate first; for review skills the default gate is `$why-review --validate-findings <report-path>`. Fix only validated findings, then restart the full review protocol from the beginning with a fresh task breakdown.
->
-> **Fresh full re-review after every fix cycle:** Re-run the whole review protocol over the current full target. When sub-agents are part of that protocol, spawn NEW `spawn_agent` calls — never reuse prior agents. Reviewers re-read ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh full review must catch:
->
-> - Cross-cutting concerns missed in the prior round
-> - Interaction bugs between changed files
-> - Convention drift (new code vs existing patterns)
-> - Missing pieces that should exist but don't
-> - Subtle edge cases the prior round rationalized away
-> - Regressions introduced by the fixes themselves
->
-> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues. If the same validated finding repeats for 3 full invocations with no progress, or a fix requires product/owner input, escalate via a direct user question.
->
-> **Rules:**
->
-> - A clean Round 1 ENDS the review — no mandatory Round 2
-> - NEVER fix unvalidated findings; validate first using the caller's validation gate
-> - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
-> - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
-> - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - No arbitrary sub-agent-round cap replaces the clean-review requirement; use the 3 repeated-no-progress blocker rule only to avoid infinite spinning
-> - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
-> - Final verdict must incorporate ALL rounds executed
->
-> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
-
-<!-- /SYNC:double-round-trip-review -->
-
 <!-- SYNC:fresh-context-review -->
 
 > **Fresh Context Re-Review** — Eliminate orchestrator confirmation bias after fixes by restarting the full review with isolated sub-agents where applicable.
@@ -375,7 +344,7 @@ Run **Phase 0 (Spec-Context Detection)** above first — it sets the context + b
 > - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
 > - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `spawn_agent` call
-> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via a direct user question
+> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate by asking the user directly
 > - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
@@ -565,8 +534,9 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -618,8 +588,8 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -630,6 +600,13 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- SYNC:severity-rubric:reminder -->
+
+- **MANDATORY** Classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS until fixed or owner-accepted.
+- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
+
+<!-- /SYNC:severity-rubric:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
@@ -642,16 +619,11 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
-<!-- SYNC:severity-rubric:reminder -->
-
-- **MANDATORY** Classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS until fixed or owner-accepted.
-- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
-
-<!-- /SYNC:severity-rubric:reminder -->
-
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Finalize a spec artifact (authored spec / existing spec / refined-idea+§8 test-specs — detected in Phase 0) only after it is COMPLETE against the discovered system AND every NON-OBVIOUS / CONFLICTING decision across every applicable validation category has been confirmed by the user through the exhaustive-but-budget-bounded blocking clarification gate — completeness-vs-system plus human confirmation, the two things `review-artifact` (isolation/M1-M6) and `why-review` (rationale) do not do.
+**IMPORTANT MUST ATTENTION Goal:** Finalize a spec artifact (authored spec / existing spec / refined-idea+§8 test-specs — detected in Phase 0) only after it is COMPLETE against the discovered system AND every NON-OBVIOUS / CONFLICTING decision across every applicable validation category has been confirmed by the user through the exhaustive-but-budget-bounded blocking clarification gate — completeness-vs-system plus human confirmation, the two things `artifact-review` (isolation/M1-M5 + M7) and `why-review` (rationale) do not do.
+
+**IMPORTANT MUST ATTENTION Main steps (do NOT skip, reorder, or collapse the loop):** Phase 0 detect context + resolve budget → Step 0 resolve the 4 inputs, flag missing as findings → Step 1 completeness pass vs the SYSTEM → Step 2 walk EVERY applicable category, classify each item OBVIOUS / NON-OBVIOUS / CONFLICTS → Step 3 brainstorm materially-changing open questions + adversarial pre-mortem → Step 4 BLOCKING ask the user directly gate on NON-OBVIOUS + CONFLICTS + high-impact within the MIN-MAX budget → Step 5 apply confirmed decisions + Decisions Log (loop `$spec [mode=update]` for material gaps, then re-run Step 1) → Step 6 validate own findings via `$why-review --validate-findings`, emit CLARIFIED / NEEDS-AUTHORING-FIX — why: the skill's own audit→classify→ask→validate sequence is what AI silently collapses, shipping unconfirmed decisions.
 
 **Protocols in force — MUST ATTENTION honor every block below (concise digest of the SYNC/shared blocks this skill carries):**
 
@@ -661,20 +633,19 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **Critical Thinking Mindset:** Traced `file:line` proof; confidence >80% to act.
 - **Evidence Based Reasoning:** No claim without cited evidence; state confidence.
 - **Understand Code First:** Read code, grep 3+ patterns before any change.
-- **Double Round Trip Review:** Validate findings, fix, restart full review until clean.
-- **Fresh Context Review:** Spawn fresh zero-memory sub-agent after each fix cycle (re-review only — this skill itself runs inline).
+- **Fresh Context Review:** Validate findings, fix, restart the full review until clean; spawn a fresh zero-memory sub-agent after each fix cycle (re-review only — this skill itself runs inline).
 - **Review Protocol Injection:** Embed all 11 protocol bodies verbatim in any fresh sub-agent prompt.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Severity Rubric:** Classify findings Critical/High/Medium/Low by consequence.
 
-**IMPORTANT MUST ATTENTION** judge completeness against the SYSTEM, not the spec alone — every related/affected behavior from the discovered landscape must be reflected, or its absence deliberately noted; this is the distinct value vs `review-artifact`'s isolation check — why: a spec that passes in isolation can still silently contradict an adjacent capability's invariant.
+**IMPORTANT MUST ATTENTION** judge completeness against the SYSTEM, not the spec alone — every related/affected behavior from the discovered landscape must be reflected, or its absence deliberately noted; this is the distinct value vs `artifact-review`'s isolation check — why: a spec that passes in isolation can still silently contradict an adjacent capability's invariant.
 **IMPORTANT MUST ATTENTION** classify every encoded assumption/default/scope-boundary/ambiguity as OBVIOUS / NON-OBVIOUS / CONFLICTS — NON-OBVIOUS and CONFLICTS MUST go to the user gate; only OBVIOUS is documented-and-proceeded; ambiguity in the class itself defaults to NON-OBVIOUS — why: a silently-picked default ships a spec the user never agreed to.
-**IMPORTANT MUST ATTENTION** detect the context FIRST (Phase 0: `AUTHORED-SPEC` / `EXISTING-SPEC` / `TEST-SPEC` by provisional-flag + §-presence + active workflow; ambiguous → 1 a direct user question) — it tunes which sections/categories are audited and the question budget — why: the wrong context audits the wrong sections and asks the wrong questions.
+**IMPORTANT MUST ATTENTION** detect the context FIRST (Phase 0: `AUTHORED-SPEC` / `EXISTING-SPEC` / `TEST-SPEC` by provisional-flag + §-presence + active workflow; ambiguous → 1 ask the user directly) — it tunes which sections/categories are audited and the question budget — why: the wrong context audits the wrong sections and asks the wrong questions.
 **IMPORTANT MUST ATTENTION** probe EVERY applicable category (the 9-category catalog × per-context matrix in `references/clarify-interview.md`) but ask only within the `Spec Validation: questions=MIN-MAX` budget (per-context default when absent) — ask ≥MIN only when ≥MIN genuine decisions exist, never invent filler, never exceed MAX — why: breadth of probing catches every gap; the budget is the fatigue control, not "ask only a few".
-**IMPORTANT MUST ATTENTION** the Step 4 clarification gate is a BLOCKING a direct user question loop — present NON-OBVIOUS + CONFLICTS + high-impact items as ≤4 structured options (recommended first), issue multiple calls as needed, NEVER silently pick a non-obvious decision — why: the active question is the entire value of this skill.
-**IMPORTANT MUST ATTENTION** this skill runs INLINE on the main agent (no `execution-mode: subagent`) — the gate needs a direct user question, which only the main interactive agent can run; a sub-agent cannot ask the user — why: a blocking confirmation loop is structurally impossible in an isolated sub-agent.
+**IMPORTANT MUST ATTENTION** the Step 4 clarification gate is a BLOCKING ask the user directly loop — present NON-OBVIOUS + CONFLICTS + high-impact items as ≤4 structured options (recommended first), issue multiple calls as needed, NEVER silently pick a non-obvious decision — why: the active question is the entire value of this skill.
+**IMPORTANT MUST ATTENTION** this skill runs INLINE on the main agent (no `execution-mode: subagent`) — the gate needs ask the user directly, which only the main interactive agent can run; a sub-agent cannot ask the user — why: a blocking confirmation loop is structurally impossible in an isolated sub-agent.
 **IMPORTANT MUST ATTENTION** before applying any decision, validate this skill's OWN findings via the terminal `$why-review --validate-findings <report-path>` gate, then apply only validated decisions and re-run Step 1 if `$spec [mode=update]` re-authored sections — why: rewriting §1-8 from a phantom completeness gap is worse than the gap.
-**IMPORTANT MUST ATTENTION** complement, never duplicate — `[HARD]`→§8 property-TC mapping is a CROSS-CHECK that the TC exists; defer the detailed TC-quality audit (universal quantification, boundary counter-case) to `review-artifact --type=spec-tests` — why: re-running that audit here drifts the skill into overlap and wastes the budget.
+**IMPORTANT MUST ATTENTION** complement, never duplicate — `[HARD]`→§8 property-TC mapping is a CROSS-CHECK that the TC exists; defer the detailed TC-quality audit (universal quantification, boundary counter-case) to `artifact-review --type=spec-tests` — why: re-running that audit here drifts the skill into overlap and wastes the budget.
 **IMPORTANT MUST ATTENTION** cite `file:line` / spec-section / invariant evidence for every completeness gap, classification, and conflict with a confidence percentage (>80% to act, <60% DO NOT recommend); "Insufficient evidence" is valid output — why: speculation produces non-fixable findings and false conflicts.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; keep one `in_progress`; add a final review task to verify every non-obvious decision was confirmed — why: untracked multi-step work loses state on compaction.
 
@@ -682,18 +653,18 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 | Evasion                                                         | Rebuttal                                                                                                                                                                                                             |
 | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "`review-artifact` already passed, skip this"                   | That was isolation / M1-M6 / AC testability. It never checked completeness-vs-system or confirmed decisions with the user. Different gate.                                                                           |
+| "`artifact-review` already passed, skip this"                   | That was isolation / M1-M5 + M7 / AC testability. It never checked completeness-vs-system or confirmed decisions with the user. Different gate.                                                                      |
 | "It's a spec, so audit the full §1-8"                           | Detect the context FIRST. `TEST-SPEC` has no §1-7 to audit; `EXISTING-SPEC` weights decomposition-driving decisions. Auditing the wrong sections wastes the budget.                                                  |
 | "Only ask a couple of the most important questions"             | Probing is exhaustive across every applicable category; _asking_ is bounded by the `questions=MIN-MAX` budget. Surfacing only a few SKIPS categories — that is the gap this upgrade closed. Walk all, ask up to MAX. |
 | "Fewer than MIN real decisions, so invent some to hit MIN"      | NEVER invent filler. Ask only the genuine decisions and record "below-MIN: only N real decisions". MIN is a floor for _real_ questions, not a quota.                                                                 |
 | "The decision is obvious, I'll just document it"                | If it is truly OBVIOUS (one reading any reader shares), document it. NON-OBVIOUS / CONFLICTS MUST go to the user gate — when unsure, it is NON-OBVIOUS.                                                              |
 | "No open questions, the spec is complete"                       | Run the pre-mortem FIRST ("ships, fails in 3 months — what spec gap caused it?") before claiming none.                                                                                                               |
-| "I'll run ask the user directly as a sub-agent to save context" | A sub-agent cannot run a direct user question. This skill runs INLINE — the gate only works on the main agent.                                                                                                       |
+| "I'll run ask the user directly as a sub-agent to save context" | A sub-agent cannot run ask the user directly. This skill runs INLINE — the gate only works on the main agent.                                                                                                        |
 | "The conflict is minor, I'll reconcile it silently"             | A CONFLICT with a discovered spec/invariant changes behavior — surface it AND confirm the resolution with the user.                                                                                                  |
 | "Findings are clearly right, apply them now"                    | Validate via `$why-review --validate-findings` BEFORE rewriting any §1-8 section — a phantom gap rewrites the spec wrongly.                                                                                          |
 
 **IMPORTANT MUST ATTENTION** judge completeness against the SYSTEM + confirm every NON-OBVIOUS / CONFLICTS decision with the user — the distinct value vs isolation review.
-**IMPORTANT MUST ATTENTION** the clarification gate is a BLOCKING a direct user question loop; runs INLINE on the main agent — NEVER silently pick a non-obvious decision.
+**IMPORTANT MUST ATTENTION** the clarification gate is a BLOCKING ask the user directly loop; runs INLINE on the main agent — NEVER silently pick a non-obvious decision.
 **IMPORTANT MUST ATTENTION** validate own findings via `$why-review --validate-findings` before applying; cite `file:line`/section evidence with confidence for every claim.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
@@ -776,8 +747,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -788,6 +760,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

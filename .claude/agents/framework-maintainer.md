@@ -94,13 +94,13 @@ Authoring split: must-be-guaranteed → hook · needs judgment → skill · orde
 - Rule: _"If a rule can be reused unchanged by another repo, keep it in `.claude`. If it names this project's tech/paths/symbols, it belongs in project-reference docs/config."_
 - `verify-no-project-residue` scans generic surfaces for this repo's literal project-name token and a denylist of project-specific framework symbols (the app's base component/store/repository classes, configured in the verifier — see `.claude/scripts/codex/verify-no-project-residue.mjs`). Leaking one **fails the build**. Use neutral placeholders/examples in generic skills. (This very agent file is mirrored to `.codex/agents/*.toml`, which the residue verifier scans for the project-name token — so keep it project-neutral too.)
 
-### Codex mirror sync (10-stage pipeline, 5 verifiers)
+### Codex mirror sync (11-stage pipeline, 6 verifiers)
 
 - Source of truth → generated mirrors: `.claude/skills/**`, `.claude/agents/*.md`, `.claude/workflows.json`, `.claude/skills/shared/sync-inline-versions.md` (canonical protocol bodies, composed by `.claude/scripts/lib/hookless-prompt-protocol.cjs`), `CLAUDE.md` → `.agents/skills/**`, `.codex/CODEX_CONTEXT.md`, `.codex/agents/*.toml`, `.codex/hooks.json`, root `AGENTS.md`.
 - Hookless-parity: Codex has no hooks; Claude also reads guidance statically, so the mirror TRANSFORM mostly relays the same static text (workflow catalog written inline; the lessons/project-reference read contract → a `CODEX:PROJECT-REFERENCE-LOADING` gate; `/skill` → `$skill`; `Agent(...)` → `spawn_agent`; `subagent_type` → `agent_type`; Claude-only frontmatter keys like `version` stripped, `disable-model-invocation` preserved).
-- `npm run codex:sync` = `node .claude/skills/sync-codex/scripts/run-codex-sync.mjs` — **10 sequential, fail-fast stages** (1–3 mutate, 4–10 verify-only): `migrate → hooks → context → tests → scripts-tests → wf-cycle → sk-proto → residue → sdd → sync-divergence`. `scripts-tests` runs the repo-script unit tests under `.claude/scripts/tests/` (statusline widgets, etc.).
-- **5 verifiers** (`.claude/scripts/codex/verify-*.mjs`, each with a unit test): `verify-sync-divergence` (oracle — re-runs transform, diffs vs committed mirror) · `verify-skill-protocol-compliance` (parity + no Claude-isms leak) · `verify-workflow-cycle-compliance` (step-sequences match skills in BOTH `.claude` and `.agents`; ordered gates intact) · `verify-no-project-residue` (portability) · `verify-sdd-semantic-compliance` (spec-driven contract coverage).
-- Read-only validation without mutating: `node .claude/skills/sync-codex/scripts/run-codex-sync.mjs --only=tests,scripts-tests,wf-cycle,sk-proto,residue,sdd,sync-divergence`. You MAY run these read-only verifiers to check your work; you must NOT run the full mutating sync.
+- `npm run codex:sync` = `node .claude/skills/sync-codex/scripts/run-codex-sync.mjs` — **11 sequential, fail-fast stages** (1–3 mutate, 4–11 verify-only): `migrate → hooks → context → tests → scripts-tests → wf-cycle → sk-proto → residue → sdd → review-validate-coverage → sync-divergence`. `scripts-tests` runs the repo-script unit tests under `.claude/scripts/tests/` (statusline widgets, etc.).
+- **6 verifiers** (`.claude/scripts/codex/verify-*.mjs`, each with a unit test): `verify-sync-divergence` (oracle — re-runs transform, diffs vs committed mirror) · `verify-skill-protocol-compliance` (parity + no Claude-isms leak) · `verify-workflow-cycle-compliance` (step-sequences match skills in BOTH `.claude` and `.agents`; ordered gates intact) · `verify-no-project-residue` (portability) · `verify-sdd-semantic-compliance` (spec-driven contract coverage) · `verify-review-validate-coverage` (Self-Review Convergence Loop sensor — every review-family skill carries the `/why-review --validate-findings` route; graders never embed the fix-loop).
+- Read-only validation without mutating: `node .claude/skills/sync-codex/scripts/run-codex-sync.mjs --only=tests,scripts-tests,wf-cycle,sk-proto,residue,sdd,review-validate-coverage,sync-divergence`. You MAY run these read-only verifiers to check your work; you must NOT run the full mutating sync.
 
 ### Design principles (the DNA — preserve them in every edit)
 
@@ -190,11 +190,11 @@ Trust but verify (`file:line` evidence) · Fail closed not open (`exit 2` when i
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `/project-init` or the narrow route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `/sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -312,8 +312,9 @@ Trust but verify (`file:line` evidence) · Fail closed not open (`exit 2` when i
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -343,6 +344,26 @@ Trust but verify (`file:line` evidence) · Fail closed not open (`exit 2` when i
 
 <!-- /SYNC:sub-agent-selection -->
 
+<!-- SYNC:shared-protocol-duplication-policy -->
+
+> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
+
+<!-- /SYNC:shared-protocol-duplication-policy -->
+
+<!-- SYNC:output-quality-principles -->
+
+> **Output Quality** — Token efficiency without sacrificing quality.
+>
+> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
+> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
+> 3. No TOCs — AI reads linearly. TOC wastes tokens
+> 4. No examples that repeat what rules say — one example only if non-obvious
+> 5. Lead with answer, not reasoning. Skip filler words and preamble
+> 6. Sacrifice grammar for concision in reports
+> 7. Unresolved questions at end, if any
+
+<!-- /SYNC:output-quality-principles -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -365,12 +386,13 @@ Trust but verify (`file:line` evidence) · Fail closed not open (`exit 2` when i
 
 - **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
 - **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
-  <!-- /SYNC:task-tracking-external-report:reminder -->
+
+<!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->

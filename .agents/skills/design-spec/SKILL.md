@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -56,7 +57,15 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Create structured UI/UX design specification documents from requirements or PBIs for developer handoff.
+**Goal:** Produce a structured, tech-agnostic UI/UX design specification from a requirement/PBI/story/wireframe so a developer can rebuild the UI on ANY stack — every component, state, design token, responsive rule, and accessibility need documented and linked back to the governing Feature Spec.
+
+**Summary (read this if nothing else — PURPOSE + every main step):**
+
+- **Purpose** — translate requirements into a developer-ready UI/UX spec (component inventory, states, design tokens, responsive behavior, accessibility), tech-agnostic: name components by UX role, never by framework/library class.
+- **Step 0–0b — research first:** inventory existing related screens/components + map connected flows, record in §1 so the spec matches the live UI system; if a governing Feature Spec exists, seed from its §6 interaction surface and reuse its view + observable-state vocabulary verbatim. — why: divergent vocabulary breaks the navigable spec↔design hub.
+- **Step 1–2 — read & route input, set complexity:** Figma URL → `$figma-design`; image/screenshot → visual analysis tooling; wireframe/sketch → `--mode=wireframe`; PBI/text → extract requirements. Pick Quick Spec (§1–4) vs Full Spec (§1–7, +Flow Diagram for multi-page).
+- **Step 3–6 — author the body:** build component inventory (new vs existing), define all 7 states + interactions, extract design tokens (reuse design-system), document responsive breakpoints (mobile 320–767 / tablet 768–1023 / desktop 1024+).
+- **Step 7–8 — save & link back:** write the artifact to `team-artifacts/design-specs/`, then set the governing Feature Spec's `design_spec:`/`mockup:` frontmatter to the saved path — frontmatter only, never the §1–8 body. — why: `artifact-review --type=design` fails if the path is not recorded.
 
 **Workflow:**
 
@@ -92,7 +101,7 @@ Create structured UI/UX design specification documents from requirements or PBIs
 ## When NOT to Use
 
 - This skill auto-routes Figma URLs to `$figma-design`; wireframes are handled internally via `--mode=wireframe` — no need to call a separate skill
-- Building the actual UI -- use `frontend-design`
+- Building the actual UI -- use `design --lane=marketing` (marketing/creative) or `design --lane=product` (product UIs)
 - Reviewing existing UI code -- use `web-design-guidelines`
 
 ## Prerequisites
@@ -112,6 +121,16 @@ Read before executing:
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
 ## Workflow
+
+> **[BLOCKING] Step 0 — Inventory existing UI + map connected flows** (per the `SYNC:existing-ui-research` protocol carried by this skill). Before authoring the spec, inventory the existing related screens / components / pages already serving this feature or domain, and map every connected feature flow that links to / embeds / navigates to-or-from the new screen. Record the matched screens + flows in §1 Overview so the spec faithfully matches the current UI system. Skip only for backend-only work (state it explicitly).
+
+> **[BLOCKING] Step 0b — Seed from the governing Feature Spec's §6 interaction surface (when one exists).** Detect whether a canonical Feature Spec already governs this feature (look under `docs/specs/**` for a spec covering the same capability). If one exists, READ its **§6 Process Flows & Interaction Surface** — the **View Inventory** (§6.2), **Navigation Map** (§6.3), **Key UI States** (§6.4), and **Per-Story Interaction Flow** (§6.5) — and use it as this design-spec's starting frame:
+>
+> - **Reuse the spec's vocabulary verbatim** — carry over the SAME UX-role view names from §6.2 and the SAME observable-state names from §6.4 (the Default / Loading / Disabled / Error / Empty / Success vocabulary in this skill's "Observable State Definitions" table is the shared language). NEVER rename or re-partition what the spec already named — the two artifacts MUST speak the same language or the navigable hub breaks.
+> - **Deepen, do not diverge or contradict.** The spec stays tech-agnostic; this design-spec is the companion that adds visual fidelity (layout, tokens, pixel detail) ON TOP of the spec's intent. Map each §6.5 step and each §6.4 state into concrete visual treatment, preserving the `US-`/`OP-`/`BR-` logical-ID cross-refs the spec already owns.
+> - This coupling is the `SYNC:ui-intent-layer` contract carried below — see that block for the full rule; do not restate it here.
+>
+> **Skip ONLY** when no governing Feature Spec exists (author the interaction frame from the source PBI/story instead) — state which case applies.
 
 1. **Read source input & route by type**
 
@@ -150,11 +169,14 @@ For ANY visual input: extract design context FIRST, then proceed to spec generat
 6. **Document responsive behavior**
     - Mobile (320-767px), Tablet (768-1023px), Desktop (1024px+)
     - What changes at each breakpoint (layout, visibility, sizing)
+    - **Small-screen minimum bar (spec it explicitly):** the layout MUST stay usable on mobile. Preferred = reflow (rows `flex-wrap` / `row → column`, grids collapse to one column). Where a component genuinely can't reflow (data tables, canvases, wide grids), specify a `min-width`/`min-height` + `overflow: auto` scroll as the accepted fallback — scrolling is OK. Hard requirement = nothing broken (no clipped, cut-off, or unreachable content/controls). If a component needs a large redesign to work on mobile, flag it for the user rather than assuming a rewrite.
 
 7. **Save artifact** — pick the filename variant by artifact type:
     - Design spec: `team-artifacts/design-specs/{YYMMDD}-designspec-{feature-slug}.md`
     - Accessibility audit: `team-artifacts/design-specs/{YYMMDD}-ux-audit-{feature-slug}.md`
     - Single-component doc: `team-artifacts/design-specs/{YYMMDD}-ux-component-{component-name}.md`
+
+8. **Link back to the governing Feature Spec (when one exists).** After saving the artifact, keep the spec the navigable hub: open the governing Feature Spec under `docs/specs/**` and set its frontmatter `design_spec:` key to this design-spec's saved path (add the key if absent, update it if stale). If a mockup was also produced (e.g. via `$pbi-mockup`), set the `mockup:` key the same way. Edit **frontmatter only** — never touch the §1–§8 spec body. This satisfies the `artifact-review --type=design` link-back gate, which fails when a design-spec exists but its path is not recorded in the spec's `design_spec:` frontmatter. Skip ONLY when no governing Feature Spec exists (the design-spec is standalone) — state that.
 
 ### Role Context & Artifact Path (canonical)
 
@@ -169,7 +191,7 @@ For ANY visual input: extract design context FIRST, then proceed to spec generat
 
 ## Mode: wireframe (image → spec)
 
-> **Invoke with `--mode=wireframe`** (or whenever a hand-drawn wireframe, digital wireframe, or UI sketch is the input). This mode is an INPUT adapter: it analyzes the image, then flows into the normal spec sections (Output Format) and the M1-M5 compliance gate. `design-spec` is the canonical owner of wireframe→spec conversion.
+> **Invoke with `--mode=wireframe`** (or whenever a hand-drawn wireframe, digital wireframe, or UI sketch is the input). This mode is an INPUT adapter: it analyzes the image, then flows into the normal spec sections (Output Format) and the M1-M5/M7 compliance gate. `design-spec` is the canonical owner of wireframe→spec conversion.
 
 ### Input Routing (wireframe)
 
@@ -199,7 +221,7 @@ After image analysis, generate (per the `SYNC:ui-wireframe-protocol` block below
 4. **Component Decomposition Tree** — If detail level warrants (refine/story)
 5. **Responsive Suggestions** — Based on layout complexity
 
-Apply the **M1-M5 Compliance for UI Specs** gate (below) to all wireframe-derived prose: business-level component names, no code-prop refs, map to feature logic by logical ID, observable state transitions, rebuild-from-spec.
+Apply the **M1-M5/M7 Compliance for UI Specs** gate (below) to all wireframe-derived prose: business-level component names, no code-prop refs, map to feature logic by logical ID, observable state transitions, rebuild-from-spec, business-visible subject matter.
 
 ### Mapped Business Operations
 
@@ -220,7 +242,7 @@ Emit this table linking each interactive component to the feature operations/rul
 
 - **Always display confidence level** for wireframe interpretation (analysis is 70-80% accurate).
 - **Always recommend human review** before proceeding to implementation.
-- If confidence <70%: ask clarifying questions about ambiguous elements via a direct user question.
+- If confidence <70%: ask clarifying questions about ambiguous elements by asking the user directly.
 
 ## Output Format
 
@@ -275,15 +297,18 @@ Emit this table linking each interactive component to the feature operations/rul
 - {Any unresolved design decisions}
 ```
 
-## M1-M5 Compliance for UI Specs
+## M1-M5/M7 Compliance for UI Specs
 
-See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. A UI spec MUST satisfy these before handoff:
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. A UI spec MUST satisfy these before handoff:
 
 - **M1 — Business-level component names.** Name every component by its UX role — Primary Button, Secondary Button, Modal Dialog, Data Table, Dropdown, Toast — NEVER by a framework component class name or library import. FAIL on tech-term prose.
 - **M2 — No code-prop refs in prose.** Describe behavior and appearance in plain UX language. NEVER reference component-state props, CSS class names, framework directives, or selectors in prose. Those belong only in `**Evidence**`/`[Source:]` carriers, frontmatter, and Mermaid.
 - **M3 — Cross-reference by logical ID.** For every behavior driven by feature logic, cite the driving operation or rule by its logical ID (`OP-`/`BR-`/`FR-`) — link UI behavior back to the feature spec, not to handler code. Keep any `[Source: namespace/service/id]` abstract anchor strictly in the Evidence carrier — never physical code coordinates or repository-root paths.
 - **M4 — Testable, unambiguous behavior.** Every state and interaction MUST have exactly one valid interpretation and an observable completion marker. Replace vague phrases ("handle appropriately", "show feedback") with the concrete observable result.
 - **M5 — Rebuild-from-spec.** A reader with zero codebase knowledge MUST be able to rebuild this UI on ANY framework from the spec alone. If a marker is only resolvable by reading source, it fails M5 — restate it as a visual/textual observable.
+- **M7 — Business-visibility.** A UI spec is a business-tree artifact, so apply the demo test to each case's BODY: _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY. Every `Given` = a state a user could arrange; every `When` = an action a user could take; every `Then` = an outcome a user could see. FAIL a `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count. Judge the BODY, never the title or ID. ⚠️ **A UI state a user can SEE is business and PASSES M7** — a spinner, an empty placeholder, an error border, a disabled control are all demoable outcomes, not technical cases. Only invocation-shaped or schema-asserting cases fail.
+
+> **M1 vs M7 — they are not the same gate.** M1 governs **vocabulary**; M7 governs **subject matter**. A technical case in impeccably tech-free prose satisfies M1 while violating M7 — _"the view correctly reflects the synchronized record"_ names no framework, passes M1, and is still a technical case wearing a business costume. That gap is the most common way business specs rot. Ask what a user could SEE, not which words were used.
 
 ### Observable State Definitions
 
@@ -384,25 +409,54 @@ For an accessibility-audit deliverable, produce this checklist report and save i
 
 ## Related Skills
 
-| Skill                   | When to use instead                  |
-| ----------------------- | ------------------------------------ |
-| `figma-design`          | Extract specs from Figma designs     |
-| `frontend-design`       | Build the actual UI implementation   |
-| `interface-design`      | Product UI design (dashboards, apps) |
-| `web-design-guidelines` | Review existing UI for compliance    |
+| Skill                     | When to use instead                 |
+| ------------------------- | ----------------------------------- |
+| `figma-design`            | Extract specs from Figma designs    |
+| `design --lane=marketing` | Build marketing/creative UI         |
+| `design --lane=product`   | Build product UI (dashboards, apps) |
+| `web-design-guidelines`   | Review existing UI for compliance   |
 
 ---
 
 ## Workflow Recommendation
 
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use a direct user question to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
+> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use ask the user directly to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
 >
-> 1. **Run the design sequence** (Recommended) — `$design-spec` → `$interface-design` (product UIs) or `$frontend-design` (marketing/creative) → `$workflow-review-changes`
+> 1. **Run the design sequence** (Recommended) — `$design-spec` → `$design --lane=product` (product UIs) or `$design --lane=marketing` (marketing/creative) → `$workflow-review-changes`
 > 2. **Execute `$design-spec` directly** — run this skill standalone
 
 ---
 
 > **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+
+<!-- SYNC:existing-ui-research -->
+
+> **[BLOCKING] Understand the existing UI before you design or spec a new/updated screen.** Before producing any wireframe, mockup, screen design, or UI spec:
+>
+> 1. **Inventory existing related UI** — search the project for screens, pages, and components already serving this feature or its domain (consult design-system docs + the real component inventory).
+> 2. **Map connected flows** — identify every feature that links to, embeds, includes, or navigates to/from the new screen; trace its entry and exit flows so the new screen fits them.
+> 3. **Reuse before invent** — prefer existing components, patterns, and layout conventions; justify any new component against what already exists.
+> 4. **Record findings** — note the matched existing screens/components + connected flows in the artifact so downstream design faithfully matches the current UI system.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that explicitly.
+
+<!-- /SYNC:existing-ui-research -->
+
+<!-- SYNC:ui-intent-layer -->
+
+> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
+>
+> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
+> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
+> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
+> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
+> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
+>
+> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
+
+<!-- /SYNC:ui-intent-layer -->
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -413,8 +467,9 @@ For an accessibility-audit deliverable, produce this checklist report and save i
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -457,6 +512,12 @@ For an accessibility-audit deliverable, produce this checklist report and save i
 
 <!-- /SYNC:ui-wireframe-protocol:reminder -->
 
+<!-- SYNC:ui-intent-layer:reminder -->
+
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+
+<!-- /SYNC:ui-intent-layer:reminder -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -482,7 +543,15 @@ For an accessibility-audit deliverable, produce this checklist report and save i
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Create structured, tech-agnostic UI/UX design specification documents from requirements or PBIs for developer handoff.
+**IMPORTANT MUST ATTENTION Goal:** Produce a structured, tech-agnostic UI/UX design specification from a requirement/PBI/story/wireframe so a developer can rebuild the UI on ANY stack — every component, state, design token, responsive rule, and accessibility need documented and linked back to the governing Feature Spec.
+
+**IMPORTANT MUST ATTENTION main steps (do not forget any):**
+
+- **Step 0–0b first** — inventory existing related UI + map connected flows (record in §1); seed from the governing Feature Spec's §6 and reuse its view/state vocabulary verbatim — why: reinventing what exists or renaming spec terms breaks the navigable hub.
+- **Step 1–2** — route by input type (Figma→`$figma-design`, image→visual analysis, wireframe→`--mode=wireframe`, PBI/text→extract), then set Quick (§1–4) vs Full (§1–7) complexity.
+- **Step 3–6** — author component inventory (new vs existing), all 7 states + interactions, design tokens (reuse design-system), responsive breakpoints.
+- **Step 7–8** — save to `team-artifacts/design-specs/`, then set the governing Feature Spec's `design_spec:`/`mockup:` frontmatter to the saved path (frontmatter only) — why: the link-back gate fails without it.
+- **M1–M5 gate (BLOCKING)** — business-level component names, no code-prop refs in prose, cross-ref behavior by logical ID (`OP-`/`BR-`/`FR-`), one testable interpretation per state, rebuildable from spec alone — why: a tech-leaking spec cannot be rebuilt on another stack.
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
@@ -495,6 +564,16 @@ For an accessibility-audit deliverable, produce this checklist report and save i
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+
+**Anti-Rationalization:**
+
+| Evasion                                            | Rebuttal                                                                                            |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| "I'll skip the existing-UI inventory and design"   | Step 0 is BLOCKING — inventory existing screens/flows first or the spec contradicts the live UI.    |
+| "Naming the framework component is clearer"        | M1/M2 FAIL — name by UX role; framework/CSS names live only in Evidence/frontmatter/Mermaid.        |
+| "The spec already names views — I'll re-partition" | Reuse §6 view + state vocabulary verbatim; renaming breaks the navigable spec↔design hub.           |
+| "Saved the file — done"                            | Step 8 link-back is required; set the spec's `design_spec:` frontmatter or `artifact-review` fails. |
+| "'Show feedback' describes the error state"        | M4 FAIL — every state needs one observable completion marker, not a vague phrase.                   |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
@@ -580,8 +659,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -592,6 +672,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

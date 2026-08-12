@@ -1,6 +1,6 @@
 # Skills Reference
 
-> 156 skills across 15+ domains + 5 shared reference/protocol files for context-aware AI assistance
+> 163 skills across 15+ domains + 5 shared reference/protocol files for context-aware AI assistance
 
 ## Overview
 
@@ -22,7 +22,7 @@ Skills Activated: fix, investigate
 
 ## Skill Domains
 
-> Curated highlights — the full catalog has 156 skills; the tables below list selected skills per domain, not the complete set.
+> Curated highlights — the full catalog has 163 skills; the tables below list selected skills per domain, not the complete set.
 
 | Domain                                            | Skills | Description                                          |
 | ------------------------------------------------- | ------ | ---------------------------------------------------- |
@@ -54,11 +54,11 @@ See `docs/project-reference/backend-patterns-reference.md` for project-specific 
 
 ## Development - Frontend
 
-| Skill                   | Triggers                           | Description          |
-| ----------------------- | ---------------------------------- | -------------------- |
-| `frontend-design`       | UI, design, screenshot             | UI implementation    |
-| `ui-ux-pro-max`         | UX, design system                  | Advanced UX          |
-| `web-design-guidelines` | accessibility, WCAG, visual review | UI compliance review |
+| Skill                   | Triggers                           | Description                         |
+| ----------------------- | ---------------------------------- | ----------------------------------- |
+| `design`                | UI, design, screenshot             | UI implementation (multi-mode/lane) |
+| `ui-ux-pro-max`         | UX, design system                  | Advanced UX                         |
+| `web-design-guidelines` | accessibility, WCAG, visual review | UI compliance review                |
 
 See `docs/project-reference/frontend-patterns-reference.md` for project-specific frontend patterns.
 
@@ -315,4 +315,4 @@ Use `/skill-creator` to create a new skill:
 
 ---
 
-_Source: `.claude/skills/` | 156 skills across 15+ domains + 5 shared reference/protocol files_
+_Source: `.claude/skills/` | 163 skills across 15+ domains + 5 shared reference/protocol files_

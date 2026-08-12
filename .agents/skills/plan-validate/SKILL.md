@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -60,10 +61,11 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
-- Classify the plan first (Phase 0: bugfix/feature/migration/refactor/other) — the type weights which question categories fire, and any fix/bug/regression/broken/defect keyword makes the Preservation question BLOCKING (never skip it).
-- The output is a real a direct user question interview, not a self-answer: honor the `questions` MIN-MAX range from `## Plan Context`, give 2-4 concrete options per question, and treat the Preservation "Unsure" answer as BLOCKED → route to `$plan`.
-- If the plan introduces new tech/packages, you MUST probe whether alternatives were evaluated before accepting the choice.
-- Persist results by adding only a `## Validation Summary` (confirmed decisions + action items) to `plan.md` — NEVER edit phase files; close by offering implement/refine/skip via a direct user question.
+- **Purpose:** validate a finished plan via a critical-questions interview so every assumption-laden decision and every preservation-critical behavior is user-confirmed BEFORE implementation — no unstated assumption silently reaches code.
+- **Main steps (run in order):** Phase 0 Detect Plan Type → resolve plan path (`$ARGUMENTS` / `## Plan Context` / ask) → load `mode` + `questions` range as hard constraints → Step 1 Read `plan.md` + all `phase-*.md`, flag decisions/assumptions/risks/tradeoffs → Step 2 Extract topics across 8 categories (Architecture, Assumptions, Tradeoffs, Risks, Scope, New Tech/Lib, Test Specs, Preservation) → Step 3 Generate questions (2-4 concrete options each, surface implicit decisions) → Step 4 Interview by asking the user directly (≤4 per call) → Step 5 Document answers → offer implement/refine/skip.
+- **Phase 0 weights everything:** plan type (bugfix/feature/migration/refactor/other) decides which question categories fire; any fix/bug/regression/broken/defect keyword makes the Preservation question BLOCKING — never skip it.
+- **The output is a REAL interview, not a self-answer:** honor the `questions` MIN-MAX range from `## Plan Context`, give 2-4 concrete options per question, treat the Preservation "Unsure" answer as BLOCKED → route to `$plan`; if the plan adds new tech/packages, probe whether alternatives were evaluated before accepting the choice.
+- **Persist results narrowly:** add ONLY a `## Validation Summary` (confirmed decisions + action items) to `plan.md` — NEVER edit phase files; close by offering implement/refine/skip by asking the user directly.
 
 **Workflow:**
 
@@ -76,10 +78,10 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Key Rules:**
 
-- MUST ATTENTION use a direct user question — NEVER auto-decide on behalf of user
-- NEVER ask about non-decision points — only genuine choices affecting implementation
-- Bugfix plans ALWAYS trigger Preservation question (keywords: fix, bug, regression, broken, defect)
-- NEVER modify phase files — only document what needs updating
+- MUST ATTENTION use ask the user directly — NEVER auto-decide on behalf of user — why: the user owns every assumption-laden choice, not the agent
+- Ask ONLY about genuine choices affecting implementation — NEVER about non-decision points — why: noise questions burn the interview budget and erode trust
+- Bugfix plans ALWAYS trigger the Preservation question (keywords: fix, bug, regression, broken, defect) — why: an unverified preserved-correctness invariant is a silent regression
+- Persist via a `## Validation Summary` on `plan.md` — NEVER modify phase files — why: phase files are the plan's source of truth; validation is a read-then-annotate pass
 
 ## First Principle — Easy to Change
 
@@ -196,11 +198,11 @@ Options (multi-select):
 
 - Option 2 selected → `plan.md` Preservation Inventory MUST cite Preservation TC asserting new behavior is intended
 - Option 4 selected → return BLOCKED status, recommend `$plan` before proceeding
-- Option 3 selected → a direct user question follow-up: "Confirm: current code has NO preserved invariant? [Yes, every input broken / No, missed some — re-investigate]"
+- Option 3 selected → ask the user directly follow-up: "Confirm: current code has NO preserved invariant? [Yes, every input broken / No, missed some — re-investigate]"
 
 ### Step 4: Interview User
 
-Use a direct user question — NEVER skip or auto-answer.
+Use ask the user directly — NEVER skip or auto-answer.
 
 **Rules:**
 
@@ -242,7 +244,7 @@ After validation:
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing, use a direct user question to present:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing, use ask the user directly to present:
 
 - **"$feature-implement (Recommended)"** — Begin implementation with validated plan
 - **"$refine"** — If plan needs PBI refinement first
@@ -250,7 +252,7 @@ After validation:
 
 ---
 
-> **[BLOCKING]** MUST ATTENTION use a direct user question to interview user. Completing without asking ≥1 question = violation.
+> **[BLOCKING]** MUST ATTENTION use ask the user directly to interview user. Completing without asking ≥1 question = violation.
 
 > **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
@@ -310,7 +312,7 @@ After validation:
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -323,11 +325,11 @@ After validation:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -390,8 +392,9 @@ After validation:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -446,8 +449,8 @@ After validation:
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -486,7 +489,9 @@ After validation:
 - **Cross-Service Check:** scan producers, consumers, sagas, contracts; flag breaking-change risk.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
-**IMPORTANT MUST ATTENTION** validate decisions with the user via a direct user question — NEVER auto-decide or self-answer; completing without ≥1 question is a protocol violation — why: the user owns every assumption-laden choice, not the agent
+**IMPORTANT MUST ATTENTION** run the main steps IN ORDER — Phase 0 Detect Plan Type → resolve plan path → load `mode` + `questions` range → Step 1 Read `plan.md` + all `phase-*.md` (flag decisions/assumptions/risks/tradeoffs) → Step 2 Extract topics (8 categories) → Step 3 Generate questions (2-4 options each) → Step 4 Interview by asking the user directly (≤4 per call) → Step 5 Document answers → offer implement/refine/skip — why: the pipeline IS the work; never collapse or skip a step from memory
+
+**IMPORTANT MUST ATTENTION** validate decisions with the user by asking the user directly — NEVER auto-decide or self-answer; completing without ≥1 question is a protocol violation — why: the user owns every assumption-laden choice, not the agent
 **IMPORTANT MUST ATTENTION** detect plan type FIRST (Phase 0) BEFORE generating questions — bugfix keywords (fix, bug, regression, broken, defect) make the Preservation question BLOCKING, never skipped — why: detection drives which categories fire and the Preservation gate
 **IMPORTANT MUST ATTENTION** NEVER modify phase files — persist results by adding ONLY a `## Validation Summary` (confirmed decisions + action items) to `plan.md` — why: phase files are the plan's source of truth and validation is a read-then-annotate pass
 
@@ -501,21 +506,21 @@ After validation:
 
 **Anti-Rationalization:**
 
-| Evasion                            | Rebuttal                                                          |
-| ---------------------------------- | ----------------------------------------------------------------- |
-| "Plan is simple, skip validation"  | Simple plans still have implicit decisions. Apply anyway.         |
-| "Already know the answers"         | Show user responses as proof. No responses = no validation.       |
-| "Preservation doesn't apply here"  | If title has fix/bug/regression/broken/defect → ALWAYS applies.   |
-| "Phase 0 not needed"               | Detection drives the Preservation gate. NEVER skip.               |
-| "Only ask a few questions"         | Use the `questions` range from Plan Context. Never go below min.  |
-| "I'll just answer for the user"    | a direct user question is mandatory. Self-answer = no validation. |
-| "New library is obviously fine"    | Probe whether alternatives were evaluated before accepting it.    |
-| "I'll edit the phase files inline" | NEVER. Add only a `## Validation Summary` to `plan.md`.           |
+| Evasion                            | Rebuttal                                                         |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| "Plan is simple, skip validation"  | Simple plans still have implicit decisions. Apply anyway.        |
+| "Already know the answers"         | Show user responses as proof. No responses = no validation.      |
+| "Preservation doesn't apply here"  | If title has fix/bug/regression/broken/defect → ALWAYS applies.  |
+| "Phase 0 not needed"               | Detection drives the Preservation gate. NEVER skip.              |
+| "Only ask a few questions"         | Use the `questions` range from Plan Context. Never go below min. |
+| "I'll just answer for the user"    | ask the user directly is mandatory. Self-answer = no validation. |
+| "New library is obviously fine"    | Probe whether alternatives were evaluated before accepting it.   |
+| "I'll edit the phase files inline" | NEVER. Add only a `## Validation Summary` to `plan.md`.          |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
 **IMPORTANT MUST ATTENTION** detect plan type (Phase 0) FIRST — bugfix keywords make Preservation BLOCKING.
-**IMPORTANT MUST ATTENTION** validate with the user via a direct user question — NEVER auto-decide.
+**IMPORTANT MUST ATTENTION** validate with the user by asking the user directly — NEVER auto-decide.
 **IMPORTANT MUST ATTENTION** NEVER modify phase files — add only a `## Validation Summary` to `plan.md`.
 
 ---
@@ -606,8 +611,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -618,6 +624,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

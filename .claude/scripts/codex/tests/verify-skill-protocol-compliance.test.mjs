@@ -53,7 +53,7 @@ test('TC-SKILLFIX-003: passes legitimate `##` -> `###` nesting', () => {
 });
 
 // TC-SKILLFIX-004 — output-format templates document stacked `##` headers inside fenced code
-// blocks (e.g. review-domain-entities, planning). Fenced headings must be skipped.
+// blocks (e.g. domain-entities-review, planning). Fenced headings must be skipped.
 test('TC-SKILLFIX-004: skips stacked headings inside a fenced code block', () => {
     const content = joinLines(
         '## Output Format',
@@ -72,7 +72,7 @@ test('TC-SKILLFIX-004: skips stacked headings inside a fenced code block', () =>
 });
 
 // TC-SKILLFIX-005 — unfenced output templates use `{placeholder}` heading syntax
-// (e.g. review-architecture/review-ui `## Verdict: {PASS | WARN | BLOCKED}`). These are
+// (e.g. architecture-review/ui-review `## Verdict: {PASS | WARN | BLOCKED}`). These are
 // intentional and must be skipped.
 test('TC-SKILLFIX-005: skips `{placeholder}` output-template headings', () => {
     const content = joinLines(

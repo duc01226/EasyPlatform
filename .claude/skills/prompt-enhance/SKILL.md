@@ -1,6 +1,6 @@
 ---
 name: prompt-enhance
-version: 3.3.0
+version: 3.4.0
 description: '[Skill Management] Use when enhancing, compressing, or expanding prompts, docs, or skills with attention anchoring [INTELLIGENT ROUTING]. Flag: --op={compress|expand|enhance} (default enhance); --op=compress strips token bloat, --op=expand reconstructs compressed text.'
 ---
 
@@ -12,6 +12,7 @@ description: '[Skill Management] Use when enhancing, compressing, or expanding p
 
 - Two phases, in order: caveman-compress prose FIRST, then attention-anchor structure — NEVER skip or reorder.
 - Enhance derives BOTH a **Goal** (the outcome to optimize for) AND a **Summary** (key things + steps to notice) for the target, and places both in its Quick Summary.
+- **Anti-forget rule (task/purpose targets):** when the target performs a task or has a purpose, the Summary AND Closing Reminders MUST carry the goal + purpose + ALL important main steps/tasks (compact enumeration) — why: AI forgets steps buried in the long middle of the prompt; the top Summary and bottom Reminders are the two high-attention anchors that survive context rot.
 - Protect content: NEVER compress code/YAML/tables/SYNC tags, NEVER delete rules or `file:line` evidence; post rule-density MUST be ≥ pre.
 - Route on `--op` (default `enhance`): `compress` = token-strip only, `expand` = reconstruct compressed text.
 
@@ -31,6 +32,7 @@ description: '[Skill Management] Use when enhancing, compressing, or expanding p
 - NEVER remove meaningful rules, constraints, code examples, or `file:line` evidence
 - MUST ATTENTION derive the target's Goal and add it to both `## Quick Summary` and `## Closing Reminders`
 - MUST ATTENTION derive the target's Summary (key important things + steps AI must notice) and place it in `## Quick Summary` immediately after the Goal — a condensing digest at a different altitude than Workflow/Key Rules, NEVER a verbatim re-listing of them
+- MUST ATTENTION when the target performs a task or has a purpose, the Summary AND `## Closing Reminders` MUST enumerate the goal + purpose + ALL important main steps/tasks as a compact list — why: long task descriptions in the middle of the prompt get forgotten; the top Summary and bottom Reminders re-anchor every step so none is skipped (compact enumeration ≠ the verbose Workflow prose, so the altitude stays distinct)
 - MUST ATTENTION skill AND sub-agent (`.claude/agents/*.md`) targets require the SAME Goal + Summary + Closing-Reminders structure (see [When Target is a Sub-Agent File](#when-target-is-a-sub-agent-file)) — anchored top and bottom; NEVER alter SYNC blocks when enhancing an agent
 - Post-optimization rule density (MUST ATTENTION/NEVER/ALWAYS per 100 lines) MUST be ≥ pre-optimization
 - Caveman compression applies to prose only — NEVER compress code blocks, YAML, or structured tables
@@ -112,6 +114,19 @@ After caveman compression, evaluate skill against each principle, add missing st
 | Dimensions > Checklists      | Named dimensions with `Think:` prompts?  | Convert checklist to dimension framework               |
 | Recursive Quality Loop       | Fix → re-review → max 3 rounds defined?  | Add recursive review loop                              |
 | Anti-Rationalization Anchors | Closing reminders include evasion table? | Add evasion → rebuttal table                           |
+
+### Anti-Forget Anchoring (task/purpose targets)
+
+Any target that **performs a task or has a purpose** (skill, sub-agent, task-prompt) hides its main steps in the long middle — exactly the zone AI attention drops 15-47% (Stanford "lost-in-the-middle"). The fix is to mirror those steps into the two high-attention anchors:
+
+| Anchor                              | Must carry                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `## Quick Summary` → `**Summary:**` | Goal + purpose + **ALL important main steps/tasks** as a compact ordered enumeration (one short phrase each) |
+| `## Closing Reminders`              | Goal echo + a `MUST ATTENTION` line re-listing the same main steps/tasks in order                            |
+
+- MUST ATTENTION enumerate EVERY important main step/task — completeness beats brevity here; a step omitted from both anchors is a step AI will skip — why: the Summary and Reminders are the only parts guaranteed to be read on a long prompt.
+- The compact enumeration is a DIFFERENT altitude than the verbose `## Workflow`/body — short phrases, not full prose — so it complements (never replaces) the detailed steps below.
+- Surface conditional routing too (modes, `--flags`, gates) so the AI doesn't forget a whole branch — why: a forgotten mode silently runs the wrong path.
 
 ---
 
@@ -248,7 +263,8 @@ Prompt quality FIRST. Verbose prompts degrade quality — AI attention dilutes a
 3. List all READ references → classify as `.claude/` (needs inline summary) or `docs/` (skip)
 4. Derive the one-sentence **Goal** (what it achieves + ultimate outcome it must cause) from target task/outcomes/guardrails; cite source lines or mark inferred with confidence
 5. Derive the **Summary** (2-4 bullets of the key important things + the steps AI must notice) — the read-this-if-nothing-else digest at a different altitude than Workflow/Key Rules; cite source lines or mark inferred with confidence — why: the Summary condenses what matters most, it does not re-list every step/rule
-6. Identify: missing Quick Summary, missing Goal, missing Summary, missing Closing Reminders, prose-heavy sections
+    - If the target performs a task or has a purpose, the Summary MUST also enumerate ALL important main steps/tasks (compact ordered list) + any modes/flags/gates — why: steps buried in the long middle get forgotten; the Summary anchor re-surfaces every one
+6. Identify: missing Quick Summary, missing Goal, missing Summary, missing main-step enumeration (task targets), missing Closing Reminders, prose-heavy sections
 
 ### Step 2: Caveman Compression Pass
 
@@ -272,6 +288,7 @@ For each `.claude/` protocol reference:
 - Present but weak → strengthen with Goal, Workflow, Key Rules
 - Ensure `**Goal:**` states what the skill achieves AND the ultimate outcome it must cause — a single consolidated line (never split the objective and outcome into two separate lines)
 - Ensure `**Summary:**` is present in Quick Summary immediately after the Goal — create if missing, strengthen if weak; it condenses the key important things + the steps AI must notice at a different altitude than Workflow/Key Rules (NEVER a verbatim re-listing of them) — why: the Goal gives the outcome, the Summary gives the read-this-if-nothing-else digest
+- For task/purpose targets, ensure the Summary enumerates ALL important main steps/tasks (compact ordered list) + modes/flags/gates — why: completeness on steps is the anti-forget guarantee
 - Protocol summaries appear before Quick Summary
 
 ### Step 5: Add/Fix Bottom Section
@@ -279,20 +296,22 @@ For each `.claude/` protocol reference:
 - Missing Closing Reminders → add standard section
 - Pick rules AI most commonly skips (evidence-based, task creation, pattern search)
 - Echo the same Goal near the start of Closing Reminders: `**IMPORTANT MUST ATTENTION Goal:** ...`
+- For task/purpose targets, add a `MUST ATTENTION` line re-listing ALL important main steps/tasks in order — why: the bottom anchor re-surfaces every step after the long middle, matching the top Summary
 - Remove old "IMPORTANT Task Planning Notes" if superseded by Closing Reminders
 
 ### Step 6: Verify
 
-| Check               | Pass Condition                                       |
-| ------------------- | ---------------------------------------------------- |
-| No YAML corruption  | Frontmatter intact                                   |
-| No content loss     | All rules, code, paths present                       |
-| Rule density        | Post ≥ pre (count MUST ATTENTION/NEVER/ALWAYS)       |
-| Goal                | Present in Quick Summary and Closing Reminders       |
-| Summary             | Present in Quick Summary (key things + steps digest) |
-| Line count          | Reduced (compression worked)                         |
-| Formatting          | Blank lines between sections, headers correct        |
-| READ classification | `.claude/` → inline summary, `docs/` → skipped       |
+| Check               | Pass Condition                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| No YAML corruption  | Frontmatter intact                                                                          |
+| No content loss     | All rules, code, paths present                                                              |
+| Rule density        | Post ≥ pre (count MUST ATTENTION/NEVER/ALWAYS)                                              |
+| Goal                | Present in Quick Summary and Closing Reminders                                              |
+| Summary             | Present in Quick Summary (key things + steps digest)                                        |
+| Main steps anchored | Task/purpose target → ALL main steps/tasks enumerated in BOTH Summary and Closing Reminders |
+| Line count          | Reduced (compression worked)                                                                |
+| Formatting          | Blank lines between sections, headers correct                                               |
+| READ classification | `.claude/` → inline summary, `docs/` → skipped                                              |
 
 ---
 
@@ -314,7 +333,7 @@ For each `.claude/` protocol reference:
 
 <!-- SYNC:universal-skill-building-principles -->
 
-> **Universal Skill-Building Principles** — 10 principles for building AI skills that work across any project type. Source: extracted from review-changes, plan-review, code-review skill rewrites.
+> **Universal Skill-Building Principles** — 10 principles for building AI skills that work across any project type. Source: extracted from changes-review, plan-review, code-review skill rewrites.
 >
 > **Meta-principle: Teach AI to reason, not to recite.** Skill's job: structure WHEN and HOW AI applies its existing knowledge — not enumerate every possible concern.
 >
@@ -459,8 +478,9 @@ For each `.claude/` protocol reference:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -503,6 +523,7 @@ For each `.claude/` protocol reference:
 **IMPORTANT MUST ATTENTION** read target file completely before any changes
 **IMPORTANT MUST ATTENTION** derive the target's one-sentence Goal (what it achieves + ultimate outcome), then place it in both `## Quick Summary` and `## Closing Reminders` — why: AI must know the ultimate outcome after enhancement
 **IMPORTANT MUST ATTENTION** enhance derives BOTH the target's Goal AND its Summary (key important things + steps AI must notice) and places both in `## Quick Summary`, the Summary at a different altitude than Workflow/Key Rules — why: the Goal tells AI the outcome to optimize for; the Summary tells AI the key things/steps to notice up front
+**IMPORTANT MUST ATTENTION** for a target that performs a task or has a purpose, the Summary AND Closing Reminders MUST enumerate the goal + purpose + ALL important main steps/tasks (compact ordered list) + modes/flags/gates — why: long task descriptions in the middle of the prompt get forgotten; the top Summary and bottom Reminders are the two anchors that survive context rot, so every step must appear in both
 **IMPORTANT MUST ATTENTION** skill AND sub-agent (`.claude/agents/*.md`) targets share ONE required structure — Goal + Summary in `## Quick Summary`, Goal echoed in `## Closing Reminders` — so creator skills (e.g. `custom-agent`) emit a consistent shape; when enhancing an agent NEVER alter `<!-- SYNC:... -->` blocks or delete `## Role`/`## Workflow`/`## Key Rules`/`## Output` — why: SYNC copies are canonical-synced and divergence fails the build
 **IMPORTANT MUST ATTENTION** read each referenced protocol file to write accurate inline summaries — NEVER guess content
 **IMPORTANT MUST ATTENTION** apply primacy-recency anchoring — 3 critical rules in first 5 AND last 5 lines of every enhanced file
@@ -516,11 +537,12 @@ For each `.claude/` protocol reference:
 
 **Anti-Rationalization:**
 
-| Evasion                                 | Rebuttal                                                                  |
-| --------------------------------------- | ------------------------------------------------------------------------- |
-| "File is short, skip compression"       | Apply both phases anyway — density matters at any length                  |
-| "Already read the file"                 | Show recorded line count + rule density as proof                          |
-| "Closing reminders already exist"       | Verify they echo top-section rules AND include anti-rationalization table |
-| "Skill file, skip Universal Principles" | NEVER skip — Phase 0 detection is BLOCKING                                |
+| Evasion                                 | Rebuttal                                                                                                                           |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| "File is short, skip compression"       | Apply both phases anyway — density matters at any length                                                                           |
+| "Already read the file"                 | Show recorded line count + rule density as proof                                                                                   |
+| "Closing reminders already exist"       | Verify they echo top-section rules AND include anti-rationalization table                                                          |
+| "Skill file, skip Universal Principles" | NEVER skip — Phase 0 detection is BLOCKING                                                                                         |
+| "Summary already has the goal, enough"  | Task/purpose target needs ALL main steps enumerated in Summary AND Reminders — a goal alone leaves middle-buried steps forgettable |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

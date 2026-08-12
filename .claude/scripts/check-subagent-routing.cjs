@@ -10,8 +10,8 @@
  *
  * Why a curated allow-list and not a blanket "no code-reviewer" heuristic:
  *   A blanket rule would false-flag the PRESCRIBED no-specialist fallbacks
- *   (`review-domain-entities`, `production-readiness-review` → `code-reviewer`;
- *   `plan-review`, `review-artifact` → `general-purpose`) that are correct
+ *   (`domain-entities-review`, `production-readiness-review` → `code-reviewer`;
+ *   `plan-review`, `artifact-review` → `general-purpose`) that are correct
  *   because no domain specialist agent exists for them. Only domains that HAVE a
  *   real specialist are guarded — extend ALLOW_LIST when a new specialist lands.
  *

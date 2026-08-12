@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -56,30 +57,31 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Break drafter confirmation bias before grooming — by helping **Dev BA PIC** (Person In Charge — development Business Analyst responsible for technical review sign-off per squad) review BA drafters' PBI drafts with specific, actionable challenge prompts, surface every architectural-feasibility, vague-AC, missing-auth, cross-service, and M1-M6 gap so an INFEASIBLE or under-specified PBI never reaches grooming with a false APPROVE. AI provides analysis; human makes decision.
+**Goal:** Break drafter confirmation bias before grooming — by helping **Dev BA PIC** (Person In Charge — development Business Analyst responsible for technical review sign-off per squad) review BA drafters' PBI drafts with specific, actionable challenge prompts, surface every architectural-feasibility, vague-AC, missing-auth, cross-service, and M1-M7 gap so an INFEASIBLE or under-specified PBI never reaches grooming with a false APPROVE. AI provides analysis; human makes decision.
 
 **Summary:**
 
-- This is a CROSS-PERSON review, not self-review: a _different_ reviewer (Dev BA PIC) challenges the BA drafter's PBI — never run on your own draft (use `$review-artifact --type=pbi` for that). The whole value is external skepticism that breaks the drafter's blind spots.
-- Confirm the auto-detected module via a direct user question BEFORE loading domain docs (Step 2) — wrong module = wrong entity context = false APPROVE; then load domain-entities-reference + relevant `docs/specs/{App}/` feature docs.
-- The M1-M6 Compliance Gate is BLOCKING and drives the verdict: any M1-M5 mandate failure forces REQUEST_REVISION with a challenge prompt naming the violated mandate ID + exact section/line/AC citation; an APPROVE over an M1-M5 violation is itself defective.
-- Order matters to fight automation bias: present Challenge Prompts FIRST so the Dev BA PIC forms their own view, THEN the AI Verdict (APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD); challenges must be SPECIFIC with suggested answers, and the human records the final decision via a direct user question.
+- **Main steps (8):** (1) locate the BA drafter's PBI draft → (2) auto-detect module, **confirm by asking the user directly BEFORE loading domain docs** (domain-entities-reference + `docs/specs/{App}/` + BR-{MOD} rules) → (3) Technical Feasibility analysis (architecture fit, entity conflicts, cross-service, complexity vs SP) → (4) AC Quality analysis (vagueness detector + M1-M7 checks) → (5) Cross-Cutting Concerns (auth matrix, seed data, migration, performance, UI Layout) → (6) generate SPECIFIC challenge prompts with suggested answers → (7) present Challenge Prompts FIRST, THEN AI Verdict (APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD) → (8) human records final decision by asking the user directly.
+- CROSS-PERSON review, NOT self-review: a _different_ reviewer (Dev BA PIC) challenges the BA drafter's PBI — NEVER your own draft (route self-review to `$artifact-review --type=pbi`). — why: external skepticism breaks blind spots that self-review rationalizes away.
+- M1-M7 Compliance Gate is BLOCKING and drives the verdict (runs inside Steps 4-5): any M1-M5 or M7 mandate failure forces REQUEST_REVISION with a challenge prompt naming the violated mandate ID + exact section/line/AC; an APPROVE over an M1-M5 or M7 violation is itself defective.
+- Order fights automation bias: Challenge Prompts FIRST so the Dev BA PIC forms their own view, THEN the AI Verdict; challenges must be SPECIFIC with suggested answers, never vague.
+- AI provides ANALYSIS; the human makes the DECISION by asking the user directly — never auto-approve or auto-reject.
 
-**Key distinction:** Collaborative review tool (drafter → reviewer flow), NOT self-review (use `$review-artifact --type=pbi` for AI self-review).
+**Key distinction:** Collaborative review tool (drafter → reviewer flow), NOT self-review (use `$artifact-review --type=pbi` for AI self-review).
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Why This Skill Exists
 
-PBI drafts routinely pass informal review unchallenged on architectural feasibility, vague AC, missing auth scenarios, cross-service impact. `$refine` generates PBIs but does not adversarially challenge them — creation tool, not review tool. `$review-artifact --type=pbi` provides AI self-review for drafter, but drafter has inherent blind spots about own assumptions. Separate reviewer (Dev BA PIC) applying AI-assisted challenge prompts breaks drafter confirmation bias before grooming — catches gaps drafter cannot catch themselves.
+PBI drafts routinely pass informal review unchallenged on architectural feasibility, vague AC, missing auth scenarios, cross-service impact. `$refine` generates PBIs but does not adversarially challenge them — creation tool, not review tool. `$artifact-review --type=pbi` provides AI self-review for drafter, but drafter has inherent blind spots about own assumptions. Separate reviewer (Dev BA PIC) applying AI-assisted challenge prompts breaks drafter confirmation bias before grooming — catches gaps drafter cannot catch themselves.
 
-**Why not just `$review-artifact --type=pbi`?** Drafter runs it on own work; even with adversarial prompts, drafter rationalizes own choices. `pbi-challenge` invoked by different person with different mandate — external skepticism requires different author, not different tool on same author.
+**Why not just `$artifact-review --type=pbi`?** Drafter runs it on own work; even with adversarial prompts, drafter rationalizes own choices. `pbi-challenge` invoked by different person with different mandate — external skepticism requires different author, not different tool on same author.
 
 ## Alternatives Considered
 
 | Approach                                                                      | Pros                                                                     | Cons                                                                                                                | Decision                                                                                         |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Extend `$review-artifact --type=pbi` with a reviewer-role flag                | No new skill, single codebase                                            | Drafter runs it themselves in practice; role separation breaks down without enforcement                             | Rejected — role separation requires a distinct invocation point owned by a different person      |
+| Extend `$artifact-review --type=pbi` with a reviewer-role flag                | No new skill, single codebase                                            | Drafter runs it themselves in practice; role separation breaks down without enforcement                             | Rejected — role separation requires a distinct invocation point owned by a different person      |
 | Fully autonomous AI verdict (no human decision)                               | Faster, no Dev BA PIC scheduling needed                                  | Automation bias: AI wrong on domain specifics propagates unchecked; no human accountability for false APPROVE       | Rejected — cost of false APPROVE on infeasible PBIs exceeds review time saved                    |
 | Static DoR checklist given to Dev BA PIC (no AI)                              | Simple, no AI dependency                                                 | No domain entity context loading, no AC vagueness flagging; manual effort is high and inconsistent across reviewers | Rejected — AI domain lookup provides non-trivial value for cross-service entity detection        |
 | Async comment-thread model (AI generates questions posted as ticket comments) | Eliminates scheduling bottleneck; drafter can research before responding | Slower feedback loop; requires external ticket integration                                                          | Valid alternative for async teams; prefer if Dev BA PIC availability is chronically a bottleneck |
@@ -89,7 +91,7 @@ PBI drafts routinely pass informal review unchallenged on architectural feasibil
 | Risk                                                                                                                 | Likelihood | Impact | Mitigation                                                                                                               |
 | -------------------------------------------------------------------------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
 | **Automation bias** — Dev BA PIC rubber-stamps AI verdict without independent assessment                             | High       | High   | Workflow Step 7 shows challenge prompts BEFORE the verdict — Dev BA PIC forms their own view first                       |
-| **Module misdetection** — AI loads wrong domain context, produces entity conflict analysis for wrong service         | Medium     | High   | Workflow Step 2 confirms detected module with Dev BA PIC via ask the user directly before proceeding                     |
+| **Module misdetection** — AI loads wrong domain context, produces entity conflict analysis for wrong service         | Medium     | High   | Workflow Step 2 confirms detected module with Dev BA PIC by asking the user directly before proceeding                   |
 | **Challenge prompts ignored** — Drafter revises PBI superficially to satisfy reviewer without resolving root gaps    | Medium     | Medium | Decision Record includes drafter-response field; Dev BA PIC re-runs skill on revision, not just reads revised PBI        |
 | **Suggested answers create adoption pressure** — Drafter adopts suggested answer rather than reasoning independently | Medium     | Medium | Suggested answers framed as "consider whether X" options, not corrections; language review in challenge prompt templates |
 | **3-way BA vote deadlock** — UX BA, Designer BA, Dev BA PIC all disagree                                             | Low        | Medium | Escalation path per `ba-team-decision-model`: Engineering Manager for tech uncertainty, PO for business value            |
@@ -105,7 +107,7 @@ PBI drafts routinely pass informal review unchallenged on architectural feasibil
 ## Workflow
 
 1. **Locate PBI draft** — Find BA drafters' draft PBI in `team-artifacts/pbis/` or path provided by user
-2. **Load domain context** — Auto-detect module from PBI content. **MANDATORY: Use a direct user question to confirm detected module with Dev BA PIC before loading domain docs.** Wrong module = wrong entity context = false APPROVE risk. Then load:
+2. **Load domain context** — Auto-detect module from PBI content. **MANDATORY: Use ask the user directly to confirm detected module with Dev BA PIC before loading domain docs.** Wrong module = wrong entity context = false APPROVE risk. Then load:
     - `docs/project-reference/domain-entities-reference.md` (entity definitions)
     - Relevant feature docs from `docs/specs/{App}/`
     - Existing business rules (BR-{MOD}-XXX) from feature docs
@@ -133,19 +135,22 @@ PBI drafts routinely pass informal review unchallenged on architectural feasibil
     - **Non-technical decisions** (UI/UX design, visual design, business value): 2/3 majority vote required (Dev BA PIC + UX BA + Designer BA per `ba-team-decision-model`)
 8. **ask the user directly** — Dev BA PIC records their FINAL decision (APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD) in the Decision Record. This is the human decision step — NOT the workflow routing step (handled separately in Next Steps)
 
-## M1-M6 Compliance Gate (BLOCKING — drives the AI Verdict)
+## M1-M7 Compliance Gate (BLOCKING — drives the AI Verdict)
 
-> **Contract:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)". This challenge enforces M6: a PBI draft that violates any of M1-M5 MUST produce an AI Verdict of REQUEST_REVISION with a challenge prompt that names the violated mandate ID and cites the exact PBI section + line/AC. An APPROVE over an M1-M5 violation is itself defective. (AI provides the analysis; the human still records the final decision.)
+> **Contract:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)". This challenge enforces M6: a PBI draft that violates any of M1-M5 or M7 MUST produce an AI Verdict of REQUEST_REVISION with a challenge prompt that names the violated mandate ID and cites the exact PBI section + line/AC. An APPROVE over an M1-M5 or M7 violation is itself defective. (AI provides the analysis; the human still records the final decision.)
 >
-> Carriers are EXEMPT from M1/M2 — source identifiers are CORRECT inside `[Source: ...]`, `**Evidence**`, `**IntegrationTest**` fields, YAML frontmatter, and ` ```mermaid ``` ` blocks. Only challenge leakage in PBI narrative prose (problem statement, AC text, scope, rule descriptions). Banned prose token list: `docs/project-reference/spec-principles.md` §3.2.
+> **M1 governs vocabulary; M7 governs subject matter.** A technical case written in impeccably tech-free prose satisfies M1 while violating M7 — that gap is the most common way business specs rot. A clean M1 pass is NEVER evidence of an M7 pass; challenge both.
+>
+> Carriers are EXEMPT from M1/M2 — source identifiers are CORRECT inside `[Source: ...]`, `**Evidence**`, `CoveredBy:` fields, legacy `**IntegrationTest:**` migration fields, YAML frontmatter, and ` ```mermaid ``` ` blocks. Only challenge leakage in PBI narrative prose (problem statement, AC text, scope, rule descriptions). Banned prose token list: `docs/project-reference/spec-principles.md` §3.2.
 
-Run these five checks as part of Step 4 (AC Quality) and Step 5 (Cross-Cutting Concerns); any failure becomes a specific challenge prompt and forces REQUEST_REVISION:
+Run these six checks as part of Step 4 (AC Quality) and Step 5 (Cross-Cutting Concerns); any failure becomes a specific challenge prompt and forces REQUEST_REVISION:
 
 - **MUST ATTENTION M1 — Tech-agnostic prose.** FAIL if problem statement, AC, or rule prose names framework/product, language-native type, or product/design-pattern class name (banned list `spec-principles.md` §3.2). Challenge: cite section + leaked token + business-term replacement. — why: stack-named prose locks the PBI to one implementation.
 - **MUST ATTENTION M2 — No source code in prose.** FAIL if requirement expressed as class/method/file-path/namespace instead of business operation. Source identifiers belong only in evidence carriers. Challenge: cite section + line.
 - **MUST ATTENTION M3 — Abstract-IDs-first.** FAIL if requirement/rule lacks logical ID (`FR-/BR-/OP-`), has logical ID but no `[Source: namespace/service/id]` abstract-anchor evidence, uses physical code coordinates or repository-root paths instead of abstract anchor, or makes anchor its primary citation. Evidence REQUIRED and KEPT, but SECONDARY to logical ID (physical coordinates live only in provenance sidecar).
 - **MUST ATTENTION M4 — Unambiguous AC.** FAIL if any AC uses vague language ("should", "might", "appropriate", "various", "as needed"), two engineers could implement it differently while both claiming conformance, or no observable completion state / named error condition exists. (Extends Step-4 vagueness detector to M4 verdict.)
 - **MUST ATTENTION M5 — Implementable from artifact alone.** FAIL if competent team with ZERO codebase knowledge could not build PBI on different stack from PBI alone (relies on reading source to understand it). Challenge: cite section + missing detail.
+- **MUST ATTENTION M7 — Business-visibility.** Apply the demo test to each case's BODY: _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY and force REQUEST_REVISION. Every `Given` = a state a user could arrange; every `When` = an action a user could take; every `Then` = an outcome a user could see. FAIL a `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count. Judge the BODY, never the title or ID. Challenge: cite section + the offending `Given`/`When`/`Then` + a demoable rewrite to consider. — why: a technical case in business clothing ships an un-demoable AC to grooming.
 
 If ANY check fails → AI Verdict is REQUEST_REVISION; tag each violated mandate ID with its concrete section/line citation in the Challenge Prompts and the AI Verdict Reason.
 
@@ -195,7 +200,7 @@ If ANY check fails → AI Verdict is REQUEST_REVISION; tag each violated mandate
 
 ### Decision Record
 
-**Dev BA PIC Decision:** {filled after human review via ask the user directly}
+**Dev BA PIC Decision:** {filled after human review by asking the user directly}
 **Vote:** {approve / request-revision / escalate}
 **Conditions:** {if any}
 **Drafter Response (on revision):** {drafter's response to each challenge prompt — filled when Dev BA PIC re-runs on revised PBI}
@@ -216,7 +221,7 @@ If ANY check fails → AI Verdict is REQUEST_REVISION; tag each violated mandate
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use ask the user directly to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"$dor-gate (Recommended)"** — If APPROVE: validate DoR before grooming
 - **"$refine"** — If REQUEST_REVISION: BA drafters revise, then re-run `$pbi-challenge`
@@ -236,8 +241,9 @@ If ANY check fails → AI Verdict is REQUEST_REVISION; tag each violated mandate
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -275,8 +281,8 @@ If ANY check fails → AI Verdict is REQUEST_REVISION; tag each violated mandate
 > 1. **User story template** — "As a {role}, I want {goal}, so that {benefit}" format
 > 2. **AC testable & unambiguous** — GIVEN/WHEN/THEN. No "should/might/TBD/various/appropriate". Min 3 scenarios (happy, edge, error) + 1 auth scenario
 > 3. **Wireframes attached** — UI features: `## UI Layout` with wireframe + components + states + tokens. Backend-only: explicit "N/A"
-> 4. **UI design ready** — Visual design + component decomposition tree. Backend-only: "N/A"
-> 5. **AI pre-review passed** — `$review-artifact --type=pbi` or `$pbi-challenge` returned PASS or WARN (not FAIL)
+> 4. **UI design ready** — Visual design + component decomposition tree + design-spec linked (`$design-spec` artifact or inline UI specs in `## UI Layout`) for any PBI with UI work. Backend-only: "N/A"
+> 5. **AI pre-review passed** — `$artifact-review --type=pbi` or `$pbi-challenge` returned PASS or WARN (not FAIL)
 > 6. **Story points estimated** — Fibonacci 1-21 + complexity (Low/Medium/High). >13 SP → recommend split
 > 7. **Dependencies table complete** — Dependency, Type (must-before/can-parallel/blocked-by/independent), Status
 >
@@ -471,7 +477,7 @@ If ANY check fails → AI Verdict is REQUEST_REVISION; tag each violated mandate
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -520,7 +526,9 @@ If ANY check fails → AI Verdict is REQUEST_REVISION; tag each violated mandate
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Break drafter confirmation bias before grooming — surface every architectural-feasibility, vague-AC, missing-auth, cross-service, and M1-M6 gap as a specific challenge prompt so an INFEASIBLE or under-specified PBI never reaches grooming with a false APPROVE.
+**IMPORTANT MUST ATTENTION Goal:** Break drafter confirmation bias before grooming — surface every architectural-feasibility, vague-AC, missing-auth, cross-service, and M1-M7 gap as a specific challenge prompt so an INFEASIBLE or under-specified PBI never reaches grooming with a false APPROVE.
+
+**IMPORTANT MUST ATTENTION Main steps (8, in order):** (1) locate PBI draft → (2) detect + **confirm module by asking the user directly before loading domain docs** → (3) Technical Feasibility → (4) AC Quality (+ M1-M7 checks) → (5) Cross-Cutting Concerns (auth/seed/migration/perf/UI Layout) → (6) generate SPECIFIC challenge prompts → (7) Challenge Prompts FIRST, then AI Verdict → (8) human records decision by asking the user directly. NEVER skip, reorder, or merge steps without explicit user approval — why: the prompts-before-verdict and module-confirm ordering is what defeats automation bias and false APPROVE.
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries) — MUST ATTENTION each canonical body still governs:**
 
@@ -532,30 +540,31 @@ If ANY check fails → AI Verdict is REQUEST_REVISION; tag each violated mandate
 - **Critical Thinking:** Traced `file:line` proof per claim; confidence >80% to act, <60% reject.
 - **Sequential Thinking:** Multi-step Thought N/M with REVISION/BRANCH/HYPOTHESIS; NEVER skip confidence closer.
 
-**IMPORTANT MUST ATTENTION** AI provides ANALYSIS, human makes DECISION — present Challenge Prompts FIRST, AI Verdict (APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD) SECOND, then record the human decision via a direct user question. NEVER auto-approve or auto-reject — why: verdict-first triggers automation bias and the Dev BA PIC rubber-stamps without independent assessment.
-**IMPORTANT MUST ATTENTION** this is CROSS-PERSON review, not self-review — run only on a BA drafter's draft, NEVER on your own; route self-review to `$review-artifact --type=pbi` — why: external skepticism breaks the drafter's blind spots that self-review rationalizes away.
-**IMPORTANT MUST ATTENTION** M1-M6 Compliance Gate is BLOCKING and drives the verdict — any M1-M5 failure forces REQUEST_REVISION with a challenge prompt naming the violated mandate ID + exact section/line/AC; an APPROVE over an M1-M5 violation is itself defective. Carriers (`[Source: ...]`, `**Evidence**`, `**IntegrationTest**`, YAML, mermaid) are EXEMPT — challenge leakage only in PBI narrative prose — why: stack-named or under-specified prose locks the PBI to one implementation and ships ambiguity to grooming.
-**IMPORTANT MUST ATTENTION** confirm the auto-detected module via a direct user question BEFORE loading domain docs — wrong module = wrong entity context = false APPROVE — why: entity-conflict analysis built on the wrong service is worse than none.
+**IMPORTANT MUST ATTENTION** AI provides ANALYSIS, human makes DECISION — present Challenge Prompts FIRST, AI Verdict (APPROVE / REQUEST_REVISION / ESCALATE_TO_LEAD) SECOND, then record the human decision by asking the user directly. NEVER auto-approve or auto-reject — why: verdict-first triggers automation bias and the Dev BA PIC rubber-stamps without independent assessment.
+**IMPORTANT MUST ATTENTION** this is CROSS-PERSON review, not self-review — run only on a BA drafter's draft, NEVER on your own; route self-review to `$artifact-review --type=pbi` — why: external skepticism breaks the drafter's blind spots that self-review rationalizes away.
+**IMPORTANT MUST ATTENTION** M1-M7 Compliance Gate is BLOCKING and drives the verdict — any M1-M5 or M7 failure forces REQUEST_REVISION with a challenge prompt naming the violated mandate ID + exact section/line/AC; an APPROVE over an M1-M5 or M7 violation is itself defective. M1 governs vocabulary, M7 governs subject matter — tech-free prose satisfies M1 and can still violate M7, so apply the demo test to the BODY. Carriers (`[Source: ...]`, `**Evidence**`, `CoveredBy:`, legacy `**IntegrationTest:**`, YAML, mermaid) are EXEMPT — challenge leakage only in PBI narrative prose — why: stack-named or under-specified prose locks the PBI to one implementation and ships ambiguity to grooming.
+**IMPORTANT MUST ATTENTION** confirm the auto-detected module by asking the user directly BEFORE loading domain docs — wrong module = wrong entity context = false APPROVE — why: entity-conflict analysis built on the wrong service is worse than none.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; keep one `in_progress`; add a final review todo to verify work quality — why: untracked multi-step work loses state on compaction.
 **IMPORTANT MUST ATTENTION** every concern raised must cite source (`file:line`, protocol section, entity definition, feature doc) with confidence — >80% to act, <60% DO NOT recommend; "Insufficient evidence" is valid output. NEVER present a guess as a verdict — why: a false APPROVE on an infeasible PBI costs more than the review.
 **IMPORTANT MUST ATTENTION** challenge prompts must be SPECIFIC with suggested answers, not vague ("needs work") — frame suggestions as "consider whether X" options, never corrections — why: vague challenges get superficially satisfied; corrections create adoption pressure that suppresses independent reasoning.
 **IMPORTANT MUST ATTENTION** search 3+ existing entity definitions + feature docs in the detected module before flagging a conflict or feasibility gap; verify the PBI's context shares the same constraints before reusing a nearby pattern as evidence — why: closest example ≠ matching preconditions.
 **IMPORTANT MUST ATTENTION** Technical-veto scope (architecture feasibility, dependency correctness, cross-service impact, performance, security) is the Dev BA PIC's unilateral call — no 2/3 vote; non-technical decisions (UI/UX, visual design, business value) require 2/3 BA majority per `ba-team-decision-model` — why: routing a technical veto through a vote dilutes accountability for false APPROVE.
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing, use a direct user question to present Next Steps (`$dor-gate` on APPROVE, `$refine` on REQUEST_REVISION, escalate on ESCALATE_TO_LEAD, or skip) — the user decides; never skip because the task seems obvious.
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing, use ask the user directly to present Next Steps (`$dor-gate` on APPROVE, `$refine` on REQUEST_REVISION, escalate on ESCALATE_TO_LEAD, or skip) — the user decides; never skip because the task seems obvious.
 
 **Anti-Rationalization:**
 
-| Evasion                                        | Rebuttal                                                                                    |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| "Verdict first, prompts are just support"      | Verdict-first = automation bias. Prompts FIRST so the human forms their own view.           |
-| "I can review my own draft with this"          | This is cross-person review. Use `$review-artifact --type=pbi` for self-review.             |
-| "Minor M1-M5 slip, still APPROVE"              | Any M1-M5 failure forces REQUEST_REVISION. An APPROVE over a violation is itself defective. |
-| "Module is obvious, skip the confirm"          | Wrong module = wrong entity context = false APPROVE. Confirm via a direct user question.    |
-| "Concern is clearly right, no citation needed" | Show `file:line` / section / entity ref + confidence. No proof = no verdict.                |
-| "Challenge prompt good enough as a question"   | Must be SPECIFIC with a suggested answer, or the drafter satisfies it superficially.        |
+| Evasion                                        | Rebuttal                                                                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| "Verdict first, prompts are just support"      | Verdict-first = automation bias. Prompts FIRST so the human forms their own view.                                         |
+| "I can review my own draft with this"          | This is cross-person review. Use `$artifact-review --type=pbi` for self-review.                                           |
+| "Minor M1-M5 slip, still APPROVE"              | Any M1-M5 or M7 failure forces REQUEST_REVISION. An APPROVE over a violation is itself defective.                         |
+| "No tech words in it — M7 passes"              | M1 ≠ M7. Apply the demo test to the BODY: what would a stakeholder SEE change? No answer → FAIL, however clean the prose. |
+| "Module is obvious, skip the confirm"          | Wrong module = wrong entity context = false APPROVE. Confirm by asking the user directly.                                 |
+| "Concern is clearly right, no citation needed" | Show `file:line` / section / entity ref + confidence. No proof = no verdict.                                              |
+| "Challenge prompt good enough as a question"   | Must be SPECIFIC with a suggested answer, or the drafter satisfies it superficially.                                      |
 
-**IMPORTANT MUST ATTENTION** AI provides ANALYSIS, human makes DECISION — challenge prompts FIRST, verdict SECOND, human records via a direct user question.
-**IMPORTANT MUST ATTENTION** M1-M5 violation forces REQUEST_REVISION with mandate ID + section/line citation — an APPROVE over a violation is defective.
+**IMPORTANT MUST ATTENTION** AI provides ANALYSIS, human makes DECISION — challenge prompts FIRST, verdict SECOND, human records by asking the user directly.
+**IMPORTANT MUST ATTENTION** M1-M5 or M7 violation forces REQUEST_REVISION with mandate ID + section/line citation — an APPROVE over a violation is defective.
 **IMPORTANT MUST ATTENTION** cite `file:line`/section/entity evidence for every concern (confidence >80% to act); never run on your own draft — cross-person review only.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
@@ -638,8 +647,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -650,6 +660,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

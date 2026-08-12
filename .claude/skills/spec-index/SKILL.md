@@ -21,9 +21,10 @@ description: '[General] Use when you need to (re)generate a DERIVED navigation i
 
 **Summary:**
 
-- This skill is a DERIVED-aid assembler only: it reads §1 Overview, §5 Domain Model Mermaid, and §8 TCs from existing Feature Specs to build `INDEX.md` (default), an optional cross-capability `{Bucket}.erd.md`, and an optional `{Bucket}.reimplementation-guide.md` — it NEVER authors business content.
-- Hard prohibition is the load-bearing rule: never emit the retired A-E engineering tree, `M##` dirs, `00-module-registry.md`, `01-domain-erd.md`, `06-reimplementation-guide.md`, or `docs/specs/README.md`/`PRIORITY-INDEX.md`. Use the `{Bucket}.*` filenames instead.
-- Step 0 Scope Gate via `AskUserQuestion` (bucket + mode + artifacts) is BLOCKING and runs before any read; if the target bucket has no `README.*.md` specs, STOP and route to `/spec` — never fabricate a spec to index.
+- **Purpose:** a DERIVED-aid assembler ONLY — reads §1 Overview, §5 Domain Model Mermaid, §8 TCs from existing Feature Specs to build `INDEX.md` (default) + optional cross-capability `{Bucket}.erd.md` + optional `{Bucket}.reimplementation-guide.md`; it NEVER authors business content. The Feature Spec stays the source of truth.
+- **Main steps (run in order):** **Step 0** Scope Gate — `AskUserQuestion` (bucket + mode + artifacts), BLOCKING before any read; no `README.*.md` specs → STOP, route to `/spec`. **Step 1** Read source specs — extract capability name+link, §1 summary, §8 feature code/TC count/status, §5 Mermaid entities+relationships. **Step 2** Assemble aids — 2a `INDEX.md` catalog, 2b cross-capability ERD, 2c reimplementation guide. **Step 3** Stamp & Write — DERIVED banner + date, write each artifact immediately (never accumulate in context). **Step 4** Verify — no retired artifacts, every link resolves, banner present, prose tech-free, no canonical claims.
+- **Modes:** `index` (default — regenerate derived aids) · `audit` (report which derived aids are stale vs their source specs).
+- Hard prohibition is the load-bearing rule: never emit the retired A-E engineering tree, `M##` dirs, `00-module-registry.md`, `01-domain-erd.md`, `06-reimplementation-guide.md`, or `docs/specs/README.md`/`PRIORITY-INDEX.md`. Use the `{Bucket}.*` filenames instead — why: an A-E bundle becomes a second source of truth competing with the Feature Spec.
 - Every generated file carries the `> DERIVED — regenerate via /spec-index; do NOT hand-edit` banner, links each row/entity back to its source spec, and keeps INDEX/ERD prose tech-free — only the reimplementation guide may name a target stack.
 
 > **Renamed:** repurposes the former `/spec-discovery` skill (v4.0.0 derived-aid rewrite) — `/spec-discovery` no longer resolves as a slash command; use `/spec-index`.
@@ -39,7 +40,7 @@ description: '[General] Use when you need to (re)generate a DERIVED navigation i
 | `index` | default — refresh derived aids     | Feature Specs in the target bucket(s)           | `INDEX.md` catalog (+ optional ERD / reimplementation guide), all DERIVED |
 | `audit` | explicit request — staleness check | Feature Spec mtimes/git vs derived-artifact age | Stale-list report (which derived aids lag their source specs)             |
 
-**Workflow:** `/scout` (locate specs) → `/spec-index` (assemble derived aids) → `/review-changes` → `/watzup`
+**Workflow:** `/scout` (locate specs) → `/spec-index` (assemble derived aids) → `/changes-review` → `/watzup`
 
 **Key Rules:**
 
@@ -184,7 +185,7 @@ If a user explicitly asks for an A-E bundle, explain it is retired and offer the
 | `/spec`              | **Source owner** — authors the canonical 8-section Feature Spec and flags when derived refresh may be required | Before spec-index — the specs must exist to index          |
 | `/spec [mode=tests]` | **Source owner** — owns Section 8 TCs that this skill counts in the catalog                                    | When TCs change and the index TC counts must refresh       |
 | `/docs-update`       | **Orchestrator** — may call spec-index to refresh derived aids after a doc sync                                | After code/spec changes need a full doc sync               |
-| `/review-changes`    | **Trigger** — detects spec changes and surfaces stale derived aids                                             | After spec changes; it will suggest regenerating the index |
+| `/changes-review`    | **Trigger** — detects spec changes and surfaces stale derived aids                                             | After spec changes; it will suggest regenerating the index |
 
 ## What Is Spec Discovery? (v4.0.0)
 
@@ -220,8 +221,9 @@ A **derived-index generator** over the single-home spec tree. The canonical know
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -259,6 +261,7 @@ A **derived-index generator** over the single-home spec tree. The canonical know
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION Goal:** Give readers a regenerable, single-writer navigation layer (catalog + cross-capability ERD + rebuild guide) assembled FROM the canonical Feature Specs — so a bucket can be browsed or replatformed without ever forking a second, hand-maintained source of truth
+- **IMPORTANT MUST ATTENTION Main steps (in order):** Step 0 Scope Gate (`AskUserQuestion` bucket+mode+artifacts, BLOCKING) → Step 1 Read source specs (§1 summary, §8 code/TC count/status, §5 Mermaid) → Step 2 Assemble (2a `INDEX.md`, 2b ERD, 2c reimplementation guide) → Step 3 Stamp & Write (DERIVED banner + date, write each immediately) → Step 4 Verify (no retired artifacts, links resolve, banner present, prose tech-free) — why: AI keeps forgetting the skill owns this fixed sequence; NEVER skip or reorder without user approval
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries — MUST ATTENTION each canonical body above):**
 

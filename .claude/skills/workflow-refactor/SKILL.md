@@ -26,13 +26,13 @@ disable-model-invocation: false
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /plan-review -> /plan-validate -> /why-review -> /plan-execute -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /production-readiness-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /plan-review -> /plan-validate -> /why-review -> /plan-execute -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `workflow-refactor` workflow. Run `/start-workflow workflow-refactor` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /plan-execute → /spec [mode=tests] → /why-review → /review-artifact --type=spec-tests → /spec [mode=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /production-readiness-review → /changelog → /test → /docs-update → /workflow-end → /watzup
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /plan-execute → /spec [mode=tests] → /why-review → /artifact-review --type=spec-tests → /spec [mode=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /changelog → /test → /docs-update → /workflow-end → /watzup
 
 > **[PERFORMANCE-SDD ROUTE]** If this refactor is performance-driven (query optimization, caching, reducing allocations, improving throughput), run `/performance-review` for benchmark evidence while preserving observable behavior. Do not use performance/refactor scope to bypass spec, test, or docs sync when behavior, public contract, SLA, performance constraint, state timing boundary, or docs/spec boundary changes. Pure behavior-preserving optimization may skip new TC/integration-test generation only with explicit skip reason and invariant-preservation evidence. `/test` remains mandatory.
 
@@ -40,7 +40,7 @@ Activate the `workflow-refactor` workflow. Run `/start-workflow workflow-refacto
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /plan-review -> /plan-validate -> /why-review -> /plan-execute -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /production-readiness-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /plan -> /plan-review -> /plan-validate -> /why-review -> /plan-execute -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
 
 <!-- SYNC:nested-task-creation -->
 
@@ -73,8 +73,9 @@ Activate the `workflow-refactor` workflow. Run `/start-workflow workflow-refacto
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

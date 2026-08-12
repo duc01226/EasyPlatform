@@ -19,7 +19,7 @@ disable-model-invocation: false
 3. **Bootstrap** - Create missing config/doc stubs when useful, then route scans/generators.
 4. **Populate** - After project config is initialized/refreshed, start the post-config parallel group: call `/scan-all` and `/workflow-code-to-spec`.
 5. **Spec Finalization** - Resolve the mandatory docs/specs gate from `/workflow-code-to-spec`; only empty/no-content or no-accepted-capability projects may defer with evidence.
-6. **Review** - Run `/review-changes`, then `/why-review` as final quality gates after scan/spec completion.
+6. **Review** - Run `/changes-review`, then `/why-review` as final quality gates after scan/spec completion.
 7. **Verify** - Validate config, root files, docs, mirrors, spec workflow status, and staleness.
 8. **Background Graph Refresh** - After setup/review/verification is otherwise done, spawn a background sub-agent to run `/graph-build`.
 9. **Report** - List completed actions, skipped actions, and remaining manual steps.
@@ -34,7 +34,7 @@ disable-model-invocation: false
 - MUST ATTENTION immediately after `/project-config` initializes or refreshes config, create and execute a post-config parallel task group with `Call /scan-all` and `Call /workflow-code-to-spec`.
 - MUST ATTENTION call `/scan-all` after config initialization for every content-bearing project; skip only empty/no-content projects with recorded evidence.
 - MUST ATTENTION invoke `/workflow-code-to-spec` for every content-bearing project; it may run in parallel with `/scan-all` after config exists, but do not treat "handoff suggested" as completion.
-- MUST ATTENTION end every setup run with final task-plan rows, in order: `Call /review-changes`, `Call /why-review`, `Spawn background /graph-build sub-agent`, after the scan/spec parallel group is resolved.
+- MUST ATTENTION end every setup run with final task-plan rows, in order: `Call /changes-review`, `Call /why-review`, `Spawn background /graph-build sub-agent`, after the scan/spec parallel group is resolved.
 - MUST ATTENTION run `/graph-build` as a required final background sub-agent task after setup/review/verification work is otherwise done; do not run this final graph refresh inline in the main context.
 - MUST ATTENTION ask the user to run `/sync-codex` or its standalone node runner when Codex mirrors/root files are missing or stale; do not auto-run this user-invoked-only sync route.
 
@@ -69,8 +69,8 @@ Minimum required task rows:
 7. Wait at a barrier until both post-config parallel tasks are completed, blocked, or evidence-deferred.
 8. Run required root-instruction route (`/claude-md-init`) or mark skipped with evidence.
 9. Resolve Codex mirror route by asking for `/sync-codex` when required.
-10. Call `/review-changes` after the scan/spec barrier.
-11. Call `/why-review` after `/review-changes`.
+10. Call `/changes-review` after the scan/spec barrier.
+11. Call `/why-review` after `/changes-review`.
 12. Run verification commands.
 13. Spawn a background sub-agent task named `Spawn background /graph-build sub-agent` after setup/review/verification is otherwise done.
 14. Record the background `/graph-build` sub-agent outcome or explicit blocker.
@@ -103,8 +103,8 @@ Also check:
 
 | State                                                                                                                                    | Action                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Empty folder, no real project content                                                                                                    | Do not deep-scan. Create minimal portable context stubs only when the user explicitly requested project initialization; otherwise report that there is no project content yet and continue with generic guidance. Create the post-config parallel tasks but mark `/scan-all` skipped and `/workflow-code-to-spec` deferred only with evidence: `No project content or accepted capability scope`; next trigger is `/workflow-idea-to-spec` or `/greenfield`, then `/workflow-code-to-spec init-full`. Still create final rows for `/review-changes` and `/why-review`; mark them skipped only with this evidence-backed deferral. |
-| Greenfield project with manifests/code scaffold                                                                                          | Run `/project-config`, then start the post-config parallel group. `/scan-all` may be limited to relevant detected stack/docs. `/workflow-code-to-spec` runs when product/capability scope or real code exists; otherwise defer with exact missing scope. Still keep `/review-changes` and `/why-review` as final task rows.                                                                                                                                                                                                                                                                                                       |
+| Empty folder, no real project content                                                                                                    | Do not deep-scan. Create minimal portable context stubs only when the user explicitly requested project initialization; otherwise report that there is no project content yet and continue with generic guidance. Create the post-config parallel tasks but mark `/scan-all` skipped and `/workflow-code-to-spec` deferred only with evidence: `No project content or accepted capability scope`; next trigger is `/workflow-idea-to-spec` or `/greenfield`, then `/workflow-code-to-spec init-full`. Still create final rows for `/changes-review` and `/why-review`; mark them skipped only with this evidence-backed deferral. |
+| Greenfield project with manifests/code scaffold                                                                                          | Run `/project-config`, then start the post-config parallel group. `/scan-all` may be limited to relevant detected stack/docs. `/workflow-code-to-spec` runs when product/capability scope or real code exists; otherwise defer with exact missing scope. Still keep `/changes-review` and `/why-review` as final task rows.                                                                                                                                                                                                                                                                                                       |
 | Existing project, config missing or skeleton                                                                                             | Run `/project-config` first. Then immediately start the post-config parallel group (`/scan-all` + `/workflow-code-to-spec`) before nonessential setup work.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | Config populated, reference docs missing/placeholders                                                                                    | Run `/scan-all` after config initialization. Use `/docs-init` or targeted `/scan --target=<key>` only as follow-up repair if `/scan-all` identifies missing/stub files.                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Config present but `referenceDocs` drifted (legacy filenames, missing canonical entries, or wrong order per the Phase 0 normalize probe) | Run **Reference-doc normalization** (Phase 2 step 1a) BEFORE the scan/spec barrier: rewrite `config.referenceDocs` to `normalizeReferenceDocs(...).normalized`, `git mv` each `renames[]` legacy file to its canonical name (or `git rm` a stale duplicate), migrate downstream textual refs, then let the SessionStart hook / `/scan --target=<key>` create the `added[]` docs. Re-run the probe until `changed:false`.                                                                                                                                                                                                          |
@@ -112,7 +112,7 @@ Also check:
 | `CLAUDE.md` exists but lacks universal guides                                                                                            | Run `/claude-md-init --mode update` if marker-managed. If markerless/project-only, manually merge the universal-guide blocks from `claude-md-init/references/claude-md-template.md` while preserving project content, then rerun update.                                                                                                                                                                                                                                                                                                                                                                                          |
 | `AGENTS.md` missing or incomplete                                                                                                        | Ask the user to run `/sync-codex` or `node .claude/skills/sync-codex/scripts/run-codex-sync.mjs`, then verify mirrors.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Config/docs/root ready but `docs/specs/` is missing or empty                                                                             | The post-config `/workflow-code-to-spec` task suggests `init-full` and completes Step 0 mode/bucket/capability confirmation before `/project-init` can report complete.                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| Config/docs/root ready and Feature Specs exist                                                                                           | The post-config `/workflow-code-to-spec` task suggests `audit`, unless an active diff/new requirement implies `update`. Then run `/review-changes` and `/why-review`.                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Config/docs/root ready and Feature Specs exist                                                                                           | The post-config `/workflow-code-to-spec` task suggests `audit`, unless an active diff/new requirement implies `update`. Then run `/changes-review` and `/why-review`.                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | Docs stale or graph missing                                                                                                              | Run `/scan-all` in the post-config parallel group; queue the required final background `/graph-build` sub-agent task after setup/review/verification is otherwise done. Still resolve the mandatory spec workflow task before final verification.                                                                                                                                                                                                                                                                                                                                                                                 |
 | Everything present                                                                                                                       | Run verification plus mandatory `/workflow-code-to-spec` audit/update decision; report idempotent status only after the spec workflow task is completed or explicitly deferred with evidence.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
@@ -137,14 +137,14 @@ Run phases sequentially except the explicit post-config parallel group. After ea
     - Greenfield with accepted product/capability scope or real code scaffold: invoke `/workflow-code-to-spec`, suggest `init-full`, and let its Step 0 confirm mode/bucket/capability.
     - Existing/grown project with `docs/specs/` missing or empty: invoke `/workflow-code-to-spec`, suggest `init-full`, and require divide-and-conquer grouping when capability count is large.
     - Existing/grown project with Feature Specs already present: invoke `/workflow-code-to-spec`, suggest `audit`; suggest `update` when `git diff` or a new requirement/PBI is the trigger.
-6. **Review changes (MANDATORY)** - create a final task named `Call /review-changes`, invoke `/review-changes`, and record pass/fail or explicit blocker.
-7. **Why review (MANDATORY)** - create a final task named `Call /why-review`, invoke `/why-review` after `/review-changes`, and record pass/fail or explicit blocker.
+6. **Review changes (MANDATORY)** - create a final task named `Call /changes-review`, invoke `/changes-review`, and record pass/fail or explicit blocker.
+7. **Why review (MANDATORY)** - create a final task named `Call /why-review`, invoke `/why-review` after `/changes-review`, and record pass/fail or explicit blocker.
 8. **Enhance** - `/prompt-enhance` on newly created or heavily updated skill/docs files.
 9. **Queue background graph refresh (MANDATORY FINAL)** - create a final task named `Spawn background /graph-build sub-agent`; do not execute it until Phase 4 verification and setup/review work are otherwise done.
 
 ## Phase 2.5: Mandatory Spec Workflow Finalization
 
-This phase starts as the `Call /workflow-code-to-spec` sibling task in the post-config parallel group. It is ALWAYS represented in task tracking and MUST be resolved before `/review-changes`, `/why-review`, final verification, and report.
+This phase starts as the `Call /workflow-code-to-spec` sibling task in the post-config parallel group. It is ALWAYS represented in task tracking and MUST be resolved before `/changes-review`, `/why-review`, final verification, and report.
 
 | Scenario                                                     | Required final task outcome                                                                                                                                                                                                 |
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -162,8 +162,8 @@ This phase starts as the `Call /workflow-code-to-spec` sibling task in the post-
 
 After Phase 2.5, always create and execute these final tasks in order:
 
-1. `Call /review-changes` - run after `/workflow-code-to-spec` so the setup/spec changes are reviewed from the current diff.
-2. `Call /why-review` - run after `/review-changes` to validate rationale and avoid closing on unchallenged setup decisions.
+1. `Call /changes-review` - run after `/workflow-code-to-spec` so the setup/spec changes are reviewed from the current diff.
+2. `Call /why-review` - run after `/changes-review` to validate rationale and avoid closing on unchallenged setup decisions.
 
 If either skill cannot run because the environment lacks the required tool, stop and report the missing tool. Do not silently replace them with a summary.
 
@@ -190,10 +190,10 @@ Spec workflow verification before declaring setup complete:
 
 - Confirm the task list contains a post-config parallel group with `Call /scan-all` and `Call /workflow-code-to-spec`.
 - Confirm `Call /scan-all` ran after `/project-config`, or was skipped only with empty/no-content evidence.
-- Confirm the task list contains `Call /review-changes` and `Call /why-review` as the final review skill-call rows after the scan/spec barrier.
+- Confirm the task list contains `Call /changes-review` and `Call /why-review` as the final review skill-call rows after the scan/spec barrier.
 - Confirm the `/workflow-code-to-spec` outcome is one of: `init-full`, `audit`, `update`, `blocked on user-confirmed mode/bucket/capability`, or an evidence-backed deferral for empty/no-capability projects.
-- Confirm `/review-changes` ran after `/workflow-code-to-spec`, or stopped with an explicit missing-tool blocker.
-- Confirm `/why-review` ran after `/review-changes`, or stopped with an explicit missing-tool blocker.
+- Confirm `/changes-review` ran after `/workflow-code-to-spec`, or stopped with an explicit missing-tool blocker.
+- Confirm `/why-review` ran after `/changes-review`, or stopped with an explicit missing-tool blocker.
 - Confirm `Spawn background /graph-build sub-agent` ran after setup/review/verification was otherwise done, or stopped with an explicit missing-tool/dependency blocker.
 - Confirm the Feature Spec root is the fixed path `docs/specs/`.
 - Confirm the hook-independent Workflow-First Gate (`<!-- CK:WORKFLOW-GATE -->` block) is present at the TOP of `CLAUDE.md` and `AGENTS.md` so routing survives without hooks. If missing, re-run `/claude-md-init` (CLAUDE.md), then ask the user to run `/sync-codex` (AGENTS.md mirror).
@@ -226,7 +226,7 @@ Report:
 - Files created/updated/skipped: project config, reference docs, `CLAUDE.md`, `AGENTS.md`, mirrors.
 - Lower-level skills/scripts invoked.
 - Post-config parallel skill calls: `/scan-all` and `/workflow-code-to-spec`, each with outcome and evidence.
-- Final review skill calls: `/review-changes`, `/why-review`, each with outcome and evidence.
+- Final review skill calls: `/changes-review`, `/why-review`, each with outcome and evidence.
 - Final background graph call: `/graph-build` sub-agent outcome, scope/build type, and blocker if any.
 - Spec workflow finalization: invoked mode (`init-full`, `audit`, `update`), user-confirmation blocker, or exact deferral reason and next trigger.
 - Verification commands and results.
@@ -244,7 +244,7 @@ Report:
 **IMPORTANT MUST ATTENTION** use `/project-init` as the unified missing-context route; lower-level skills remain implementation steps.
 **IMPORTANT MUST ATTENTION** before doing anything, create many small task-plan rows covering every setup phase, the post-config parallel group, and the final review skill calls.
 **IMPORTANT MUST ATTENTION** after config exists, call `/scan-all` and `/workflow-code-to-spec` as a parallel group when possible, then wait for both outcomes.
-**IMPORTANT MUST ATTENTION** never finish `/project-init` without `Call /scan-all` and `Call /workflow-code-to-spec` after config initialization, followed by final rows `Call /review-changes`, `Call /why-review`, `Spawn background /graph-build sub-agent`.
+**IMPORTANT MUST ATTENTION** never finish `/project-init` without `Call /scan-all` and `Call /workflow-code-to-spec` after config initialization, followed by final rows `Call /changes-review`, `Call /why-review`, `Spawn background /graph-build sub-agent`.
 **IMPORTANT MUST ATTENTION** final `/graph-build` runs in a background sub-agent after setup/review/verification is otherwise done; track it to returned outcome or explicit blocker.
 **IMPORTANT MUST ATTENTION** for content-bearing projects, invoke `/workflow-code-to-spec`; do not close on a recommendation/handoff alone.
 **IMPORTANT MUST ATTENTION** record explicit blocker for any unavailable required skill/tool; silent skip is not completion.
@@ -259,7 +259,7 @@ Report:
 | "Config exists, skip planning"                      | Create full task plan first; missing-context setup drifts without visible rows.                  |
 | "Scan-all and spec workflow can be suggested later" | Call both after config and wait at the barrier; handoff is not completion.                       |
 | "Graph already exists"                              | Final `/graph-build` still runs in background; existing graph changes scope to update, not skip. |
-| "Review is enough"                                  | Run `/review-changes`, `/why-review`, verification, then final background graph task.            |
+| "Review is enough"                                  | Run `/changes-review`, `/why-review`, verification, then final background graph task.            |
 
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -277,8 +277,9 @@ Report:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

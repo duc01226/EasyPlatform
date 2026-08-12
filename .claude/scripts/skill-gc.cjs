@@ -90,6 +90,31 @@ Decisions per target:
 Exit: 0 dry-run/apply ok · 1 BLOCKED/WAITING present · 2 bad args.`);
 }
 
+// Decode a YAML frontmatter scalar — strip the quote wrapper AND undo that style's escaping.
+// De-wrapping alone leaks `''` out of single-quoted scalars (`'a bug''s cause'`). Same contract as
+// unquote() in .claude/scripts/lib/workflow-skills-catalog.cjs and stripQuotes() in
+// .claude/scripts/codex/migrate-claude-to-codex.mjs.
+function unquoteYamlScalar(value) {
+    const s = String(value).trim();
+    if (s.length < 2) return s;
+    if (s.startsWith("'") && s.endsWith("'")) {
+        let out = s.slice(1, -1);
+        let previous = '';
+        while (out !== previous) {
+            previous = out;
+            out = out.replace(/''/g, "'");
+        }
+        return out.trim();
+    }
+    if (s.startsWith('"') && s.endsWith('"')) {
+        return s
+            .slice(1, -1)
+            .replace(/\\(["\\/])/g, '$1')
+            .trim();
+    }
+    return s;
+}
+
 function parseFrontmatter(skillPath) {
     const file = path.join(skillPath, 'SKILL.md');
     if (!fs.existsSync(file)) return null;
@@ -101,12 +126,7 @@ function parseFrontmatter(skillPath) {
     for (const line of body.split(/\r?\n/)) {
         const kv = line.match(/^(\w[\w_-]*)\s*:\s*(.*?)\s*$/);
         if (!kv) continue;
-        let val = kv[2];
-        // Strip surrounding quotes
-        if ((val.startsWith("'") && val.endsWith("'")) || (val.startsWith('"') && val.endsWith('"'))) {
-            val = val.slice(1, -1);
-        }
-        fm[kv[1]] = val;
+        fm[kv[1]] = unquoteYamlScalar(kv[2]);
     }
     return fm;
 }

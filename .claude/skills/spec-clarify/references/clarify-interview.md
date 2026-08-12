@@ -112,7 +112,7 @@ surface encoded decisions — each surfaced decision that is NON-OBVIOUS/CONFLIC
   property/invariant TC. **CROSS-CHECK that the TC exists — do NOT audit TC quality here.**
 - **Audit prompts:** Which implied operation or edge case has no §8 TC at all? Which `[HARD]` rule has no covering
   property TC? (Defer universal-quantification / boundary-counter-case / mutation depth to
-  `review-artifact --type=spec-tests` — surfacing a _missing_ TC is in scope; judging an _existing_ TC's rigor is not.)
+  `artifact-review --type=spec-tests` — surfacing a _missing_ TC is in scope; judging an _existing_ TC's rigor is not.)
 
 ### 8. Cross-Spec Conflicts & Overlaps (discovered landscape)
 

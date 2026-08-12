@@ -120,10 +120,10 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
     {
         try
         {
-            var jsonMessage = message.ToJson(forceUseRuntimeType: true);
+            var transportMessage = message.ToJson(forceUseRuntimeType: true);
             var selectedRoutingKey = routingKey ?? message.As<IPlatformSelfRoutingKeyBusMessage>()?.RoutingKey();
 
-            await PublishMessageToQueueAsync(jsonMessage, selectedRoutingKey);
+            await PublishMessageToQueueAsync(transportMessage, message, selectedRoutingKey);
 
             return message;
         }
@@ -133,12 +133,28 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
         }
     }
 
-    private async Task PublishMessageToQueueAsync(string message, string routingKey)
+    /// <param name="transportMessage">Serialized body — goes on the wire, never into a log or trace tag.</param>
+    /// <param name="runtimeMessage">The live message — used ONLY to derive a type name for diagnostics.</param>
+    /// <param name="routingKey">Resolved routing key.</param>
+    private async Task PublishMessageToQueueAsync(string transportMessage, object runtimeMessage, string routingKey)
     {
-        await PublishMessageToQueue(message, routingKey);
+        await PublishMessageToQueue(transportMessage, runtimeMessage, routingKey);
     }
 
-    private async Task PublishMessageToQueue(string message, string routingKey)
+    /// <summary>
+    /// Publishes the serialized body and tags the producer trace span.
+    /// </summary>
+    /// <param name="transportMessage">Serialized body — goes on the wire, never into a log or trace tag.</param>
+    /// <param name="runtimeMessage">The live message — used ONLY to derive a type name for diagnostics.</param>
+    /// <param name="routingKey">Resolved routing key.</param>
+    /// <remarks>
+    /// The two are separate parameters on purpose. Previously one <c>message</c> string served both, so the trace tag
+    /// necessarily carried the same fully serialized body that was being published — every produced message's
+    /// contents mirrored into the tracing backend. Splitting the roles makes the wire payload and the diagnostic
+    /// representation independent, and makes a future edit that tags <paramref name="transportMessage" /> an obvious
+    /// mistake rather than the path of least resistance.
+    /// </remarks>
+    private async Task PublishMessageToQueue(string transportMessage, object runtimeMessage, string routingKey)
     {
         using (
             var activity = IPlatformMessageBusProducer.ActivitySource.StartActivity(
@@ -147,7 +163,9 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
         )
         {
             activity?.AddTag("routingKey", routingKey);
-            activity?.AddTag("message", message);
+            activity?.AddTag(
+                "message",
+                PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(runtimeMessage));
 
             IChannel channel = null;
 
@@ -168,12 +186,10 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
                 await channel.BasicPublishAsync(
                     ExchangeProvider.GetExchangeName(routingKey),
                     routingKey,
-                    body: Encoding.UTF8.GetBytes(message),
+                    body: Encoding.UTF8.GetBytes(transportMessage),
                     basicProperties: publishRequestProps,
                     mandatory: false
                 );
-
-                ChannelPool.Return(channel);
             }
             catch (AlreadyClosedException alreadyClosedException)
             {

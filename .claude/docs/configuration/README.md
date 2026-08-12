@@ -128,14 +128,14 @@ The `codeReview` section records which project-specific review-rule doc the revi
 
 **Schema:** Each workflow entry supports `description`, `name`, `parallelGroups`, `preActions`, `sequence`, `stepMeta`, `whenToUse`. There are NO `priority` or `triggers` properties — detection is semantic: the model matches the prompt against each workflow's `whenToUse` description and auto-selects the best fit (works in any prompt language).
 
-**Live catalog (17 workflows):** `workflow-big-feature`, `workflow-bugfix`, `workflow-e2e`, `workflow-feature`, `workflow-feature-spec`, `workflow-greenfield-init`, `workflow-idea-to-pbi`, `workflow-idea-to-spec`, `workflow-refactor`, `workflow-research`, `workflow-review-changes`, `workflow-code-to-spec`, `workflow-spec-to-pbi`, `workflow-spec-sync`, `workflow-visualize`, `workflow-seed-test-data`, `workflow-write-integration-test`.
+**Live catalog (19 workflows):** `workflow-big-feature`, `workflow-bugfix`, `workflow-e2e`, `workflow-feature`, `workflow-feature-spec`, `workflow-greenfield-init`, `workflow-idea-to-pbi`, `workflow-idea-to-spec`, `workflow-refactor`, `workflow-research`, `workflow-review-changes`, `workflow-architecture-audit`, `workflow-code-to-spec`, `workflow-spec-to-pbi`, `workflow-spec-sync`, `workflow-visualize`, `workflow-seed-test-data`, `workflow-write-integration-test`, `workflow-integration-test-green`.
 
-| Workflow                  | Sequence (abridged, from `workflows.json`)                                                                | whenToUse (abridged)                              |
-| ------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `workflow-feature`        | scout → investigate → … → plan → plan-review → … → plan-execute → … → integration-test → … → workflow-end | Well-defined feature implementation               |
-| `workflow-bugfix`         | scout → investigate → debug-investigate → … → fix → prove-fix → … → workflow-end                          | Bug, error, crash, regression; end-to-start trace |
-| `workflow-refactor`       | scout → investigate → plan → … → plan-execute → … → workflow-end                                          | Restructure code without behavior change          |
-| `workflow-review-changes` | review-changes → why-review → parallel reviewers → code-simplifier → … → workflow-end                     | Review uncommitted changes before committing      |
+| Workflow                  | Sequence (abridged, from `workflows.json`)                                                                                                                           | whenToUse (abridged)                              |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `workflow-feature`        | scout → investigate → … → plan → plan-review → … → plan-execute → … → integration-test → … → workflow-end                                                            | Well-defined feature implementation               |
+| `workflow-bugfix`         | scout → investigate → debug-investigate → … → fix → prove-fix → … → workflow-end                                                                                     | Bug, error, crash, regression; end-to-start trace |
+| `workflow-refactor`       | scout → investigate → plan → … → plan-execute → … → workflow-end                                                                                                     | Restructure code without behavior change          |
+| `workflow-review-changes` | [parallel: changes-review + whole-target why-review] → validate findings → parallel specialists → code-simplifier → … → final whole-target why-review → workflow-end | Review uncommitted changes before committing      |
 
 ---
 

@@ -1,17 +1,25 @@
 ---
 name: design
 version: 1.0.0
-description: '[Design] Create or describe a UI design — quick (fast), immersive (good), or recreated/described from a screenshot or video. Dispatch via --mode={fast|good|describe|screenshot|video} (default fast).'
+description: '[Design] Create or describe a UI design — quick (fast), immersive (good), or recreated/described from a screenshot or video, in a product-UI or marketing/creative lane. Dispatch via --mode={fast|good|describe|screenshot|video} (default fast) and --lane={product|marketing} (default product).'
 disable-model-invocation: false
 ---
 
 ## Quick Summary
 
-**Goal:** Create (or describe) a UI design using design-intelligence databases and subagents, dispatched by `--mode`.
+**Goal:** Create (or describe) a UI design using design-intelligence databases and subagents, dispatched by `--mode` (input carrier) × `--lane` (design lane).
 
 > **Renamed:** folds the former `/design-fast`, `/design-good`, `/design-describe`, `/design-screenshot`, `/design-video` skills into `--mode={fast|good|describe|screenshot|video}` — those names no longer resolve as slash commands; use `/design --mode=…`.
+>
+> **Absorbed lanes:** the former `frontend-design` (marketing/creative) and `interface-design` (product-UI) skills now fold into `--lane={marketing|product}` — those names no longer resolve as slash commands; use `/design --lane=…`. Each lane's full body lives under `references/lane-{marketing,product}/lane-guide.md`.
 
 **Mode dispatch:** `--mode={fast|good|describe|screenshot|video}` — default `fast` when omitted.
+**Lane dispatch:** `--lane={product|marketing}` — default `product` when omitted. Lane (the design tradition) is orthogonal to mode (the input carrier); any mode combines with any lane.
+
+| Lane                | Use for                                                                | Full body                                 |
+| ------------------- | ---------------------------------------------------------------------- | ----------------------------------------- |
+| `product` (default) | dashboards, admin panels, SaaS apps, tools, settings, data interfaces  | `references/lane-product/lane-guide.md`   |
+| `marketing`         | landing pages, marketing sites, campaigns, distinctive creative pieces | `references/lane-marketing/lane-guide.md` |
 
 | Mode             | Input carrier      | Output                                                             |
 | ---------------- | ------------------ | ------------------------------------------------------------------ |
@@ -25,8 +33,8 @@ disable-model-invocation: false
 
 1. **Research** — Run `ui-ux-pro-max` searches for design intelligence (ALWAYS FIRST)
 2. **Ingest** — For visual modes (`describe`/`screenshot`/`video`), use `visual analysis tooling` to analyze the screenshot/video in super-detail
-3. **Design** — Use `ui-ux-designer` subagent to create the design (or, for `describe`, an implementation plan)
-4. **Implement** — Build as code with `frontend-design` (skipped in `describe` mode)
+3. **Design** — Use `ui-ux-designer` subagent to create the design (or, for `describe`, an implementation plan), applying the selected lane's craft body
+4. **Implement** — Build as code following the selected lane guide: `references/lane-product/lane-guide.md` (product UIs) or `references/lane-marketing/lane-guide.md` (marketing/creative). Skipped in `describe` mode.
 5. **Document** — Present to user for approval; update `./docs/design-guidelines.md` if needed
 
 **Key Rules:**
@@ -40,19 +48,30 @@ disable-model-invocation: false
 
 ## Arguments & Mode Dispatch
 
-`/design --mode={fast|good|describe|screenshot|video} <brief | screenshot | video>`
+`/design --mode={fast|good|describe|screenshot|video} --lane={product|marketing} <brief | screenshot | video>`
 
 - When `--mode` is omitted, default to `--mode=fast`.
+- When `--lane` is omitted, default to `--lane=product` (the dominant PBI/app use). Pick `marketing` for landing pages, campaigns, and distinctive creative pieces.
+- `--mode` (input carrier) and `--lane` (design tradition) are orthogonal — e.g. `--mode=screenshot --lane=product` recreates a dashboard screenshot in the product-UI craft tradition.
 - `$ARGUMENTS` carries the full input after the command. Interpret it per mode: `fast`/`good` → a text design brief; `describe`/`screenshot` → a screenshot reference (path/URL/attachment); `video` → a video reference.
+
+### Lane selection (apply the chosen lane's craft body at stages 3-4)
+
+- **`--lane=product` (default)** — product UIs: dashboards, admin panels, SaaS apps, tools. Domain-driven craft (intent → domain exploration → signature → layered surfaces/tokens). Full body: `references/lane-product/lane-guide.md`.
+- **`--lane=marketing`** — marketing/creative: landing pages, campaigns, screenshot replication. Bold aesthetic direction (distinctive type, cohesive palette, atmosphere, motion). Full body: `references/lane-marketing/lane-guide.md`.
+
+Do NOT inline the lane bodies here — read the matching `lane-guide.md` when the lane is selected.
 
 ## Required Skills (Priority Order)
 
 1. **`ui-ux-pro-max`** — Design intelligence database (ALWAYS ACTIVATE FIRST)
-2. **`frontend-design`** — Implementation, screenshot/video analysis, and design replication
+2. **In-skill lane references** — `references/lane-{product|marketing}/lane-guide.md` (+ their reference files) own implementation, screenshot/video analysis, and design replication for the selected lane.
 
 **Ensure token efficiency while maintaining high quality.**
 
 ## Shared First Step (ALL modes)
+
+> **[BLOCKING] Step 0 — Understand the existing UI first** (per the `SYNC:existing-ui-research` protocol carried by this skill). Before designing or updating any screen/component, inventory the existing related UI (screens, pages, components already serving this feature/domain) and map every connected feature flow that links to / embeds / navigates to-or-from it, so the design faithfully matches the current UI system. Skip only for non-UI work (state it explicitly).
 
 **FIRST**, run `ui-ux-pro-max` searches to gather design intelligence:
 
@@ -145,6 +164,19 @@ Treat `$ARGUMENTS` as the video to recreate exactly. Same as `--mode=screenshot`
 Think hard to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules. Parse `--mode` from the input (default `fast`) and route to the matching branch above:
 <tasks>$ARGUMENTS</tasks>
 
+<!-- SYNC:existing-ui-research -->
+
+> **[BLOCKING] Understand the existing UI before you design or spec a new/updated screen.** Before producing any wireframe, mockup, screen design, or UI spec:
+>
+> 1. **Inventory existing related UI** — search the project for screens, pages, and components already serving this feature or its domain (consult design-system docs + the real component inventory).
+> 2. **Map connected flows** — identify every feature that links to, embeds, includes, or navigates to/from the new screen; trace its entry and exit flows so the new screen fits them.
+> 3. **Reuse before invent** — prefer existing components, patterns, and layout conventions; justify any new component against what already exists.
+> 4. **Record findings** — note the matched existing screens/components + connected flows in the artifact so downstream design faithfully matches the current UI system.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that explicitly.
+
+<!-- /SYNC:existing-ui-research -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -154,8 +186,9 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

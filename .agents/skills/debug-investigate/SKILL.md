@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -60,14 +61,16 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
-- This is investigation-ONLY — never patch here; classify the bug type FIRST (Phase 0, BLOCKING) to route to the right agent and decide which evidence matters before tracing anything.
-- Trace end-to-start: name Frame 0 (observed final state), walk backward reader → storage/projection → writer → consumer/job → producer, and enumerate ALL feeder paths — the bug enters where bad state is WRITTEN, not where it crashes.
-- Every root-cause claim carries `Confidence: X%` + `file:line` proof; below 60% you report "hypothesis, not confirmed" with named evidence gaps, never a guess.
-- The `$why-review` gate is non-negotiable: run it in the SAME session/main agent before declaring confirmed; 2 rounds without passing → STOP and escalate via a direct user question. Run a graph trace when `graph.db` exists — it surfaces bus/event consumers grep cannot see.
+- **Purpose — investigation-ONLY:** pin the root cause, NEVER patch here; the deliverable is a `$why-review`-validated cause handed to `$fix`, or an honest "hypothesis, not confirmed."
+- **Main steps in order (the digest):** (0) **Classify** bug type — Phase 0, BLOCKING — routes to `debugger` / `performance-optimizer` / `security-auditor` and decides which evidence matters; (0.5) **Adjudicate fault** — failing/flaky integration test ONLY: READ the `$integration-test-review` gate protocol (never invoke it) and emit one verdict — TEST-WRONG · TEST-NOT-OPTIMAL · SOURCE-WRONG · ENVIRONMENT · AMBIGUOUS — BEFORE any trace, because tracing the source first silently assumes the test is right; (1) **Reproduce** with evidence (error/stack/screenshot); (2) **Hypothesize** 2-3 ranked theories + the evidence that confirms/contradicts each; (3) **Trace END-to-START** — name Frame 0 (observed final state), walk reader → storage/projection → writer → consumer/job → producer, enumerate ALL feeder paths; (4) **Confirm** one cause explains ALL symptoms via the hypothesis matrix, no bypass paths; (5) **Validate** through the `$why-review` gate; (6) **Report** the confidence-tagged finding + hand off to `$fix` → `$prove-fix` runs after the fix.
+- **Core discipline:** the bug enters where bad state is WRITTEN, not where it crashes — fix at the LOWEST invariant-owning layer, NEVER the crash site.
+- **Evidence law:** every root-cause claim carries `Confidence: X%` + `file:line` proof; below 60% report "hypothesis, not confirmed" with named gaps, NEVER a guess. Run a graph trace when `graph.db` exists — it surfaces bus/event consumers grep cannot see.
+- **`$why-review` gate is non-negotiable:** run it in the SAME session/main agent before declaring confirmed; 2 rounds without passing → STOP and escalate by asking the user directly.
 
 **Workflow:**
 
 1. **Classify** — Detect bug scenario type (Phase 0) → route to specialized agent
+   1.5. **Adjudicate** — Failing integration test? Read `$integration-test-review` gates (Phase 0.5) → emit fault verdict before tracing
 2. **Reproduce** — Confirm expected vs actual with evidence
 3. **Hypothesize** — Form 2-3 ranked theories
 4. **Trace** — Follow code paths; collect `file:line` proof per hypothesis
@@ -86,16 +89,37 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Think:** What type of failure is this? Classification routes to the right agent and determines which evidence matters most.
 
-| Bug Type                    | Signals                                                 | Specialized Agent                  |
-| --------------------------- | ------------------------------------------------------- | ---------------------------------- |
-| Frontend UI / rendering     | Console errors, visual regression, component state      | `debugger`                         |
-| Backend logic / data        | Wrong API response, data corruption, validation failure | `debugger`                         |
-| Cross-service / message bus | Events not propagating, consumer failures, sync lag     | `debugger` + graph trace MANDATORY |
-| Performance / memory        | Slow queries, OOM, N+1, unbounded result sets           | `performance-optimizer`            |
-| Security / auth             | Access denied, token issues, permission bypass          | `security-auditor`                 |
+| Bug Type                             | Signals                                                                                  | Specialized Agent                                                                                  |
+| ------------------------------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Frontend UI / rendering              | Console errors, visual regression, component state                                       | `debugger`                                                                                         |
+| Backend logic / data                 | Wrong API response, data corruption, validation failure                                  | `debugger`                                                                                         |
+| Cross-service / message bus          | Events not propagating, consumer failures, sync lag                                      | `debugger` + graph trace MANDATORY                                                                 |
+| Performance / memory                 | Slow queries, OOM, N+1, unbounded result sets                                            | `performance-optimizer`                                                                            |
+| Security / auth                      | Access denied, token issues, permission bypass                                           | `security-auditor`                                                                                 |
+| **Failing / flaky integration test** | A test that was green now fails, fails intermittently, or fails only in a full-suite run | `debugger` + **READ the `$integration-test-review` protocol FIRST** (see Fault Adjudication below) |
 
 **Cross-service bugs:** Run graph trace FIRST — grep alone misses implicit bus connections.
 **OOM / memory exhaustion:** Check row COUNT before row SIZE. Unbounded query loading thousands of records is more common cause. Triage: (1) missing DB-level filter? (2) excessive row size?
+
+### Phase 0.5: Fault Adjudication — failing integration tests (BLOCKING for that bug type)
+
+> **Think:** a failing test has TWO candidate defendants — source and test. Tracing source first ASSUMES the test is right; that assumption produces the "fix" rationalizing a broken invariant into green. Decide _whose fault_ before deciding _where to trace_.
+
+**Step 1 — READ the protocol; NEVER invoke the skill.** Read `.claude/skills/integration-test-review/SKILL.md` §"The 8 Quality Gates" into context. Gates 1 (assertion value), 3 (repeatability), 4 (domain logic), 8 (scenario fidelity) reveal whether the TEST is the faulty party — dead/always-true assertion, non-unique ID, assertion on fields the handler never writes, unreachable setup.
+
+> **MUST NOT invoke `$integration-test-review` from here — READ its protocol instead.** Inside `integration-test-verify-loop`, this skill already runs in the SAME round as an explicit `$integration-test-review` call (`integration-test-verify-loop/SKILL.md:110`, `:495`); invoking it again runs a 9-phase audit twice per round — the duplicate-ownership defect that loop removes (`:31`). The loop OWNS the invocation. — why: standalone, reading also suffices — investigation is this skill's only deliverable.
+
+**Step 2 — emit ONE fault verdict before any trace.**
+
+| Verdict              | Meaning                                                               | Where to trace next                                                                  |
+| -------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **TEST-WRONG**       | Stale assertion, wrong setup, non-unique data, unreachable scenario   | The test's own root cause — fix the assertion/setup at its root, NEVER weaken it     |
+| **TEST-NOT-OPTIMAL** | Test is right but fragile — timing, shared state, ordering dependence | The fragility's source (missing ARRANGE barrier, shared infra assertion)             |
+| **SOURCE-WRONG**     | Production code violates the spec or a clear invariant                | Normal end-to-start trace to the invariant-owning layer; KEEP or strengthen the test |
+| **ENVIRONMENT**      | Config, DB, credentials, ports, versions                              | Mark BLOCKED — do not trace application code                                         |
+| **AMBIGUOUS**        | Spec silent or contradictory about which side is correct              | **STOP and ask the user** by asking the user directly — never self-resolve           |
+
+**Step 3 — governing law (`CLAUDE.md:160`, mirrored `AGENTS.md:446`):** _"A green-again suite is not the goal; the correct verdict on what was actually wrong is."_ NEVER weaken an assertion, add a skip, or relax a timeout to force green; NEVER change source to satisfy a broken test — instead fix the faulty party the verdict named, at its owning layer. Spec silent or ambiguous → STOP and ask.
 
 ## Debug Mindset (NON-NEGOTIABLE)
 
@@ -204,7 +228,7 @@ NEVER declare a confirmed root cause straight from investigation. Run `$why-revi
 
 - `$why-review` PASSES → declare confirmed, proceed to `$fix`
 - `$why-review` finds GAPS/risks → collect additional evidence, repeat
-- 2 validation rounds without passing → STOP, escalate to user via a direct user question
+- 2 validation rounds without passing → STOP, escalate to user by asking the user directly
 
 ## ⚠️ MANDATORY: Post-Fix Verification
 
@@ -229,7 +253,7 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 
 ## Workflow Recommendation
 
-**MUST ATTENTION — NO EXCEPTIONS:** Not in workflow? Use a direct user question:
+**MUST ATTENTION — NO EXCEPTIONS:** Not in workflow? Use ask the user directly:
 
 1. **Activate `workflow-bugfix` workflow** (Recommended) — scout → investigate → debug → plan → fix → prove-fix → review → test
 2. **Execute `$debug-investigate` directly** — standalone
@@ -238,14 +262,14 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 
 ## Next Steps (Standalone only — skip if inside workflow)
 
-**MUST ATTENTION** use a direct user question after completing. NEVER auto-decide next step:
+**MUST ATTENTION** use ask the user directly after completing. NEVER auto-decide next step:
 
 - **"Proceed with full workflow (Recommended)"** — detect best workflow to continue from here
 - **"$fix"** — apply fix based on debug findings
 - **"$plan"** — if fix requires planning first
 - **"Skip, continue manually"** — user decides
 
-**Standalone Review Gate:** Outside workflow? MUST create `$review-changes` task as LAST task.
+**Standalone Review Gate:** Outside workflow? MUST create `$changes-review` task as LAST task.
 
 ---
 
@@ -338,6 +362,22 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 
 <!-- /SYNC:source-test-drift-check -->
 
+<!-- SYNC:test-failure-fault-adjudication -->
+
+> **Test-Failure Fault Adjudication** — When a test fails (or you are debugging or fixing a failure), the job is to determine _who is at fault — the source code or the test code_. Getting that verdict right matters more than turning the suite green. Binds every debug / fix / test skill identically.
+>
+> 1. **Root-cause first — never guess, never patch the symptom.** `$debug-investigate` and trace the failure end-to-start to its actual cause before touching either side. A green-again suite is NOT the goal; a correct verdict on what was actually wrong is.
+> 2. **Triangulate against the spec AND the source.** If a governing Feature Spec covers the behavior (e.g. `docs/specs/**` — §3 ACs / §4 BRs / §5 invariants / §8 TCs), it is the tiebreaker for _intended_ behavior — compare BOTH the production source and the failing test against it. With no spec, the documented intent / acceptance criteria / caller contract is the reference. Decide from this evidence whether the SOURCE is wrong or the TEST is wrong.
+> 3. **Classify who is at fault, then fix the wrong side at its root:**
+>     - **SOURCE-WRONG** — production code violates the spec's intended behavior or a clear invariant → fix the source at the owning layer; keep or strengthen the test that caught it.
+>     - **TEST-WRONG** — the test encodes a stale or incorrect assertion, setup, or expectation that contradicts intended behavior → fix the test at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green.
+>     - NEVER change a test to match broken source, and NEVER change source to satisfy a broken test. (Migration code excluded — schema/data migrations are one-time execution paths, not core application logic.)
+> 4. **Ask the user when intended behavior is unclear.** If no spec covers the behavior, the spec is silent, or the spec is ambiguous about which side is correct, STOP and ask the user directly (or consult the canonical spec owner) before editing either side — never silently pick source or test just to make the suite pass.
+>
+> Reconcile to intended behavior, never to whichever side currently passes — green can encode the very bug.
+
+<!-- /SYNC:test-failure-fault-adjudication -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -347,8 +387,9 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -373,11 +414,11 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -418,7 +459,7 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -643,7 +684,7 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 
 <!-- SYNC:red-flag-stop-conditions -->
 
-> **Red Flag Stop Conditions** — STOP and escalate to user via ask the user directly when:
+> **Red Flag Stop Conditions** — STOP and escalate to user by asking the user directly when:
 >
 > 1. Confidence drops below 60% on any critical decision
 > 2. Changes would affect >20 files (blast radius too large)
@@ -707,8 +748,8 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -766,12 +807,13 @@ After `$fix` applies changes, `$prove-fix` MUST be run — builds code proof tra
 **IMPORTANT MUST ATTENTION** NEVER fix at the crash site — trace full data flow origin → crash, fix at the lowest invariant-owning layer that protects ALL downstream consumers — why: the crash site is a symptom; scattered guards at consumers signal nobody owns the invariant.
 **MUST ATTENTION** trace END-to-START — name Frame 0 (observed final state), walk reader → storage/projection → writer → consumer/job → producer, enumerate ALL feeder paths, build the hypothesis matrix BEFORE proposing any fix — why: the bug enters where bad state is WRITTEN, not where it crashes.
 **MUST ATTENTION** every root-cause claim carries `Confidence: X%` + `file:line` proof; <60% → report "hypothesis, not confirmed" with named evidence gaps, NEVER a guess — why: self-confirmed findings rationalize their own gaps.
-**MUST ATTENTION** NEVER declare a confirmed root cause without passing the `$why-review` gate (SAME session, SAME main agent, NO sub-agent); 2 rounds without passing → STOP, escalate via a direct user question.
+**MUST ATTENTION** NEVER declare a confirmed root cause without passing the `$why-review` gate (SAME session, SAME main agent, NO sub-agent); 2 rounds without passing → STOP, escalate by asking the user directly.
 **MUST ATTENTION** search 3+ existing patterns and READ the actual code before concluding — cite `file:line`; inference alone is insufficient — why: trial-and-error and assumed APIs hallucinate causes.
+**MUST ATTENTION** failing/flaky integration test → run **Phase 0.5 Fault Adjudication BEFORE any trace**: READ the `$integration-test-review` protocol (8 assertion-quality / repeatability / domain-logic / scenario-fidelity gates) — NEVER invoke that skill, the verify loop owns the invocation — then emit ONE verdict: TEST-WRONG · TEST-NOT-OPTIMAL · SOURCE-WRONG · ENVIRONMENT · AMBIGUOUS (→ STOP and ask) — why: without that verdict the trace targets the wrong side and can rationalize a broken invariant as green.
 **MUST ATTENTION** run a graph trace when `graph.db` exists — `callers_of` / `importers_of` / `tests_for` / `trace` reveal MESSAGE_BUS consumers and event handlers grep cannot see — why: cross-service chains are invisible to text search.
 **MUST ATTENTION** prove convergence FORWARD after choosing the fix layer — walk start → end, map each root cause to a fix part and each fix part to a test/proof; `$prove-fix` MUST run after `$fix` applies changes.
 **MUST ATTENTION** OOM/memory → check row COUNT before row SIZE (unbounded query > large row); 3+ failed fixes → STOP, question the architecture, escalate to user.
-**MUST ATTENTION** bootstrap task tracking task tracking BEFORE first file read; persist findings incrementally to `plans/reports/`; standalone (outside workflow) → add a `$review-changes` task as the LAST task — why: context cutoff loses in-memory findings.
+**MUST ATTENTION** bootstrap task tracking task tracking BEFORE first file read; persist findings incrementally to `plans/reports/`; standalone (outside workflow) → add a `$changes-review` task as the LAST task — why: context cutoff loses in-memory findings.
 
 **Anti-Rationalization:**
 
@@ -871,8 +913,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -883,6 +926,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

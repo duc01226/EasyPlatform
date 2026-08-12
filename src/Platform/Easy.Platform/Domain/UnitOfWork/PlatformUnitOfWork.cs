@@ -42,7 +42,11 @@ public interface IPlatformUnitOfWork : IDisposable
 
     /// <summary>
     /// Gets or sets the list of actions to be executed when the unit of work is disposed.
-    /// Each action in the list is a function returning a Task, allowing for asynchronous operations.
+    /// <para>
+    /// Each action is a <c>Func&lt;Task&gt;</c>, but MUST complete synchronously (return an already-completed Task,
+    /// e.g. <c>Task.CompletedTask</c>): Dispose invokes them via <c>.WaitResult()</c>, so an action that actually
+    /// awaits I/O would reintroduce the sync-over-async threadpool blocking on dispose that this design avoids.
+    /// </para>
     /// </summary>
     public ConcurrentBag<Func<Task>> OnDisposedActions { get; set; }
 
@@ -434,11 +438,17 @@ public abstract class PlatformUnitOfWork : IPlatformUnitOfWork
 
             Disposed = true;
 
-            OnDisposedActions
-                .ParallelAsync(p => Util.TaskRunner.CatchException(
-                    p.Invoke,
-                    ex => LoggerFactory.CreateLogger(GetType()).LogError(ex.BeautifyStackTrace(), "Invoke DisposedActions error.")))
-                .Wait();
+            // Keep manager bookkeeping synchronous so a disposed UoW cannot remain visible to the next Begin(false)
+            // call. Current OnDisposedActions are only idempotent manager-tracking removals.
+            // The previous `OnDisposedActions.ParallelAsync(...).Wait()` was sync-over-async: under high-concurrency
+            // transient-read disposal (e.g. the Insights UpsertDocuments nested fan-out draining a large set) every
+            // read blocked a threadpool thread waiting on Task.Run work queued BEHIND it, hill-climbing the pool into
+            // starvation. Invoke directly; exceptions stay logged inside CatchException.
+            foreach (var onDisposedAction in OnDisposedActions)
+                Util.TaskRunner.CatchException(
+                        onDisposedAction,
+                        ex => LoggerFactory.CreateLogger(GetType()).LogError(ex.BeautifyStackTrace(), "Invoke DisposedActions error."))
+                    .WaitResult();
             OnDisposedActions.Clear();
 
             AssociatedToDisposeWithServiceScope?.Dispose();

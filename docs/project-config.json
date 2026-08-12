@@ -367,6 +367,16 @@
         },
         "guideDoc": "docs/project-reference/integration-test-reference.md"
     },
+    "integrationTestVerify": {
+        "guidance": "BLOCKING PREREQUISITE: the easyplatform-example infrastructure stack (sql-data, mongo-data, postgres-sql, rabbitmq, redis-cache) must be running before any integration test run. The suite connects to fixed localhost ports (Mongo 27017, RabbitMQ 5672, Redis 6379, Postgres 54320, SQL Server 14330) declared in src/Backend/PlatformExampleApp.IntegrationTests/appsettings.json. Those ports are NOT proof the right stack is up: any other Docker Compose project publishing the same ports will accept the connections and the suite will run green-or-red against foreign infrastructure with no error. Always verify container IDENTITY via systemCheckCommand (compose-project label), never mere connectivity. Empty systemCheckCommand output means NOT started, even if the ports respond. The text-snippet-api container is NOT required: the suite hosts the API in-process via WebApplicationFactory with port binding disabled (see WebAppFactory/TextSnippetWebApplicationFactory.cs); a separately running API is a conflict risk, not a dependency.",
+        "referenceDocs": ["docs/project-reference/integration-test-reference.md"],
+        "startupScript": "src/start-dev-platform-example-app.infrastructure.cmd",
+        "runScript": "src/start-dev-platform-example-app.cmd",
+        "systemCheckCommand": "docker ps --filter \"label=com.docker.compose.project=easyplatform-example\" --format \"{{.Names}} => {{.Status}}\"",
+        "quickRunCommand": "dotnet test",
+        "testProjectPattern": "**/*.IntegrationTests.csproj",
+        "testProjects": ["src/Backend/PlatformExampleApp.IntegrationTests/PlatformExampleApp.IntegrationTests.csproj"]
+    },
     "e2eTesting": {
         "framework": "playwright",
         "language": "typescript",

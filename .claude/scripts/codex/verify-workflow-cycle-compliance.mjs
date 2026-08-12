@@ -100,7 +100,7 @@ const GOAL_CONTRACT_SKILL_IDS = [
 
 // Review gates: must additionally emit Goal Satisfaction status before PASS.
 const GOAL_CONTRACT_REVIEW_SKILL_IDS = [
-  "review-changes",
+  "changes-review",
   "why-review",
   "plan-review",
   "code-review",
@@ -132,6 +132,95 @@ const GOAL_CONTRACT_FILE_REQUIRED_SECTIONS = [
   "Iteration Log",
   "Goal Satisfaction",
 ];
+
+// --- workflow-review-changes inline-in-main-session execution policy -----------------------------
+// workflow-review-changes is the documented EXCEPTION to "nested workflow -> sub-agent": its Step 0
+// `/goal` gate binds the session Stop hook and its step-15 re-review is inline by design, so a
+// sub-agent cannot host it without silently dropping the unabandonable review->fix->re-review loop.
+// These checks assert the canonical `.claude` surfaces DECLARE the inline mandate and carry NO
+// residual whole-workflow sub-agent mandate. `.agents/**` mirrors are owned by the sync tooling
+// (same portability rule as the goal-contract checks above — gating on a generated mirror would make
+// source-first edits unverifiable). Patterns are intentionally semantic (phrase, not exact wording)
+// so a correct rewording stays green; a regression to sub-agent delegation fails loudly.
+const REVIEW_CHANGES_INLINE_MAIN_SESSION = /inline\s+in\s+the\s+main\s+(?:current\s+)?session/i;
+const REVIEW_CHANGES_OBSOLETE_SUBAGENT_MANDATE = /MUST RUN AS SUB-AGENT/i;
+// Old start-workflow HARD-GATE row delegating the whole workflow to a `code-reviewer` sub-agent.
+const REVIEW_CHANGES_OBSOLETE_DELEGATION_ROW =
+  /\|\s*`?[/$]?workflow-review-changes`?\s*\|[^\n]*`code-reviewer`/i;
+
+const REVIEW_CHANGES_INLINE_SURFACES = [
+  {
+    rel: ".claude/skills/workflow-review-changes/SKILL.md",
+    require: [
+      { label: "inline-in-main-session execution mandate", re: REVIEW_CHANGES_INLINE_MAIN_SESSION },
+    ],
+    forbid: [
+      { label: "obsolete 'MUST RUN AS SUB-AGENT' whole-workflow mandate", re: REVIEW_CHANGES_OBSOLETE_SUBAGENT_MANDATE },
+    ],
+  },
+  {
+    rel: ".claude/skills/start-workflow/SKILL.md",
+    require: [
+      {
+        label: "workflow-review-changes inline-in-main-session exception",
+        re: /workflow-review-changes[^\n]*inline\s+in\s+the\s+main\s+session/i,
+      },
+    ],
+    forbid: [
+      {
+        label: "obsolete sub-agent delegation row mapping workflow-review-changes to code-reviewer",
+        re: REVIEW_CHANGES_OBSOLETE_DELEGATION_ROW,
+      },
+    ],
+  },
+  {
+    rel: ".claude/skills/claude-md-init/references/claude-md-template.md",
+    require: [
+      {
+        label: "§3 workflow-review-changes inline-in-main-session exception",
+        re: /workflow-review-changes[^\n]*inline\s+in\s+the\s+main\s+(?:current\s+)?session/i,
+      },
+    ],
+    forbid: [],
+  },
+];
+
+// Pure, content-only checker (exported for unit tests): given a known surface `rel` and its
+// content, return the list of inline-execution policy violations. Unknown `rel` ⇒ no-op.
+export function checkReviewChangesInlineExecutionPolicy(rel, content) {
+  const failures = [];
+  const surface = REVIEW_CHANGES_INLINE_SURFACES.find((s) => s.rel === rel);
+  if (!surface) return failures;
+  for (const req of surface.require) {
+    if (!req.re.test(content)) {
+      failures.push(
+        `workflow-review-changes inline-execution violation (${rel}): missing ${req.label} — workflow-review-changes MUST declare it runs INLINE in the main session when a step inside a parent workflow`
+      );
+    }
+  }
+  for (const forbid of surface.forbid) {
+    if (forbid.re.test(content)) {
+      failures.push(
+        `workflow-review-changes inline-execution violation (${rel}): found ${forbid.label} — workflow-review-changes MUST run inline in the main session, never as a sub-agent (its Step 0 /goal gate owns the session Stop hook)`
+      );
+    }
+  }
+  return failures;
+}
+
+async function checkReviewChangesInlineExecutionCoverage(rootDir, failures) {
+  let checkedCount = 0;
+  for (const surface of REVIEW_CHANGES_INLINE_SURFACES) {
+    const filePath = path.join(rootDir, ...surface.rel.split("/"));
+    // Absent surface ⇒ this framework checkout does not ship it (skip, do not fail) — same
+    // portability rule as the optional mirror carriers and goal-contract coverage above.
+    if (!(await exists(filePath))) continue;
+    const content = await fs.readFile(filePath, "utf8");
+    failures.push(...checkReviewChangesInlineExecutionPolicy(surface.rel, content));
+    checkedCount += 1;
+  }
+  return checkedCount;
+}
 
 export function checkGoalContractSkillCompliance(skillId, content, { requireSatisfaction = false } = {}) {
   const failures = [];
@@ -341,9 +430,9 @@ function ensureWorkflowPolicy(workflowId, workflow, sequence, failures) {
   }
 
   if (TDD_WORKFLOW_IDS.has(workflowId)) {
-    if (!hasOrderedSubsequence(sequence, ["spec [mode=tests]", "review-artifact --type=spec-tests"])) {
+    if (!hasOrderedSubsequence(sequence, ["spec [mode=tests]", "artifact-review --type=spec-tests"])) {
       failures.push(
-        `Workflow policy violation (${workflowId}): missing ordered spec [mode=tests] -> review-artifact --type=spec-tests`
+        `Workflow policy violation (${workflowId}): missing ordered spec [mode=tests] -> artifact-review --type=spec-tests`
       );
     }
     if (!sequence.includes("spec [mode=sync]")) {
@@ -677,6 +766,11 @@ async function main() {
 
   const goalContractCheckedCount = await checkGoalContractSkillCoverage(rootDir, failures);
 
+  const reviewChangesInlineCheckedCount = await checkReviewChangesInlineExecutionCoverage(
+    rootDir,
+    failures
+  );
+
   if (failures.length > 0) {
     console.error("[codex-verify-workflow-cycle] FAIL");
     for (const failure of failures) {
@@ -690,7 +784,7 @@ async function main() {
     (id) => Array.isArray(workflows[id]?.parallelGroups) && workflows[id].parallelGroups.length > 0
   ).length;
   console.log(
-    `[codex-verify-workflow-cycle] PASS (${workflowIds.length} workflow(s) across .claude/.agents skills; ${TARGET_WORKFLOW_IDS.length} policy-checked; ${groupedCount} parallelGroups workflow(s) parity-checked; ${goalContractCheckedCount} goal-contract skill(s) checked)`
+    `[codex-verify-workflow-cycle] PASS (${workflowIds.length} workflow(s) across .claude/.agents skills; ${TARGET_WORKFLOW_IDS.length} policy-checked; ${groupedCount} parallelGroups workflow(s) parity-checked; ${goalContractCheckedCount} goal-contract skill(s) checked; ${reviewChangesInlineCheckedCount} workflow-review-changes inline-execution surface(s) checked)`
   );
 }
 
@@ -723,6 +817,7 @@ export {
   renderExpectedBarrierToken,
   checkParallelGroupsStructure,
   checkParallelGroupsMirrorParity,
+  REVIEW_CHANGES_INLINE_SURFACES,
   GOAL_CONTRACT_MARKER,
   GOAL_CONTRACT_SKILL_IDS,
   GOAL_CONTRACT_REVIEW_SKILL_IDS,

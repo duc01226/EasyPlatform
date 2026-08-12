@@ -18,6 +18,7 @@ Record the discovered examples with file evidence before writing a new test. If 
 Every integration test created through this skill must satisfy these rules:
 
 - Exercise real dependency wiring for the scope under test. Do not replace the behavior under review with mocks unless the local reference docs explicitly define that boundary.
+- Reproduce a sequence, pacing, and data shape production can actually reach — pass the Real-World Fidelity Gate below before writing the arrange step (barrier shape: Pattern 10).
 - Link to one protected business intent or invariant.
 - Include a TC ID comment and the configured test-spec annotation mechanism.
 - Seed unique data so the test can run repeatedly without cleanup.
@@ -25,6 +26,22 @@ Every integration test created through this skill must satisfy these rules:
 - Wrap data-state assertions in the repository's async wait/poll helper when writes, handlers, consumers, projections, or background work can be delayed.
 - Keep one behavior per test unless the local pattern uses scenario tables for the same invariant.
 - Reuse existing fixture, seeding, auth/user-context, clock, queue, storage, and cleanup helpers.
+
+<!-- SYNC:real-world-fidelity-testing -->
+
+> **Real-World Fidelity Gate** — MANDATORY when authoring, reviewing, or repairing any integration / E2E / system test.
+>
+> A test earns trust by reproducing a situation the system can actually meet in production. A scenario that could never occur in real life proves nothing when it passes, and wastes hours when it fails.
+>
+> 1. **Ask the fidelity question BEFORE writing the setup:** _"Can this sequence, timing, and data actually occur in production?"_ If no, the test is mis-specified — fix the SCENARIO, never the assertion.
+> 2. **Model real pacing between actor steps.** Two distinct actor actions that production separates by seconds, minutes, or hours MUST NOT be fired back-to-back in the same millisecond. Compressed pacing manufactures races the system was never designed to survive, then reports them as product defects.
+> 3. **Wait on a real signal, never a blind sleep.** Find an observable proving the prior step finished — a persisted state change, an audit/version stamp, a queue/worker idle marker, a completion event — and poll until it settles (unchanged across a short stability window). Use a fixed delay ONLY when no observable exists, and say so in a comment.
+> 4. **Barriers belong in ARRANGE, never in ASSERT.** Waiting for a precondition is fidelity. Widening an assertion's timeout, loosening a comparison, adding a retry around a failing assertion, or skipping the test is masking. NEVER do the latter to force green.
+> 5. **Distinguish harness-amplified from real.** Test topologies (shared infra, fan-out consumers, parallel suites, cold starts) can make a rare production race routine locally. Before filing a product defect, state whether the trigger exists in production and at what likelihood.
+> 6. **Keep the protected invariant intact.** Improving fidelity must NEVER reduce what the test protects. If a realistic scenario no longer exercises the rule, the rule needs a DIFFERENT realistic scenario — not a weaker assertion.
+> 7. **Deliberate impossible-state tests are allowed, but MUST be labelled.** Corruption-repair, migration, and fail-safe tests intentionally construct states production should never reach; comment WHY the state is reachable (upstream bug, partial write, legacy data), so they are never confused with unrealistic setups.
+
+<!-- /SYNC:real-world-fidelity-testing -->
 
 ## TC Annotation Pattern
 
@@ -136,6 +153,40 @@ Use when an invariant must hold across an INPUT SPACE, not just one hand-picked 
 6. **Tie the property back to a §8 Invariant/Property TC.** Each property test carries the `TestSpec` annotation linking to its TC-{FEATURE}-{NNN} (the spec's Invariant/Property TC category). One Invariant/Property TC may map to one property test that internally covers the whole space — do NOT split it into one TC per generated input.
 
 Prefer a property test over a hand-picked example whenever the behavior owns a universally-quantified rule (a conservation law, a round-trip, an ordering, an idempotent transition). Keep example-based tests for concrete acceptance scenarios and specific edge cases; use property tests to guard the invariant across the space the examples cannot enumerate.
+
+## Pattern 10: Settle Barrier Between Actor Steps
+
+Use when one arrange step must be fully absorbed by the system before the next actor action starts — the fidelity tool for behaviors production separates by seconds, minutes, or hours (see the Real-World Fidelity Gate above). Firing both actions in the same millisecond lets in-flight asynchronous work from step 1 land after step 2 and overwrite it, which surfaces as a phantom product defect.
+
+1. **Pick an observable that proves step 1 finished** — the persisted field the step writes, an audit/version/revision stamp, a queue depth or worker-idle marker, a completion event, or a projection's last-processed marker. Prefer the one closest to the work that can clobber the next step.
+2. **Poll it until it stops changing**, not until it first appears: capture the value, wait a short interval, re-capture, and treat it as settled only when it is unchanged across a stability window (a few consecutive identical reads).
+3. **Bound the wait** with a maximum duration drawn from the timeouts nearby tests already use.
+4. **Return best-effort on timeout — do NOT fail inside the barrier.** The barrier is arrange, not verdict: let the real assertions produce the failure so the report names the broken behavior, not the helper.
+5. **Call it in ARRANGE, between the two actor actions.** Reuse the suite's existing async wait/poll helper rather than adding a new one.
+
+```text
+settleBarrier(readObservable, maxWait, pollInterval, stableReads):
+    deadline  = now + maxWait
+    last      = readObservable()
+    stableHits = 0
+    while now < deadline:
+        wait(pollInterval)
+        current = readObservable()
+        stableHits = (current == last) ? stableHits + 1 : 0
+        last = current
+        if stableHits >= stableReads:
+            return SETTLED
+    return NOT_SETTLED        # best-effort: let the test's own assertions decide the verdict
+```
+
+**Contrast with the anti-patterns it replaces:**
+
+| Shape                                           | Why it is wrong                                                                                                                                |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fixed sleep between the two actor actions       | Guesses a duration; too short still races, too long taxes every run. Only acceptable when NO observable exists — and then say so in a comment. |
+| Widening the failing assertion's timeout        | Masks a scenario defect as a slow assertion. The precondition never settled; the assertion is not the broken part.                             |
+| Retry loop wrapped around the failing assertion | Converts a fidelity gap into flake tolerance and hides the overwrite entirely.                                                                 |
+| Skipping or deleting the test                   | Drops the protected invariant. The rule still needs a realistic scenario.                                                                      |
 
 ## Anti-Patterns
 

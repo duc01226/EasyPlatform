@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -60,21 +61,25 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
+- **Purpose:** turn business artifacts into a user-validated DDD domain model (bounded contexts, aggregates, entities, VOs, domain events, ERD) so downstream code builds on correct invariants — never re-cut boundaries after consumers depend on them.
+- **Ten ordered steps (do all, none skippable):** 0 locate active plan + `domain-entities-reference.md` → 1 load business context (nouns→entities, verbs→events) → 2 identify bounded contexts → 3 model entities & aggregates → 4 map relationships → 5 domain events → 6 generate Mermaid ERD → 7 user-validation interview → 8 entity-change assessment vs reference doc → 9 update `plan.md` `## Domain Model`.
 - Drive the model from business artifacts, not guesses: load plan/PBI/business-eval inputs and `domain-entities-reference.md`, then extract nouns→entities, verbs→events, roles, and processes before classifying anything.
 - Every concept passes the Entity-vs-VO matrix and aggregate boundary rules (≤5 entities, one transaction, reference-by-ID only, root is the sole mutation entry) — flag primitive obsession and anemic models as you go.
-- User validation is non-skippable: present bounded contexts and the Mermaid ERD, then run the 5-8 question a direct user question interview to confirm boundaries, aggregate roots, and event flows before marking the model confirmed.
+- User validation is non-skippable: present bounded contexts and the Mermaid ERD, then run the 5-8 question ask the user directly interview to confirm boundaries, aggregate roots, and event flows before marking the model confirmed.
 - Close the loop on persistence: reconcile findings against `domain-entities-reference.md` (new/modified/deprecated), update the `## Domain Model` section of `plan.md`, and keep cross-context communication event-driven with `{AggregateNoun}{PastTenseVerb}` naming and no cross-service FKs.
 
 **Workflow:**
 
-1. **Load Business Context** — Read idea, business evaluation, refined PBI artifacts + domain-entities-reference.md
-2. **Identify Bounded Contexts** — Group related concepts, define context boundaries
+0. **Locate Active Plan & Domain Reference** — Glob `plans/*/plan.md`, read plan + prior research + `domain-entities-reference.md`; set `{plan-dir}`
+1. **Load Business Context** — Read idea, business evaluation, refined PBI artifacts; extract nouns→entities, verbs→events, roles, processes
+2. **Identify Bounded Contexts** — Group related concepts, define context boundaries (validate grouping with user)
 3. **Model Entities & Aggregates** — Define aggregates, entities, value objects per context
-4. **Map Relationships** — Entity relationships, cross-context integration points
-5. **Domain Events** — Identify events crossing context boundaries
+4. **Map Relationships** — Entity relationships, cross-context integration points (context map)
+5. **Domain Events** — Identify events crossing context boundaries, `{AggregateNoun}{PastTenseVerb}`
 6. **Generate ERD** — Mermaid ER diagram with all entities and relationships
-7. **User Validation** — Present model, ask 5-8 questions, confirm decisions
-8. **Domain Entity Change Assessment** — Compare against domain-entities-reference.md, update if needed
+7. **User Validation** — Present model, ask 5-8 questions, confirm decisions → `status: confirmed`
+8. **Domain Entity Change Assessment** — Compare against `domain-entities-reference.md`, update/create if needed
+9. **Update Main Plan** — Append/update `## Domain Model` section of `{plan-dir}/plan.md`
 
 **Key Rules:**
 
@@ -645,7 +650,7 @@ Group related entities using DDD principles. Apply context boundary signals from
 - Two entities with same name but different invariants? → separate contexts
 - Can this context be worked on without understanding the other? → good separation
 
-**MANDATORY IMPORTANT MUST ATTENTION** present identified contexts to user via a direct user question:
+**MANDATORY IMPORTANT MUST ATTENTION** present identified contexts to user by asking the user directly:
 
 - "I identified {N} bounded contexts: {list}. Does this grouping make sense?"
 - Options: Agree (Recommended) | Merge {X} and {Y} | Split {Z} | Add missing context
@@ -778,7 +783,7 @@ erDiagram
 
 ### Step 7: User Validation Interview
 
-**MANDATORY IMPORTANT MUST ATTENTION** present domain model and ask 5-8 questions via a direct user question:
+**MANDATORY IMPORTANT MUST ATTENTION** present domain model and ask 5-8 questions by asking the user directly:
 
 #### Required Questions
 
@@ -808,7 +813,7 @@ After user confirms, update report with final decisions and mark as `status: con
 1. **Identify new entities** — in analysis but not in reference doc
 2. **Identify modified entities** — changed fields, relationships, or bounded context assignment
 3. **Identify deprecated entities** — in reference doc but no longer needed by feature
-4. **Present changes to user** via a direct user question:
+4. **Present changes to user** by asking the user directly:
     - "Domain entity changes detected: {N} new, {N} modified, {N} deprecated. Proceed with updating domain-entities-reference.md?"
     - Options: Approve all (Recommended) | Review each change | Skip update
 
@@ -863,7 +868,7 @@ Report must be **≤250 lines**. Use tables over prose.
 ---
 
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** validate EVERY bounded context and key relationship with user via a direct user question.
+**MANDATORY IMPORTANT MUST ATTENTION** validate EVERY bounded context and key relationship with user by asking the user directly.
 **MANDATORY IMPORTANT MUST ATTENTION** include Mermaid ERD and confidence % for all architectural decisions.
 **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 
@@ -871,16 +876,16 @@ Report must be **≤250 lines**. Use tables over prose.
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, use a direct user question to present these options:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, use ask the user directly to present these options:
 
-- **"$review-domain-entities (Recommended)"** — Review DDD quality of entities modeled/modified in this analysis (anemic model, VO classification, invariant enforcement, aggregate boundaries)
+- **"$domain-entities-review (Recommended)"** — Review DDD quality of entities modeled/modified in this analysis (anemic model, VO classification, invariant enforcement, aggregate boundaries)
 - **"$tech-stack-research"** — Research tech stack based on domain model
 - **"$plan"** — If tech stack already decided and entity quality already reviewed
 - **"Skip, continue manually"** — user decides
 
 ### Council escalation (always-offer, second prompt)
 
-After the existing `## Next Steps` prompt above resolves, present a **second**, independent a direct user question call (do NOT merge into the first):
+After the existing `## Next Steps` prompt above resolves, present a **second**, independent ask the user directly call (do NOT merge into the first):
 
 - **"Skip council — proceed with model (Recommended)"** — Continue with the bounded contexts / aggregate boundaries as drawn. Recommended default.
 - **"Escalate to $llm-council"** — Run 11 sub-agent council (5 advisors + 5 reviewers + chairman). Best applied when bounded-context splits or aggregate boundaries are contested (multiple defensible cuts), the model touches >=3 services, or invariants span aggregates. DDD boundary decisions are hard to reverse once consumers depend on them. Cheaper alternatives: `$why-review`, `$plan-validate` (run these first if you haven't).
@@ -888,7 +893,7 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 ---
 
 **MANDATORY IMPORTANT MUST ATTENTION** use task tracking to break ALL work into small tasks BEFORE starting.
-**MANDATORY IMPORTANT MUST ATTENTION** use a direct user question at EVERY decision point — validate every bounded context and entity relationship with user.
+**MANDATORY IMPORTANT MUST ATTENTION** use ask the user directly at EVERY decision point — validate every bounded context and entity relationship with user.
 **MANDATORY IMPORTANT MUST ATTENTION** produce ERD diagram (Mermaid) and domain model report with confidence %.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
@@ -906,8 +911,9 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -951,7 +957,8 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Critical Thinking:** Traced proof per claim; confidence >80% to act, NEVER guess as fact.
 
-**IMPORTANT MUST ATTENTION** validate EVERY bounded context + key relationship with user via a direct user question — NEVER auto-decide a boundary — why: DDD boundaries are hard to reverse once consumers depend on them; one wrong cut costs days of rework.
+**IMPORTANT MUST ATTENTION** run ALL ten ordered steps, none skippable: 0 locate plan + reference → 1 load context → 2 bounded contexts → 3 entities/aggregates → 4 relationships → 5 domain events → 6 Mermaid ERD → 7 user-validation interview → 8 entity-change assessment → 9 update `plan.md` — why: AI keeps dropping Step 0 (plan load) and Step 9 (plan update), leaving the model un-anchored and un-persisted.
+**IMPORTANT MUST ATTENTION** validate EVERY bounded context + key relationship with user by asking the user directly — NEVER auto-decide a boundary — why: DDD boundaries are hard to reverse once consumers depend on them; one wrong cut costs days of rework.
 **IMPORTANT MUST ATTENTION** domain events ALWAYS follow `{AggregateNoun}{PastTenseVerb}` naming — NEVER command-style (`CancelOrder`) or generic (`OrderStatusChanged`) — why: command/generic names hide what happened and break consumer routing.
 **IMPORTANT MUST ATTENTION** NEVER place cross-service FK in the ERD — use ID reference (`{Entity}Id` string/ULID) + event-driven sync only — why: cross-service FK couples schemas and blocks independent deployment.
 
@@ -966,13 +973,13 @@ After the existing `## Next Steps` prompt above resolves, present a **second**, 
 
 **Anti-Rationalization:**
 
-| Evasion                                         | Rebuttal                                                                                  |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| "Boundaries are obvious, skip user validation"  | User validation is non-skippable — run the 5-8 question a direct user question interview. |
-| "Already know the entities, skip reference doc" | Show `file:line` from `domain-entities-reference.md`. No proof = not checked.             |
-| "This concept is clearly an entity"             | Run the Entity-vs-VO matrix anyway — state confidence %. Pattern-matching skips context.  |
-| "Small model, skip task tracking"               | Still task tracking first. Skip depth, never skip tracking.                               |
-| "Cross-service link is just one FK"             | Never — ID reference + event-driven sync. One FK couples two schemas permanently.         |
+| Evasion                                         | Rebuttal                                                                                 |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| "Boundaries are obvious, skip user validation"  | User validation is non-skippable — run the 5-8 question ask the user directly interview. |
+| "Already know the entities, skip reference doc" | Show `file:line` from `domain-entities-reference.md`. No proof = not checked.            |
+| "This concept is clearly an entity"             | Run the Entity-vs-VO matrix anyway — state confidence %. Pattern-matching skips context. |
+| "Small model, skip task tracking"               | Still task tracking first. Skip depth, never skip tracking.                              |
+| "Cross-service link is just one FK"             | Never — ID reference + event-driven sync. One FK couples two schemas permanently.        |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
@@ -1060,8 +1067,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -1072,6 +1080,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

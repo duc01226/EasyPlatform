@@ -119,8 +119,23 @@ def scan_skills(base_path: Path) -> List[Dict]:
     return skills
 
 DESCRIPTION_PREFIX_TO_CATEGORY = {
+    '[architecture]': 'other',
     '[decision support]': 'utilities',
 }
+
+
+def name_matches(lower_name: str, keyword: str) -> bool:
+    """Match a category keyword against a hyphen/underscore-delimited skill name.
+
+    A bare keyword must match a whole name token, so 'ui' matches `test-ui` but
+    not `demo-guide`. Keywords that are themselves prefixes ('ai-') or already
+    hyphenated ('claude-code') keep substring semantics.
+    """
+    if keyword.endswith('-'):
+        return lower_name.startswith(keyword)
+    if '-' in keyword:
+        return keyword in lower_name
+    return keyword in re.split(r'[-_]', lower_name)
 
 
 def categorize_skill(name: str, description: str, content: str) -> str:
@@ -135,39 +150,39 @@ def categorize_skill(name: str, description: str, content: str) -> str:
             return bucket
 
     # AI/ML
-    if any(x in lower_name for x in ['ai-', 'gemini', 'multimodal', 'adk']):
+    if any(name_matches(lower_name, x) for x in ['ai-', 'gemini', 'multimodal', 'adk']):
         return 'ai-ml'
 
     # Frontend
-    if any(x in lower_name for x in ['frontend', 'ui', 'design', 'aesthetic', 'threejs']):
+    if any(name_matches(lower_name, x) for x in ['frontend', 'ui', 'design', 'aesthetic', 'threejs']):
         return 'frontend'
 
     # Backend
-    if any(x in lower_name for x in ['backend', 'auth', 'payment']):
+    if any(name_matches(lower_name, x) for x in ['backend', 'auth', 'payment']):
         return 'backend'
 
     # Infrastructure
-    if any(x in lower_name for x in ['devops', 'docker', 'cloudflare', 'gcloud']):
+    if any(name_matches(lower_name, x) for x in ['devops', 'docker', 'cloudflare', 'gcloud']):
         return 'infrastructure'
 
     # Database
-    if any(x in lower_name for x in ['database', 'mongodb', 'postgresql', 'sql']):
+    if any(name_matches(lower_name, x) for x in ['database', 'mongodb', 'postgresql', 'sql']):
         return 'database'
 
     # Development Tools
-    if any(x in lower_name for x in ['mcp', 'skill-creator', 'claude-code', 'repomix', 'docs-seeker']):
+    if any(name_matches(lower_name, x) for x in ['mcp', 'skill-creator', 'claude-code', 'repomix', 'docs-seeker']):
         return 'dev-tools'
 
     # Multimedia
-    if any(x in lower_name for x in ['media', 'chrome-devtools']):
+    if any(name_matches(lower_name, x) for x in ['media', 'chrome-devtools']):
         return 'multimedia'
 
     # Frameworks
-    if any(x in lower_name for x in ['web-frameworks', 'mobile', 'shopify']):
+    if any(name_matches(lower_name, x) for x in ['web-frameworks', 'mobile', 'shopify']):
         return 'frameworks'
 
     # Utilities
-    if any(x in lower_name for x in ['debug', 'problem', 'code-review', 'plan', 'research', 'sequential']):
+    if any(name_matches(lower_name, x) for x in ['debug', 'problem', 'code-review', 'plan', 'research', 'sequential']):
         return 'utilities'
 
     return 'other'

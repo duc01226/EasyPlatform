@@ -23,7 +23,7 @@ disable-model-invocation: false
 - MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
 - NEVER skip mandatory workflow or skill gates.
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /workflow-end -> /watzup
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /changes-review -> /code-simplifier -> /docs-update -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
@@ -31,21 +31,21 @@ disable-model-invocation: false
 
 Activate the `workflow-seed-test-data` workflow. Run `/start-workflow workflow-seed-test-data` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /seed-test-data → /review-changes → /code-simplifier → /docs-update → /workflow-end → /watzup
+**Steps:** /scout → /investigate → /seed-test-data → /changes-review → /code-simplifier → /docs-update → /workflow-end → /watzup
 
 > **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
 >
 > **`/scout`** — Find feature area command files; locate existing seeders in the same service for pattern matching. Output: target seeder file path (or "none — create new") + existing seeder examples.
 > **`/investigate`** — Read the commands the seeder will call. Map: required inputs, validation rules, side effects, cross-service dependencies. Output: command signature list + dependency chain (what data must pre-exist).
 > **`/seed-test-data`** — Implement or enhance the seeder. Environment gate FIRST → read count from config → idempotency check → loop from existing to target → dispatch application commands with realistic, diverse inputs.
-> **`/review-changes`** — Full compliance review: environment gate present, count read from config key, idempotency correct (loop from `existing` not from `0`), no direct DB writes for domain entities, project's scoped DI mechanism used per iteration.
+> **`/changes-review`** — Full compliance review: environment gate present, count read from config key, idempotency correct (loop from `existing` not from `0`), no direct DB writes for domain entities, project's scoped DI mechanism used per iteration.
 > **`/code-simplifier`** — DRY and simplify the seeder without changing behavior. Merge duplication, extract reusable builders, remove unnecessary scaffolding.
 > **`/docs-update`** — Triage doc impact from changed seeder files. Update feature docs if dev-data coverage changed materially.
 > **`/workflow-end`** + **`/watzup`** — Close workflow state, then summarize and run the final `/understand` handoff.
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /review-changes -> /code-simplifier -> /docs-update -> /workflow-end -> /watzup
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /seed-test-data -> /changes-review -> /code-simplifier -> /docs-update -> /workflow-end -> /watzup
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -56,8 +56,9 @@ Activate the `workflow-seed-test-data` workflow. Run `/start-workflow workflow-s
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -47,19 +48,23 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Stage changes and create well-structured git commits following Conventional Commits format.
+**Goal:** Stage changes and create well-structured git commits following Conventional Commits format — and, when code changed, gate the commit on a user decision to verify (via `$workflow-integration-test-green`, which drives the suite to green), confirm already-verified, or explicitly skip (default: verify first).
 
 **Workflow:**
 
 1. **Analyze Changes** — Run git status/diff to understand staged and unstaged changes
 2. **Stage Changes** — Add relevant files (specific or all)
-3. **Generate Message** — Detect type (feat/fix/refactor/etc.), extract scope from paths, write subject, and add a detailed body structured as **purpose/kind → what changed → how it works**
-4. **Commit** — Create commit with HEREDOC (title + detailed summary + attribution footer)
-5. **Verify** — Confirm with git status and git log
+3. **Identify Reviewers** — from git history, list relevant reviewers (last author per touched file vs `HEAD`, excluding the commit author) and the area each must focus on — computed BEFORE the commit so the block can be embedded in the message body
+4. **Generate Message** — Detect type (feat/fix/refactor/etc.), extract scope from paths, write subject, add a detailed body structured as **purpose/kind → what changed → how it works**, and append the **Reviewers** block from step 3
+5. **Test-Verify Gate** — When staged changes include code that might need tests, ask the user (ask the user directly, default **verify**) to verify via `$workflow-integration-test-green`, confirm **Yes — already verified**, or explicitly **Skip**. Default = verify first, and verify means drive the suite to green, not merely report it
+6. **Commit** — Create commit with HEREDOC (title + detailed summary + Reviewers block + attribution footer)
+7. **Verify** — Confirm with git status and git log
 
 **Key Rules:**
 
 - Write a detailed body — **purpose/kind → what changed → how it works** — so the next human reading `git log`/`git blame` understands the change without opening the diff. As detailed as the change needs (wrap ~72 chars); no title-only commits for non-trivial changes
+- Embed a **Reviewers** block in the commit message — the per-area reviewers (last author per touched file vs `HEAD`, commit author excluded) — computed BEFORE committing so it lives in the message body, not just as a side report
+- When staged changes include code that might need tests, **gate the commit on test verification** — ask the user to verify via `$workflow-integration-test-green` (default), confirm already-verified, or explicitly skip; only an explicit **Yes** or **Skip** proceeds straight to commit, and the agent NEVER chooses skip on the user's behalf
 - Stop after the commit; push only when the user explicitly requests it (or passes `--push` / says "commit and push" → stage + commit + push via `git-manager`)
 - Never commit secrets, credentials, or .env files
 - Never use `--amend` or `--no-verify` unless explicitly requested
@@ -127,6 +132,40 @@ Before committing, check if staged files impact documentation:
 3. If matches found: invoke `$docs-update` skill, then re-stage any doc changes with `git add`
 4. If no matches: skip (log "No doc-impacting files staged")
 
+### Step 2.7: Identify Reviewers (pre-commit — feeds the message)
+
+Runs **BEFORE** the commit so the result can be embedded in the commit message body (see Step 3). Read-only (git log/blame only) — it NEVER blocks the commit and never messages anyone.
+
+For each **staged** file, find the **LAST author who touched it** (against `HEAD`, the soon-to-be parent) — that author is the natural reviewer for the area.
+
+Rules:
+
+- **EXCLUDE the commit author** from the "ask to review" list (you don't ask yourself to review) — but still surface files where the author is the only prior toucher as **author-owned, no external reviewer**.
+- **Brand-new files (no prior history)** → mark `NEW FILE — reviewer = owner of its source/sibling file`.
+- **GROUP reviewers by change AREA** (which feature/subsystem each owns) and state WHICH AREA each must focus on — not a flat name list.
+- Fetch each reviewer's email for tagging.
+
+Collect the raw last-author-per-staged-file data:
+
+```bash
+# Staged files in this pending commit
+git diff --cached --name-only \
+  | while read -r f; do
+      author=$(git log -1 --format='%an' HEAD -- "$f" 2>/dev/null)
+      email=$(git log -1 --format='%ae' HEAD -- "$f" 2>/dev/null)
+      date=$(git log -1 --format='%ad' --date=short HEAD -- "$f" 2>/dev/null)
+      [ -z "$author" ] && author="(NEW FILE — reviewer = source/sibling owner)" && date="-"
+      printf '%s\t%s\t%s\t%s\n' "$author" "$email" "$date" "$f"
+    done
+```
+
+Then: collapse by author, map each author's files to the change area, drop the commit author, and render the **Reviewers** block to embed in the commit message (Step 3) and to present to the user:
+
+| Reviewer | Email | Focus area | Files |
+| -------- | ----- | ---------- | ----- |
+
+Follow the table with a short **recommended review assignment by feature** list (area → reviewer). The skill does NOT auto-message anyone — this is the user's deliverable.
+
 ### Step 3: Generate Commit Message
 
 Analyze staged changes and generate message following **Conventional Commits**:
@@ -135,6 +174,9 @@ Analyze staged changes and generate message following **Conventional Commits**:
 <type>(<scope>): <subject>
 
 <detailed summary of changes>
+
+Reviewers:
+- <area>: <Reviewer Name> <email> — focus on <what they own>
 ```
 
 #### Type Detection
@@ -186,6 +228,36 @@ Structure body in three parts (omit a part only when genuinely empty):
 | Normal (feature/fix, single area)   | Purpose + 2–5 "what" bullets + a short "how it works"                                                               |
 | Complex (cross-cutting, subtle bug) | Purpose + grouped "what" + a full "how it works" that spells out the key invariant / edge case / why-this-over-that |
 
+### Step 3.5: Test-Verify Gate (blocking — only when code changed)
+
+Before committing, decide whether the staged changes carry **code that might need tests**. This gate protects against committing untested behaviour changes.
+
+**Trigger detection** — run `git diff --cached --name-only` and classify the staged files:
+
+- **Code that might need tests** → any change to production/source code: backend service source, frontend app source, shared libraries, scripts, hooks (`.cjs`), or other executable logic (resolve concrete source roots from `docs/project-config.json` / the project structure reference).
+- **NOT a trigger (skip the gate)** → the staged set is _only_ docs (`docs/**`, `*.md`), specs (`docs/specs/**`), test-spec/config text, changelog, or other non-executable content with no source-code change.
+
+**If the gate is NOT triggered:** log `Test-Verify Gate: skipped (no code changes staged)` and continue to Step 4.
+
+**If the gate IS triggered:** STOP and ask the user with ask the user directly (default option is **No**):
+
+> Header: `Test verify`
+> Question: `Staged code changes may need tests. Verify before committing, or skip?`
+> Options (in order — first is the default):
+>
+> 1. `Verify now — run $workflow-integration-test-green` (Recommended) — do NOT commit yet; activate the `workflow-integration-test-green` workflow, which verifies the suite AND drives any failure to green (verify → adjudicate → fix → review → re-verify) before returning. Proceed to Step 4 only once the whole suite is green; if it escalates instead of converging, surface that and stop (no commit).
+> 2. `Yes — already verified` — the user confirms the integration tests were run and passed; proceed directly to Step 4 (Commit).
+> 3. `Skip — commit without verifying` — the user's explicit, recorded decision to commit unverified code; proceed to Step 4 and note `Test-Verify Gate: skipped by user` in the response (never in the commit message).
+
+Rules:
+
+- **Default is option 1 (verify).** If the user does not actively choose "Yes" or "Skip", treat it as verify-first — never commit unverified code on assumption.
+- **Verify routes to `workflow-integration-test-green`, not to a bare verify run** — why: a bare `integration-test-verify` only reports the failures, leaving the user to hand-carry each one; the workflow owns the converge-to-green loop, so choosing "verify" actually clears the suite instead of just describing it.
+- **Yes is an explicit user assertion** that the integration tests were run and passed; honour it and commit.
+- **Skip is the user's call, and it is theirs alone to make.** Offer it, never recommend it, and NEVER select it yourself — why: an agent that can skip its own gate has no gate.
+- Re-run this gate only once per commit; after a `verify → green`, proceed to commit without re-asking.
+- This gate is independent of `--push`: it runs before the commit in every mode.
+
 ### Step 4: Commit
 
 Use HEREDOC for proper formatting:
@@ -197,10 +269,15 @@ type(scope): subject
 - summarize key change 1 with intent
 - summarize key change 2 with impact
 
+Reviewers:
+- <area>: Reviewer Name <reviewer@email> — focus on <what they own>
+
 Generated by AI
 EOF
 )"
 ```
+
+> The **Reviewers** block comes from Step 2.7 (last author per staged file vs `HEAD`, commit author excluded, grouped by area). Omit the block only when every staged file is brand-new or author-owned with no external reviewer — in that case state `Reviewers: none (author-owned / new files)`.
 
 ### Step 5: Verify
 
@@ -208,6 +285,8 @@ EOF
 git status
 git log -1
 ```
+
+Confirm the committed message body contains the **Reviewers** block from Step 2.7 (or the explicit `Reviewers: none (author-owned / new files)` line). Re-present the per-area reviewer assignment to the user as the final deliverable so they can request the right reviewers on the resulting PR.
 
 ## Examples
 
@@ -218,15 +297,26 @@ feat(order): add warehouse filter to list
 - wire frontend filter control to request payload
 - update tests for filtered and unfiltered list behavior
 
+Reviewers:
+- order backend: Jane Doe <jane@acme.com> — focus on the list endpoint query change
+- order UI: Bob Lee <bob@acme.com> — focus on the filter control wiring
+
+Generated by AI
+
 fix(validation): handle empty date range
 
 - guard null/empty date inputs before parsing
 - return validation message instead of throwing format exception
+
+Reviewers: none (author-owned / new files)
+
+Generated by AI
 ```
 
 ## Critical Rules
 
 - **ALWAYS stage all unstaged changes** before committing — run `git add .` (or specific files) so nothing is left behind
+- **Test-Verify Gate (Step 3.5):** when staged changes include code that might need tests, ask the user to verify via `$workflow-integration-test-green` (default — it converges the suite to green), confirm already-verified, or explicitly skip; only an explicit **Yes** or user-chosen **Skip** commits without verifying, and the agent NEVER picks skip itself. Bypass the gate entirely only when the staged set is docs/specs/config with no source-code change
 - **Stop after the commit; push** to remote only when the user explicitly requests it
 - **Review staged changes** before committing
 - **Never commit** secrets, credentials, or .env files
@@ -235,6 +325,7 @@ fix(validation): handle empty date range
 - Commit message MUST include a Conventional Commit title AND a detailed body — **purpose/kind → what changed → how it works**. As detailed as the change needs (wrap ~72 chars); title-only commit FORBIDDEN for non-trivial changes
 - Optimize body for the next human reading `git log` / `git blame` — surface the non-obvious (key logic, invariants, edge cases, why-this-over-that), not just a list of touched files
 - Include attribution footer: `Generated by AI`
+- **Embed reviewers in the commit message** — BEFORE committing (Step 2.7), surface the last author per staged file vs `HEAD` (exclude the commit author), grouped by focus area, and write it as a `Reviewers:` block in the message body so the right reviewers travel with the commit/PR. Read-only; never blocks the commit.
 
 ## Push & PR Operations
 
@@ -280,8 +371,9 @@ Spawn `git-manager` after committing when user says "push", "create PR", or "ope
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -313,10 +405,22 @@ Spawn `git-manager` after committing when user says "push", "create PR", or "ope
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Critical Thinking:** traced `file:line` proof per claim; confidence >80% to act, never guess.
 
+- **MANDATORY MUST ATTENTION — AI KEEPS FORGETTING:** code changed? ask the user directly BEFORE committing — verify via `$workflow-integration-test-green` (default), **Yes — already verified**, or user-chosen **Skip**; NEVER select skip yourself — why: prevents committing unverified code, and a gate the agent can waive is not a gate
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+
+**Anti-Rationalization:**
+
+| Evasion                                         | Rebuttal                                                                                                                                    |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| "The user said commit, so just commit"          | Code changed → run the Test-Verify Gate first. ask the user directly to verify / already-verified / skip; default verify before committing. |
+| "The user is clearly in a hurry — pick Skip"    | Skip is the user's decision alone. Offer it, never choose it. An agent that waives its own gate has no gate.                                |
+| "Verify just means run the tests once"          | Verify routes to `$workflow-integration-test-green` — it drives failures to green. Reporting red and committing anyway is not verification. |
+| "Tests probably passed already"                 | Probably ≠ confirmed. Ask the user; default No runs verify. Only an explicit Yes commits without verifying.                                 |
+| "It's a small change, skip the verify question" | Size doesn't decide — any code that might need tests triggers the gate. Skip only docs/specs/config-only diffs.                             |
+| "Asking is annoying, I'll just proceed"         | The confirmation is the point — AI keeps committing unverified code. Ask every time code changed.                                           |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
@@ -400,8 +504,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -412,6 +517,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

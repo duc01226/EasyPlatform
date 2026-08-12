@@ -69,6 +69,7 @@ The PreToolUse / UserPromptSubmit hooks are gates — not content injectors.
 | Hook                           | Matcher                                                               | Purpose                                                                                                                                                                                                                     |
 | ------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `windows-command-detector.cjs` | `Bash`                                                                | Detect/block Windows CMD syntax; auto-rewrite `\!` in `node -e` commands                                                                                                                                                    |
+| `bash-shell-guard.cjs`         | `Bash`                                                                | Block PowerShell here-strings (`@' … '@`) and name the POSIX heredoc replacement — Git Bash reports only `@: command not found`                                                                                             |
 | `git-commit-block.cjs`         | `Bash`                                                                | Block git commit/push unless the `/commit` skill is active                                                                                                                                                                  |
 | `doc-sync-gate.cjs`            | `Bash` and `Write\|Edit\|MultiEdit`                                   | Doc⇄Code sync gate — WARN-only (every path exits 0): warns when a `git commit` stages behavioral code in an enforced area without touching its Feature Spec, and per-edit when enforced-area code drifts past `last_synced` |
 | `scout-block.cjs`              | `Bash\|Glob\|Grep\|Read\|Edit\|Write\|NotebookEdit`                   | Prevent bulk reads outside approved scope                                                                                                                                                                                   |
@@ -109,6 +110,7 @@ Lessons are managed via the `/learn` skill. See `.claude/skills/learn/SKILL.md`.
 | `privacy-block.cjs`            | `Bash\|Glob\|Grep\|Read\|Edit\|Write\|NotebookEdit`                | Block access to sensitive files (.env, keys, credentials)                |
 | `scout-block.cjs`              | `Bash\|Glob\|Grep\|Read\|Edit\|Write\|NotebookEdit`                | Prevent bulk reads outside approved scope                                |
 | `windows-command-detector.cjs` | `Bash`                                                             | Detect/block Windows CMD syntax; auto-rewrite `\!` in `node -e` commands |
+| `bash-shell-guard.cjs`         | `Bash`                                                             | Block PowerShell here-strings (`@' … '@`); name the POSIX heredoc form   |
 | `git-commit-block.cjs`         | `Bash`                                                             | Block git commit/push unless `/commit` skill is active                   |
 
 ### Context Management & Utility
@@ -164,9 +166,9 @@ SESSION START (5 hooks)                         DURING SESSION
     ├── resolvePlanPath()               │         init-prompt-gate.cjs (gate)
     └── writeEnv() (CK_* vars)          │
   npm-auto-install.cjs                  │       PRETOOLUSE GATES
-  session-init-docs.cjs                 │         windows-command-detector / git-commit-block
-  graph-session-init.cjs ───────────────┘         scout-block / privacy-block / path-boundary-block
-                                                  doc-sync-gate (WARN)
+  session-init-docs.cjs                 │         windows-command-detector / bash-shell-guard
+  graph-session-init.cjs ───────────────┘         git-commit-block / scout-block / privacy-block
+                                                  path-boundary-block / doc-sync-gate (WARN)
                                                 SESSION END (1 hook)
                                                     session-end.cjs
                                                       ├── write pending-tasks-warning.json

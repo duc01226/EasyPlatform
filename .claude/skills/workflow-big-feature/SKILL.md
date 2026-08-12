@@ -29,10 +29,10 @@ This workflow has steps that appear multiple times. When creating tasks, use the
 
 | Step           | Occurrence   | Task Description                                                                  |
 | -------------- | ------------ | --------------------------------------------------------------------------------- |
-| `/plan`        | 1st (pos 11) | PLAN₁: High-level architecture plan (after architecture-design)                   |
-| `/plan`        | 2nd (pos 27) | PLAN₂: Sprint-ready implementation plan (after review-artifact --type=spec-tests) |
-| `/plan-review` | 1st (pos 12) | Review PLAN₁ architecture                                                         |
-| `/plan-review` | 2nd (pos 28) | Review PLAN₂ implementation                                                       |
+| `/plan`        | 1st (pos 12) | PLAN₁: High-level architecture plan (after architecture-design)                   |
+| `/plan`        | 2nd (pos 28) | PLAN₂: Sprint-ready implementation plan (after artifact-review --type=spec-tests) |
+| `/plan-review` | 1st (pos 13) | Review PLAN₁ architecture                                                         |
+| `/plan-review` | 2nd (pos 29) | Review PLAN₂ implementation                                                       |
 
 **NEVER deduplicate** — each occurrence is a distinct task with a different purpose.
 
@@ -44,9 +44,9 @@ Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `T
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /spec-discovery -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /why-review -> /plan -> /plan-review -> /refine -> /why-review -> /review-artifact --type=pbi -> /story -> /why-review -> /review-artifact --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /spec -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec-clarify -> /plan -> /plan-review -> /scaffold -> /plan-validate -> /why-review -> /plan-execute -> /seed-test-data -> /review-domain-entities -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /workflow-review-changes -> /production-readiness-review -> /security-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /spec-discovery -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /architecture-scalability-review -> /why-review -> /plan -> /plan-review -> /refine -> /why-review -> /artifact-review --type=pbi -> /story -> /why-review -> /artifact-review --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /spec -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /spec-clarify -> /plan -> /plan-review -> /scaffold -> /architecture-review-full -> /plan-validate -> /why-review -> /plan-execute -> /seed-test-data -> /domain-entities-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /workflow-review-changes -> /security-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
 
-**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /spec-discovery -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /why-review -> /plan -> /plan-review -> /refine -> /why-review -> /review-artifact --type=pbi -> /story -> /why-review -> /review-artifact --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /spec -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /spec-clarify -> /plan -> /plan-review -> /scaffold -> /plan-validate -> /why-review -> /plan-execute -> /seed-test-data -> /review-domain-entities -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /workflow-review-changes -> /production-readiness-review -> /security-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
+**IMPORTANT MANDATORY Steps:** /idea -> /web-research -> /deep-research -> /business-evaluation -> /spec-discovery -> /domain-analysis -> /why-review -> /tech-stack-research -> /architecture-design -> /architecture-scalability-review -> /why-review -> /plan -> /plan-review -> /refine -> /why-review -> /artifact-review --type=pbi -> /story -> /why-review -> /artifact-review --type=story -> /pbi-challenge -> /dor-gate -> /pbi-mockup -> /spec -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /spec-clarify -> /plan -> /plan-review -> /scaffold -> /architecture-review-full -> /plan-validate -> /why-review -> /plan-execute -> /seed-test-data -> /domain-entities-review -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /workflow-review-changes -> /security-review -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
@@ -54,7 +54,7 @@ Activate the `workflow-big-feature` workflow. Run `/start-workflow workflow-big-
 
 > **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
 
-**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /spec-discovery → /domain-analysis → /why-review → /tech-stack-research → /architecture-design → /why-review → /plan → /plan-review → /refine → /why-review → /review-artifact --type=pbi → /story → /why-review → /review-artifact --type=story → /pbi-challenge → /dor-gate → /pbi-mockup → /spec → /spec [mode=tests] → /why-review → /review-artifact --type=spec-tests → /spec-clarify → /plan → /plan-review → /scaffold → /plan-validate → /why-review → /plan-execute → /seed-test-data → /review-domain-entities → /integration-test → /integration-test-review → /integration-test-verify → /spec [mode=sync] → /workflow-review-changes → /production-readiness-review → /security-review → /changelog → /test → /docs-update → /workflow-end → /watzup
+**Steps:** /idea → /web-research → /deep-research → /business-evaluation → /spec-discovery → /domain-analysis → /why-review → /tech-stack-research → /architecture-design → /architecture-scalability-review → /why-review → /plan → /plan-review → /refine → /why-review → /artifact-review --type=pbi → /story → /why-review → /artifact-review --type=story → /pbi-challenge → /dor-gate → /pbi-mockup → /spec → /spec [mode=tests] → /why-review → /artifact-review --type=spec-tests → /spec-clarify → /plan → /plan-review → /scaffold → /architecture-review-full → /plan-validate → /why-review → /plan-execute → /seed-test-data → /domain-entities-review → /integration-test → /integration-test-review → /integration-test-verify → /spec [mode=sync] → /workflow-review-changes → /security-review → /changelog → /test → /docs-update → /workflow-end → /watzup
 
 <!-- SYNC:ai-mistake-prevention -->
 
@@ -65,8 +65,9 @@ Activate the `workflow-big-feature` workflow. Run `/start-workflow workflow-big-
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

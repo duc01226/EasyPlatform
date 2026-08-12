@@ -2,6 +2,8 @@
 
 > The `/scan --target=<key>` host (`../SKILL.md`) loads ONE entry from this file per run. Each entry is the single source of truth for that scan: doc path, sub-agent count + roles, Phase-0 detection tables, verbatim sub-agent Think scopes, output Target Sections, Content-Rule exceptions, target-unique Special slivers, and the target-specific Anti-Rationalization rows. The shared 4-phase engine + SYNC blocks live ONCE in the host body — this manifest carries only the per-target DATA.
 
+> **Portability rule:** Host-owned instruction files keep their native skill-invocation prefix. Content written into shared generated project docs MUST instead use bare skill names without a host-specific prefix, unless it explicitly documents every supported host syntax.
+
 **Valid keys:** `project-structure` · `backend-patterns` · `frontend-patterns` · `scss-styling` · `design-system` · `code-review-rules` · `domain-entities` · `feature-spec` · `docs-index` · `e2e-tests` · `integration-tests` · `seed-test-data` · `ui-system`
 
 **Confidence vocab note:** most targets use sub-agent confidence tiers `>80% document / 60-80% "observed (unverified)" / <60% omit`. `code-review-rules` instead classifies rules HIGH / MEDIUM / LOW. `domain-entities` uses %-based thresholds. Honor the per-entry vocab.
@@ -37,7 +39,29 @@ Step 3 — Detect **orchestration approach**:
 | `k8s/` or `charts/`               | Kubernetes / Helm                   | Deployment targets, ingress config                |
 | No orchestration files            | Direct run                          | Launch commands per service                       |
 
-Step 4 — Load module list from `docs/project-config.json` `modules[]` if available — use as expected service catalog.
+Step 3.5 — Detect **delivery / deployment stack** (provider-agnostic — list only signals present; NEVER assume a provider):
+
+| Signal (file/dir present)                                           | Category                 | What to Document                                      |
+| ------------------------------------------------------------------- | ------------------------ | ----------------------------------------------------- |
+| `.github/workflows/*.yml`                                           | CI/CD — GitHub Actions   | Workflows, triggers, jobs, deploy steps, environments |
+| `.gitlab-ci.yml`                                                    | CI/CD — GitLab CI        | Stages, jobs, `environment:` blocks                   |
+| `azure-pipelines.yml` / `.azure/`                                   | CI/CD — Azure Pipelines  | Stages, deployment jobs, environments                 |
+| `Jenkinsfile`                                                       | CI/CD — Jenkins          | Pipeline stages, agents, deploy stages                |
+| `.circleci/config.yml`                                              | CI/CD — CircleCI         | Workflows, jobs, contexts                             |
+| `bitbucket-pipelines.yml`                                           | CI/CD — Bitbucket        | Pipelines, deployments                                |
+| `*.tf` / `*.tf.json`                                                | IaC — Terraform          | Providers, resources, backends, workspaces/envs       |
+| `Pulumi.yaml`                                                       | IaC — Pulumi             | Stacks, resources                                     |
+| `*.template.json` / `cdk.json`                                      | IaC — CloudFormation/CDK | Stacks, resources                                     |
+| `*.bicep`                                                           | IaC — Bicep              | Modules, resources                                    |
+| `ansible/` / `playbook*.yml`                                        | IaC — Ansible            | Playbooks, roles, inventories                         |
+| `charts/` / `Chart.yaml`                                            | IaC — Helm               | Charts, values-per-env                                |
+| `kustomization.yaml`                                                | IaC — Kustomize          | Bases, overlays-per-env                               |
+| `appsettings*.json` / `.env*` / `*.config`                          | Env/app-settings         | Setting KEYS per environment (NOT values)             |
+| K8s `ConfigMap`/`Secret`, `.env.example`, vault/secret-manager refs | Secret management        | Mechanism + reference NAMES only (NEVER values)       |
+
+**Evidence gate:** `<60%` confidence on delivery stack → document "delivery stack: undetermined (no CI/IaC config found)"; DO NOT fabricate a pipeline.
+
+Step 4 — Load module list from `docs/project-config.json` `modules[]` **and the `infrastructure` block (`containerization` / `orchestration` / `cicd.*` / `iac.*`) if present** — use as expected catalog + detection hints (config hints are corroborated against file evidence, never trusted blindly).
 
 **Evidence gate:** Confidence <60% on architecture type → report uncertainty, DO NOT proceed with architecture-specific scan assumptions.
 
@@ -59,22 +83,27 @@ Step 4 — Load module list from `docs/project-config.json` `modules[]` if avail
 
 **Agent 3: Infrastructure & Tech Stack**
 
-- **Think (Infrastructure dimension):** What external services must be running for the app to function? Which are optional? What are the default credentials (from docker-compose or defaults)?
+- **Think (Infrastructure dimension):** What external services must be running for the app to function? Which are optional? How is each external service authenticated — env var / secret name / secret-manager reference? (record the **mechanism and reference names**, NEVER credential values)
 - **Think (CI/CD dimension):** What pipeline system is used? What are the build/test/deploy stages? What environments exist?
+- **Think (Delivery dimension):** What is the full path from commit → deployed environment? What environments exist and how does a change promote between them? How is a bad deploy rolled back? Where do environment/app settings live and how are secrets supplied?
 - **Think (Version accuracy dimension):** Framework/library versions must come from actual config files — not assumed from project type.
-- Scan targets: read `docker-compose*.yml` (infra services, port mappings, credentials); find CI/CD configs (`.github/workflows/*.yml`, `azure-pipelines.yml`, `Jenkinsfile`); parse package managers for key deps + versions; identify DBs per service from connection strings; find message-broker config from appsettings.
+- Scan targets: read `docker-compose*.yml` (infra services, port mappings, **auth mechanism / secret names — NOT credential values**); find CI/CD configs (`.github/workflows/*.yml`, `azure-pipelines.yml`, `Jenkinsfile`); parse package managers for key deps + versions; identify DBs per service from connection strings; find message-broker config from appsettings.
+- **Delivery scan targets (write to Deployment & Delivery / Environment Configuration sections):** CI/CD pipeline files (stages, triggers, deploy jobs, gated environments); IaC files (resources, backends, per-env values/overlays/workspaces); environment list + promotion order; rollback mechanism (blue-green, canary, `rollout undo`, previous-image redeploy); environment/app-settings surfaces (`appsettings.{env}.json`, `.env.{env}`, config maps) — record setting **KEYS grouped by environment**; secret-management **mechanism + reference names ONLY**.
+- **[BLOCKING] Secret safety:** record secret variable/reference **names, file locations, and the mechanism** (env var, vault, sealed secret, CI secret store). **NEVER** copy a secret value, token, connection string with credentials, or private key into the report or doc.
 
 ### Target Sections
 
-| Section                   | Content                                                                           |
-| ------------------------- | --------------------------------------------------------------------------------- |
-| **Architecture Overview** | Architecture type, orchestration approach, deployment model                       |
-| **Service Architecture**  | Table: Service Name, Type (API/Worker/App), Port, Dockerfile path                 |
-| **Infrastructure Ports**  | Table: Service (DB/MQ/Cache), Port, Credentials (from docker-compose)             |
-| **Frontend Apps**         | Table: App name, Framework, Dev port, Build command                               |
-| **Tech Stack**            | Table: Category (Backend/Frontend/Infra), Technology, Version                     |
-| **Module Codes**          | Table: Module code abbreviation, Full name, Service path                          |
-| **Key Directories**       | Top 2-3 levels of configured source roots with one-line purpose per top-level dir |
+| Section                       | Content                                                                                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Architecture Overview**     | Architecture type, orchestration approach, deployment model                                                                                                   |
+| **Service Architecture**      | Table: Service Name, Type (API/Worker/App), Port, Dockerfile path                                                                                             |
+| **Infrastructure Ports**      | Table: Service (DB/MQ/Cache), Port, Auth mechanism (env var / secret name / "default local-dev only" — NEVER credential VALUES)                               |
+| **Deployment & Delivery**     | CI/CD provider + pipeline stages (table: Stage, Trigger, Target env, `file:line`); IaC tool + key resources; environments + promotion flow; rollback strategy |
+| **Environment Configuration** | Table: Setting group / config file, Environment, Purpose, `file:line` — setting KEYS only; Secret-management mechanism + reference NAMES (NO values)          |
+| **Frontend Apps**             | Table: App name, Framework, Dev port, Build command                                                                                                           |
+| **Tech Stack**                | Table: Category (Backend/Frontend/Infra), Technology, Version                                                                                                 |
+| **Module Codes**              | Table: Module code abbreviation, Full name, Service path                                                                                                      |
+| **Key Directories**           | Top 2-3 levels of configured source roots with one-line purpose per top-level dir                                                                             |
 
 ### Content Rules / exceptions
 
@@ -86,8 +115,11 @@ Standard — follows shared `output-quality-principles` (no full trees/counts/TO
 - **[BLOCKING] Phase 0** architecture-type + mode detection (parallel); sub-agent focus depends on detected type.
 - **Two-axis Phase 0** — architecture type (step 2) AND orchestration approach (step 3) are separate classification tables.
 - **Evidence-gate fallback** — <60% on architecture type → report uncertainty, DO NOT proceed (stricter than design-system's "Agent 1 only").
-- Phase 4 verify: Glob-verify ALL Dockerfile paths in service table (not just 3); Grep-verify port numbers vs config.
+- Phase 4 verify: Glob-verify ALL Dockerfile paths in service table (not just 3); Grep-verify port numbers vs config. Glob-verify ALL CI/CD, IaC, and env-config file paths cited in Deployment & Delivery / Environment Configuration; Grep-scan the generated sections (case-insensitive) to assert **no secret-looking values** leaked — only KEYS/names. The backstop must cover the formats the scan actually reads, not just shell/dotenv: (a) `key=value` secrets (`password=`, `token=`, `pwd=`, `secret=`); (b) JSON/YAML colon-form secret keys — a `"password"|"pwd"|"secret"|"apikey"|"api_key"|"token"|"connectionstring"` key (case-insensitive) followed by a non-placeholder value (not `${...}`, `<...>`, `***`, empty); (c) known token/key shapes (`sk-`, `AKIA[0-9A-Z]{16}`, `ghp_`, `xox[baprs]-`); (d) `-----BEGIN` PEM headers and long base64/hex blobs. Keep it a bounded backstop — the primary control is the keys-only instruction in the Agent 3 Secret-safety obligation.
 - Version accuracy: framework/library versions MUST come from actual config (`package.json`/`.csproj` exact versions, not ranges/inference).
+- **Delivery detection is a third Phase-0 axis** (architecture + orchestration + delivery) — provider-agnostic; list only detected signals.
+- **[BLOCKING] No-secret-values rule** — deployment/env scanning records names + locations + mechanism only; secret VALUES never enter the report or committed doc. Reinforced in Agent 3 Think, Phase 4 verify, Round 2 fresh-eyes, closing reminder.
+- **Config-hint corroboration** — `infrastructure.*` from project-config is a hint; confirm against actual files before documenting (config can be stale).
 
 ### Anti-Rationalization rows
 
@@ -99,6 +131,9 @@ Standard — follows shared `output-quality-principles` (no full trees/counts/TO
 | "Framework versions obvious from project type"       | Read `package.json`/`.csproj` for exact versions — never assume                                                                                   |
 | "Skip Round 2 even when Round 1 found issues"        | Clean Round 1 ends the scan. When issues exist, fresh-eyes mandatory after fixing — port numbers and paths are the most hallucination-prone data. |
 | "project-config.json not needed if repo looks clear" | Config file provides expected service catalog — use it to detect missing services                                                                 |
+| "CI provider obvious from the `.github` folder"      | Read the workflow files — document actual jobs/stages/environments, not folder-name inference                                                     |
+| "No deploy docs, so skip deployment"                 | Env/app-settings, IaC, and CI configs ARE the deployment source of truth — scan them, don't skip                                                  |
+| "Copy the env/app-settings values for completeness"  | NEVER copy secret values — record KEYS, locations, and mechanism only; the doc is committed                                                       |
 
 ### prompt-enhance
 
@@ -461,7 +496,7 @@ Step 4 — check for app-specific design docs in the same directory.
 ### Special slivers
 
 - **AUTHORING branch (init mode only)** — when init mode detected (canonical doc missing or placeholder):
-    1. **Author `{docsPath}/{canonicalDoc}`** from Agent 3 findings: prepend regen marker `<!-- Generated by /scan --target=design-system on YYYY-MM-DD; refine sections manually -->`; sections: Foundations, Tokens, Components, Patterns, Accessibility, Adoption Strategy.
+    1. **Author `{docsPath}/{canonicalDoc}`** from Agent 3 findings: prepend regen marker `<!-- Generated by scan --target=design-system on YYYY-MM-DD; refine sections manually -->`; sections: Foundations, Tokens, Components, Patterns, Accessibility, Adoption Strategy.
     2. **Author each `{docsPath}/{tokenFiles[i]}`** from grouped declarations — **FIRST: REMOVE the `PLACEHOLDER_MARKER_SCSS` sentinel** before writing real tokens; `.scss`: SCSS variable block per category + CSS custom property mirrors in `:root {}`; categories: Colors, Typography, Spacing, Breakpoints, Z-Index, Elevation/Shadow.
     3. **Preserve manual content in sync mode** — DO NOT overwrite a populated doc/token file.
 - **Token whitelist scope** (Agent 3) — whitelist + declarations-only is the distinguishing sliver.
@@ -710,7 +745,7 @@ Path branching: INIT → Phase 1 → Phase 2 (full scan) → Phase 3 (full write
 - **Think (Accuracy dimension):** What section headings actually appear across feature docs? What's the frequency? Which sections are standard (≥80% coverage) vs optional (20-80%) vs rare (<20%)?
 - **Think (Completeness dimension):** Are there documentation naming patterns? Section numbering? Required fields (evidence fields, TC IDs)?
 - Scan targets: glob `docs/**/*.md`; find documentation templates (template files, skeleton docs); recurring H2/H3 headings across docs; count docs per app/module for coverage distribution; doc naming patterns.
-- **M1/M2 Compliance Scan (per feature doc):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Scan §1-14 prose lines (excluding evidence carriers `**Evidence**` / `IntegrationTest` / `[Source:]`, YAML frontmatter, and ` ```mermaid ``` ` blocks) and report:
+- **M1/M2 Compliance Scan (per feature doc):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. Scan §1-14 prose lines (excluding evidence carriers `**Evidence**` / `IntegrationTest` / `[Source:]`, YAML frontmatter, and ` ```mermaid ``` ` blocks) and report:
     - **M1 prose leaks:** banned tech-term occurrences (framework/product/language/persistence/messaging/auth names + project-internal framework type names — banned-token list in `spec-principles.md` §3.2) in narrative, headings, tables.
     - **M2 prose leaks:** code-identifier occurrences (class/method names, file paths, namespaces) in narrative prose.
     - Report each leak by **file, line, and section**.
@@ -838,7 +873,7 @@ Path branching: INIT → Phase 1 → Phase 2 (full scan) → Phase 3 (full write
 | **Doc Lookup Guide**      | keyword → path table                                                      |
 | **Uncategorized Files**   | Files found by broad glob not in any category — with paths                |
 
-Doc header also carries `<!-- Last scanned: {YYYY-MM-DD} -->`, title `# Documentation Index Reference`, and the banner `> Auto-generated by /scan --target=docs-index. Do not edit manually.`
+Doc header also carries `<!-- Last scanned: {YYYY-MM-DD} -->`, title `# Documentation Index Reference`, and the banner `> Auto-generated by scan --target=docs-index. Do not edit manually.` Shared generated docs MUST use bare skill names without a host-specific invocation prefix so the same guidance remains valid across AI hosts.
 
 ### Content Rules / exceptions — INVERTS the shared no-counts rule
 
@@ -1014,7 +1049,7 @@ Step 5 — **config-driven prerequisites load (TARGET-SPECIFIC):** load test pro
 - `runScript` / `startupScript` — inspect to capture Docker/system startup behavior + supported arguments
 - `systemCheckCommand` — document what readiness check must pass before direct test commands
 - `quickRunCommand`, `testProjectPattern`, `testProjects[]` — source of truth for runner commands + project discovery
-- `integrationRules[]` — document repeatability/data-integrity gates, including 3 consecutive verification runs without DB reset
+- `integrationRules[]` — document repeatability/data-integrity gates, including 2 consecutive verification runs without DB reset
 
 **Evidence gate:** Confidence <60% on framework detection → report uncertainty, ask user before proceeding.
 
@@ -1031,7 +1066,7 @@ Step 5 — **config-driven prerequisites load (TARGET-SPECIFIC):** load test pro
 **Agent 2: Test Patterns & Conventions**
 
 - **Think (Assertion dimension):** "What assertion patterns are used? Is there a waiting/polling mechanism for async operations? Are assertions on specific field values or just \"does not throw\"?"
-- **Think (Data dimension):** "How is test data created — builders, factories, seed methods? How is uniqueness ensured across runs? Is there a cleanup strategy?" — Flag direct repository create/update setup as a risk unless it is a valid, idempotent fixture seeder for service-owned reference data. Flag verification guidance as incomplete if it does not require 3 consecutive successful runs without DB reset.
+- **Think (Data dimension):** "How is test data created — builders, factories, seed methods? How is uniqueness ensured across runs? Is there a cleanup strategy?" — Flag direct repository create/update setup as a risk unless it is a valid, idempotent fixture seeder for service-owned reference data. Flag verification guidance as incomplete if it does not require 2 consecutive successful runs without DB reset.
 - **Think (Coverage dimension):** "Which services have tests? Which are missing? What's the test-to-feature ratio?"
 - Scan targets: assertion helpers (await-until-condition / polling helpers, custom assertion extensions, fluent `Should*`-style matchers); common test patterns (Arrange-Act-Assert, Given-When-Then, test data flow); test categorization (traits, categories, tags); data uniqueness patterns (`Ulid.NewUlid()`, `Guid.NewGuid()`, timestamp suffixes); infrastructure interaction (database state verification, queue drain, cache clear); map which services have test projects (coverage distribution) — use grep expressions, not counts.
 
@@ -1059,7 +1094,7 @@ Standard `output-quality-principles` (no counts/trees/TOCs, 1 example per patter
 - **Dual-dimension detect requirement:** MUST detect framework AND infrastructure type FIRST — patterns differ significantly.
 - **Evidence gate:** Confidence <60% on framework → stop and ask user.
 - **Hardcoded-credentials security gate:** test creds hardcoded in source (not env/secret store) → flag CRITICAL in report; verify flag present in Phase 4.
-- **3-consecutive-runs repeatability gate (TARGET-UNIQUE):** verification guidance is INCOMPLETE unless it requires 3 consecutive successful runs without DB reset.
+- **2-consecutive-runs repeatability gate (TARGET-UNIQUE):** verification guidance is INCOMPLETE unless it requires 2 consecutive successful runs without DB reset.
 - **Direct-repository-setup risk branch:** flag direct repository create/update setup as a risk unless it is a valid, idempotent fixture seeder for service-owned reference data.
 - **Smoke-only prohibition:** never document smoke-only assertions as acceptable unless infrastructure is truly unobservable.
 - **No hardcoded counts:** coverage/test-file counts MUST be grep expressions, never hardcoded.

@@ -82,9 +82,9 @@ const tests = [
     fn: () => {
       const synthetic = '  subagent_type: "code-reviewer",';
       assertEqual(
-        scanSkillContent('review-domain-entities', synthetic, DEFAULT_ALLOW_LIST).length,
+        scanSkillContent('domain-entities-review', synthetic, DEFAULT_ALLOW_LIST).length,
         0,
-        'review-domain-entities not guarded (no DDD-entity specialist)'
+        'domain-entities-review not guarded (no DDD-entity specialist)'
       );
       assertEqual(
         scanSkillContent('production-readiness-review', synthetic, DEFAULT_ALLOW_LIST).length,

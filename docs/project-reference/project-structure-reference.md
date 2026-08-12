@@ -1,4 +1,4 @@
-<!-- Last scanned: 2026-06-12 -->
+<!-- Last scanned: 2026-08-12 -->
 <!-- CRITICAL: Logic in LOWEST layer: Entity/Model > Service > Component/Handler. Search 3+ patterns before writing code. -->
 
 # Project Structure Reference
@@ -208,6 +208,7 @@ No central package management — there is NO `Directory.Packages.props`/`Direct
 | Frontend dev server  | `cd src/Frontend && npm run dev-start:playground-text-snippet`                                                                        |
 | Full system (Docker) | `src/start-dev-platform-example-app.cmd`                                                                                              |
 | Infrastructure only  | `src/start-dev-platform-example-app.infrastructure.cmd`                                                                               |
+| Framework unit tests | `dotnet test src/Platform/Easy.Platform.Tests.Unit/`                                                                                  |
 | E2E tests            | `cd src/Frontend/e2e && npx playwright test`                                                                                          |
 
 <!-- CRITICAL: Logic in LOWEST layer: Entity/Model > Service > Component/Handler. PlatformExampleApp is the reference implementation. -->

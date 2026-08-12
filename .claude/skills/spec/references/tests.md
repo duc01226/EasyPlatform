@@ -4,13 +4,13 @@
 
 > **Portability:** `docs/specs/` is the fixed Feature Spec root.
 
-**Goal:** Generate/update test specs in feature docs Section 8 (canonical TC registry) — unified `TC-{FEATURE}-{NNN}` format. 5 modes: TDD-first, implement-first, update (post-change/PR), sync, from-integration-tests.
+**Goal:** Generate/update business test specs in feature docs Section 8 (canonical business TC registry) — unified `TC-{FEATURE}-{NNN}` format. 5 modes: TDD-first, implement-first, update (post-change/PR), sync, from-integration-tests.
 
 **Workflow:** (1) Mode Detection → (2) Investigation → (3) TC Generation → (4) Write Section 8 → (5) Test-Code Sync → (6) Next Steps
 
 **Key Rules:** Unified `TC-{FEATURE}-{NNN}` format · Section 8 = source of truth · Evidence required on every TC · Minimum 5 categories (positive, negative, authorization, edge cases, invariant/property) · Properties not just examples — every [HARD] rule / §5 invariant gets a universally-quantified property TC · Interactive review via `AskUserQuestion` mandatory
 
-> **[M5 — Rebuild-from-scratch signal]** A competent team with zero codebase knowledge MUST be able to derive and execute every TC from the spec text alone, on ANY stack — without reading source. If a TC's intent is only understandable by opening the implementation, it fails M5: rewrite the objective/Given-When-Then in business-observable terms. See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria.
+> **[M5 — Rebuild-from-scratch signal]** A competent team with zero codebase knowledge MUST be able to derive and execute every TC from the spec text alone, on ANY stack — without reading source. If a TC's intent is only understandable by opening the implementation, it fails M5: rewrite the objective/Given-When-Then in business-observable terms. See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria.
 
 > **[BLOCKING] One TC → many tests (business-oriented TCs):** Each §8 TC is a **business / user-story acceptance scenario**, not a code unit. It is covered by **one OR MANY** annotation-tagged tests (integration + unit, across components/services), joined by the test-spec annotation (key `TestSpec`, value `TC-...`) in the configured test framework's syntax. Write TCs at the business-behavior grain — NEVER split, narrow, or technicalize a TC so it maps 1:1 to a single test method or production class (that breaks the business/user-story orientation, M1/M5). Coverage = ≥1 annotation-tagged test. Many tests sharing one TC is correct, never a duplicate. Canonical contract: `.claude/skills/shared/tc-format.md` → TC ↔ Test Code Cardinality.
 
@@ -37,30 +37,47 @@
 2. **Investigation** — Analyze PBI/codebase/existing TCs/git changes per mode
 3. **TC Generation** — Generate TC outlines, interactive review with user
 4. **Write to Feature Doc** — Upsert TCs into Section 8
-5. **Test-Code Sync** — Optionally reconcile Section 8 TCs ↔ integration test code (forward-sync; §8 canonical) — see `sync.md`
+5. **Test-Code Sync** — Optionally reconcile Section 8 TCs ↔ executing test code (forward-sync; §8 canonical) — see `sync.md`
 6. **Next Steps** — Suggest follow-on actions per mode
 
 **Key Rules:**
 
 - **Unified format:** `TC-{FEATURE}-{NNN}` — feature codes in `docs/project-reference/feature-spec-reference.md`
-- **Source of truth:** Feature docs Section 8 — canonical TC registry. NEVER write TCs to `docs/specs/` as primary destination.
+- **Source of truth:** Feature docs Section 8 — canonical business TC registry. NEVER write standalone TC files to `docs/specs/` as the primary destination; update the governing Feature Spec's Section 8.
 - **Evidence required:** Every TC MUST have `Evidence: [Source: {namespace}/{service}/{id}]` (stack-portable abstract anchor — never physical code coordinates or repository-root paths) or `TBD (pre-implementation)` for TDD-first. Canonical format + anchor taxonomy: `shared/tc-format.md`
 - **Minimum 5 categories:** Positive (happy path) · Negative (error handling) · **Authorization** (role-based access — MANDATORY) · Edge cases · **Invariant / Property** (MANDATORY — see below)
     - **Invariant / Property TCs (MANDATORY):** For each **[HARD] business rule (§4)** and each **§5 entity invariant**, derive ≥1 **universally-quantified property TC** — phrase the objective/GWT as "for ALL inputs in {domain}, {invariant} holds" — PLUS ≥1 **boundary counter-case** (the input just outside the domain where the invariant must fail-closed). A property TC names the input **domain**, not a single point; this distinguishes it from an example TC (one fixed GIVEN/WHEN/THEN). Walk the 6 invariant classes (idempotency · round-trip/inverse · commutativity · monotonicity · conservation · state-transition) in `.claude/skills/shared/tc-format.md` → "Invariant Categories to Probe" as the discovery prompt. Naming an invariant in the per-TC field is NOT enough — the TC must ASSERT the property across its domain.
-    - **Bugfix specs:** MANDATORY Preservation Tests — see `references/spec-tests-template.md#preservation-tests-mandatory-for-bugfix-specs`
+    - **Business-visible bugfix specs:** MANDATORY Preservation Tests — see `references/spec-tests-template.md#preservation-tests-mandatory-for-bugfix-specs`
     - **Query-Only exception:** Read-only, no auth boundaries, no events → validation + authorization + edge cases + invariant/property minimum
     - **Config-Only exception:** Flag-toggle features, no entity changes → authorization + edge cases minimum
 
-> **[BLOCKING] Import the Test-Complete Gate.** This mode MUST enforce `.claude/skills/shared/sdd-artifact-contract.md` → **Test-Complete Gate** (state-transition + integration-event coverage), not just the operation/actor floor below. From that gate: **every state transition** maps to ≥1 **valid AND ≥1 invalid** transition TC where applicable; **every integration event** maps to a publish/consume/**idempotency** TC where applicable; **every test names the business intent or invariant it protects and would fail if that intent breaks**. A spec is NOT test-complete until these hold — generating only positive/validation/auth example TCs leaves the gate FAILED even when the operation floor passes.
+> **[BLOCKING] Import the Test-Complete Gate.** This mode MUST enforce `.claude/skills/shared/sdd-artifact-contract.md` → **Test-Complete Gate** at the business-visible layer, not just the operation/actor floor below. From that gate: **every user-observable state transition** maps to ≥1 **valid AND ≥1 invalid** transition TC where applicable; **every user-observable external outcome** maps to a demoable TC where applicable; **every test names the business intent or invariant it protects and would fail if that intent breaks**. Architecture-only publish/consume/idempotency obligations belong to the technical spec tree and test code, not to business §8. A spec is NOT test-complete until the business-visible obligations hold — generating only positive/validation/auth example TCs leaves the gate FAILED even when the operation floor passes.
 
 - **Cross-cutting TC categories (when applicable):**
-    - **Invariant / Property TCs (MANDATORY):** Per [HARD] §4 rule + §5 invariant — universally-quantified property ("for ALL inputs in {domain}, {invariant} holds") + boundary counter-case; covers state-transition (valid + invalid) and integration-event idempotency per the imported Test-Complete Gate
+    - **Invariant / Property TCs (MANDATORY):** Per [HARD] §4 rule + §5 invariant — universally-quantified property ("for ALL inputs in {domain}, {invariant} holds") + boundary counter-case; covers business-visible state-transition validity per the imported Test-Complete Gate
     - **Authorization TCs (MANDATORY):** Authorized succeeds, unauthorized rejected, role visibility verified
     - **Seed Data TCs:** Reference data exists, seeder runs correctly
     - **Performance TCs:** Feature within SLA under production-like volume
-    - **Data Migration TCs:** Data transforms correctly, rollback works, no data loss
-    - **Preservation TCs (MANDATORY bugfixes):** ≥1 per "Healthy input" row — authored from OLD code semantics BEFORE fix lands
+    - **Data Change TCs:** business data state transforms correctly and remains visible/usable as expected
+    - **Preservation TCs (MANDATORY business-visible bugfixes):** ≥1 per "Healthy input" row — authored from OLD code semantics BEFORE fix lands. Technical-only bugfixes with no business-visible result produce zero business TCs.
 - **Interactive review:** ALWAYS `AskUserQuestion` — review TC list with user before writing
+- **Real-world fidelity (per TC):** every TC's `Preconditions` and `Demo Flow` MUST describe a situation real actor behaviour can actually produce. State HOW production reaches the precondition, and — whenever two consecutive steps are distinct actor actions — state the realistic elapsed gap between them. A TC specifying a sequence production could never reach GUARANTEES an unrealistic test downstream: the spec is the upstream lever, so fix it here, never in the generated test's assertions.
+
+<!-- SYNC:real-world-fidelity-testing -->
+
+> **Real-World Fidelity Gate** — MANDATORY when authoring, reviewing, or repairing any integration / E2E / system test.
+>
+> A test earns trust by reproducing a situation the system can actually meet in production. A scenario that could never occur in real life proves nothing when it passes, and wastes hours when it fails.
+>
+> 1. **Ask the fidelity question BEFORE writing the setup:** _"Can this sequence, timing, and data actually occur in production?"_ If no, the test is mis-specified — fix the SCENARIO, never the assertion.
+> 2. **Model real pacing between actor steps.** Two distinct actor actions that production separates by seconds, minutes, or hours MUST NOT be fired back-to-back in the same millisecond. Compressed pacing manufactures races the system was never designed to survive, then reports them as product defects.
+> 3. **Wait on a real signal, never a blind sleep.** Find an observable proving the prior step finished — a persisted state change, an audit/version stamp, a queue/worker idle marker, a completion event — and poll until it settles (unchanged across a short stability window). Use a fixed delay ONLY when no observable exists, and say so in a comment.
+> 4. **Barriers belong in ARRANGE, never in ASSERT.** Waiting for a precondition is fidelity. Widening an assertion's timeout, loosening a comparison, adding a retry around a failing assertion, or skipping the test is masking. NEVER do the latter to force green.
+> 5. **Distinguish harness-amplified from real.** Test topologies (shared infra, fan-out consumers, parallel suites, cold starts) can make a rare production race routine locally. Before filing a product defect, state whether the trigger exists in production and at what likelihood.
+> 6. **Keep the protected invariant intact.** Improving fidelity must NEVER reduce what the test protects. If a realistic scenario no longer exercises the rule, the rule needs a DIFFERENT realistic scenario — not a weaker assertion.
+> 7. **Deliberate impossible-state tests are allowed, but MUST be labelled.** Corruption-repair, migration, and fail-safe tests intentionally construct states production should never reach; comment WHY the state is reachable (upstream bug, partial write, legacy data), so they are never confused with unrealistic setups.
+
+<!-- /SYNC:real-world-fidelity-testing -->
 
 ---
 
@@ -70,7 +87,7 @@
 
 | Skill              | Relationship                                                                                                                                                                                 |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `spec [mode=sync]` | **Native sync mode** — forward-syncs Section 8 TCs ↔ integration test code (see `sync.md`)                                                                                                   |
+| `spec [mode=sync]` | **Native sync mode** — forward-syncs Section 8 TCs ↔ executing test code (see `sync.md`)                                                                                                     |
 | `integration-test` | Code generator → generates integration tests FROM TCs written by this mode                                                                                                                   |
 | `/spec`            | Feature doc creator → creates the Section 8 that this mode populates                                                                                                                         |
 | `/spec-index`      | **Derived index** — regenerable navigation catalog/ERD assembled FROM the Feature Specs (never a source of truth). After §8 changes, refresh the bucket `INDEX.md` TC counts via /spec-index |
@@ -157,9 +174,9 @@ If 2+ fail → `AskUserQuestion`: "Spec readiness below TC generation threshold.
 
 **Implement-first mode:**
 
-**[BLOCKING]:** Enumerate ALL operations first — establishes minimum TC floor.
+**[BLOCKING]:** Enumerate ALL operations first — establishes **what the feature does**, so no capability is missed. ⚠️ **It does NOT establish the TC floor.** The floor is `business_floor` (see `author.md` — _"The business TC floor"_), which reads only spec sections.
 
-**Use Case Inventory (implement-first):**
+**Operation discovery (implement-first) — informs WHAT to write about, never HOW MANY:**
 
 ```bash
 # First resolve {target-source-path} and source file globs from docs/project-config.json
@@ -176,10 +193,15 @@ rg "{project read-handler patterns}" {target-source-path} -g "{source-file-glob}
 rg "{project read-endpoint patterns}" {target-source-path} -g "{source-file-glob}" -l
 ```
 
-Count: N (write) + M (read) + K (event/background) = **minimum TC count**.
-If minimum > 20: split into operation-group batches (≤20 ops each per `TaskCreate`). NEVER generate all TCs in one pass for large features.
+Use the discovered operations to check that **no business capability was missed** when authoring §3 journeys — then set the count from `business_floor`.
 
-**Actor Catalog Discovery (MANDATORY — feeds authorization TCs):**
+⚠️ **[HARD] The operation count is NOT the TC floor.** `business_floor` is (`author.md` — _"The business TC floor"_). An operation that produces **no user-observable behavior and no business data-state change** gets **no business TC** — it is covered by the technical spec tree. Consumers, event handlers, sync processors and background jobs are architecture; a business TC exists only where a user or QC can **demo** the outcome.
+
+If `business_floor` > 20: split into operation-group batches (≤20 ops each per `TaskCreate`). NEVER generate all TCs in one pass for large features.
+
+**Actor Catalog Discovery — §2-AUTHORING ONLY (never a TC-count input):**
+
+⚠️ **[HARD] These greps discover candidate roles to write into §2 as business nouns. Once §2 exists, §2 is the ONLY source.** `count(§2 actors)` MUST read §2's actor list — never a permission-guard grep. A permission attribute is an _implementation_ of a role; sourcing the count from it lets an authorization refactor move a "business" floor with zero business change.
 
 ```bash
 # Permission attributes and role guards
@@ -188,16 +210,47 @@ rg "{project authorization/permission guard patterns}" {target-source-path} -g "
 rg "{project actor/role/permission definition patterns}" {target-source-path} -g "{source-file-glob}" -n | head -20
 ```
 
-Build actor catalog: `[Role1, Role2,...]`. Authorization TC minimum = actor count × 2 (authorized succeeds + unauthorized rejected). Every actor MUST appear in ≥1 authorization TC.
+Build actor catalog into **§2**: `[Role1, Role2,...]`. Authorization TC minimum = **`count(§2 actors) × 2`** (authorized succeeds + unauthorized rejected) — **read from §2, not from the grep above**. Every §2 actor MUST appear in ≥1 authorization TC.
 
 1. Grep commands/queries using project patterns from `docs/project-config.json` and the referenced architecture/test docs.
 2. Grep entities and domain events
-3. Trace: Controller → Command → Handler → Entity → Event Handler
-4. Identify testable behaviors from implementation
+3. **Trace the full vertical chain, not just the backend slice:** UI view + action → API/route → command/query handler → entity + business rule → persistence → event → consumer/read model → UI observable outcome. Reuse the Full-Chain Trace Map authored by `spec [mode=init]` (`.ai/workspace/analysis/{Module}-chain-map.md`, Step 1-INIT.4.6) when it exists; otherwise build the chain with `graph-connect-api` (frontend→backend links) + `graph-trace` (backend→entity→event). A TC that asserts only a handler in isolation misses the seam behavior the chain reveals.
+4. Identify testable behaviors from implementation — at least one **end-to-end chain TC** (decade 061–069, UI/User-journey) per `COMPLETE` chain that spans intent → outcome across the full slice, in addition to the per-operation TCs
 
 **Update mode (post-change / post-bugfix / post-PR):**
 
-**[BLOCKING]:** Run Use Case Inventory on full module BEFORE git diff. Check existing TC count in Section 8.
+**[BLOCKING] FIRST — the business-visibility gate. Answer before writing ANY TC:**
+
+> **Did this change alter what a user or QC can observe, demo, or rely on?**
+>
+> - **NO → the correct output is ZERO new business TCs.** Say so explicitly and stop. A no-op is the **expected, correct** result for a technical fix — it is **never** a coverage failure and MUST NOT be recorded as a gap.
+> - **YES → author TC(s) for the observable business behavior**, in demo form (actor → flow → observable expectation).
+>
+> **TECHNICAL-ONLY (→ zero business TCs; route to the technical spec tree):** a consumer/event-handler/sync-processor not firing; a read-model or projection lag; a serialization, mapping, or round-trip persistence defect; a null-reference/exception; a query/index performance fix; a race or idempotency defect; a DI/config/migration error; a retry/timeout; a UI rendering, CSS, layout, or overflow defect; a data-load or pagination mechanic — **where the business rule, the user-visible outcome, and the business data state are all unchanged**.
+>
+> ⚠️ **The test is NOT "can I phrase this without technical words?"** Any technical case can be laundered into tech-free prose — _"the system correctly synchronizes the record"_ is a technical TC in a business costume, and it is exactly the failure this gate exists to stop. **The test is: can a QC engineer DEMO this as a business outcome, and would a stakeholder recognize the value?** If the only way to observe it is to inspect a queue, a projection, a log, or a database row that no user-facing behavior depends on — **it is TECHNICAL-ONLY.**
+>
+> **The honest question is "what business behavior broke?", not "what code changed?"** Most bugfixes change code without changing business behavior. When the pre-fix and post-fix **business** behavior are identical — the feature was always _supposed_ to work this way and now does — **there is no new business rule to specify, and no business TC to add.** The regression belongs in an integration test, which is where regression protection lives.
+
+> ### The constructive form of the gate — write the TC as a DEMO SCRIPT
+>
+> The gate above says what a business TC must **not** be. This says what it must **be** — and it is the stronger
+> target, because _"is it demoable?"_ is answerable by **writing the demo** and far more checkable than _"is it
+> technical?"_.
+>
+> **A §8 business TC and a `/demo-guide` case describe THE SAME EVENT** — one case, two audiences: the spec states
+> it as intent, the demo guide stages it for an audience. **They MUST be able to converge**, and that is a
+> **usable authoring test**: _if `/demo-guide` could not turn this TC into a live demo someone would sit through,
+> it is not a business TC._ ⚠️ Conversely, a TC that reads as a demo script **cannot** be a laundered technical
+> case — a presenter has nothing to show for _"the consumer receives the event"_.
+>
+> Author every TC in the template's demo shape (`spec-tests-template.md`): **actor → demo flow → expected result**,
+> filling every applicable dimension — **UI**, **system behavior**, **business data state** (in business language,
+> never storage language), and **data shown on the UI**. Omit a dimension only **with a reason, never silently**.
+> **`/demo-guide` reads §8 as its canonical source of user stories and TC IDs** — so a §8 TC that is not
+> demo-shaped surfaces later as a case the demo guide cannot stage.
+
+**[BLOCKING] THEN:** run the operation discovery below **only to locate the changed capability** — never to count TCs. Check existing TC count in Section 8 against `business_floor`.
 
 ```bash
 # Write-side
@@ -209,9 +262,10 @@ rg "{project read-handler patterns}" {target-source-path} -g "{source-file-glob}
 rg "{project read-endpoint patterns}" {target-source-path} -g "{source-file-glob}" -l
 ```
 
-- Count N+M+K (Grand Total) = minimum TC count.
-- Existing TC count < minimum → pre-existing coverage gap. Flag: `"Pre-existing gap: {existing}/{minimum} TCs"`. Generate gap-filling TCs in addition to update-triggered TCs.
-- NEVER add TCs only for changed code when baseline already under-covered.
+- **The floor is `business_floor`** (`author.md` — _"The business TC floor"_). **NEVER derive a floor from the operation count.** An operation-derived floor is architecture-derived: it mints a business TC for every consumer, event handler, and background job, and it moves when the code is re-architected though no business behavior changed.
+- Existing TC count < `business_floor` → a **business** coverage gap (a user story, `[HARD]` rule, invariant, transition, actor, or observable state with no TC). Flag: `"Pre-existing gap: {existing}/{business_floor} TCs"` and fill it with **business** TCs.
+- ⚠️ **A spec is NOT under-covered because it has fewer TCs than the module has handlers.** That comparison is the defect: it reads an architecture count as a business obligation and backfills technical TCs into a business spec on every bugfix. **If `business_floor` is met, there is no gap — regardless of the operation count.**
+- **Scope discipline:** update-triggered TCs cover the observable business change. Backfill **only** genuine `business_floor` gaps — never architecture-derived ones.
 
 1. Read existing Section 8 TCs
 2. `git diff` or `git diff main...HEAD` (for PRs) — find code changes since last TC update
@@ -232,7 +286,7 @@ rg "{project read-endpoint patterns}" {target-source-path} -g "{source-file-glob
 >
 > **Checkpoint:** Answer this question before proceeding: "Is the code change intentional and approved?" If yes, update TCs. If no (regression), the code needs fixing — do not update TCs to document broken behavior.
 
-6. Update feature docs Section 8 (canonical), then forward-sync to integration test code via `[mode=sync]`
+6. Update feature docs Section 8 (canonical), then forward-sync to executing test code via `[mode=sync]`
 
 #### Step UPDATE-FINAL: TC Blast Radius Analysis (UPDATE mode only)
 
@@ -277,10 +331,10 @@ TC Blast Radius Analysis:
 - Change is additive only (new endpoint added, no existing endpoint modified)
 - Module has no dependency surface (standalone, no shared entities)
 
-**Sync mode (§8 TCs ↔ integration test code):** the full reconciliation procedure lives in `sync.md` (`[mode=sync]`). High-level shape:
+**Sync mode (§8 TCs ↔ test code):** the full reconciliation procedure lives in `sync.md` (`[mode=sync]`). High-level shape:
 
 1. Read feature docs Section 8 TCs for target module (canonical source)
-2. Read test files: grep for the test-spec annotation (key `TestSpec`) in the integration-test paths configured by `docs/project-config.json` or the project integration-test reference doc.
+2. Read test files: grep for the test-spec annotation (key `TestSpec`) across configured executing test tiers; include integration, unit, E2E, contract, and property-test suites that carry the annotation.
 3. Build a 2-way comparison table:
 
 ```
@@ -291,7 +345,7 @@ TC Blast Radius Analysis:
 | TC-FEAT-030 | ❌ | ✅ | Back-fill §8 TC (from-integration-tests mode) |
 ```
 
-4. Reconcile: a §8 TC with no covering test → flag for `/integration-test`; an existing test with no §8 TC → back-fill the TC into §8
+4. Reconcile: a §8 TC with no covering test → flag for the owning test route; an existing business `TestSpec` with no §8 TC → adjudicate via M7 before back-filling; technical-only tests use `TechnicalSpec` and do not create §8 TCs
 5. Section 8 remains source of truth — any conflict uses the §8 version
 
 **From-integration-tests mode (reverse-engineer specs from existing tests):**
@@ -306,28 +360,31 @@ TC Blast Radius Analysis:
 
 **[BLOCKING]** Do NOT start Phase 3 until all rows in this table show PASS:
 
-| Gate                | Check                                                          | Required                                         | Actual | Status    |
-| ------------------- | -------------------------------------------------------------- | ------------------------------------------------ | ------ | --------- |
-| Write-op coverage   | TC count for CRUD/write ops                                    | ≥ N (write ops from inventory)                   | {n}    | PASS/FAIL |
-| Read-op coverage    | TC count for query/view ops                                    | ≥ M (read ops from inventory)                    | {n}    | PASS/FAIL |
-| Event/job coverage  | TC count for events + background jobs                          | ≥ K (event/job count)                            | {n}    | PASS/FAIL |
-| Permission coverage | TC count for authorization                                     | ≥ actor_count × 2                                | {n}    | PASS/FAIL |
-| Invariant coverage  | **Property TC** count guarding §4 [HARD] rules + §5 invariants | ≥ count([HARD] BR) + count(§5 entity invariants) | {n}    | PASS/FAIL |
-| Transition coverage | Valid + invalid transition TCs for each §5 lifecycle state     | ≥ 2 per stateful entity (≥1 valid, ≥1 invalid)   | {n}    | PASS/FAIL |
-| Total floor         | Total planned TCs                                              | ≥ N + M + K (Grand Total)                        | {n}    | PASS/FAIL |
+| Gate                | Check                                                                                        | Required                                                                                    | Actual | Status    |
+| ------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------ | --------- |
+| Story coverage      | TC count for §3 user stories                                                                 | ≥ count(§3 US × AC)                                                                         | {n}    | PASS/FAIL |
+| Permission coverage | TC count for authorization                                                                   | ≥ count(§2 actors) × 2                                                                      | {n}    | PASS/FAIL |
+| State coverage      | TC count for observable §6 states                                                            | ≥ count(observable §6 states)                                                               | {n}    | PASS/FAIL |
+| Invariant coverage  | **Property TC** count guarding §4 [HARD] rules + §5 invariants                               | ≥ count([HARD] BR) + count(§5 entity invariants)                                            | {n}    | PASS/FAIL |
+| Transition coverage | Valid + invalid transition TCs for each §5 lifecycle state                                   | ≥ 2 per stateful entity (≥1 valid, ≥1 invalid)                                              | {n}    | PASS/FAIL |
+| Chain coverage      | End-to-end chain TC (decade 061–069) per `COMPLETE` user-facing chain (Full-Chain Trace Map) | ≥ 1 per COMPLETE UI-bearing chain                                                           | {n}    | PASS/FAIL |
+| Scenario fidelity   | TCs whose Preconditions + step pacing production can actually reach                          | ALL planned TCs (0 unreachable; a deliberate impossible-state TC counts only when labelled) | {n}    | PASS/FAIL |
+| Total floor         | Total planned TCs                                                                            | ≥ `business_floor`                                                                          | {n}    | PASS/FAIL |
 
-> **Count properties, not operations.** The Invariant-coverage row counts TCs that ASSERT a universally-quantified property (per the imported Test-Complete Gate), NOT TCs that merely name an invariant in the per-TC field. A §4 [HARD] rule or §5 invariant with zero property TC = FAIL even when every operation/actor row passes. The Transition-coverage row operationalizes `sdd-artifact-contract.md` → Test-Complete Gate ("every state transition maps to ≥1 valid AND ≥1 invalid transition TC"); also confirm every integration event has an idempotency TC (covered under Event/job coverage).
+> ⚠️ **This table has NO Write-op / Read-op / Event-job rows, deliberately.** Those made the business TC count a function of the architecture — an Event/job row mints a business TC for every consumer and background job, which is how sync/consumer/event-handler cases entered a tech-free business spec. **The obligation is not abolished: it is owned by the technical spec tree**, where counting handlers is correct. Every row above reads a **spec section**, so re-architecting cannot move any number in this table.
+>
+> **Count properties, not operations.** The Invariant-coverage row counts TCs that ASSERT a universally-quantified property (per the imported Test-Complete Gate), NOT TCs that merely name an invariant in the per-TC field. A §4 [HARD] rule or §5 invariant with zero property TC = FAIL even when every story/actor row passes. The Transition-coverage row operationalizes `sdd-artifact-contract.md` → Test-Complete Gate ("every state transition maps to ≥1 valid AND ≥1 invalid transition TC"); also confirm every integration event has an idempotency TC (covered under Event/job coverage).
 
 **FAIL action:** TaskCreate for each FAIL row — list specific missing TC categories (and, for Invariant/Transition rows, the exact §4 rule / §5 invariant / lifecycle state left uncovered). NEVER proceed to Phase 3 until all gates PASS.
 
-**Operation group decomposition:** If Grand Total > 20, split TC generation into batches of ≤20 related operations:
+**Operation group decomposition:** If `business_floor` > 20, split TC generation into batches of ≤20 related operations:
 
 ```
 TaskCreate: "Generate CRUD TCs for {feature} — ops {1-N}: {CommandA}, {CommandB}, {CommandC}"
 TaskCreate: "Generate Read TCs for {feature} — ops {1-M}: {QueryA}, {QueryB}"
 TaskCreate: "Generate Event TCs for {feature} — ops {1-K}: {EventConsumerA}, {BackgroundJobA}"
 TaskCreate: "Generate Permission TCs for {feature} — actors: {Role1}, {Role2}"
-TaskCreate: "Generate Edge Case TCs for {feature} — boundary conditions from inventory"
+TaskCreate: "Generate Edge Case TCs for {feature} — boundary conditions from §4 [HARD] rules + §5 invariants"
 TaskCreate: "Generate Invariant/Property TCs for {feature} — per [HARD] §4 rule + §5 invariant: universally-quantified property + boundary counter-case (probe idempotency/round-trip/commutativity/monotonicity/conservation/state-transition)"
 ```
 
@@ -349,7 +406,7 @@ Each batch task completes before starting the next. Final AskUserQuestion review
 
 ```
 Question: "These {N} test cases cover {feature}. Review the list:
-[Coverage context (diagnostic only — not a gate): Use Case Inventory found {total_ops} total operations ({write_ops} write, {read_ops} read, {event_ops} event/background). {N} TCs planned = {coverage_pct}% operation coverage. Invariant/property TCs: {p} guarding {hard_rule_count} [HARD] rules + {invariant_count} §5 invariants.]"
+[Coverage context (diagnostic only — NOT a gate, and NOT a floor): business_floor = {business_floor} from {us_ac} US×AC + {hard_rule_count} [HARD] rules + {invariant_count} §5 invariants + {transition_count} transitions×2 + {actor_count} §2 actors×2 + {state_count} observable §6 states. {N} TCs planned. Operation discovery found {total_ops} operations — shown ONLY to check no capability was missed; it is NOT a target and a lower TC count is NOT a gap.]"
 Options:
 - "Approve as-is (Recommended)" — Proceed to writing
 - "Add missing scenario" — Describe what's missing
@@ -370,7 +427,13 @@ Options:
 3. Section 8 absent: create from template
 4. Use `Edit` tool to upsert
 
-**TC format** (from `spec-tests-template.md`):
+**TC format** — **ILLUSTRATIVE ONLY. The canonical definition is `.claude/skills/shared/tc-format.md` → TC Entry Format.**
+
+> **[HARD] This block does NOT define the format; it only shows it.** If this excerpt and `tc-format.md` ever
+> disagree, **`tc-format.md` wins and this excerpt is the bug.** Never author a TC from this copy without checking
+> the canonical file — a format duplicated in N places drifts in N-1 of them, and it drifts silently because
+> nothing reads two files at once. _(This excerpt had already drifted: it taught `Test Steps` for a full version
+> after the canonical format moved to `Demo Flow` + `Expected Result`.)_
 
 ```markdown
 #### TC-{FEATURE}-{NNN}: {Descriptive Test Name} [{Priority}]
@@ -381,16 +444,27 @@ Options:
 
 **Preconditions:**
 
-- {Setup requirement}
+- {State a user or QC could arrange — never storage setup}
 
-**Test Steps:**
+**Real-World Reachability:** {how production actually reaches those Preconditions — which actor performs which prior action, in what order, and the realistic elapsed gap between consecutive actor actions}
+
+**Demo Flow:**
 \`\`\`gherkin
-Given {initial state}
+Given {state a user could arrange}
 And {additional context}
-When {action}
-Then {expected outcome}
-And {additional verification}
+When {an action a user could take}
+Then {an outcome a user could SEE}
+And {additional visible verification}
 \`\`\`
+
+**Expected Result:**
+
+| Dimension               | What to state                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| **UI**                  | What the user sees on screen                                                    |
+| **System behavior**     | What the system does, in business terms                                         |
+| **Business data state** | What is now true about the business — business language, never storage language |
+| **Data shown on UI**    | What the user reads back, and where                                             |
 
 **Acceptance Criteria:**
 
@@ -411,7 +485,20 @@ And {additional verification}
 **Evidence:** `[Source: {namespace}/{service}/{id}]` or `TBD (pre-implementation)`
 ```
 
-> **[M1-M2 Compliance — authoring the TC body]** The `Objective`, `Business Intent / Invariant Guarded`, and the `Given/When/Then` steps MUST name business operations and observable states only — what an actor does and what the system visibly does in response. NEVER use class/method/file names, transport/handler names, or language-native types in these fields. Those source identifiers belong ONLY in the `**Evidence**` and `IntegrationTest` carriers. Quick check: replace the implementation with a different stack — does the GWT still read correctly? If not, it leaks tech (M1/M2 fail). See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria.
+> **[M1-M2 Compliance — authoring the TC body]** The `Objective`, `Business Intent / Invariant Guarded`, and the `Given/When/Then` steps MUST name business operations and observable states only — what an actor does and what the system visibly does in response. NEVER use class/method/file names, transport/handler names, or language-native types in these fields. Those source identifiers belong ONLY in the `**Evidence**` and `CoveredBy` carriers. Quick check: replace the implementation with a different stack — does the GWT still read correctly? If not, it leaks tech (M1/M2 fail). See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria.
+
+> **[M7 — Business-visibility — judge the TC BODY]** Apply the demo test to the case BODY: _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY, and the case does NOT belong in §8. A `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count FAILS. Judge the BODY, never the title or ID — a business-sounding title routinely fronts an invocation-shaped `When`.
+>
+> **M1 governs vocabulary; M7 governs subject matter.** A technical case in impeccably tech-free prose satisfies M1 while violating M7 — _"the system correctly synchronizes the record"_ names no technology, passes the M1-M2 check above, and is still a technical TC wearing a business costume. The M1-M2 stack-swap check CANNOT catch this; only the demo test can. See `.claude/skills/shared/sdd-artifact-contract.md` → "Business-Visibility Gate" for the full BLOCKING criteria, the detection recipe, and the no-op rule (a change with no business-behavior delta correctly yields ZERO new TCs).
+
+> **[BLOCKING] Real-world fidelity — judge the SCENARIO the TC specifies.** Per the Real-World Fidelity Gate above, a TC is the upstream lever on test realism: a spec describing an impossible situation guarantees an unrealistic test, and that test proves nothing when it passes. Before writing any TC body, answer: _"Can this sequence, timing, and data actually occur in production?"_
+>
+> 1. **`Real-World Reachability` is REQUIRED on every TC** — name the prior actor action(s) that produce the `Preconditions`. "The data is simply there" is not reachability; if no actor path produces that state, the TC is mis-specified — re-scope it, never soften the `Then`.
+> 2. **State the gap whenever consecutive steps are distinct actor actions.** A TC whose `When`/`And` steps imply two different actor actions with NO realistic gap MUST declare the gap explicitly (_"the reviewer responds minutes after the applicant submits"_) or be re-scoped into separate TCs. Silence here becomes a back-to-back call in the generated test, manufacturing a race production never has.
+> 3. **A deliberately unreachable state MUST be labelled** with WHY it is reachable (upstream defect, partial write, legacy data) — see the template's `Deliberate Impossible State` field. Unlabelled, it is indistinguishable from a mis-specified TC.
+> 4. **Fidelity NEVER costs coverage.** If a realistic scenario stops exercising the [HARD] rule or §5 invariant the TC guards, author a DIFFERENT realistic scenario — never a weaker `Then`.
+>
+> Full field definitions: `references/spec-tests-template.md` → Individual TC Entry.
 
 **Evidence rules by mode:**
 
@@ -419,7 +506,7 @@ And {additional verification}
 - **Implement-first:** trace to the real code, then record the stack-portable abstract anchor `Evidence: [Source: {namespace}/{service}/{id}]` (derive namespace/service/id per `shared/tc-format.md`; the physical `file:line` goes to the provenance sidecar, NEVER into the doc)
 - **Update:** re-resolve the anchor ONLY if the logical artifact was renamed/split; a file move or stack change does NOT change the anchor — that stability is the point
 
-> **[M3 Traceability — logical-IDs-first]** Every TC MUST map to at least one logical business-rule/operation ID (`BR-`/`OP-` from feature doc Section 6/8) as its primary trace spine — record this mapping in the TC body (e.g. a `Traces: BR-XX, OP-XX` line) SEPARATE from the evidence anchor. The `[Source: {namespace}/{service}/{id}]` in the `**Evidence**` field is the SECONDARY, stack-portable carrier — it names WHICH logical artifact implements/verifies the behavior, never WHAT the TC guards. KEEP the abstract anchor; never drop it and never replace it with `file:line` (physical coordinates live only in the provenance sidecar). A TC with `[Source: ...]` but no logical-ID mapping fails M3. See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria.
+> **[M3 Traceability — logical-IDs-first]** Every TC MUST map to at least one logical business-rule/operation ID (`BR-`/`OP-` from feature doc Section 6/8) as its primary trace spine — record this mapping in the TC body (e.g. a `Traces: BR-XX, OP-XX` line) SEPARATE from the evidence anchor. The `[Source: {namespace}/{service}/{id}]` in the `**Evidence**` field is the SECONDARY, stack-portable carrier — it names WHICH logical artifact implements/verifies the behavior, never WHAT the TC guards. KEEP the abstract anchor; never drop it and never replace it with `file:line` (physical coordinates live only in the provenance sidecar). A TC with `[Source: ...]` but no logical-ID mapping fails M3. See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria.
 
 ### Phase 5: Sync Section 8 TCs ↔ Integration Test Code (Optional)
 
@@ -429,7 +516,7 @@ The full reconciliation procedure (direction detection, quality gate, forward/re
 2. TDD-first: map to expected test method names (to be created by `/integration-test`)
 3. Flag §8 TCs with **zero** covering tests as coverage gaps for `/integration-test` (NEVER flag many-tests-per-TC as a problem — that is the expected one-to-many shape; NEVER split a business TC to achieve a 1:1 map to test methods)
 
-> **[M2/M3 — keep §8 stack-portable]** Each TC's `Evidence` **abstract anchor** (`[Source: {namespace}/{service}/{id}]`) stays verbatim — NEVER expand it to physical code coordinates or repository-root paths. The only physical reference a TC may carry is the operational `IntegrationTest` field — one or more `{TestFile}::{MethodName}` link(s) (or a test-filter expression), since a business TC maps to many tests.
+> **[M2/M3 — keep §8 stack-portable]** Each TC's `Evidence` **abstract anchor** (`[Source: {namespace}/{service}/{id}]`) stays verbatim — NEVER expand it to physical code coordinates or repository-root paths. The only physical reference a TC may carry is the operational `CoveredBy` field — one or more `{TestFile}::{MethodName}` link(s), a test-filter expression, or manual-QC coverage, since a business TC maps to many tests. Legacy `IntegrationTest:` is accepted only as migration input.
 
 **Skip** if user says "skip sync" or no integration test project exists for the module. For the full algorithm, switch to `[mode=sync]` (`sync.md`).
 
@@ -440,7 +527,7 @@ Based on mode, suggest via `AskUserQuestion`:
 **TDD-first:**
 
 ```
-1. "/review-artifact --type=spec-tests — Validate TC quality before generating tests (Recommended)"
+1. "/artifact-review --type=spec-tests — Validate TC quality before generating tests (Recommended)"
 2. "/integration-test — Generate test stubs from these TCs (skip review)"
 3. "/plan — Plan the feature implementation"
 4. "Done for now — I'll implement later"
@@ -449,7 +536,7 @@ Based on mode, suggest via `AskUserQuestion`:
 **Implement-first:**
 
 ```
-1. "/review-artifact --type=spec-tests — Validate TC quality before generating tests (Recommended)"
+1. "/artifact-review --type=spec-tests — Validate TC quality before generating tests (Recommended)"
 2. "/integration-test — Generate integration tests (skip review)"
 3. "/workflow-review-changes — Review all changes"
 4. "Done for now"
@@ -458,17 +545,17 @@ Based on mode, suggest via `AskUserQuestion`:
 **Update (post-change/PR):**
 
 ```
-1. "/review-artifact --type=spec-tests — Validate updated TCs before regenerating tests (Recommended)"
+1. "/artifact-review --type=spec-tests — Validate updated TCs before regenerating tests (Recommended)"
 2. "/integration-test — Generate/update tests for changed TCs (skip review)"
 3. "/test — Run existing tests to verify coverage"
-4. "spec [mode=sync] — Sync §8 TCs ↔ integration test code"
+4. "spec [mode=sync] — Sync §8 TCs ↔ executing test code"
 5. "Done for now"
 ```
 
 **Sync:**
 
 ```
-1. "spec [mode=sync] — Sync §8 TCs ↔ integration test code after reconciliation (Recommended)"
+1. "spec [mode=sync] — Sync §8 TCs ↔ executing test code after reconciliation (Recommended)"
 2. "/integration-test — Generate tests for any TCs missing test coverage"
 3. "Done for now"
 ```
@@ -476,7 +563,7 @@ Based on mode, suggest via `AskUserQuestion`:
 **From-integration-tests:**
 
 ```
-1. "spec [mode=sync] — Sync §8 TCs ↔ integration test code for newly documented TCs (Recommended)"
+1. "spec [mode=sync] — Sync §8 TCs ↔ executing test code for newly documented TCs (Recommended)"
 2. "/test — Run tests to verify all documented TCs pass"
 3. "Done for now"
 ```
@@ -487,17 +574,17 @@ Based on mode, suggest via `AskUserQuestion`:
 
 **[BLOCKING] Before assigning any TC ID:** Read all existing TC IDs in the feature doc's Section 8. Find the next available decade slot.
 
-| NNN Range | Category                                                                                                                                 |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 001–009   | CRUD / Core operations (P0-P1)                                                                                                           |
-| 011–019   | Validation / Business rules (P1-P2)                                                                                                      |
-| 021–029   | Authorization / Permissions (P0-P1)                                                                                                      |
-| 031–039   | Events / Background jobs (P1-P2)                                                                                                         |
-| 041–049   | Cross-service / Integration (P1-P2) — run the cross-service boundary scan (producers/consumers/sagas/contracts) before writing these TCs |
-| 051–059   | Edge cases / Error scenarios (P2-P3)                                                                                                     |
-| 061–069   | UI / User journey flows (P2-P3)                                                                                                          |
-| 071–079   | Invariant / Property TCs (P0-P2) — universally-quantified properties + boundary counter-cases per [HARD] §4 rule / §5 invariant          |
-| 081–099   | Reserved for feature-specific groups                                                                                                     |
+| NNN Range | Category                                                                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 001–009   | CRUD / Core operations (P0-P1)                                                                                                                    |
+| 011–019   | Validation / Business rules (P1-P2)                                                                                                               |
+| 021–029   | Authorization / Permissions (P0-P1)                                                                                                               |
+| 031–039   | Business workflows / lifecycle outcomes (P1-P2)                                                                                                   |
+| 041–049   | External business-facing outcomes (P1-P2) — write only the demoable user/QC-visible outcome; architecture-only flows belong to the technical tree |
+| 051–059   | Edge cases / Error scenarios (P2-P3)                                                                                                              |
+| 061–069   | UI / User journey flows (P2-P3)                                                                                                                   |
+| 071–079   | Invariant / Property TCs (P0-P2) — universally-quantified properties + boundary counter-cases per [HARD] §4 rule / §5 invariant                   |
+| 081–099   | Reserved for feature-specific groups                                                                                                              |
 
 **Collision prevention:**
 
@@ -536,13 +623,14 @@ When feature behavior removed or significantly changed:
 - ❌ Generating TCs without reading existing Section 8 (causes ID collisions)
 - ❌ Skipping the interactive review step (user must approve TC list)
 - ❌ Writing TCs without Evidence field (every TC needs it, even if `TBD`)
+- ❌ Specifying a scenario production could never reach — unreachable `Preconditions`, or two distinct actor actions with no realistic gap (mis-specified TC → unrealistic test → false defect report)
 
 ---
 
 ## See Also
 
-- `review-artifact --type=spec-tests` — TC quality review (use AFTER this mode to validate TC coverage and correctness)
-- `spec [mode=sync]` — Native sync mode (forward-syncs Section 8 TCs ↔ integration test code; see `sync.md`)
+- `artifact-review --type=spec-tests` — TC quality review (use AFTER this mode to validate TC coverage and correctness)
+- `spec [mode=sync]` — Native sync mode (forward-syncs Section 8 TCs ↔ executing test code; see `sync.md`)
 - `integration-test` — Integration test code generator (use AFTER this mode to generate test stubs)
 - `/spec` — Feature doc creator (creates the Section 8 that this mode populates)
 - `refine` — PBI refinement (feeds acceptance criteria into this mode's TDD-first path)

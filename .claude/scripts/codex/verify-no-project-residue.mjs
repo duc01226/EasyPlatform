@@ -35,7 +35,7 @@ const forbiddenTerms = ['br' + 'avo', 'Br' + 'avoSuite'];
 //      `PlatformValidationResult`, `untilDestroyed`) — used as "e.g. on a .NET/Angular project…"
 //      examples in scan/investigate/refactoring/feature/affirmative-rewrite-rubric. A blanket
 //      denylist would force ~10 allowlist entries and fight the framework's example-driven design.
-//      The load-bearing leak (review-architecture asserting them as MUST-rules) is fixed at the
+//      The load-bearing leak (architecture-review asserting them as MUST-rules) is fixed at the
 //      source — rules reframed as project-examples routed through reference docs — not by this gate.
 export const projectSymbolDenylist = [
     'AppBaseComponent',
@@ -46,19 +46,23 @@ export const projectSymbolDenylist = [
     'IPlatformRootRepository',
     'ExecuteInjectScopedAsync',
     'ExecuteUowTask',
-    // CQRS entity-event / bus-producer base classes — appear ONLY as review-architecture's marked
+    // CQRS entity-event / bus-producer base classes — appear ONLY as architecture-review's marked
 // examples today; denylisted as future-proofing so a NEW skill/hook can't introduce them as an
-// unmarked assertion. review-architecture is allowlisted below for its documented examples.
+// unmarked assertion. architecture-review is allowlisted below for its documented examples.
     'PlatformCqrsEntityEventApplicationHandler',
-    'PlatformCqrsEventBusMessageProducer'
+    'PlatformCqrsEventBusMessageProducer',
+    // Consuming-project directory/solution name. Was hardcoded as a service-derivation
+    // special case inside the tech-spec generator and passed this sensor unnoticed —
+    // denylisted so a consumer's project name can never re-enter portable framework code.
+    'PlatformExampleApp'
 ];
 
 // Per-file exemptions: skills that legitimately document THIS project's architecture as marked
-// examples (review-architecture frames these base classes as "e.g. this project" anchors;
+// examples (architecture-review frames these base classes as "e.g. this project" anchors;
 // the seed-test-data scan target greps for them in .NET source). Keyed by repo-relative forward-slash path →
 // symbols allowed for that file only.
 export const projectSymbolAllowlist = {
-    '.claude/skills/review-architecture/SKILL.md': [
+    '.claude/skills/architecture-review/SKILL.md': [
         'AppBaseComponent',
         'AppBaseVmStoreComponent',
         'AppBaseFormComponent',

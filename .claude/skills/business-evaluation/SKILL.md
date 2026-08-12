@@ -19,6 +19,7 @@ description: '[Content] Use when you need to evaluate business idea viability: B
 
 **Summary:**
 
+- **All 7 main steps, in order:** (1) capture idea (problem/solution/target), (2) load market-analysis data as evidence, (3) Business Model Canvas — all 9 blocks, (4) 3-year financial projections + assumptions table, (5) risk assessment — 5+ risks, (6) phased execution plan, (7) go-to-market — then deliver the (Step 7) verdict. NEVER skip, reorder, or merge a step — why: AI forgets the skill's own steps and ships a partial evaluation.
 - Runs after market-analysis: pull its market data in as evidence rather than re-deriving market sizing here — this skill judges viability, it does not research the market.
 - Every artifact is evidence-gated — all 9 BMC blocks cite proof, every financial number carries an assumption + source, and each of the 5+ risks needs mitigation AND a residual-risk entry; an unbacked number or block fails the gate.
 - The verdict is the load-bearing output: a 1-10 viability score, an explicit confidence tier (95/80/60/<60%) with its evidence basis, a Pursue/Pivot/Pause/Pass call, and the single key condition that must hold to succeed — bias toward skepticism, never optimism.
@@ -151,8 +152,9 @@ Write to `docs/knowledge/strategy/business/{descriptive-slug}.md` using enforced
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -204,6 +206,7 @@ Write to `docs/knowledge/strategy/business/{descriptive-slug}.md` using enforced
 **MANDATORY IMPORTANT MUST ATTENTION** consume market data FROM market-analysis as evidence — NEVER re-derive market sizing here — why: this skill judges viability, it does not research the market; duplicated sizing diverges from the source.
 **MANDATORY IMPORTANT MUST ATTENTION** all 9 BMC blocks present, each citing proof; every financial number lists its assumption + source in the assumptions table — why: a missing block or bare number is a silent gap the verdict then rests on.
 **MANDATORY IMPORTANT MUST ATTENTION** minimum 5 risks, each with mitigation AND a residual-risk entry across market/execution/financial/competitive/regulatory/technical — why: a risk without residual pretends mitigation is total.
+**MANDATORY IMPORTANT MUST ATTENTION** run ALL 7 steps in order — idea → market-load → 9-block BMC → 3-year financials → 5+ risks → 3-phase execution plan (Validation/Build/Growth milestones) → go-to-market (launch + top-3 channels + pricing rationale) → verdict; NEVER drop financials, execution, or GTM because the idea "feels" decided — why: the verdict is only as sound as the weakest step it rests on.
 **MANDATORY IMPORTANT MUST ATTENTION** before writing any figure or claim, search market-analysis output + prior evaluations for 3+ comparable patterns and cite them — why: a number with no comparable anchor is a fabrication.
 **MANDATORY IMPORTANT MUST ATTENTION** write the result to `docs/knowledge/strategy/business/{slug}.md` via the enforced `.claude/templates/business-evaluation-template.md` — NEVER hand-roll the structure — why: the template is the contract downstream skills (domain-analysis/plan) read.
 **MANDATORY IMPORTANT MUST ATTENTION** persist intermediate findings to `plans/reports/` for lengthy evaluations — why: external memory survives context loss and serves as the deliverable.

@@ -4,7 +4,6 @@ using System.Diagnostics;
 using Easy.Platform.Common;
 using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.Exceptions;
@@ -273,13 +272,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                             if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
                             {
                                 logger.LogError(
-                                    ex.BeautifyStackTrace(),
-                                    "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                                    "[{Type}] Retry: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                                     GetType().Name,
-                                    ex.Message,
+                                    PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                                     existingOutboxMessage.MessageTypeFullName,
-                                    PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                                    existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                                    PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingOutboxMessage.MessageTypeFullName));
                             }
                         });
 
@@ -305,7 +302,9 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
             }
             catch (Exception exception)
             {
-                logger.LogError(exception.BeautifyStackTrace(), "SendExistingOutboxMessageAsync failed. [[Error:{Error}]]", exception.Message);
+                logger.LogError(
+                    "SendExistingOutboxMessageAsync failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]",
+                    PlatformMessageBusDiagnosticFormatter.FormatException(exception));
 
                 // Update the outbox message as failed if sending fails.
                 await UpdateExistingOutboxMessageFailedAsync(existingOutboxMessage, exception, retryProcessFailedMessageInSecondsUnit, cancellationToken, logger);
@@ -316,7 +315,9 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 }
                 catch (Exception e)
                 {
-                    logger.LogError(e.BeautifyStackTrace(), "Cancel StartIntervalPingProcessing failed");
+                    logger.LogError(
+                        "Cancel StartIntervalPingProcessing failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]",
+                        PlatformMessageBusDiagnosticFormatter.FormatException(e));
                 }
             }
         }
@@ -344,19 +345,19 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     {
                         CreateLogger()
                             .LogError(
-                                ex.BeautifyStackTrace(),
-                                "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                                "[{Type}] Retry: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                                 GetType().Name,
-                                ex.Message,
+                                PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                                 existingOutboxMessage.MessageTypeFullName,
-                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                                PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingOutboxMessage.MessageTypeFullName));
                     }
                 });
         }
         catch (Exception e)
         {
-            CreateLogger().LogError(e.BeautifyStackTrace(), "Try DeleteExistingOutboxProcessedMessageAsync failed");
+            CreateLogger().LogError(
+                "Try DeleteExistingOutboxProcessedMessageAsync failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]",
+                PlatformMessageBusDiagnosticFormatter.FormatException(e));
         }
     }
 
@@ -440,13 +441,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                                 {
                                     loggerFactory()
                                         .LogError(
-                                            ex.BeautifyStackTrace(),
-                                            "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                                            "[{Type}] Retry: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                                             nameof(PlatformOutboxMessageBusProducerHelper),
-                                            ex.Message,
+                                            PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                                             outboxMessage.MessageTypeFullName,
-                                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                                            outboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                                            PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(outboxMessage.MessageTypeFullName));
                                 }
                             }
                         });
@@ -488,13 +487,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 {
                     CreateLogger()
                         .LogError(
-                            ex.BeautifyStackTrace(),
-                            "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                            "[{Type}] Retry: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                             GetType().Name,
-                            ex.Message,
+                            PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                             existingOutboxMessage.MessageTypeFullName,
-                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                            existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                            PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingOutboxMessage.MessageTypeFullName));
                 }
             });
     }
@@ -538,7 +535,9 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         }
         catch (Exception exception)
         {
-            logger.LogError(exception.BeautifyStackTrace(), "SendExistingOutboxMessageInNewScopeAsync failed. [[Error:{Error}]]", exception.Message);
+            logger.LogError(
+                "SendExistingOutboxMessageInNewScopeAsync failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]",
+                PlatformMessageBusDiagnosticFormatter.FormatException(exception));
 
             // Update the outbox message as failed if sending fails.
             await UpdateExistingOutboxMessageFailedAsync(existingOutboxMessage, exception, retryProcessFailedMessageInSecondsUnit, cancellationToken, logger);
@@ -599,13 +598,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 {
                     CreateLogger()
                         .LogError(
-                            ex.BeautifyStackTrace(),
-                            "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                            "[{Type}] Retry: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                             GetType().Name,
-                            ex.Message,
+                            PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                             existingOutboxMessage.MessageTypeFullName,
-                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                            existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                            PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingOutboxMessage.MessageTypeFullName));
                 }
             });
     }
@@ -629,12 +626,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         try
         {
             logger.LogError(
-                exception.BeautifyStackTrace(),
-                "UpdateExistingOutboxMessageFailedAsync. [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
-                exception.Message,
+                "UpdateExistingOutboxMessageFailedAsync. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[OutboxMessageId:{OutboxMessageId}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
+                PlatformMessageBusDiagnosticFormatter.FormatException(exception),
                 existingOutboxMessage.MessageTypeFullName,
-                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                existingOutboxMessage.Id,
+                PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingOutboxMessage.MessageTypeFullName));
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 () => rootServiceProvider.ExecuteInjectScopedAsync(async (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
@@ -663,25 +659,22 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     {
                         CreateLogger()
                             .LogError(
-                                ex.BeautifyStackTrace(),
-                                "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                                "[{Type}] Retry: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                                 GetType().Name,
-                                ex.Message,
+                                PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                                 existingOutboxMessage.MessageTypeFullName,
-                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                                PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingOutboxMessage.MessageTypeFullName));
                     }
                 });
         }
         catch (Exception ex)
         {
             logger.LogError(
-                ex.BeautifyStackTrace(),
-                "UpdateExistingOutboxMessageFailedAsync. [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
-                ex.Message,
+                "UpdateExistingOutboxMessageFailedAsync. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[OutboxMessageId:{OutboxMessageId}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
+                PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                 existingOutboxMessage.MessageTypeFullName,
-                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                existingOutboxMessage.Id,
+                PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingOutboxMessage.MessageTypeFullName));
         }
     }
 
@@ -689,12 +682,36 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// Updates an existing outbox message with failure details.
     /// </summary>
     /// <param name="existingOutboxMessage">The existing outbox message to update.</param>
-    /// <param name="exception">The exception that caused the failure.</param>
+    /// <param name="exception">The send failure; its type, message and stack trace are persisted — see the remarks.</param>
     /// <param name="retryProcessFailedMessageInSecondsUnit">The time unit in seconds for retrying failed message sending.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <param name="outboxBusMessageRepository">The repository for accessing outbox messages.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-    private static async Task UpdateExistingOutboxMessageFailedAsync(
+    /// <remarks>
+    /// <para>
+    /// <b><c>LastSendError</c> is a debuggable exception diagnostic, but never a message dump.</b> It carries the
+    /// exception type, message, demystified stack trace and inner TYPE chain. It does NOT carry the bus message
+    /// body, inner exception messages, or <see cref="Exception.Data" />.
+    /// </para>
+    /// <para>
+    /// This column briefly stored the exception TYPE alone, on the reasoning that it is a long-lived database row
+    /// readable by anyone with database access. That was reversed, because the reasoning did not survive one
+    /// observation: <b>this send path catches the exception and never rethrows it</b>, so this column is the ONLY
+    /// record that the failure happened — and <see cref="PlatformOutboxBusMessage.JsonMessage" /> already persists
+    /// the entire message body in the SAME ROW, with the same retention and the same readers. Stripping the adjacent
+    /// error column was therefore never a net confidentiality gain; it only made stuck messages undiagnosable.
+    /// </para>
+    /// <para>
+    /// What genuinely still holds is the boundary between the EXCEPTION and the PAYLOAD: the message body is not
+    /// re-serialized into this column. The accepted disclosure — exception messages are not credential-scrubbed —
+    /// is documented as a decision on <c>PlatformDiagnosticJsonSerializer.SerializeException</c>.
+    /// </para>
+    /// <para>
+    /// <b>Visibility:</b> <c>internal</c> rather than <c>private</c> so the unit tests can assert what actually lands
+    /// in the persisted column, which no log-capturing test can observe.
+    /// </para>
+    /// </remarks>
+    internal static async Task UpdateExistingOutboxMessageFailedAsync(
         PlatformOutboxBusMessage existingOutboxMessage,
         Exception exception,
         double retryProcessFailedMessageInSecondsUnit,
@@ -704,7 +721,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         existingOutboxMessage.SendStatus = PlatformOutboxBusMessage.SendStatuses.Failed;
         existingOutboxMessage.LastSendDate = DateTime.UtcNow;
         existingOutboxMessage.LastProcessingPingDate = DateTime.UtcNow;
-        existingOutboxMessage.LastSendError = exception.BeautifyStackTrace().Serialize();
+        existingOutboxMessage.LastSendError = PlatformMessageBusDiagnosticFormatter.FormatException(exception);
         existingOutboxMessage.RetriedProcessCount = (existingOutboxMessage.RetriedProcessCount ?? 0) + 1;
         existingOutboxMessage.NextRetryProcessAfter = PlatformOutboxBusMessage.CalculateNextRetryProcessAfter(
             existingOutboxMessage.RetriedProcessCount,
@@ -904,13 +921,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 {
                     CreateLogger()
                         .LogError(
-                            ex.BeautifyStackTrace(),
-                            "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                            "[{Type}] Retry: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                             GetType().Name,
-                            ex.Message,
+                            PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                             message.GetType().GetNameOrGenericTypeName(),
-                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                            message.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                            PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(message));
                 }
             });
     }

@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -48,6 +49,8 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 > **[GOAL REMINDER — MUST ATTENTION CRITICAL]**
 >
 > Ensure every review target is reasonable, correct, proof-backed, and best-practice aligned.
+> **ALWAYS ASK THE 3 TRADE-OFF QUESTIONS (every decision AND every recommendation you make):** (1) **is there any trade-off?** — name what it sacrifices; "none" is an unfinished analysis, not an answer; (2) **is it worth it?** — gain vs cost, who pays, when → WORTH IT / NOT WORTH IT / UNCLEAR; (3) **is the trade-off material enough to confirm with the user?** — irreversible, cost shifted to someone else, one quality attribute traded for another, boundary crossed, high-consequence path, or UNCLEAR → STOP and confirm by asking the user directly BEFORE the verdict. NEVER resolve a material trade-off silently. — why: naming a benefit without its price is an endorsement, not a review, and a one-way door is the user's call to walk through, never yours.
+> **MANDATORY SECOND PASS (full mode):** whenever Round 1 produces ANY finding, you MUST call `$why-review --validate-findings` a SECOND time on those findings to confirm each is correct and reasonable BEFORE handoff. NEVER skip it; NEVER suppress, demote, or under-report findings to dodge it. The self-recursive review loop bound as the first full-mode action — the **protocol loop primarily** (host-independent), plus a `/goal` Stop-hook gate WHEN available — BLOCKS stopping until findings are validated. — why: an unvalidated finding is an unproven claim, and a second self-review catches the misreads and inflation Round 1 rationalized.
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
 
@@ -62,17 +65,19 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Goal:** Resolve the requested review target and apply the matching adversarial review path (plan/PBI rationale, code changes, docs/spec/report, findings, or explicit artifact) so decisions, findings, and plans survive adversarial rationale review before downstream work proceeds.
 
-**Summary:**
+**Summary:** (read-this-if-nothing-else digest — the skill's purpose + ALL main steps)
 
-- DETECT MODE FIRST: `--validate-findings` is TERMINAL — it never re-invokes `$why-review`, never runs the gate, never spawns a sub-agent; full mode may call itself ONCE in validate-findings mode. This recursion guard is non-negotiable.
-- Resolve the target type BEFORE reviewing — a commit/PR/diff defaults to code-change review, a PBI/spec/doc to artifact review; "no active plan" is valid ONLY for an unresolved plan-rationale request. Never silently convert target types.
-- Default stance is SKEPTIC not validator: complete every box of the Anti-Bias Gate (steel-man rejected alt, unseen alternative, args against, stressed assumptions, pre-mortem, pros/cons symmetry); presence of a section is never a pass — quality depth is.
-- Judge by Easy-to-Change (does this lower future change cost?) and gate every finding on `file:line`, severity, and confidence; in full mode the Findings Validation Gate on your OWN findings is the mandatory closing task when any finding exists.
-- Dual-feedback validation: when validating findings, a behavior-changing finding MUST carry BOTH a spec-drift verdict (CODE-WRONG / SPEC-STALE / AMBIGUOUS / SPEC-SILENT / in-sync) AND a concrete test-feedback action — a missing axis is a HAS-ISSUES flag, not a clean finding; a SPEC-SILENT verdict additionally REQUIRES a spec-enrichment action (add §4 BR/§3 AC + §8 TC) on the spec axis, else HAS-ISSUES.
+- **PURPOSE** — be the adversarial rationale reviewer: every plan/PBI/diff/doc/spec/report/finding survives a SKEPTIC pass before downstream work proceeds; success metric is Easy-to-Change (lower future change cost or reject). Gate EVERY finding on `file:line` + severity + confidence.
+- **STEP 1 — DETECT MODE FIRST** (recursion control): `--validate-findings` is TERMINAL — NEVER re-invokes `$why-review`, NEVER runs the gate, NEVER spawns a sub-agent; full mode may call itself ONCE in validate-findings mode. Non-negotiable guard. — why: any of these from terminal mode loops infinitely.
+- **STEP 2 — FULL-MODE FIRST ACTION** → bind the self-recursive review loop: the **protocol loop is the primary, host-independent binding** (you self-drive review → validate → reconcile → full re-review until CLEAN with no new findings; max 2 re-dos, then escalate), and a `/goal` gate is an **optional accelerator invoked WHEN available** (its absence never weakens the loop) — NEVER bind it in terminal mode; "self-fix" = reconcile this review's OWN findings set, not code. THEN Task Bootstrap: create phase tasks + the MANDATORY Findings Validation Gate closing task.
+- **STEP 3 — RESOLVE TARGET TYPE** before any review (commit/PR/diff → code-change; PBI/spec/doc → artifact; "no active plan" ONLY for an unresolved plan-rationale request — NEVER silently convert), read the active Goal Contract, then route by concern (code-reviewer / security-auditor / performance-optimizer / general-purpose). **Integration tests in the target → apply the Integration-Test-Review Linkage** (read `$integration-test-review`'s 8 gates, or delegate in standalone full mode) — SKIPPED under its 4-row recursion guard.
+- **STEP 4 — REVIEW as SKEPTIC** → complete ALL 7 Anti-Bias Gate boxes (steel-man rejected alt · unseen alternative · args against · stressed assumptions · pre-mortem · pros/cons symmetry · **Trade-Off Interrogation Gate**) + Validation Checklist (presence AND quality depth) + Round 2 re-review; triangulate spec↔tests↔code — any disagreeing face is a finding, presence is NEVER a pass.
+- **TRADE-OFF GATE — ALWAYS ASK, on every decision AND every recommendation YOU make:** (1) **is there any trade-off?** name the sacrifice — "none" is an unfinished analysis, so state the dimensions checked; (2) **is it worth it?** gain vs cost, who pays, when → WORTH IT / NOT WORTH IT / UNCLEAR; (3) **is it material enough to confirm with the user?** irreversible · cost shifted elsewhere · quality attribute traded · boundary crossed · high-consequence path · UNCLEAR → **STOP and confirm by asking the user directly BEFORE the verdict**. Emit the `Trade-Off Assessment` table; a material trade-off unconfirmed = NEVER PASS.
+- **STEP 5 — FINDINGS VALIDATION GATE** on your OWN findings (any severity): re-invoke terminal `--validate-findings`, reconcile, RE-DO the full review until CLEAN with no new findings (max 2), then ask next step by asking the user directly (+ conditional `$llm-council`). Dual-feedback: a behavior-changing finding needs BOTH a spec-drift verdict (CODE-WRONG / SPEC-STALE / AMBIGUOUS / SPEC-SILENT / in-sync) AND a test-feedback action; SPEC-SILENT also REQUIRES §4 BR/§3 AC + §8 TC enrichment — a missing axis is HAS-ISSUES, never clean.
 
-**Workflow:** Detect mode/target → route path/docs/graph/sub-agent focus → review dimensions/adversarial gates/Easy-to-Change → validate findings via terminal `--validate-findings` → ask next step in full mode.
+**Workflow:** Detect mode/target → (full mode only) bind the self-recursive review loop (protocol-primary; optional `/goal` accelerator when available) → route path/docs/graph/sub-agent focus → review dimensions/adversarial gates/Easy-to-Change → validate findings via terminal `--validate-findings` → reconcile + holistic full re-review until CLEAN with no new findings (max 2 re-dos) → ask next step in full mode.
 
-**Key Rules:** MUST ATTENTION resolve target type BEFORE review. MUST ATTENTION every finding needs `file:line`, severity, confidence, best-practice rationale. NEVER say "No active plan" except unresolved plan-rationale request. NEVER call `$why-review` from `validate-findings`. MUST ATTENTION judge by Easy-to-Change: lower future change cost or reject.
+**Key Rules:** MUST ATTENTION resolve target type BEFORE review. MUST ATTENTION every finding needs `file:line`, severity, confidence, best-practice rationale. MUST ATTENTION ask the 3 trade-off questions on every decision AND every recommendation (trade-off? worth it? material → confirm with user); NEVER accept "no trade-off" unexamined, NEVER decide a material trade-off silently. NEVER say "No active plan" except unresolved plan-rationale request. NEVER call `$why-review` from `validate-findings`. MUST ATTENTION judge by Easy-to-Change: lower future change cost or reject.
 
 ## Your Mission
 
@@ -93,13 +98,41 @@ Detect mode from `$ARGUMENTS` BEFORE any review work:
 
 > **In `validate-findings` mode:** skip full Validation Checklist, Adversarial Rounds, Task Bootstrap, Next-Steps council gate. Jump straight to **Findings Validation Routine**, emit verdict, return to caller.
 
+## Bind the Self-Recursive Review Loop (full mode — FIRST ACTION, after mode detection; protocol-first, `/goal` optional)
+
+> **MUST ATTENTION:** In **full mode only**, the FIRST action after mode detection — before Task Bootstrap, before any review work — binds this skill's self-recursive review loop so you cannot stop until this review's own findings are all validated and a holistic re-review surfaces nothing new (or a bounded escalation fires). The loop is bound by TWO layers: the **protocol loop (primary, host-independent)** and an **optional `/goal` accelerator**. Correctness rides on the protocol loop — the project rule is that hooks/commands are accelerators only, so `/goal`'s absence NEVER weakens the loop.
+
+**Entry gate:**
+
+- **Run** in full mode (no `validate-findings` token).
+- **SKIP** in `validate-findings` terminal mode — that mode only returns a verdict to its caller and MUST NOT bind a loop, install a goal, create a closing task, or loop (recursion guard). Record nothing.
+
+**1. Protocol loop — ALWAYS binding (hook/command-independent).** You, the running agent, are personally responsible for not stopping until the loop converges or bounded-escalates. This binds Claude, Codex, and Copilot equally, whether or not `/goal` exists:
+
+> Run the full adversarial review (Validation Checklist + both Adversarial Rounds) over the whole target → run `$why-review --validate-findings` on the findings → reconcile (drop unproven/inflated findings, fix proof gaps, ADD surfaced findings/enhancements) → re-run the FULL review over the WHOLE target combined with the reconciled findings (not just re-checking the changed findings) → loop until a complete pass yields zero new findings and validation returns CLEAN, or a bounded blocker escalates. Max 2 re-do rounds, then escalate by asking the user directly. Do not stop while a finding is unvalidated or a re-review would surface new findings.
+
+Treat this as a standing obligation you re-read at the Findings Validation Gate — NOT a one-time note you can rationalize away after the first pass.
+
+**2. `/goal` command — invoke as an accelerator WHEN AVAILABLE.** If a `/goal` command exists and you are permitted to run it in this environment, ALSO invoke it (a real command call, NOT a paraphrase, NOT a Goal Contract file substituted for it) with a condition encoding THIS skill's self-recursive loop, so a session Stop hook mechanically enforces it:
+
+```
+/goal why-review self-recursive loop: run the full adversarial review (Validation Checklist + both Adversarial Rounds) over the whole target → run $why-review --validate-findings on the findings → reconcile (drop unproven/inflated findings, fix proof gaps, ADD surfaced findings/enhancements) → re-run the FULL review over the WHOLE target combined with the reconciled findings (not just re-checking the changed findings) → loop until a complete pass yields zero new findings and validation returns CLEAN, or a bounded blocker escalates. Max 2 re-do rounds, then escalate by asking the user directly. Do not stop while a finding is unvalidated or a re-review would surface new findings.
+```
+
+The `/goal` Stop hook blocks stopping until the condition holds and auto-clears when met — do not tell the user to clear it.
+
+**If `/goal` is unavailable, unregistered, or not permitted** (e.g. Codex/Copilot, or a Claude run without the command): DO NOT error, DO NOT block, and DO NOT invent a stand-in gate. Record ONE line where you track the review (the closing Findings Validation Gate task, or the active Goal Contract if one exists) — `/goal accelerator unavailable — review loop bound by protocol (above)` — and proceed. The protocol loop IS the gate, enforced by discipline instead of a hook.
+
+> **why-review fixes its OWN findings set, not code.** "Self-fix" here = reconcile the findings report so every surviving finding is correct, proof-backed, reasonable, best-practice, and nothing is missed — the same loop the Findings Validation Gate runs, now made unabandonable by the goal gate. Code/spec/test fixes remain the caller's job; this skill is review-only.
+
 ## Task Bootstrap (full mode — do at skill START)
 
 Before review work, task tracking phase tasks AND required closing task:
 
+- [ ] `[Why-Review] Bind self-recursive review loop — protocol-primary; optional /goal accelerator when available (full mode only)` — in_progress **(MANDATORY FIRST TASK — skip in `validate-findings` mode)**
 - [ ] `[Why-Review] Findings Validation Gate — if ANY findings exist, run $why-review --validate-findings on them; re-do until CLEAN (max 2)` — pending **(MANDATORY CLOSING TASK)**
 
-> Create at START. Keep `pending` until findings exist; then execute before skill completes. In `validate-findings` mode, do NOT create it.
+> Create at START. Keep the closing task `pending` until findings exist; then execute before skill completes. In `validate-findings` mode, do NOT create either task.
 
 ## First Principle — Easy to Change
 
@@ -123,29 +156,32 @@ Apply before any rule/checklist below; if downstream rule raises change cost, th
 
 ### Adversarial Techniques (apply ALL before concluding)
 
-| Technique              | Think                                                                                                            |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Steel-Man              | Argue FOR rejected alternative. Would a 10-year domain senior choose it? If yes, dismissal needs stronger proof. |
-| Why NOT?               | For every "chose X because Y", ask what X sacrifices.                                                            |
-| Assumption Stress Test | List top 3 assumptions; ask impact if wrong. Strong plan survives 2/3 false.                                     |
-| Pre-Mortem             | Assume 3-month production failure; write one plausible scenario.                                                 |
-| Unseen Alternatives    | Identify 1-2 approaches not mentioned; absence without exclusion reasoning = weak coverage.                      |
-| Pros/Cons Symmetry     | Count chosen-approach pros/cons. Pros > cons by 2:1 means likely bias.                                           |
-| Contrarian Pass        | Before finding/verdict, argue opposite conclusion in 2 sentences; choose stronger argument.                      |
+| Technique               | Think                                                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Steel-Man               | Argue FOR rejected alternative. Would a 10-year domain senior choose it? If yes, dismissal needs stronger proof.       |
+| Why NOT?                | For every "chose X because Y", ask what X sacrifices.                                                                  |
+| Assumption Stress Test  | List top 3 assumptions; ask impact if wrong. Strong plan survives 2/3 false.                                           |
+| Pre-Mortem              | Assume 3-month production failure; write one plausible scenario.                                                       |
+| Unseen Alternatives     | Identify 1-2 approaches not mentioned; absence without exclusion reasoning = weak coverage.                            |
+| Pros/Cons Symmetry      | Count chosen-approach pros/cons. Pros > cons by 2:1 means likely bias.                                                 |
+| Contrarian Pass         | Before finding/verdict, argue opposite conclusion in 2 sentences; choose stronger argument.                            |
+| Trade-Off Interrogation | Ask the 3 questions (below): is there a trade-off? · is it worth it? · is it material enough to confirm with the user? |
 
 ### Forbidden Patterns
 
-| Forbidden pattern       | Required correction                                      |
-| ----------------------- | -------------------------------------------------------- |
-| "Looks good because..." | Lead with challenges first.                              |
-| Presence = quality      | Test quality depth; real alternatives, causal rationale. |
-| Vague rationale         | Demand metric + cost: better at what cost?               |
-| Asymmetric trade-offs   | Treat 3 pros / 1 con as incomplete analysis.             |
-| "Looks fine"            | Provide adversarial challenge evidence.                  |
+| Forbidden pattern                   | Required correction                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
+| "Looks good because..."             | Lead with challenges first.                                                                      |
+| Presence = quality                  | Test quality depth; real alternatives, causal rationale.                                         |
+| Vague rationale                     | Demand metric + cost: better at what cost?                                                       |
+| Asymmetric trade-offs               | Treat 3 pros / 1 con as incomplete analysis.                                                     |
+| "Looks fine"                        | Provide adversarial challenge evidence.                                                          |
+| "No trade-off" / "pure win"         | Name the dimensions checked and why each is unaffected; unexamined ≠ absent.                     |
+| Material trade-off decided silently | Escalate to the user by asking the user directly; a one-way door is never yours to walk through. |
 
 ### Anti-Bias Gate (MANDATORY before finalizing verdict)
 
-Complete ALL checks before writing the final verdict (MUST ATTENTION):
+Complete ALL 7 checks before writing the final verdict (MUST ATTENTION):
 
 - steel-man at least one rejected alternative (argue FOR it)
 - identify at least 1 alternative NOT in the plan
@@ -153,8 +189,36 @@ Complete ALL checks before writing the final verdict (MUST ATTENTION):
 - surface 2-3 hidden assumptions with stress tests
 - run the pre-mortem (one concrete failure scenario)
 - check pros/cons symmetry
+- run the **Trade-Off Interrogation Gate** below (trade-off named · worth-it verdict · materiality escalation decided)
 
 Any check incomplete → adversarial review NOT complete. Go back.
+
+## Trade-Off Interrogation Gate (MANDATORY — no verdict, no finding, no recommendation without it)
+
+> **[BLOCKING]** Ask these THREE questions EVERY time — about the decision under review AND about every recommendation YOU make. — why: a review that names benefits without naming their price is an endorsement, not a review; and the biggest trade-offs are the ones nobody wrote down.
+
+**1. Is there any trade-off?** Name what this decision/recommendation SACRIFICES. Every choice buys something with something. "None" is NOT an acceptable answer — it is an unfinished analysis. To claim no material trade-off, state which dimensions you checked and why each is unaffected:
+
+> future change cost · complexity · performance/latency · memory/cost · coupling · reversibility · migration burden · operational/ops load · blast radius · security posture · testability · team skill/ramp · delivery time · UX.
+
+**2. Is it worth it?** Weigh gain against sacrifice EXPLICITLY — **what is gained · what it costs · who pays · when it comes due** — then emit one verdict: **WORTH IT / NOT WORTH IT / UNCLEAR**. Anchor on Easy-to-Change: a trade-off raising future change cost needs a proportionate, named payoff, not a vague one. "Better" without a metric and a cost FAILS this question.
+
+**3. Is the trade-off material enough to CONFIRM WITH THE USER?** A material trade-off is the user's call, never yours. MATERIAL when ANY row below holds:
+
+| Material when the trade-off…                     | Examples                                                                            |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Is irreversible — a one-way door                 | data migration, public API/contract shape, storage format, framework/vendor lock-in |
+| Shifts cost onto someone else                    | another team, ops/on-call, the future maintainer, the end user                      |
+| Trades one quality attribute for another         | correctness↔speed, security↔convenience, latency↔cost, simplicity↔flexibility       |
+| Crosses a boundary                               | client↔server tier seam, service contract, event contract, shared library           |
+| Sits on a high-consequence path                  | auth, money, data integrity, breaking change, High/Medium residual risk             |
+| Cannot be evidenced (worth-it verdict = UNCLEAR) | gain or cost unquantifiable from available evidence                                 |
+
+- **MATERIAL → STOP and confirm by asking the user directly** BEFORE the verdict stands: state the trade-off, both options, what each sacrifices, your recommendation. NEVER resolve a material trade-off silently on the user's behalf, and NEVER bury it as a Low-severity note.
+- **NOT material → record it inline** in the Trade-Off Assessment table with a one-line justification and proceed; no escalation needed.
+- In `validate-findings` terminal mode: **assess and record, do NOT escalate** — that mode asks nothing (see Next Steps exemption); flag the unescalated material trade-off in the verdict so the CALLER escalates it.
+
+**Output:** every review emits the `Trade-Off Assessment` table (see Output Format) — one row per reviewed decision and per recommendation you make. An empty table with findings present is an incomplete review.
 
 ## Target Resolution (DO THIS BEFORE REVIEW)
 
@@ -180,13 +244,14 @@ Analyze user request, not only literal argument shape. Determine target, then ch
 
 ### Review Focus Routing
 
-| Detected concern                 | Primary focus / sub-agent route                                                                 |
-| -------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Source code / diff               | `code-reviewer` + embedded code-review protocols.                                               |
-| Auth, secrets, permissions, data | `security-auditor` if available; otherwise `code-reviewer` with explicit security pass.         |
-| Latency, scale, memory, queries  | `performance-optimizer` if available; otherwise `code-reviewer` with explicit performance pass. |
-| Plan / PBI / doc / spec          | `general-purpose` with rationale/artifact dimensions.                                           |
-| Mixed target                     | Split focused passes by concern; aggregate findings after all passes.                           |
+| Detected concern                                                                                    | Primary focus / sub-agent route                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source code / diff                                                                                  | `code-reviewer` + embedded code-review protocols.                                                                                                                                                          |
+| Integration/E2E tests in the target, OR a behavior change whose code has covering integration tests | Apply the **Integration-Test-Review Linkage** below — `$integration-test-review` owns the 8 test-quality gates; this skill reads its protocol (Mode A) or delegates to it (Mode B), never re-derives them. |
+| Auth, secrets, permissions, data                                                                    | `security-auditor` if available; otherwise `code-reviewer` with explicit security pass.                                                                                                                    |
+| Latency, scale, memory, queries                                                                     | `performance-optimizer` if available; otherwise `code-reviewer` with explicit performance pass.                                                                                                            |
+| Plan / PBI / doc / spec                                                                             | `general-purpose` with rationale/artifact dimensions.                                                                                                                                                      |
+| Mixed target                                                                                        | Split focused passes by concern; aggregate findings after all passes.                                                                                                                                      |
 
 ### Code-Change Review Path
 
@@ -197,24 +262,49 @@ When target is code changes:
     - Merge commit: default to first-parent diff unless the user specifies another parent/range.
     - Branch/range: use the user-supplied range.
     - Uncommitted changes: use `git diff` plus staged diff if relevant.
-2. Read the changed files and any nearby tests/docs required to prove behavior.
-3. Read project reference docs based on changed file types before judging patterns.
-4. If `.code-graph/graph.db` exists, run graph blast-radius or trace on key changed files before concluding.
-5. Apply embedded code-review protocols by serial focused pass: bug detection, design patterns quality, logic/intention, test/spec verification, graph investigation, Easy-to-Change.
-6. Output findings first, with `file:line` evidence, severity, confidence, and tests/docs gaps.
+2. **Comprehend change context + trace full pipeline across BOTH boundaries (MANDATORY for code-change targets; N/A for pure plan/PBI/doc targets).** Before deep file judging, write a one-line Change Context (what · intent · originating tier · main affected flow), then apply BOTH inlined blocks below: `SYNC:cross-stack-impact-trace` for the client↔server tier seam (BE→FE forward, FE→BE backward) and `SYNC:cross-service-check` for the microservice / event / external / loosely-coupled boundary. Classify each seam/touchpoint NONE / ADDITIVE / BREAKING; a BREAKING seam whose other-side consumer is un-updated in the same diff is a HIGH-min finding. State `Single-tier / monolith — N/A` when no cross-boundary seam exists.
+3. Read the changed files and any nearby tests/docs required to prove behavior.
+4. **Integration-test detection (CONDITIONAL).** If the target contains integration/E2E test files, OR changes behavior-bearing code that has covering integration tests, run the **Integration-Test-Review Linkage** below before judging the `Test/spec/doc sync` dimension. State `No integration tests in target — linkage N/A` when neither holds.
+5. Read project reference docs based on changed file types before judging patterns.
+6. If `.code-graph/graph.db` exists, run graph blast-radius or trace on key changed files before concluding.
+7. Apply embedded code-review protocols by serial focused pass: bug detection, design patterns quality, logic/intention, test/spec verification, graph investigation, Easy-to-Change.
+8. Output findings first, with `file:line` evidence, severity, confidence, and tests/docs gaps.
+
+### Integration-Test-Review Linkage (CONDITIONAL — advisory, guarded)
+
+> **Purpose:** this skill's `Test/spec/doc sync` dimension asks _"does evidence prove tests/specs/docs protect the intended invariant?"_ — but the 8 gates answering it (assertion value · data state · repeatability · domain logic · spec traceability · three-way sync · change coverage · scenario fidelity) belong to `$integration-test-review`. Route to that owner; NEVER re-derive a weaker copy here. — why: a rationale review judging test quality by eye endorses assertions it never mutation-tested.
+
+**Recursion guard — SKIP entirely when ANY row holds.** Record the deferral line, then proceed; NEVER invoke or read:
+
+| Suppressing context                                                                                                                                      | Evidence                                                                                                                                                                                           | Deferral line to record                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Mode is `validate-findings`                                                                                                                              | Terminal mode — no sub-skill calls at all                                                                                                                                                          | `Linkage N/A — validate-findings is terminal.`                               |
+| Invoked by `$integration-test-review` Phase 9                                                                                                            | It calls this skill at `integration-test-review/SKILL.md:429-431` and guards the reverse edge at `:438`                                                                                            | `Linkage deferred — invoked by $integration-test-review Phase 9.`            |
+| Invoked by `changes-review` in ANY phase — 0.8 parallel rationale dimension, 6 validate-findings, or 7.5 holistic — or inside `$workflow-review-changes` | `changes-review/SKILL.md:395` (Phase 0.8, which states this deferral as a binding sub-agent constraint), `:867` (Phase 6), `:938` (Phase 7.5); its Phase 3.7 (`:608-626`) already owns the gate    | `Linkage deferred to changes-review Phase 3.7 / parent workflow step.`       |
+| Invoked by `$debug-investigate`'s Root Cause Validation gate                                                                                             | `debug-investigate/SKILL.md:151`; inside `integration-test-verify-loop` that gate fires in a round already running `$integration-test-review` (`integration-test-verify-loop/SKILL.md:98,110,495`) | `Linkage deferred — debug-investigate gate; the verify loop owns the audit.` |
+
+> — why: unguarded, this edge closes a cycle (`why-review` → `integration-test-review` → Phase 9 → `why-review`) and re-creates the duplicate-ownership defect `integration-test-verify-loop/SKILL.md:31` removes.
+
+**Mode A — READ the protocol (DEFAULT).** Read `.claude/skills/integration-test-review/SKILL.md` §"The 8 Quality Gates"; apply Gates 1-8 as review lenses over target tests. Cheap — no recursion, no sub-skill call. Findings enter this review's normal finding set with `file:line` evidence + severity.
+
+**Mode B — DELEGATE to `$integration-test-review` (ESCALATION).** Invoke ONLY when ALL hold: no guard row fired · standalone full-mode review · target diff itself contains integration test files. Its GAP / SPEC-GAP verdicts become ordinary findings for this review's Findings Validation Gate.
+
+**Advisory, NEVER blocking** — matches this skill's `Enforcement: Advisory` scope; mandatory coverage lives in `changes-review` Phase 3.7. — why: without this linkage a standalone rationale review silently skips test quality.
 
 ### Rationale / Artifact Review Dimensions
 
 Run one focused pass per applicable dimension; do NOT scan all dimensions simultaneously.
 
-| Dimension          | Think                                                                                                 |
-| ------------------ | ----------------------------------------------------------------------------------------------------- |
-| Target fit         | Did we resolve what user asked, with evidence and confidence?                                         |
-| Goal alignment     | Does the rationale serve the saved Goal Contract's purpose and success criteria — or drift past them? |
-| Rationale depth    | Are alternatives real, causal, symmetric, assumption-aware?                                           |
-| Behavioral risk    | What breaks in happy, error, edge, and rollback paths?                                                |
-| Test/spec/doc sync | Does evidence prove tests/specs/docs protect the intended invariant and avoid stale claims?           |
-| Future change cost | Does recommendation reduce coupling, hidden state, duplication, unclear intent?                       |
+| Dimension             | Think                                                                                                                                                                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Target fit            | Did we resolve what user asked, with evidence and confidence?                                                                                                          |
+| Goal alignment        | Does the rationale serve the saved Goal Contract's purpose and success criteria — or drift past them?                                                                  |
+| Rationale depth       | Are alternatives real, causal, symmetric, assumption-aware?                                                                                                            |
+| Trade-off honesty     | What does this SACRIFICE, is it worth it, and is the trade-off material enough to confirm with the user? An unpriced benefit is a rationale gap.                       |
+| Behavioral risk       | What breaks in happy, error, edge, and rollback paths?                                                                                                                 |
+| Cross-boundary impact | Does a changed contract break a consumer on the other client↔server tier (BE↔FE), or a loosely-coupled/external service or event consumer? (tier seam + service/event) |
+| Test/spec/doc sync    | Does evidence prove tests/specs/docs protect the intended invariant and avoid stale claims?                                                                            |
+| Future change cost    | Does recommendation reduce coupling, hidden state, duplication, unclear intent?                                                                                        |
 
 ## Validation Checklist
 
@@ -269,6 +359,7 @@ For code-change reviews, use Code-Change Review Path instead of forcing plan che
 | 4   | Risk Assessment         | ✅/❌     | ✅/⚠️/❌      | {concrete mitigations or vague?}                                     |
 | 5   | Ownership               | ✅/❌     | ✅/⚠️/❌      | {details}                                                            |
 | 6   | Bugfix Debugger Trace   | ✅/❌/N/A | ✅/⚠️/❌      | {final state, feeder paths, hypothesis matrix, owner, forward proof} |
+| 7   | Trade-Off Gate          | ✅/❌     | ✅/⚠️/❌      | {trade-off named? worth-it verdict? material → user confirmed?}      |
 
 > ✅ Strong ⚠️ Weak/Partial ❌ Missing
 
@@ -304,6 +395,16 @@ For code-change reviews, use Code-Change Review Path instead of forcing plan che
 
 **Pros/Cons symmetry:** Pros listed: {N} | Cons listed: {N} | Bias: {balanced / leans toward pros / leans toward cons}
 
+### Trade-Off Assessment (MANDATORY — one row per reviewed decision AND per recommendation you make)
+
+| #   | Decision / recommendation       | Trade-off — what it sacrifices                       | Gain (metric)   | Who pays, when     | Worth it?                         | Material?                          | Confirmed with user?       |
+| --- | ------------------------------- | ---------------------------------------------------- | --------------- | ------------------ | --------------------------------- | ---------------------------------- | -------------------------- |
+| 1   | {decision or my recommendation} | {sacrifice — or dimensions checked + why unaffected} | {gain + metric} | {payer / when due} | WORTH IT / NOT WORTH IT / UNCLEAR | YES / NO ({which materiality row}) | asked / N/A (not material) |
+
+> Material trade-off with `Confirmed with user? = no` → verdict CANNOT be PASS. Escalate by asking the user directly first.
+
+**Cross-Boundary Impact:** (code-change targets) {per client↔server seam AND per service/event/external touchpoint: NONE / ADDITIVE / BREAKING with routed fix; or `Single-tier / monolith — N/A`}
+
 ### Missing Items (if any)
 
 - {specific item to add before implementation}
@@ -321,13 +422,14 @@ After Round 1, execute **second full adversarial round**:
 
 1. **Assume Round 1 was wrong** — start with: "Round 1 missed something. Find it."
 2. **Challenge every PASS item** from Round 1 — generate at least 2 sentences arguing the opposite for each
-3. **Complete the Anti-Bias Gate** (all 6 boxes from Adversarial Review Mindset section)
+3. **Complete the Anti-Bias Gate** (all 7 boxes from Adversarial Review Mindset section, including the Trade-Off Interrogation Gate)
 4. **Populate Adversarial Analysis** — MANDATORY:
     - At least 2 arguments against the chosen approach
     - At least 1 unexamined alternative
     - At least 2 hidden assumptions with failure consequences
     - Pre-mortem scenario
     - Pros/Cons symmetry count
+    - Trade-Off Assessment table — every decision AND every recommendation of yours: trade-off named, worth-it verdict, materiality decided; re-ask the 3 questions on any trade-off Round 1 called "none" — why: Round 1's most common miss is an unpriced benefit.
 5. **Focus on Round-1 misses:**
     - Alternatives that are strawmen (too easy to dismiss)
     - Risks stated vaguely without concrete mitigations
@@ -354,15 +456,15 @@ After Round 1, execute **second full adversarial round**:
 
 > **Purpose:** Before handoff, re-validate THIS review's OWN findings: **correct, proof-backed, reasonable, best-practice**. Catch finding issues and missed enhancements.
 
-**Trigger:** Full mode with ANY finding, weakness, missing item, or NEEDS WORK verdict. Skip ONLY unconditional PASS with zero findings/missing items; record skip reason. **NEVER run in `validate-findings` mode**.
+**Trigger:** Full mode with ANY finding, weakness, missing item, or NEEDS WORK verdict — of ANY severity (Critical, High, Medium, OR Low). A Medium or Low severity NEVER exempts a finding from validation; even one low-severity nit triggers the gate. Skip ONLY unconditional PASS with a literally empty finding set (zero findings/missing items of any severity); record skip reason. **NEVER run in `validate-findings` mode**. — why: "it's only Low" is itself a severity claim the validation pass must confirm, not a reason to skip it.
 
 **Caller-side re-do loop (bounded — owned HERE, not by validate mode):**
 
 1. Ensure findings written to a report (`plans/reports/why-review-{date}.md`).
 2. **Invoke `$why-review --validate-findings plans/reports/why-review-{date}.md`** in SAME main-agent session, NOT sub-agent. Returns CLEAN / HAS-ISSUES. Each call terminal.
 3. **CLEAN** → append `## Findings Validation` line to report ("All N findings re-validated; correct, proof-backed, reasonable, best-practice; no changes."), gate PASSES, exit loop.
-4. **HAS ISSUES** → reconcile: drop/demote unproven or inflated findings, fix proof gaps, add surfaced findings/enhancements, re-derive verdict, record `## Findings Validation Notes` citing what changed and why.
-5. **RE-DO** — re-invoke on UPDATED report ONLY because findings changed. Repeat until CLEAN or **max 2 re-do rounds**. Still not CLEAN → record unresolved state and ask user in `## Next Steps`.
+4. **HAS ISSUES** → reconcile: drop/demote unproven or inflated findings (including any finding below the **≥85% finding-survival bar** — see the Findings Validation Routine's Confidence bar), fix proof gaps, add surfaced findings/enhancements, re-derive verdict, record `## Findings Validation Notes` citing what changed and why.
+5. **RE-DO holistically** — because the reconciled findings changed the picture, re-run the FULL review (Validation Checklist + both Adversarial Rounds) over the WHOLE target combined with the reconciled findings — NOT just re-validate the changed findings in isolation — then re-invoke `$why-review --validate-findings` on the UPDATED report. Repeat until CLEAN with no new findings surfaced, or **max 2 re-do rounds**. Still not CLEAN → record unresolved state, mark the goal-gate blocker, and escalate by asking the user directly in `## Next Steps`.
 
 ## Findings Validation Routine (validate-findings mode body — TERMINAL)
 
@@ -374,7 +476,9 @@ Read supplied findings/report (path from `$ARGUMENTS`). For EACH finding, weakne
 - **Proof-backed** — concrete `file:line` or quoted plan/report section present; reject "probably / should be / I think".
 - **Reasonable** — severity/weight proportionate, not inflated; steel-man of opposing view does not dissolve it.
 - **Best-practice** — recommendation reflects project conventions and Easy-to-Change metric (lowers future change cost), not preference or speculative generality.
+- **Trade-off priced** — the finding's recommendation names what it SACRIFICES, carries a WORTH IT / NOT WORTH IT / UNCLEAR verdict, and has its materiality decided (per the Trade-Off Interrogation Gate). A recommendation presented as a pure win, or with `Trade-off: none` and no dimensions-checked justification, is a validation FAIL — flag HAS-ISSUES naming the unpriced recommendation. A **material** trade-off left unconfirmed with the user is HAS-ISSUES: name it so the CALLER escalates (terminal mode assesses, never asks). NOT WORTH IT → the finding is dropped or its recommendation replaced, never kept as-is. — why: a fix that costs more than the bug it removes is a finding the review should have withdrawn.
 - **Dual-feedback (behavior-changing findings only)** — if ANY finding changes observable behavior, confirm that BOTH halves of the feedback are present for it: (1) a spec-drift verdict — CODE-WRONG / SPEC-STALE / AMBIGUOUS / SPEC-SILENT / in-sync (per `SYNC:spec-drift-adjudication`) — AND (2) a concrete test-feedback action (regression/preservation TC via `$spec [mode=tests]`, or covering test via `$integration-test`). A behavior-changing finding missing EITHER half is a validation FAIL — flag it as HAS-ISSUES and name the missing axis (`spec verdict absent` or `test feedback absent`). A **SPEC-SILENT** verdict (code correctly enforces an invariant no spec artifact states) REQUIRES a spec-enrichment action on the spec axis — add the §4 BR/§3 AC + a §8 TC via `$spec [update]` + `$spec [mode=tests]`; a SPEC-SILENT finding with no spec-enrichment action is HAS-ISSUES, same as a blank dual-feedback axis. A code-only fix with no spec verdict and no owed TC is an incomplete finding, not a clean one.
+- **Confidence bar (distinct from the >80% act-gate)** — a finding survives ONLY if its own stated confidence that it is a real issue is **≥85%**. This is a HIGHER bar than the generic >80% act-gate, and a DIFFERENT question: the act-gate asks "may I act on this evidence?"; this bar asks "is this reported finding strong enough to KEEP?". A finding at 80-84% is demoted or dropped, not kept. The ≥85% must rest on the Proof-backed check above (a cited `file:line` + a traced failure path); confidence resting on inference alone caps below the bar.
 
 Then **sweep for misses** — apply Adversarial Techniques once more: unexamined alternative, hidden assumption, enhancement opportunity?
 
@@ -389,9 +493,11 @@ Return verdict path + status. **Caller owns reconciliation and bounded re-do; ro
 
 ## Next Steps
 
-> **EXEMPT in `validate-findings` mode:** terminal mode returns verdict; skip `## Next Steps`, a direct user question, council gate.
+> **EXEMPT in `validate-findings` mode:** terminal mode returns verdict; skip `## Next Steps`, ask the user directly, council gate.
 
-**MANDATORY — FULL MODE:** after review, use a direct user question; user owns next step.
+**MANDATORY — FULL MODE:** after review, use ask the user directly; user owns next step.
+
+> **[BLOCKING] Material trade-off confirmation comes FIRST.** Any trade-off the Trade-Off Interrogation Gate marked MATERIAL (irreversible · shifts cost to someone else · trades one quality attribute for another · crosses a boundary · high-consequence path · worth-it verdict UNCLEAR) MUST be confirmed with the user via its OWN ask the user directly — stating the trade-off, both options, what each sacrifices, and your recommendation — BEFORE the next-step question and BEFORE any PASS verdict. Multiple material trade-offs → ask the highest-consequence ones first (cap 3 questions per call), never bundle them into one vague "proceed?". — why: a one-way door walked through silently cannot be un-walked, and the user is the only one who owns that call.
 
 - **"$feature-implement (Recommended)"** — Begin implementation after design rationale is validated
 - **"$plan-execute"** — If implementing a simpler change
@@ -468,13 +574,51 @@ If suppressed or no-fire, do NOT mention `$llm-council`. If gate fires, ask a **
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
+
+<!-- SYNC:cross-stack-impact-trace -->
+
+> **Cross-Stack Impact Trace** — FIRST review action: comprehend change holistically, THEN judge files. Every reviewed diff: note change context, trace full pipeline of main affected area end-to-end across client↔server seam, so a change on one tier can never silently break the other. (Distinct from `SYNC:cross-service-check`, which owns service-to-service / event boundary — this owns client↔server tier seam inside one app; pair both for full-pipeline coverage.)
+>
+> 1. **Comprehend context FIRST** — before file-by-file review, write short **Change Context** note: what changed, intent (why), originating tier (frontend / backend / shared / infra), main affected feature/flow. Do before flagging anything.
+> 2. **Identify cross-stack seam(s)** — for main affected area, locate contract seam(s) between client and server: API route/endpoint + verb, request/response DTO or payload shape, shared type/schema, event/message contract, query/route params. Infer tier layout from `docs/project-config.json` and project conventions.
+> 3. **Trace full pipeline end-to-end, in change's direction:**
+>     - **Backend change → trace FORWARD to every frontend consumer:** handler/controller → response DTO/serializer → API client/service → store/state → component/template rendering or submitting it.
+>     - **Frontend change → trace BACKWARD to backend contract:** component/form → API client call → route/endpoint → request DTO/validation → handler/domain.
+>     - When `.code-graph/graph.db` exists, use `$graph-connect-api` and `python .claude/scripts/code_graph trace <file> --direction both --json` to map connection; otherwise grep route path, DTO/type name, each field name across BOTH tiers.
+> 4. **Verify BOTH sides still agree** — for every changed seam confirm other tier matches: route path & verb, field names & types, nullability/optionality, required vs optional params, enum values, auth/permission, error/status shape. Any mismatch = **BREAKING** finding (backend change breaks a frontend consumer, or frontend now sends what backend rejects).
+> 5. **Classify each seam:** NONE (no contract change) / ADDITIVE (backward-compatible) / BREAKING (consumer on other tier must change too). BREAKING seam whose other-tier consumer NOT updated in same diff = HIGH severity minimum (CRITICAL for auth/money/data-integrity paths).
+>
+> **Skip ONLY** when change has no cross-tier seam — pure docs, pure styling with no data contract, or single-tier tooling. State explicitly: `Single-tier change — no cross-stack seam`. Backend-only or single-tier repo still traces internal consumers (`SYNC:cross-service-check` for service/event boundaries).
+>
+> **BLOCKED until:** Change Context noted · seam(s) identified or explicit N/A · full pipeline traced in change direction · every changed seam classified NONE / ADDITIVE / BREAKING.
+
+<!-- /SYNC:cross-stack-impact-trace -->
+
+<!-- SYNC:cross-service-check -->
+
+> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
+>
+> | Boundary            | Grep terms                                                                      |
+> | ------------------- | ------------------------------------------------------------------------------- |
+> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
+> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
+> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
+> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
+> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
+> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
+>
+> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
+>
+> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
+
+<!-- /SYNC:cross-service-check -->
 
 <!-- SYNC:task-tracking-external-report -->
 
@@ -513,7 +657,7 @@ If suppressed or no-fire, do NOT mention `$llm-council`. If gate fires, ask a **
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -530,8 +674,9 @@ If suppressed or no-fire, do NOT mention `$llm-council`. If gate fires, ask a **
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -556,6 +701,14 @@ If suppressed or no-fire, do NOT mention `$llm-council`. If gate fires, ask a **
 
 > **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
 >
+> _aka **Self-Review Convergence Loop**._ The name is historical — there is **NO 2-round cap**; "double-round-trip" only means a validated-finding fix cycle forces at least one fresh re-review. It runs until a clean pass, bounded by the **5-round ceiling** below.
+>
+> **Round cap — 5 rounds MAX (a ceiling, NEVER a target).** A clean pass ENDS the loop immediately at ANY round — round 1 included; the cap never obliges you to keep spinning. Hitting round 5 with validated findings still open → **STOP and escalate by asking the user directly** with the still-open findings listed; NEVER emit a silent "good enough" PASS on cap exhaustion, and NEVER let the cap substitute for the clean-review requirement. The 3-repeated-no-progress blocker rule stays an EARLIER exit — escalate at whichever trips first.
+>
+> **Universal scope (any new output/judgment):** any newly produced output or judgment gets **≥1 self-review**; any **new judgment** gets **≥1 `$why-review --validate-findings` pass**; anything flagged to re-check is re-checked **≥1 time** — before that output is treated as final. This loop is the default convergence contract for ANY work-producing skill, not review skills only.
+>
+> **Routing invariant (author-facing):** a skill that validates findings MUST route them through `$why-review --validate-findings` (the terminal validator) — NEVER fork an inline finding-validation. Routing through why-review is what makes the finding-survival bar and this loop apply; the `verify-review-validate-coverage` sensor enforces this exact route mechanically.
+>
 > **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
 >
 > **Decision after Round 1:**
@@ -572,16 +725,18 @@ If suppressed or no-fire, do NOT mention `$llm-council`. If gate fires, ask a **
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues. If the same validated finding repeats for 3 full invocations with no progress, or a fix requires product/owner input, escalate via a direct user question.
+> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues, **capped at 5 rounds**. Escalate by asking the user directly at whichever comes first: the same validated finding repeats for 3 full invocations with no progress · a fix requires product/owner input · round 5 completes with validated findings still open. NEVER loop past 5 rounds, and NEVER convert cap exhaustion into a PASS.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
 > - NEVER fix unvalidated findings; validate first using the caller's validation gate
+> - Every surviving finding must additionally clear the **finding-survival bar** defined in why-review's Findings Validation Routine (a deliberately higher bar than the generic act-gate — "keep this finding?" is a stricter question than "act on this evidence?"); a finding below the bar is demoted or dropped, not kept
 > - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
 > - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - No arbitrary sub-agent-round cap replaces the clean-review requirement; use the 3 repeated-no-progress blocker rule only to avoid infinite spinning
+> - The 5-round cap NEVER replaces the clean-review requirement — it bounds runaway looping, it does not authorize shipping an un-clean review; a clean pass ends the loop early at any round, and cap exhaustion escalates rather than passes
+> - Enforce the round cap of 5 alongside the 3 repeated-no-progress blocker rule; both are escalation triggers, neither is a completion criterion
 > - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
@@ -610,7 +765,7 @@ If suppressed or no-fire, do NOT mention `$llm-council`. If gate fires, ask a **
 > - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
 > - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `spawn_agent` call
-> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via a direct user question
+> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate by asking the user directly
 > - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
@@ -817,6 +972,46 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:severity-rubric -->
 
+<!-- SYNC:goal-contract-satisfaction-loop -->
+
+> **Goal Contract Satisfaction Loop** — Persist the user goal in an external file, execute against it, and loop review/fix until every saved required criterion passes or a blocker escalates. Bounded closed loop — NEVER open-ended autonomous exploration.
+>
+> 1. **Resolve the active goal** (in order): active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create a new Goal Contract from the current user request (template: `.claude/templates/goal-contract-template.md`).
+> 2. **Required sections:** Original Request, Purpose, Success Criteria (checkboxes; mark required vs optional), Constraints, Evidence Required, Iteration Log, Goal Satisfaction matrix.
+> 3. **Before work:** read the active goal and map planned work to saved success criteria — execution serves the saved criteria, never chat memory alone.
+> 4. **After execution/verification:** append an Iteration Log entry — result, evidence references (`file:line`, command output, report path), remaining gaps.
+> 5. **Review gate:** emit a Goal Satisfaction matrix — `| Success Criterion | Evidence | Status |` with PASS/FAIL/BLOCKED. Overall PASS requires every required criterion PASS.
+> 6. **Loop rule (retry):** required criterion FAIL → validate the gap is real → fix → re-review only the affected criteria. Stop cleanly when all required criteria PASS.
+> 7. **Escalation rule (stop):** two consecutive iterations with no criterion progressing, or a blocker needing user input → mark the criterion BLOCKED with a user-facing reason and escalate. NEVER loop indefinitely.
+> 8. **Skip rule:** tiny conversational tasks may skip the goal file ONLY with a recorded one-line reason. User-accepted gate skips are recorded in the goal file with reason and scope.
+> 9. **Security:** NEVER store secrets, tokens, credentials, or private customer data in goal files — store evidence references and redact sensitive values.
+>
+> **Blocked until:** active goal resolved (or skip reason recorded) · saved success criteria read before edits · iteration evidence appended after execution · Goal Satisfaction matrix emitted before any PASS verdict.
+
+<!-- /SYNC:goal-contract-satisfaction-loop -->
+
+<!-- SYNC:trade-off-interrogation-gate -->
+
+> **Trade-Off Interrogation Gate** — ALWAYS ask these THREE questions before ANY verdict, score, finding, or recommendation — about the thing under review AND about every recommendation YOU make. — why: naming a benefit without its price is an endorsement, not a review; the costliest trade-offs are the ones nobody wrote down.
+>
+> 1. **Is there any trade-off?** Name what it SACRIFICES. "None" / "pure win" is an unfinished analysis, NOT an answer — to claim none, state which dimensions you checked and why each is unaffected: future change cost · complexity · performance/latency · memory/cost · coupling · reversibility · migration burden · operational load · blast radius · security posture · testability · team skill/ramp · delivery time · UX.
+> 2. **Is it worth it?** Weigh gain against sacrifice EXPLICITLY — what is gained (with a metric) · what it costs · WHO pays · WHEN it comes due — then emit **WORTH IT / NOT WORTH IT / UNCLEAR**. "Better" with no metric and no cost FAILS this question. NOT WORTH IT → withdraw or replace the recommendation, never keep it as-is.
+> 3. **Is the trade-off material enough to CONFIRM WITH THE USER?** A material trade-off is the user's call, never yours. **MATERIAL** when ANY holds: irreversible / one-way door (data migration, public contract, storage format, vendor lock-in) · cost shifted onto someone else (another team, ops/on-call, future maintainer, end user) · one quality attribute traded for another (correctness↔speed, security↔convenience, latency↔cost, simplicity↔flexibility) · a boundary crossed (client↔server tier, service contract, event contract, shared library) · a high-consequence path (auth, money, data integrity, breaking change, High/Medium residual risk) · the worth-it verdict is UNCLEAR.
+>
+> **MATERIAL → STOP and confirm by asking the user directly BEFORE the verdict stands** — state the trade-off, both options, what each sacrifices, and your recommendation. **NOT material →** record it inline with a one-line justification and proceed.
+>
+> **Non-asking execution contexts — ESCALATE BY HANDOFF, never by silence.** ask the user directly reaches only the main interactive agent: a sub-agent cannot ask the user, and a terminal/verdict-only mode asks nothing by design. When you are running in such a context, the obligation is **redirected, never waived** — do ALL of: (a) complete questions 1 and 2 normally; (b) decide materiality and record it in the Trade-Off Assessment row with `confirmed? = NO — cannot ask from this context`; (c) **name the unconfirmed MATERIAL trade-off explicitly in your returned summary/verdict so the CALLER (or parent orchestrator) escalates it by asking the user directly on your behalf** — a material trade-off mentioned only inside a report file on disk is NOT a handoff; (d) do not emit an unqualified PASS — mark the verdict as carrying an unconfirmed material trade-off, so the caller's gate stays closed until the user answers. The caller inherits the escalation duty the moment it reads your return.
+>
+> This carve-out is about **reachability, not convenience**: it applies ONLY where the tool genuinely cannot reach the user (spawned sub-agent, terminal validate/verdict-only mode, non-interactive/headless run). It is NEVER a licence to skip the question, to self-approve a one-way door, or to downgrade materiality because asking is inconvenient — if you CAN ask, you MUST ask.
+>
+> **Emit a Trade-Off Assessment row** per reviewed decision and per recommendation: `| decision | sacrifices | gain (metric) | who pays, when | WORTH IT/NOT/UNCLEAR | material? | confirmed? |`.
+>
+> **BLOCKED until:** trade-off named (or dimensions-checked justification given) · worth-it verdict emitted · materiality decided · every MATERIAL trade-off either confirmed with the user OR — in a non-asking context — handed off in the returned verdict for the caller to confirm. A MATERIAL trade-off that is neither confirmed nor handed off can NEVER be PASS, and NEVER gets buried as a Low-severity note.
+>
+> **NEVER** answer "no trade-off" without checking · decide a material trade-off silently on the user's behalf · let convergence/delivery pressure authorize walking through a one-way door · bundle several material trade-offs into one vague "proceed?".
+
+<!-- /SYNC:trade-off-interrogation-gate -->
+
 <!-- SYNC:task-tracking-external-report:reminder -->
 
 - **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
@@ -826,11 +1021,23 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
+
+<!-- SYNC:cross-stack-impact-trace:reminder -->
+
+**MUST ATTENTION** FIRST review action — note change context + holistically trace full pipeline of main affected area across client↔server seam (BE→FE forward, FE→BE backward). Verify both tiers still agree on route/DTO/field/type/nullability/auth; any mismatch = BREAKING finding. Skip only for single-tier / docs-only changes (state so).
+
+<!-- /SYNC:cross-stack-impact-trace:reminder -->
+
+<!-- SYNC:cross-service-check:reminder -->
+
+**IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
+
+<!-- /SYNC:cross-service-check:reminder -->
 
 <!-- SYNC:end-to-start-debugger-trace:reminder -->
 
@@ -852,6 +1059,13 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
+<!-- SYNC:severity-rubric:reminder -->
+
+- **MANDATORY** Classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS until fixed or owner-accepted.
+- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
+
+<!-- /SYNC:severity-rubric:reminder -->
+
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
@@ -863,16 +1077,26 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
-<!-- SYNC:severity-rubric:reminder -->
+<!-- SYNC:double-round-trip-review:reminder -->
 
-- **MANDATORY** Classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS until fixed or owner-accepted.
-- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop (aka **Self-Review Convergence Loop**): review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review. Any newly produced output/judgment gets ≥1 self-review; any new judgment gets ≥1 `$why-review --validate-findings` pass before it is treated as final.
+- **MANDATORY** enforce the **round cap of 5 — a ceiling, NEVER a target**: a clean pass ends the loop immediately at any round (round 1 included), and round 5 completing with validated findings still open → **STOP & escalate by asking the user directly**, never a silent PASS. The 3-repeated-no-progress blocker rule is an earlier exit — escalate at whichever trips first. NEVER loop open-ended.
 
-<!-- /SYNC:severity-rubric:reminder -->
+<!-- /SYNC:double-round-trip-review:reminder -->
+
+<!-- SYNC:trade-off-interrogation-gate:reminder -->
+
+- **MANDATORY MUST ATTENTION ALWAYS ASK THE 3 TRADE-OFF QUESTIONS** — on the thing under review AND on every recommendation you make: (1) **is there any trade-off?** name what it SACRIFICES (change cost · complexity · perf · coupling · reversibility · migration · ops load · blast radius · security · testability · delivery time · UX) — "none"/"pure win" is an unfinished analysis, so state the dimensions checked; (2) **is it worth it?** gain (with a metric) vs cost, WHO pays, WHEN → emit **WORTH IT / NOT WORTH IT / UNCLEAR**; NOT WORTH IT → withdraw or replace it; (3) **is it material enough to confirm with the user?** irreversible/one-way door · cost shifted onto another team/ops/maintainer/user · one quality attribute traded for another · a tier/service/event/library boundary crossed · auth/money/data-integrity/breaking-change/High-or-Medium-risk path · verdict UNCLEAR → **STOP and confirm by asking the user directly BEFORE the verdict**.
+- **MANDATORY** A MATERIAL trade-off with no user confirmation can NEVER be PASS; NEVER bury one as a Low-severity note, NEVER decide it silently, and NEVER let delivery or convergence pressure authorize a one-way door. — why: an un-walked-back one-way door is the user's call to make, not the reviewer's.
+- **MANDATORY — non-asking contexts escalate BY HANDOFF, never by silence.** ask the user directly reaches only the main interactive agent: a sub-agent cannot ask the user, and a terminal/verdict-only mode asks nothing by design. There the duty is REDIRECTED, not waived — still name the trade-off, still decide materiality, record `confirmed? = NO — cannot ask from this context`, **state the unconfirmed MATERIAL trade-off in your RETURNED verdict/summary so the CALLER escalates it** (a note only in an on-disk report is not a handoff), and never emit an unqualified PASS. Applies ONLY where the user is genuinely unreachable (spawned sub-agent, terminal validate mode, headless run) — if you CAN ask, you MUST ask.
+
+<!-- /SYNC:trade-off-interrogation-gate:reminder -->
 
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Resolve the requested review target and apply the matching adversarial review path (plan/PBI rationale, code changes, docs/spec/report, findings, or explicit artifact) so decisions, findings, and plans survive adversarial rationale review before downstream work proceeds.
+
+**IMPORTANT MUST ATTENTION Main steps (full mode) — execute in order, the skill AI keeps forgetting:** (1) DETECT MODE — `--validate-findings` is TERMINAL; (2) bind the self-recursive review loop — protocol loop primary (host-independent), optional `/goal` gate WHEN available — + Task Bootstrap (phase tasks + closing Findings Validation Gate task); (3) RESOLVE TARGET TYPE + read active Goal Contract + route by concern; (4) REVIEW as SKEPTIC — 7 Anti-Bias boxes (incl. the **Trade-Off Interrogation Gate**: trade-off? worth it? material → confirm with user) + Validation Checklist (presence AND quality depth) + Round 2 re-review + spec↔tests↔code triangulation; (5) FINDINGS VALIDATION GATE — re-invoke terminal `--validate-findings`, reconcile, RE-DO the full re-review until CLEAN (max 2), then ask next step by asking the user directly. NEVER skip, reorder, or merge a step without explicit user approval. — why: the steps ARE the review's integrity; dropping one ships an unproven verdict.
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):** these are signposts — the canonical bodies above are binding; MUST ATTENTION honor each, NEVER treat a digest line as the full rule.
 
@@ -890,23 +1114,27 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **Review Protocol Injection:** embed all 11 protocol bodies VERBATIM into each fresh sub-agent prompt.
 - **Graph Impact Analysis:** run blast-radius when graph.db exists; impacted minus changed = stale files.
 - **Severity Rubric:** classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS.
+- **Trade-Off Interrogation Gate:** always ask — trade-off? worth it? material → confirm with the user before any PASS.
 
-**IMPORTANT MUST ATTENTION** default stance SKEPTIC, NOT validator — before ANY verdict complete all 6 Anti-Bias Gate boxes: steel-man ≥1 rejected alternative, name ≥1 unseen alternative, list 2-3 arguments AGAINST chosen approach, stress-test 2-3 hidden assumptions, run a pre-mortem, check pros/cons symmetry. — why: section presence is never a pass, and a reviewer who already endorsed the reasoning needs a forced reset to find what's wrong.
+**IMPORTANT MUST ATTENTION** default stance SKEPTIC, NOT validator — before ANY verdict complete all 7 Anti-Bias Gate boxes: steel-man ≥1 rejected alternative, name ≥1 unseen alternative, list 2-3 arguments AGAINST chosen approach, stress-test 2-3 hidden assumptions, run a pre-mortem, check pros/cons symmetry, run the Trade-Off Interrogation Gate. — why: section presence is never a pass, and a reviewer who already endorsed the reasoning needs a forced reset to find what's wrong.
+
+**IMPORTANT MUST ATTENTION ALWAYS ASK THE 3 TRADE-OFF QUESTIONS** — on the decision under review AND on EVERY recommendation you yourself make: (1) **Is there any trade-off?** name what it SACRIFICES across future change cost · complexity · performance · coupling · reversibility · migration · ops load · blast radius · security · testability · team skill · delivery time · UX — "no trade-off" / "pure win" is an unfinished analysis, so state the dimensions checked and why each is unaffected; (2) **Is it worth it?** weigh gain vs sacrifice explicitly — what is gained (with a metric), what it costs, WHO pays, WHEN it comes due → emit **WORTH IT / NOT WORTH IT / UNCLEAR**; NOT WORTH IT → withdraw or replace the recommendation, never keep it; (3) **Is the trade-off material enough to confirm with the user?** MATERIAL when irreversible (one-way door) · cost shifted onto another team/ops/maintainer/user · one quality attribute traded for another · a tier/service/event/library boundary crossed · an auth/money/data-integrity/breaking-change/High-or-Medium-risk path · or the worth-it verdict is UNCLEAR → **STOP and confirm via its OWN ask the user directly BEFORE the next-step question and BEFORE any PASS verdict**, stating the trade-off, both options, what each sacrifices, and your recommendation. Emit the `Trade-Off Assessment` table every review; a MATERIAL trade-off with no user confirmation can NEVER be PASS, and NEVER bury one as a Low-severity note. In `validate-findings` terminal mode: assess and record, do NOT ask — flag it so the caller escalates. — why: a benefit named without its price is an endorsement rather than a review, unpriced fixes cost more than the bugs they remove, and a one-way door is the user's call to walk through, never the reviewer's.
 **IMPORTANT MUST ATTENTION** resolve target type BEFORE reviewing: plan/PBI rationale, code changes, docs/spec/report, findings, or another artifact. Commit/PR/diff input defaults to code-change review; say "no active plan" ONLY for unresolved plan-rationale requests, NEVER silently convert target types. — why: wrong target type reviews the wrong artifact against the wrong checklist.
 **IMPORTANT MUST ATTENTION** recursion guard is non-negotiable: full mode may call `$why-review --validate-findings` at most ONCE; validate-findings mode is TERMINAL — NEVER re-invokes why-review, NEVER runs the gate, NEVER spawns a sub-agent. — why: any of these from terminal mode causes infinite recursion.
 
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence + severity + confidence for EVERY finding (>80% act, <60% do NOT recommend); reject "probably / should be / I think" — why: an unproven finding is speculation, not a review result.
 **IMPORTANT MUST ATTENTION** judge by Easy-to-Change — every finding, test, refactor, abstraction must lower future change cost; name the real enemies (coupling, hidden state, duplicated knowledge, unclear intent, premature irreversible decisions) or reject the recommendation. — why: this metric overrides any downstream "best practice" that raises change cost.
 **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read target files BEFORE judging conventions; evaluate fit before flagging a nearby pattern as "wrong" (closest example ≠ matching preconditions). — why: local conventions override generic framework defaults; pattern-matching without context manufactures false findings.
-**IMPORTANT MUST ATTENTION** break work into small todo tasks via task tracking BEFORE starting; in full mode create the **Findings Validation Gate** closing task at skill START (Task Bootstrap) and run it whenever findings exist — re-invoke `$why-review --validate-findings` (TERMINAL, SAME session) to confirm every finding is correct, proof-backed, reasonable, best-practice; RE-DO ONLY on surfaced finding issues/enhancements (max 2 re-dos, then escalate via a direct user question). — why: the gate catches inflated, misread, or unproven findings before handoff.
+**IMPORTANT MUST ATTENTION** break work into small todo tasks via task tracking BEFORE starting; in full mode create the **Findings Validation Gate** closing task at skill START (Task Bootstrap) and run it whenever findings exist — re-invoke `$why-review --validate-findings` (TERMINAL, SAME session) to confirm every finding is correct, proof-backed, reasonable, best-practice; RE-DO ONLY on surfaced finding issues/enhancements (max 2 re-dos, then escalate by asking the user directly). — why: the gate catches inflated, misread, or unproven findings before handoff.
 **IMPORTANT MUST ATTENTION** execute the review loop: review → validate findings → fix validated findings → full re-review; a complete review pass with zero findings ENDS the review. NEVER fix unvalidated findings; NEVER reuse a sub-agent across rounds (spawn NEW `spawn_agent` calls); main agent reads sub-agent reports but does NOT filter or override. — why: every fix invalidates the prior verdict, and orchestrator confirmation bias hides regressions a fresh zero-memory reviewer catches.
 **IMPORTANT MUST ATTENTION** judge the WHOLE PACKAGE, not the diff alone — load the behavior's spec (§3 AC / §4 BR / §8 TC), its tests, and the changed code together and triangulate; a missing or disagreeing face is itself a finding (CODE-WRONG / SPEC-STALE / TEST-GAP / SPEC-SILENT). NEVER mark PASS while any face disagrees without a logged finding. — why: the diff is the entry point, the package is the unit of judgment.
+**IMPORTANT MUST ATTENTION** when the target holds integration/E2E tests — or changes behavior that HAS covering integration tests — apply the **Integration-Test-Review Linkage**: `$integration-test-review` owns the 8 test-quality gates, so read its protocol (Mode A default) or delegate to it (Mode B, standalone full mode only) rather than judging assertion quality by eye. SKIP under any of the 4 guard rows (validate-findings mode · invoked by `$integration-test-review` Phase 9 · by `changes-review` in ANY phase — 0.8, 6, or 7.5 — or `$workflow-review-changes` · by `$debug-investigate`'s root-cause gate) and record the deferral line. — why: this skill's `Test/spec/doc sync` dimension claims to prove tests protect the invariant, but only those gates can answer it; and an unguarded call closes a `why-review → integration-test-review → why-review` cycle.
 **IMPORTANT MUST ATTENTION** every behavior-changing finding carries BOTH a spec-drift verdict (CODE-WRONG / SPEC-STALE / AMBIGUOUS / SPEC-SILENT / in-sync) AND a concrete test-feedback action; a SPEC-SILENT verdict additionally REQUIRES a spec-enrichment action (§4 BR/§3 AC + §8 TC). A missing axis is HAS-ISSUES, never a clean finding. — why: code-only fixes silently drop the invariant from the spec and leave it unguarded.
 **IMPORTANT MUST ATTENTION** for bugfix / regression / behavior-changing reviews, walk the End-to-Start debugger trace (observed final state → backward → feeder paths → hypothesis matrix → owning layer → forward convergence proof) and produce the Behavioral Delta Matrix (≥3 rows, ≥1 row outside the bug report) BEFORE the verdict; any REGRESSION delta → FAIL until a preservation test covers it. — why: narrative claims hide regressions and symptom-first fixes the matrix and trace force into view.
 **IMPORTANT MUST ATTENTION** require fixes at the owning layer — the lowest layer that owns the invariant — NEVER at the symptom/crash site; a fix touching 3+ files with defensive checks signals the wrong layer, go lower. — why: symptom-site patches leave every other consumer exposed.
 **IMPORTANT MUST ATTENTION** High/Medium residual risk must be fixed, reduced, or explicitly accepted by the user/owner before PASS; AI-extracted specs/TCs are not accepted evidence unless the canonical owner/review gate accepted them. — why: unowned residual risk is a deferred failure, not a pass.
 **IMPORTANT MUST ATTENTION** flag 3+ duplicated patterns for extraction and same-suffix classes (`*Entity`/`*Dto`/`*Service`) for a shared base when it lowers future change cost; NEVER recommend a pattern with fewer than 3 occurrences (YAGNI). — why: both over- and under-abstraction raise future change cost.
-**IMPORTANT MUST ATTENTION** read reference docs chosen by Project Reference Docs Gate (always include `docs/project-reference/lessons.md`); persist long-review findings to `plans/reports/` incrementally; validate the next step with the user via a direct user question in full mode — NEVER auto-proceed. — why: project docs override generic assumptions, external memory survives compaction, and the review gate is user-owned.
+**IMPORTANT MUST ATTENTION** read reference docs chosen by Project Reference Docs Gate (always include `docs/project-reference/lessons.md`); persist long-review findings to `plans/reports/` incrementally; validate the next step with the user by asking the user directly in full mode — NEVER auto-proceed. — why: project docs override generic assumptions, external memory survives compaction, and the review gate is user-owned.
 **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality.
 
 <!-- SYNC:critical-thinking-mindset:reminder -->
@@ -932,20 +1160,29 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **[GOAL REMINDER — MUST ATTENTION CRITICAL]**
 >
 > Ensure every review target is reasonable, correct, proof-backed, and best-practice aligned.
+> **ALWAYS ASK THE 3 TRADE-OFF QUESTIONS (every decision AND every recommendation you make):** (1) **is there any trade-off?** — name what it sacrifices; "none" is an unfinished analysis, not an answer; (2) **is it worth it?** — gain vs cost, who pays, when → WORTH IT / NOT WORTH IT / UNCLEAR; (3) **is the trade-off material enough to confirm with the user?** — irreversible, cost shifted to someone else, one quality attribute traded for another, boundary crossed, high-consequence path, or UNCLEAR → STOP and confirm by asking the user directly BEFORE the verdict. NEVER resolve a material trade-off silently. — why: naming a benefit without its price is an endorsement, not a review, and a one-way door is the user's call to walk through, never yours.
+> **MANDATORY SECOND PASS (full mode):** whenever Round 1 produces ANY finding, you MUST call `$why-review --validate-findings` a SECOND time on those findings to confirm each is correct and reasonable BEFORE handoff. NEVER skip it; NEVER suppress, demote, or under-report findings to dodge it. The self-recursive review loop — the **protocol loop primarily** (host-independent), plus a `/goal` Stop-hook gate WHEN available — BLOCKS stopping until findings are validated. — why: an unvalidated finding is an unproven claim, and a second self-review catches the misreads and inflation Round 1 rationalized.
 
 **Anti-Rationalization:**
 
-| Evasion                           | Rebuttal                                                                                                          |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| "No active plan"                  | Valid only for unresolved plan-rationale requests; commits/diffs/PBIs/docs are targets.                           |
-| "Just code review"                | Still resolve target, read docs, run graph, map tests/specs/docs.                                                 |
-| "Findings look obvious"           | Validate every finding via terminal `--validate-findings`.                                                        |
-| "All dimensions at once"          | One focused pass per dimension; split attention catches misses.                                                   |
-| "Ask later"                       | Full mode asks user next step before completion.                                                                  |
-| "Looks good / faces agree"        | Default SKEPTIC; complete all 6 Anti-Bias boxes; triangulate spec↔tests↔code — any disagreeing face is a finding. |
-| "Behavior change, no spec impact" | Emit spec-drift verdict + test-feedback action; SPEC-SILENT requires §4 BR/§3 AC + §8 TC enrichment.              |
-| "Fix where it crashes"            | Fix at the owning layer (lowest invariant owner); the crash site is the symptom, not the cause.                   |
-| "High risk, but ship"             | High/Medium residual risk must be fixed, reduced, or owner-accepted before PASS.                                  |
+| Evasion                                                   | Rebuttal                                                                                                                                                                      |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "No active plan"                                          | Valid only for unresolved plan-rationale requests; commits/diffs/PBIs/docs are targets.                                                                                       |
+| "Just code review"                                        | Still resolve target, read docs, run graph, map tests/specs/docs.                                                                                                             |
+| "Findings look obvious"                                   | Validate every finding via terminal `--validate-findings`.                                                                                                                    |
+| "Round 1 is enough"                                       | Full mode with ANY finding MUST run the SECOND `--validate-findings` pass; the protocol review loop (and the `/goal` Stop hook when available) blocks stopping until it does. |
+| "Report zero findings, skip the gate"                     | Suppressing/demoting findings to dodge validation is the exact bias the SKEPTIC stance forbids; surface them, THEN validate.                                                  |
+| "Validate inline, don't re-invoke"                        | The second pass is a real terminal `$why-review --validate-findings` call on the written report — not a mental once-over.                                                     |
+| "All dimensions at once"                                  | One focused pass per dimension; split attention catches misses.                                                                                                               |
+| "Ask later"                                               | Full mode asks user next step before completion.                                                                                                                              |
+| "Looks good / faces agree"                                | Default SKEPTIC; complete all 7 Anti-Bias boxes; triangulate spec↔tests↔code — any disagreeing face is a finding.                                                             |
+| "No trade-off here / pure win"                            | Unexamined ≠ absent. Name the dimensions checked (change cost, complexity, perf, coupling, reversibility, ops, security, delivery) and why each is unaffected.                |
+| "Trade-off is obvious, it's fine"                         | Emit the explicit WORTH IT / NOT WORTH IT / UNCLEAR verdict with gain, cost, who pays, when. "Obvious" is not a verdict.                                                      |
+| "I'll note the trade-off in the report instead of asking" | A MATERIAL trade-off needs its OWN ask the user directly before any PASS — a buried note is not a confirmation.                                                               |
+| "Just a review, not my decision to escalate"              | Surfacing a material trade-off for the user's call IS the review's job; silence hands the decision to no one.                                                                 |
+| "Behavior change, no spec impact"                         | Emit spec-drift verdict + test-feedback action; SPEC-SILENT requires §4 BR/§3 AC + §8 TC enrichment.                                                                          |
+| "Fix where it crashes"                                    | Fix at the owning layer (lowest invariant owner); the crash site is the symptom, not the cause.                                                                               |
+| "High risk, but ship"                                     | High/Medium residual risk must be fixed, reduced, or owner-accepted before PASS.                                                                                              |
 
 ---
 
@@ -1035,8 +1272,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -1047,6 +1285,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

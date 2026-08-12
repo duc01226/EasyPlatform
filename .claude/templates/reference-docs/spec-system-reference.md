@@ -10,8 +10,16 @@ Use this file to answer where specs live, which artifact is canonical, where tes
 
 Primary config source: `docs/project-config.json`.
 
-- Feature/spec root: `docs/specs/`
+- Business/feature spec root: `docs/specs/` — declared as `specRoots.business.path`
+- Derived technical spec root: `docs/specs-technical/` — declared as `specRoots.technical.path`
 - Feature template: `workflowPatterns.featureDocTemplate`
+
+Each root also declares its SEMANTICS, not just its location, so a consumer can tell an authored tree from a generated one without inspecting the files:
+
+| Root                  | `authorship` | `m1Policy` | Owner                                                                                                   |
+| --------------------- | ------------ | ---------- | ------------------------------------------------------------------------------------------------------- |
+| `specRoots.business`  | `hand`       | `strict`   | humans + `/spec` — M1 (no tech leakage in prose) applies                                                |
+| `specRoots.technical` | `derived`    | `exempt`   | `/tech-spec` generator only — it is a projection OF code, so naming code in it is the point, not a leak |
 
 When this `.claude` folder is copied to a new project, keep the portable `docs/specs/` root unless the runtime loader and project reference docs are intentionally changed together.
 
@@ -24,6 +32,8 @@ docs/specs/{Bucket}/README.{FeatureName}.md
 ```
 
 The Feature Spec is the business-facing source of truth. Code is the technical source of truth. Do not create a parallel engineering-spec tree unless the runtime loader and project reference docs are intentionally changed together.
+
+**`docs/specs-technical/` is not an exception to that rule** — it is not a parallel _authored_ tree. It is a regenerable **view** projected from annotated tests and source by `/tech-spec`; every file in it carries a `DERIVED` banner and the generator refuses to run if any file there lacks one. Nothing in it is a source of truth, and hand-editing it is the one thing it is designed to prevent. The prohibition above targets a second place where business intent is _authored_; a generated projection creates no second author.
 
 ## 3. Test Case Registry
 
@@ -39,7 +49,7 @@ Keep each TC mapped to the business rule, invariant, or observable outcome it pr
 
 ## 4. Derived Artifacts
 
-Indexes, ERDs, dashboards, reimplementation guides, and mirrors are derived aids. They must be regenerated from canonical Feature Specs or source code through their owning scan/sync command.
+Indexes, ERDs, dashboards, reimplementation guides, mirrors, and the whole `specRoots.technical` tree are derived aids. They must be regenerated from canonical Feature Specs or source code through their owning scan/sync command.
 
 Do not hand-maintain derived outputs as a second source of truth.
 

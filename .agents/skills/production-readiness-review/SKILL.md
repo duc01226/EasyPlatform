@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -60,6 +61,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
+- **Main steps (in order):** (1) **Resolve scope** — args else `git diff --name-only` uncommitted; backend service/API files only, skip frontend/tests/docs/config-only. (2) **Score 12 criteria 0-2** across the 4 dimensions (/24). (3) **Extended SRE Readiness gate** — 8 pass/fail deploy-time + operate-time items; an unaccepted CRITICAL/HIGH fail blocks PASS regardless of the /24 score. Gating, NOT scored — does not change the /24 math. (4) **Map score + gate → verdict**. (5) **Structural Impact Analysis** — graph gate (blast-radius, `tests_for`, downstream trace) when `graph.db` exists. (6) **Validated Fix + Full Re-Review** loop on any finding. (7) **Emit the SRE Review Results report** — `file:line` evidence per score and per gate item. Execute in order; NEVER skip/merge a step — why: untracked steps get silently merged and gaps reach production.
 - Score 12 criteria 0-2 across four dimensions (Observability/8, Reliability/8, Data Integrity/4, DB Performance/4) for a /24 PASS (19-24) / NEEDS WORK (13-18) / NOT READY (0-12) verdict — every score needs `file:line` evidence or it is 0.
 - The DB Performance Protocol is MANDATORY and non-advisory: ALL list queries must paginate (no unbounded GetAll/ToList) and ALL filter fields, foreign keys, and sort columns must have matching indexes.
 - VERDICT is advisory only; the graph gate, validated-fix full re-review, and DB Performance Protocol are NEVER skippable regardless of change size — and when batched (≥10 files), re-score all 12 criteria holistically from combined cross-batch evidence, never by averaging per-batch scores.
@@ -85,24 +87,24 @@ $ARGUMENTS
 
 **Be skeptical. Every claim needs traced proof, confidence >80%.**
 
-- NEVER accept operational readiness at face value — verify by reading actual implementations
+- NEVER accept operational readiness at face value — verify by reading implementations
 - Every score MUST have `file:line` evidence — unprovable score = 0
 - Question: "Is this really handled?" → trace error/retry/timeout path to confirm
-- Challenge: "Are ALL failure modes covered?" → check what happens when dependencies fail
+- Challenge: "Are ALL failure modes covered?" → check behavior when dependencies fail
 - Verify: "Can we debug this in production?" → check logging, correlation, metrics
 
 ## Scope Resolution
 
 1. Arguments specify files/directories → review those
 2. Else → review uncommitted changes (`git diff --name-only`)
-3. Focus: backend source files under the service root (per the project's structure reference / `docs/project-config.json`), API controllers, service classes
+3. Focus: backend source files under service root (per the project's structure reference / `docs/project-config.json`), API controllers, service classes
 4. Skip: frontend files, test files, documentation, config-only changes
 
 ## Production Readiness Scoring
 
 Score each criterion 0-2: **0** = not addressed, **1** = partially, **2** = fully.
 
-> **MANDATORY when batched (≥10 files, `SYNC:systematic-review-batching` active):** the 12 criteria are scored **holistically across the FULL cross-batch scope**, NOT by merging or averaging per-batch scores. Several criteria are inherently cross-file — e.g. "all query filter fields have indexes" can have the query in one batch and the migration in another; a per-batch score sees only its ≤8 files and would false-flag a `0` when the satisfying file lives in a different batch. The synthesis/reduce tier MUST therefore **RE-SCORE each of the 12 criteria from the combined cross-batch evidence** (batch agents surface evidence per criterion; the reducer assigns the score). If holistic re-score is infeasible for a given run, do NOT batch production-readiness-review — fall back to whole-scope serial scoring.
+> **MANDATORY when batched (≥10 files, `SYNC:systematic-review-batching` active):** score the 12 criteria **holistically across the FULL cross-batch scope**, NOT by merging or averaging per-batch scores. Several criteria are cross-file — e.g. "all query filter fields have indexes" can have the query in one batch, the migration in another; a per-batch score sees only its ≤8 files and false-flags `0` when the satisfying file lives in a different batch. The synthesis/reduce tier MUST therefore **RE-SCORE each of the 12 criteria from combined cross-batch evidence** (batch agents surface evidence per criterion; reducer assigns the score). If holistic re-score is infeasible, do NOT batch production-readiness-review — fall back to whole-scope serial scoring.
 
 ### Observability (max 8)
 
@@ -156,6 +158,29 @@ Score each criterion 0-2: **0** = not addressed, **1** = partially, **2** = full
 > 1. **Mutation bar, not coverage %** — for changed service/API core logic the bar is the **MUTATION-SCORE gate**: a surviving mutant on a changed line is a release blocker (it proves an invariant the tests do not assert), NEVER a line-coverage-% question. A green coverage number over un-asserted behavior does not clear this gate.
 > 2. **Dual feedback** — every production-readiness finding that changes behavior feeds BOTH the spec (NAME the contract/invariant in Section 8) AND a guarding test; a code-only fix is INCOMPLETE. A surviving mutant → add the killing test AND record the invariant it protects in the spec.
 
+## Extended SRE Readiness Gate (step-by-step, pass/fail — gating, NOT scored)
+
+> **Runs as main step 3, after scoring, before verdict mapping.** Deploy-time and operate-time SRE aspects the 12-criteria `/24` model does NOT score. Check each item **step by step**; record `pass` / `partial` / `fail` with `file:line` evidence or explicit `N/A — reason`. Gate does **not** change `/24` math — it overlays it: **an unaccepted CRITICAL/HIGH `fail` blocks a PASS verdict regardless of score** (per Severity Rubric — CRITICAL/HIGH must be resolved or owner-accepted before PASS). Read deployment context from `docs/project-config.json → infrastructure` (referenced above) to decide which items are `N/A` (e.g. no orchestration → readiness/liveness probes `N/A` with stated reason).
+
+| #   | Gate Item                      | What to Check                                                                                                                                                                          | Status            | Evidence                      |
+| --- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ----------------------------- |
+| G1  | **Rollout & Rollback**         | Deploy is staged/canary-able; a documented, fast rollback path exists (feature flag, versioned + reversible migration). No irreversible one-way change without a stated recovery plan. | pass/partial/fail | `file:line` or `N/A — reason` |
+| G2  | **Health Checks**              | Readiness + liveness endpoints/probes exist and reflect real dependency health (not an always-200 stub).                                                                               | pass/partial/fail | ...                           |
+| G3  | **Alerting & Runbook**         | New failure modes have an actionable alert (signal, not noise) and a runbook / escalation note.                                                                                        | pass/partial/fail | ...                           |
+| G4  | **SLO / Error-Budget**         | Change respects an SLO or names the latency/availability target it affects; no silent new failure mode against the budget.                                                             | pass/partial/fail | ...                           |
+| G5  | **Capacity & Resource Limits** | Load ceilings, resource limits, autoscaling/back-pressure considered; no unbounded fan-out or unbounded in-memory growth.                                                              | pass/partial/fail | ...                           |
+| G6  | **Config & Secrets**           | Required config present in all envs and fails fast if missing; no secrets committed in the diff.                                                                                       | pass/partial/fail | ...                           |
+| G7  | **Graceful Shutdown/Startup**  | In-flight work drains on shutdown; startup waits for / degrades gracefully on unready dependencies.                                                                                    | pass/partial/fail | ...                           |
+| G8  | **Concurrency & Idempotency**  | Operations are safe under retry / at-least-once delivery; no race on shared state; idempotency keys where needed.                                                                      | pass/partial/fail | ...                           |
+
+**Gate verdict:** `{n}/8 pass`. Any CRITICAL/HIGH `fail` not explicitly owner-accepted ⇒ overall verdict cannot be PASS even at a 19-24 score.
+
+## Technique Applicability (advisory — NON-SCORING, NON-GATING)
+
+Invoke `SYNC:scale-technique-gate`: derive the system's scale tier from evidence (users/RPS, SLO, data volume, tenancy, topology — cite `file:line`/config/infra + confidence), then emit the **Technique Applicability Matrix** (`technique | tier-warranted? | present? | verdict | advice | evidence`) across the 10 concern groups. Surface warranted-but-missing reliability/scale techniques (rate limiting, backups, DR, failover, graceful degradation) as **advice**; flag `OVER-ENGINEERED` techniques the tier does not warrant.
+
+> **Advisory only — this matrix does NOT add a gate item, does NOT change the `{n}/8` gate result, the `/24` score, or the verdict.** A `MISSING-WARRANTED` technique is guidance to consider at this tier, NOT a gate `fail`. `N/A-by-scale` for small systems is expected, never a failure. Full catalog → `.claude/docs/scale-technique-catalog.md`.
+
 ## Scoring
 
 | Score | Verdict        | Recommendation                                                                            |
@@ -172,9 +197,27 @@ Score each criterion 0-2: **0** = not addressed, **1** = partially, **2** = full
 - `python .claude/scripts/code_graph query tests_for <function_name> --json` → verify test coverage on changed functions
 - `python .claude/scripts/code_graph trace <service-file> --direction downstream --json` → verify all downstream event handlers, bus consumers, cross-service calls have error handling
 
+## Why-Review Findings Validation Gate (MANDATORY when findings exist)
+
+> **Purpose:** Adversarial validation of own findings BEFORE any fix. Catches over-flagged criteria, false positives, and severity/score inflation at the source rather than letting them drive fixes or ship downstream.
+
+**Trigger:** Any finding produced (any severity). Skip ONLY when the verdict is unconditional PASS with literally zero findings.
+
+**Protocol:**
+
+1. Read own finalized report from `plans/reports/{skill}-{date}-{slug}.md`
+2. Invoke `$why-review --validate-findings plans/reports/{skill}-{date}-{slug}.md` — verify each finding has `file:line` proof, steel-man each rejected interpretation, and stress-test every severity/score classification (each finding must clear why-review's finding-survival bar to be kept)
+3. Read the CLEAN / HAS-ISSUES verdict returned by why-review
+4. **If why-review demotes/removes any finding:** UPDATE own report with revised severities, remove false positives, and add a `## Why-Review Validation Notes` section citing what changed and why
+5. **If why-review confirms all findings:** append a `## Why-Review Validation` line stating "All N findings re-validated against actual code; no severity changes."
+
+**Skip conditions (record explicit reason if skipping):** unconditional PASS with zero findings; why-review is itself the active context (avoid recursion).
+
+**Why this exists:** SRE sub-agent reports inherit confirmation bias — the orchestrator absorbs severity claims as ground truth. Validate findings BEFORE the fix so no fix is ever driven by an inflated or false finding; this gate feeds the "Validated Fix + Full Re-Review" loop below.
+
 ## Validated Fix + Full Re-Review (MANDATORY when fixes are applied)
 
-When a review pass finds issues, validate findings before any fix. Do not spawn a fresh sub-agent only to re-review the same finding set before validation/fix. After validated SRE fixes are applied, rerun the full SRE review. If that restarted review uses a sub-agent, spawn it with ZERO prior-round memory. A clean review pass ENDS the review.
+When a review pass finds issues, validate findings before any fix. Do NOT spawn a fresh sub-agent only to re-review the same finding set before validation/fix. After validated SRE fixes applied, rerun the full SRE review. If that restarted review uses a sub-agent, spawn it with ZERO prior-round memory. A clean review pass ENDS the review.
 
 **When a fresh sub-agent is part of the restarted review, spawn via canonical template in `SYNC:review-protocol-injection`:**
 
@@ -190,7 +233,7 @@ When a review pass finds issues, validate findings before any fix. Do not spawn 
 - Operational concerns spanning multiple services
 - Subtle reliability gaps (retry, circuit breakers, timeout handling)
 - Missing observability (structured logging, correlation IDs, metrics)
-- Data integrity edge cases under concurrent load
+- Data-integrity edge cases under concurrent load
 
 **Final verdict = every review pass that actually ran, combined.**
 
@@ -236,6 +279,21 @@ When a review pass finds issues, validate findings before any fix. Do not spawn 
 | 11  | Pagination       | 0/1/2 | ...      |
 | 12  | Database Indexes | 0/1/2 | ...      |
 
+### Extended SRE Readiness ({n}/8 gate — pass/fail, does not change /24)
+
+| #   | Gate Item                  | Status            | Evidence          |
+| --- | -------------------------- | ----------------- | ----------------- |
+| G1  | Rollout & Rollback         | pass/partial/fail | `file:line` / N/A |
+| G2  | Health Checks              | pass/partial/fail | ...               |
+| G3  | Alerting & Runbook         | pass/partial/fail | ...               |
+| G4  | SLO / Error-Budget         | pass/partial/fail | ...               |
+| G5  | Capacity & Resource Limits | pass/partial/fail | ...               |
+| G6  | Config & Secrets           | pass/partial/fail | ...               |
+| G7  | Graceful Shutdown/Startup  | pass/partial/fail | ...               |
+| G8  | Concurrency & Idempotency  | pass/partial/fail | ...               |
+
+_Any unaccepted CRITICAL/HIGH `fail` above blocks a PASS verdict regardless of the /24 score._
+
 ### Gaps to Address
 
 - {specific actionable item}
@@ -250,13 +308,14 @@ When a review pass finds issues, validate findings before any fix. Do not spawn 
 - Advisory (final VERDICT only) — score/verdict inform team but don't block commits; MANDATORY process steps (graph gate, validated-fix full re-review, Database Performance Protocol) are NEVER advisory
 - Evidence-based — cite `file:line` for every score; unprovable score = 0
 - Proportional — small bug fixes need less rigor than new endpoints (applies to VERDICT interpretation, NOT to skipping MANDATORY steps)
-- Check framework patterns — background job base handlers, base controller error handling
+- Extended SRE Readiness gate is pass/fail, NOT scored — does not change `/24` math; but an unaccepted CRITICAL/HIGH gate `fail` blocks a PASS verdict (Severity Rubric). Use `docs/project-config.json → infrastructure` to mark items `N/A` with stated reason
+- Check framework patterns — background-job base handlers, base-controller error handling
 
 ---
 
 ## Workflow Recommendation
 
-> **MANDATORY — NO EXCEPTIONS:** If NOT already in workflow, use a direct user question to ask user:
+> **MANDATORY — NO EXCEPTIONS:** If NOT already in workflow, use ask the user directly to ask user:
 >
 > 1. **Activate `workflow-feature` workflow** (Recommended) — scout → investigate → plan → feature-implement → review → production-readiness-review → test → docs
 > 2. **Execute `$production-readiness-review` directly** — run standalone
@@ -265,11 +324,13 @@ When a review pass finds issues, validate findings before any fix. Do not spawn 
 
 ## Next Steps
 
-**MANDATORY — NO EXCEPTIONS** — after completing, use a direct user question:
+**MANDATORY — NO EXCEPTIONS** — after completing, use ask the user directly:
 
 - **"$watzup (Recommended)"** — wrap up + check doc staleness
 - **"$test"** — run tests before wrapping up
 - **"Skip, continue manually"** — user decides
+
+> **Combined audit:** For a whole-project architecture + compliance + production-readiness audit in one pass, run `$architecture-review-full` (or `$start-workflow workflow-architecture-audit`) — fans out this skill, `architecture-review`, `architecture-scalability-review` as parallel sub-agents and synthesizes one consolidated report.
 
 ---
 
@@ -355,11 +416,11 @@ When a review pass finds issues, validate findings before any fix. Do not spawn 
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -404,6 +465,14 @@ When a review pass finds issues, validate findings before any fix. Do not spawn 
 
 > **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
 >
+> _aka **Self-Review Convergence Loop**._ The name is historical — there is **NO 2-round cap**; "double-round-trip" only means a validated-finding fix cycle forces at least one fresh re-review. It runs until a clean pass, bounded by the **5-round ceiling** below.
+>
+> **Round cap — 5 rounds MAX (a ceiling, NEVER a target).** A clean pass ENDS the loop immediately at ANY round — round 1 included; the cap never obliges you to keep spinning. Hitting round 5 with validated findings still open → **STOP and escalate by asking the user directly** with the still-open findings listed; NEVER emit a silent "good enough" PASS on cap exhaustion, and NEVER let the cap substitute for the clean-review requirement. The 3-repeated-no-progress blocker rule stays an EARLIER exit — escalate at whichever trips first.
+>
+> **Universal scope (any new output/judgment):** any newly produced output or judgment gets **≥1 self-review**; any **new judgment** gets **≥1 `$why-review --validate-findings` pass**; anything flagged to re-check is re-checked **≥1 time** — before that output is treated as final. This loop is the default convergence contract for ANY work-producing skill, not review skills only.
+>
+> **Routing invariant (author-facing):** a skill that validates findings MUST route them through `$why-review --validate-findings` (the terminal validator) — NEVER fork an inline finding-validation. Routing through why-review is what makes the finding-survival bar and this loop apply; the `verify-review-validate-coverage` sensor enforces this exact route mechanically.
+>
 > **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
 >
 > **Decision after Round 1:**
@@ -420,16 +489,18 @@ When a review pass finds issues, validate findings before any fix. Do not spawn 
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues. If the same validated finding repeats for 3 full invocations with no progress, or a fix requires product/owner input, escalate via a direct user question.
+> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues, **capped at 5 rounds**. Escalate by asking the user directly at whichever comes first: the same validated finding repeats for 3 full invocations with no progress · a fix requires product/owner input · round 5 completes with validated findings still open. NEVER loop past 5 rounds, and NEVER convert cap exhaustion into a PASS.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
 > - NEVER fix unvalidated findings; validate first using the caller's validation gate
+> - Every surviving finding must additionally clear the **finding-survival bar** defined in why-review's Findings Validation Routine (a deliberately higher bar than the generic act-gate — "keep this finding?" is a stricter question than "act on this evidence?"); a finding below the bar is demoted or dropped, not kept
 > - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
 > - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - No arbitrary sub-agent-round cap replaces the clean-review requirement; use the 3 repeated-no-progress blocker rule only to avoid infinite spinning
+> - The 5-round cap NEVER replaces the clean-review requirement — it bounds runaway looping, it does not authorize shipping an un-clean review; a clean pass ends the loop early at any round, and cap exhaustion escalates rather than passes
+> - Enforce the round cap of 5 alongside the 3 repeated-no-progress blocker rule; both are escalation triggers, neither is a completion criterion
 > - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
@@ -458,7 +529,7 @@ When a review pass finds issues, validate findings before any fix. Do not spawn 
 > - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
 > - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `spawn_agent` call
-> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via a direct user question
+> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate by asking the user directly
 > - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
@@ -648,8 +719,9 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -757,10 +829,91 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:category-review-thinking -->
 
+<!-- SYNC:scale-technique-gate -->
+
+> **Scalability & Production-Readiness Technique Gate** — CONDITIONAL, evidence-gated, scale-tiered. Judge which system-design techniques a system _warrants_ at its scale — flag warranted-but-missing gaps AND advise AGAINST unwarranted heavyweight ones. **ADVICE-ONLY: emit the matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.**
+>
+> 1. **Derive the scale tier FIRST — from evidence, never assumed.** Read users/RPS, SLO/latency targets, data volume, tenancy, topology from config/infra/specs; cite `file:line` + confidence. Tiers: `T0` internal/single-instance · `T1` small SaaS (<10k users) · `T2` high-scale (10k–1M) · `T3` massive/multi-region (millions+). Unknown tier → state assumption, do NOT default to T3.
+> 2. **Judge each concern group only at/above its warranting tier** (member techniques → owning review skill for depth):
+>     - Traffic & Edge — Rate Limiting, Load Balancing, Reverse Proxy, API Gateway, CDN, Edge Caching, WAF, DDoS (T1+; CDN/WAF T2+) → security-review owns WAF/DDoS
+>     - Caching & Data Access — Caching, Cache Invalidation, DB Indexing, Query Optimization, N+1, Connection Pooling (T1+) → performance-review owns depth
+>     - Data Scaling & Consistency — Read Replicas, Sharding, Partitioning, Replication, CAP, Eventual Consistency, Locks, Leader Election (T2+; sharding/multi-region T3) → performance-review
+>     - Async & Messaging — Message Queues, Pub/Sub, Event-Driven, Saga, DLQ, Distributed Transactions, Backpressure, Webhooks, WebSockets/SSE (T2+)
+>     - Resilience — Circuit Breakers, Timeouts, Retries, Backoff, Idempotency, Health Checks, Liveness/Readiness, Failover, Graceful Degradation (T1+) → production-readiness-review
+>     - Scaling & Compute — Autoscaling, Horizontal/Vertical Scaling, Serverless Limits, Cold Starts, Cron Jobs, Thread Safety, GC/Memory Leaks (T1+; autoscaling T2+)
+>     - Deployment & Release — CI/CD, Docker, Kubernetes, Blue-Green/Canary/Rolling, Rollbacks, Feature Flags, IaC/Terraform/Helm, Build Caching (CI/CD T0+; K8s/canary T2+)
+>     - Observability — Monitoring, Logging, Distributed Tracing, Metrics, Alerting, SLOs/SLIs, Error Budgets (T1+; tracing/error-budgets T2+) → production-readiness-review
+>     - Security & Compliance — Secrets Management, IAM, OAuth, JWT Rotation, TLS, Encryption at Rest/Transit, CORS, CSRF, SQLi, XSS, SSRF (T0+) → security-review owns
+>     - DR & Infra — Backups, Disaster Recovery, Multi-Region, Chaos Engineering, Schema Versioning, DB Migrations, Cost Optimization (backups T1+; DR/multi-region/chaos T3) → production-readiness-review
+> 3. **Assign one of 4 verdicts per warranted technique:** `PRESENT` · `MISSING-WARRANTED` (→ **advise only** — guidance, NOT a score/gate lever) · `N/A-by-scale` (below warranting tier) · `OVER-ENGINEERED` (present but unwarranted at this tier → advise AGAINST).
+> 4. **Anti-over-engineering guard (first-class):** do NOT recommend K8s, sharding, multi-region, service mesh, event sourcing, or distributed transactions below their warranting tier. A correctly-lean small system is a PASS, never a gap.
+> 5. **Output — Technique Applicability Matrix:** `technique | tier-warranted? | present? | verdict | advice | evidence (file:line/config/infra)`. Full grouped catalog + per-tier baseline → `.claude/docs/scale-technique-catalog.md`. Hosting reviews surface this matrix WITHOUT changing any `/20`, `/24`, verdict band, or PASS/FAIL (per user decision 2026-07-06). **Drift-guard: tier thresholds & per-technique warranting tiers are AUTHORITATIVE in `.claude/docs/scale-technique-catalog.md` — the inline tier summary above is a condensed pointer; on any tier/technique change, update the catalog FIRST, then re-run `.claude/scripts/inject_scale_technique_gate.py` to re-propagate this block.**
+>
+> **BLOCKED until:** `- [ ]` tier derived from evidence (not assumed) `- [ ]` matrix emitted `- [ ]` over-engineering guard applied `- [ ]` advisory-only (no score/verdict mutation) confirmed
+
+<!-- /SYNC:scale-technique-gate -->
+
+<!-- SYNC:scenario-stress-eval -->
+
+> **Scenario Stress & Resilience Evaluation** — CONDITIONAL, evidence-gated, business-criticality-aware. The top-down companion to `SYNC:scale-technique-gate`: instead of _"is technique X present?"_, put the system UNDER concrete failure/load scenarios and judge whether it SURVIVES, SELF-HEALS, and whether its BUSINESS needs it to. **ADVICE-ONLY: emit the Scenario Stress Matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.**
+>
+> 1. **Reuse the scale tier** derived by `SYNC:scale-technique-gate` (or derive it identically from evidence); **also derive business-criticality `B0`–`B3`** from specs/SLA/product docs + the domain, cite `file:line` + confidence. `B0` best-effort · `B1` important · `B2` business-critical · `B3` mission-critical/regulated. Unknown → state the assumption, do **NOT** default to `B3`/`T3`. **Criticality-signal floor (both-directions safety):** regulated / PII / financial / health data, money movement, auth/identity, or legal-compliance scope raises `B` to **at least `B2` even absent SLA/SLO docs**; anti-over-engineering lowers hardening ONLY when NO such signal is present. `B` (blast if it fails) and `T` (scale of load/data) are independent — a low-traffic payroll run is low-`T`, high-`B`.
+> 2. **Select in-scope scenarios** — only those the system's `B`/`T` combination warrants (a `B0` internal PoC skips region-loss/DR entirely; a `B3`/`T0` regulated service still needs backups + DR by BUSINESS, not scale).
+> 3. **Walk each in-scope scenario:** simulate the stimulus → trace the break path → name the failure signature → answer the self-heal/recovery question (auto-recover? MTTR? manual runbook?) → name the trade-off it forces. Families: traffic spike · sustained growth · data-volume growth · write/ingest burst · dependency down/slow · instance/node loss · zone/region loss · **data loss/corruption** · poison-message/retry-storm · cascading failure/backpressure · cold-start/deploy-blip · clock-skew/duplicate-delivery.
+> 4. **Assign one verdict per scenario:** `WITHSTANDS` · `DEGRADES-GRACEFULLY` · `FAILS-HARD` (→ **advise only**) · `N/A-by-business` (not warranted → skip, not a gap) · `OVER-HARDENED` (resilience beyond business need → **advise AGAINST**, cite carrying cost).
+> 5. **Anti-over-engineering guard (first-class):** a lean system whose business does not need HA/DR is a PASS; `OVER-HARDENED` flags resilience the business does not warrant. This guard is symmetric with the criticality-signal floor above — never under-harden a `B2`+ system just because its traffic is low.
+> 6. **Output — Scenario Stress Matrix:** `scenario | in-scope (B/T)? | verdict | self-heal | trade-off | evidence (file:line/config/infra)`. Full catalog + Business×Scale in-scope baseline + verdict/tier tables → `.claude/docs/scenario-stress-catalog.md`. **ADVISORY-ONLY: NEVER mutate any `/20`, `/24`, verdict band, or gate pass/fail. Drift-guard: scenarios/verdicts/business-tiers are AUTHORITATIVE in the catalog — update it FIRST, then re-run `.claude/scripts/inject_scenario_stress_gate.py`. Scale tier stays single-sourced in `scale-technique-catalog.md`.**
+>
+> **BLOCKED until:** `- [ ]` scale tier + business-criticality (with criticality-signal floor) derived from evidence `- [ ]` in-scope scenarios selected `- [ ]` matrix emitted `- [ ]` over-hardening guard applied `- [ ]` advisory-only (no score/verdict mutation) confirmed
+
+<!-- /SYNC:scenario-stress-eval -->
+
+<!-- SYNC:goal-contract-satisfaction-loop -->
+
+> **Goal Contract Satisfaction Loop** — Persist the user goal in an external file, execute against it, and loop review/fix until every saved required criterion passes or a blocker escalates. Bounded closed loop — NEVER open-ended autonomous exploration.
+>
+> 1. **Resolve the active goal** (in order): active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create a new Goal Contract from the current user request (template: `.claude/templates/goal-contract-template.md`).
+> 2. **Required sections:** Original Request, Purpose, Success Criteria (checkboxes; mark required vs optional), Constraints, Evidence Required, Iteration Log, Goal Satisfaction matrix.
+> 3. **Before work:** read the active goal and map planned work to saved success criteria — execution serves the saved criteria, never chat memory alone.
+> 4. **After execution/verification:** append an Iteration Log entry — result, evidence references (`file:line`, command output, report path), remaining gaps.
+> 5. **Review gate:** emit a Goal Satisfaction matrix — `| Success Criterion | Evidence | Status |` with PASS/FAIL/BLOCKED. Overall PASS requires every required criterion PASS.
+> 6. **Loop rule (retry):** required criterion FAIL → validate the gap is real → fix → re-review only the affected criteria. Stop cleanly when all required criteria PASS.
+> 7. **Escalation rule (stop):** two consecutive iterations with no criterion progressing, or a blocker needing user input → mark the criterion BLOCKED with a user-facing reason and escalate. NEVER loop indefinitely.
+> 8. **Skip rule:** tiny conversational tasks may skip the goal file ONLY with a recorded one-line reason. User-accepted gate skips are recorded in the goal file with reason and scope.
+> 9. **Security:** NEVER store secrets, tokens, credentials, or private customer data in goal files — store evidence references and redact sensitive values.
+>
+> **Blocked until:** active goal resolved (or skip reason recorded) · saved success criteria read before edits · iteration evidence appended after execution · Goal Satisfaction matrix emitted before any PASS verdict.
+
+<!-- /SYNC:goal-contract-satisfaction-loop -->
+
+<!-- SYNC:trade-off-interrogation-gate -->
+
+> **Trade-Off Interrogation Gate** — ALWAYS ask these THREE questions before ANY verdict, score, finding, or recommendation — about the thing under review AND about every recommendation YOU make. — why: naming a benefit without its price is an endorsement, not a review; the costliest trade-offs are the ones nobody wrote down.
+>
+> 1. **Is there any trade-off?** Name what it SACRIFICES. "None" / "pure win" is an unfinished analysis, NOT an answer — to claim none, state which dimensions you checked and why each is unaffected: future change cost · complexity · performance/latency · memory/cost · coupling · reversibility · migration burden · operational load · blast radius · security posture · testability · team skill/ramp · delivery time · UX.
+> 2. **Is it worth it?** Weigh gain against sacrifice EXPLICITLY — what is gained (with a metric) · what it costs · WHO pays · WHEN it comes due — then emit **WORTH IT / NOT WORTH IT / UNCLEAR**. "Better" with no metric and no cost FAILS this question. NOT WORTH IT → withdraw or replace the recommendation, never keep it as-is.
+> 3. **Is the trade-off material enough to CONFIRM WITH THE USER?** A material trade-off is the user's call, never yours. **MATERIAL** when ANY holds: irreversible / one-way door (data migration, public contract, storage format, vendor lock-in) · cost shifted onto someone else (another team, ops/on-call, future maintainer, end user) · one quality attribute traded for another (correctness↔speed, security↔convenience, latency↔cost, simplicity↔flexibility) · a boundary crossed (client↔server tier, service contract, event contract, shared library) · a high-consequence path (auth, money, data integrity, breaking change, High/Medium residual risk) · the worth-it verdict is UNCLEAR.
+>
+> **MATERIAL → STOP and confirm by asking the user directly BEFORE the verdict stands** — state the trade-off, both options, what each sacrifices, and your recommendation. **NOT material →** record it inline with a one-line justification and proceed.
+>
+> **Non-asking execution contexts — ESCALATE BY HANDOFF, never by silence.** ask the user directly reaches only the main interactive agent: a sub-agent cannot ask the user, and a terminal/verdict-only mode asks nothing by design. When you are running in such a context, the obligation is **redirected, never waived** — do ALL of: (a) complete questions 1 and 2 normally; (b) decide materiality and record it in the Trade-Off Assessment row with `confirmed? = NO — cannot ask from this context`; (c) **name the unconfirmed MATERIAL trade-off explicitly in your returned summary/verdict so the CALLER (or parent orchestrator) escalates it by asking the user directly on your behalf** — a material trade-off mentioned only inside a report file on disk is NOT a handoff; (d) do not emit an unqualified PASS — mark the verdict as carrying an unconfirmed material trade-off, so the caller's gate stays closed until the user answers. The caller inherits the escalation duty the moment it reads your return.
+>
+> This carve-out is about **reachability, not convenience**: it applies ONLY where the tool genuinely cannot reach the user (spawned sub-agent, terminal validate/verdict-only mode, non-interactive/headless run). It is NEVER a licence to skip the question, to self-approve a one-way door, or to downgrade materiality because asking is inconvenient — if you CAN ask, you MUST ask.
+>
+> **Emit a Trade-Off Assessment row** per reviewed decision and per recommendation: `| decision | sacrifices | gain (metric) | who pays, when | WORTH IT/NOT/UNCLEAR | material? | confirmed? |`.
+>
+> **BLOCKED until:** trade-off named (or dimensions-checked justification given) · worth-it verdict emitted · materiality decided · every MATERIAL trade-off either confirmed with the user OR — in a non-asking context — handed off in the returned verdict for the caller to confirm. A MATERIAL trade-off that is neither confirmed nor handed off can NEVER be PASS, and NEVER gets buried as a Low-severity note.
+>
+> **NEVER** answer "no trade-off" without checking · decide a material trade-off silently on the user's behalf · let convergence/delivery pressure authorize walking through a one-way door · bundle several material trade-offs into one vague "proceed?".
+
+<!-- /SYNC:trade-off-interrogation-gate -->
+
 <!-- SYNC:double-round-trip-review:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review.
-  <!-- /SYNC:double-round-trip-review:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop (aka **Self-Review Convergence Loop**): review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review. Any newly produced output/judgment gets ≥1 self-review; any new judgment gets ≥1 `$why-review --validate-findings` pass before it is treated as final.
+- **MANDATORY** enforce the **round cap of 5 — a ceiling, NEVER a target**: a clean pass ends the loop immediately at any round (round 1 included), and round 5 completing with validated findings still open → **STOP & escalate by asking the user directly**, never a silent PASS. The 3-repeated-no-progress blocker rule is an earlier exit — escalate at whichever trips first. NEVER loop open-ended.
+
+<!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:graph-assisted-investigation:reminder -->
 
@@ -795,8 +948,8 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -807,17 +960,6 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
-
-## Prompt-Enhance Closing Anchors
-
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
-**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
-**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
-**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
-
-<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
 <!-- SYNC:systematic-review-batching:reminder -->
 
@@ -840,9 +982,49 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:category-review-thinking:reminder -->
 
+<!-- SYNC:scale-technique-gate:reminder -->
+
+**IMPORTANT MUST ATTENTION** scale-technique gate: derive the scale tier from evidence FIRST (T0 internal · T1 <10k · T2 10k–1M · T3 millions+), then judge each warranted technique `PRESENT`/`MISSING-WARRANTED`/`N/A-by-scale`/`OVER-ENGINEERED`. Advise on warranted-but-missing gaps AND advise AGAINST unwarranted heavyweight techniques (anti-over-engineering). **ADVICE-ONLY — emit the Technique Applicability Matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.** Full catalog → `.claude/docs/scale-technique-catalog.md` (authoritative for tier thresholds & per-technique warranting tiers — on any change update the catalog FIRST, then re-run `inject_scale_technique_gate.py`).
+
+<!-- /SYNC:scale-technique-gate:reminder -->
+
+<!-- SYNC:scenario-stress-eval:reminder -->
+
+**IMPORTANT MUST ATTENTION** scenario-stress gate: reuse the scale tier `T0`–`T3` AND derive business-criticality `B0`–`B3` from evidence first — apply the **criticality-signal floor** (regulated/PII/financial/health data · money movement · auth/identity · legal-compliance → at least `B2` even absent SLA docs; do NOT default to `B3`). Select only the scenarios the `B`/`T` combination warrants, then walk each (simulate → trace → failure signature → self-heal/MTTR → trade-off) and assign `WITHSTANDS`/`DEGRADES-GRACEFULLY`/`FAILS-HARD`/`N/A-by-business`/`OVER-HARDENED`. Anti-over-engineering is first-class (a lean system that needs no HA/DR is a PASS) AND symmetric (never under-harden a `B2`+ system for low traffic). **ADVICE-ONLY — emit the Scenario Stress Matrix as guidance; NEVER mutate any score, verdict band, or gate pass/fail.** Full catalog → `.claude/docs/scenario-stress-catalog.md` (authoritative for scenarios/verdicts/business-tiers — on any change update the catalog FIRST, then re-run `inject_scenario_stress_gate.py`; scale tier stays single-sourced in `scale-technique-catalog.md`).
+
+<!-- /SYNC:scenario-stress-eval:reminder -->
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
+## Prompt-Enhance Closing Anchors
+
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
+**IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
+**IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
+
+<!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:goal-contract-satisfaction-loop:reminder -->
+
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
+
+<!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
+
+<!-- SYNC:trade-off-interrogation-gate:reminder -->
+
+- **MANDATORY MUST ATTENTION ALWAYS ASK THE 3 TRADE-OFF QUESTIONS** — on the thing under review AND on every recommendation you make: (1) **is there any trade-off?** name what it SACRIFICES (change cost · complexity · perf · coupling · reversibility · migration · ops load · blast radius · security · testability · delivery time · UX) — "none"/"pure win" is an unfinished analysis, so state the dimensions checked; (2) **is it worth it?** gain (with a metric) vs cost, WHO pays, WHEN → emit **WORTH IT / NOT WORTH IT / UNCLEAR**; NOT WORTH IT → withdraw or replace it; (3) **is it material enough to confirm with the user?** irreversible/one-way door · cost shifted onto another team/ops/maintainer/user · one quality attribute traded for another · a tier/service/event/library boundary crossed · auth/money/data-integrity/breaking-change/High-or-Medium-risk path · verdict UNCLEAR → **STOP and confirm by asking the user directly BEFORE the verdict**.
+- **MANDATORY** A MATERIAL trade-off with no user confirmation can NEVER be PASS; NEVER bury one as a Low-severity note, NEVER decide it silently, and NEVER let delivery or convergence pressure authorize a one-way door. — why: an un-walked-back one-way door is the user's call to make, not the reviewer's.
+- **MANDATORY — non-asking contexts escalate BY HANDOFF, never by silence.** ask the user directly reaches only the main interactive agent: a sub-agent cannot ask the user, and a terminal/verdict-only mode asks nothing by design. There the duty is REDIRECTED, not waived — still name the trade-off, still decide materiality, record `confirmed? = NO — cannot ask from this context`, **state the unconfirmed MATERIAL trade-off in your RETURNED verdict/summary so the CALLER escalates it** (a note only in an on-disk report is not a handoff), and never emit an unqualified PASS. Applies ONLY where the user is genuinely unreachable (spawned sub-agent, terminal validate mode, headless run) — if you CAN ask, you MUST ask.
+
+<!-- /SYNC:trade-off-interrogation-gate:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Ensure service/API changes are production-ready for observability, reliability, data integrity, and database performance — score each dimension on service/API changes so working code that can be debugged, monitored, and rolled back ships, and operational technical debt does not.
+
+**IMPORTANT MUST ATTENTION — Main steps (execute in order, NEVER skip/merge):** (1) Resolve scope (args else uncommitted `git diff`; backend service/API only, skip frontend/tests/docs/config-only) → (2) Score the 12 criteria 0-2 across the 4 dimensions (/24) → (3) Extended SRE Readiness gate — 8 pass/fail deploy/operate items; unaccepted CRITICAL/HIGH `fail` blocks PASS (gating, not scored, does not change /24) → (4) Map score + gate → verdict → (5) Structural Impact Analysis graph gate when `graph.db` exists → (6) Validated Fix + Full Re-Review loop on any finding → (7) Emit the SRE Review Results report with `file:line` evidence per score and per gate item — why: AI repeatedly forgets the graph gate and the re-review loop and stops at scoring.
 
 **IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries; each is a signpost — the canonical body above governs, NEVER skip one):**
 
@@ -860,6 +1042,7 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 - **Systematic Batching:** ≥10 files → size-capped parallel batches, then reduce.
 - **Severity Rubric:** Classify Critical/High/Medium/Low by consequence; map 0-2 scores onto it.
 - **Category Review Thinking:** Derive each category's concerns from first principles, not a checklist.
+- **Scale-Technique Gate (advisory):** Derive scale tier from evidence, emit the Technique Applicability Matrix as guidance — NEVER mutate the `/24`, the `{n}/8` gate, or the verdict.
 
 **IMPORTANT MUST ATTENTION** every score requires `file:line` evidence — unprovable score = 0; assume the worst without proof — why: an unverified "looks fine" is how silent operational gaps reach production.
 **IMPORTANT MUST ATTENTION** the DB Performance Protocol, graph gate, and validated-fix full re-review are NEVER skippable regardless of change size — VERDICT is advisory, these process steps are not — why: small changes are exactly where unbounded queries and missing re-reviews slip through.
@@ -875,7 +1058,7 @@ The following are all MANDATORY:
 - **MANDATORY** run at least ONE graph command on key files before concluding when `.code-graph/graph.db` exists (blast-radius, `tests_for`, downstream trace) — why: the HARD-GATE catches cross-service consumers grep alone misses.
 - **MANDATORY** when batched (≥10 files), RE-SCORE all 12 criteria holistically from combined cross-batch evidence — NEVER average per-batch scores — why: a cross-file criterion (query in one batch, migration in another) false-flags `0` per-batch.
 - **MANDATORY** changed core logic clears the MUTATION-SCORE gate, not a coverage %; every behavior-changing finding feeds BOTH the spec (name the contract/invariant in §8) AND a guarding test — a code-only fix is INCOMPLETE.
-- **MANDATORY** validate decisions with the user via a direct user question for workflow/next-step routing — never auto-decide.
+- **MANDATORY** validate decisions with the user by asking the user directly for workflow/next-step routing — never auto-decide.
 
 **Anti-Rationalization:**
 
@@ -974,8 +1157,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -986,6 +1170,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

@@ -13,7 +13,7 @@ argument-hint: <file-or-pattern>
 
 1. **Identify Target** — Use provided file/pattern or ask user which components to review
 2. **Scan Files** — Read and Grep target files for violation patterns
-3. **Check Categories** — Accessibility, keyboard nav, forms, animation, performance, touch/mobile, content, dark mode/i18n
+3. **Check Categories** — Accessibility, keyboard nav, forms, async states & feedback (loading/error/empty), animation, performance, touch/mobile, responsive layout (flex-wrap / row→column), content, dark mode/i18n
 4. **Report Findings** — Group by file, use `file:line` format, terse findings, prioritized summary
 
 **Key Rules:**
@@ -38,9 +38,9 @@ Review UI code for compliance with WCAG 2.2, Core Web Vitals, and modern web des
 
 ## When NOT to Use
 
-- **Building** UI -- use `frontend-design`
+- **Building** UI -- use `design --lane=marketing` (marketing/creative) or `design --lane=product` (product UIs)
 - **Creating** design specs -- use `design-spec`
-- **Workflow-wired UI review gate** -- use `/review-ui` (the project UI review gate that runs in the `review-changes` parallel batch on frontend changes: long-content overflow, responsive flex, flex-vs-fixed sizing, z-index discipline, SCSS/BEM). This skill is the generic, framework-agnostic a11y/UX checklist that `/review-ui` cross-references — not a duplicate.
+- **Workflow-wired UI review gate** -- use `/ui-review` (the project UI review gate that runs in the `changes-review` parallel batch on frontend changes: long-content overflow, responsive flex, flex-vs-fixed sizing, z-index discipline, SCSS/BEM). This skill is the generic, framework-agnostic a11y/UX checklist that `/ui-review` cross-references — not a duplicate.
 - Project SCSS review -- also check `docs/project-reference/scss-styling-guide.md`
 
 ## Prerequisites
@@ -60,10 +60,12 @@ Review UI code for compliance with WCAG 2.2, Core Web Vitals, and modern web des
     - **Accessibility** -- semantic HTML, ARIA, labels, alt text, color contrast, focus indicators
     - **Keyboard navigation** -- tab order, focus trap in modals, escape key handling
     - **Forms** -- labels, validation, error display, autocomplete, paste not blocked
+    - **Async states & feedback** -- every fetch/submit/mutation renders a **loading** indicator (spinner/skeleton, never a frozen blank), a user-visible **error** with a retry/recovery path (never a silent failure or raw stack trace), an **empty** state for zero-item collections, and an in-flight **disabled** state on submit controls to prevent double-submit (canonical vocabulary: Default / Loading / Disabled / Error / Empty / Success)
     - **Animation** -- `prefers-reduced-motion` respected, no `transition: all`, GPU-safe properties only
     - **Performance** -- image dimensions set, lazy loading, no layout thrashing, virtualization for large lists
     - **Touch/Mobile** -- touch targets >= 44px, `touch-action: manipulation`, safe areas
-    - **Content** -- text overflow handled, empty states, responsive breakpoints
+    - **Responsive layout** -- usable on small devices (owns all reflow/breakpoint concerns). Minimum bar: **preferred** reflow (rows `flex-wrap` or `row → column`, grids collapse to one column, fluid min/max/`%`/`rem` over large fixed px); **acceptable fallback** when a layout genuinely can't reflow (tables, canvases, wide grids) — a fixed `min-width`/`min-height` + `overflow: auto` scroll (scrolling is OK, not a defect); **hard fail** only when content is broken on small screens — clipped, cut off, or a control unreachable with no scroll path. Big responsive refactor needed → flag it and confirm scope with the user, don't silently rewrite. Breakpoints tested at 320 / 768 / 1024px
+    - **Content** -- long-text/overflow handling (`text-overflow`, wrapping, line clamp), readable line length _(empty-collection states → **Async states & feedback**; breakpoints/reflow → **Responsive layout**)_
     - **Dark mode / i18n** -- `color-scheme`, logical CSS properties, `Intl.*` formatters
 
 4. **Report findings** in output format below
@@ -113,11 +115,11 @@ Group by file. Use `file:line` format. Terse findings. No preamble.
 
 ## Related Skills
 
-| Skill             | When to use instead                                                                                                       |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `frontend-design` | Building UI (not reviewing)                                                                                               |
-| `design-spec`     | Creating design specifications                                                                                            |
-| `/review-ui`      | Project UI review gate (overflow, responsive flex, z-index, SCSS/BEM); runs in `review-changes` batch on frontend changes |
+| Skill         | When to use instead                                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `design`      | Building UI (not reviewing) — `--lane=marketing` (creative) or `--lane=product` (app UIs)                                 |
+| `design-spec` | Creating design specifications                                                                                            |
+| `/ui-review`  | Project UI review gate (overflow, responsive flex, z-index, SCSS/BEM); runs in `changes-review` batch on frontend changes |
 
 ---
 
@@ -132,8 +134,9 @@ Group by file. Use `file:line` format. Terse findings. No preamble.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

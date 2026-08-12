@@ -40,9 +40,9 @@ SKILL_NAMES = [
     "refactoring", "db-migrate", "scaffold",
     # Review family
     "security-review", "code-review", "integration-test-review",
-    "knowledge-review", "review-architecture",
-    "review-artifact", "review-changes", "review-domain-entities",
-    "production-readiness-review",
+    "knowledge-review", "architecture-review",
+    "artifact-review", "changes-review", "domain-entities-review",
+    "production-readiness-review", "architecture-review-full",
     "why-review", "workflow-review-changes",
     # Workflow step skills
     # NOTE: `spec` (merged feature-spec router) is intentionally NOT a target —

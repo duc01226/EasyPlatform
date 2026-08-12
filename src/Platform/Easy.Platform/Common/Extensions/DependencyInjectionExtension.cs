@@ -1823,6 +1823,42 @@ public static class DependencyInjectionExtension
             ? OriginalBeforeDecoratedDescriptors[serviceType]
             : services[lastIndex];
 
+        // Guard: the descriptor we are about to treat as "the original" must not itself need TService to be built.
+        // When it does, Factory() below resolves TService to construct the original, which re-enters the decorated
+        // descriptor we are registering -> unbounded self-recursion. It never surfaces as a StackOverflowException:
+        // MS.DI's StackGuard continues each deep resolution on a FRESH thread and blocks the previous one, so the
+        // process silently consumes the thread pool and hangs forever with no error. Fail fast instead.
+        //
+        // The usual cause is convention scanning: an interface deriving from IPlatformHelper is auto-registered
+        // from every assembly in GetAssembliesForServiceScanning() - which, for a test module, includes the TEST
+        // assembly. The decorator defined there is discovered as an implementation of the very service it decorates
+        // and lands AFTER the real registration, so Decorate() would wrap the decorator with itself.
+        //
+        // COVERAGE LIMITS - this catches the common shape, not every self-recursion. It is deliberately a cheap
+        // static check, not a proof. Not covered:
+        //   - ImplementationFactory / ImplementationInstance descriptors: there is no ImplementationType to inspect,
+        //     so a factory that resolves TService internally still recurses. Only the Factory() branch below runs.
+        //   - Indirect cycles: the base takes IOther, and IOther's implementation takes TService.
+        //   - Property/method injection or a service-locator call to sp.GetService<TService>() inside the ctor.
+        //   - IEnumerable<TService> parameters - the parameter type is not TService, so the Any() test misses it,
+        //     yet resolving the collection still builds the decorated registration.
+        // A hit here is proof of the bug; a miss is NOT proof of its absence. If a decorated resolution hangs with
+        // no exception and no CPU, suspect this same self-recursion in one of the shapes above.
+        if (baseDescriptor.ImplementationType != null &&
+            baseDescriptor.ImplementationType
+                .GetConstructors()
+                .Any(constructor => constructor.GetParameters().Any(parameter => parameter.ParameterType == serviceType)))
+        {
+            throw new InvalidOperationException(
+                $"Cannot decorate '{serviceType.FullName}' with '{typeof(TDecorated).FullName}': the registration being " +
+                $"decorated is '{baseDescriptor.ImplementationType.FullName}', which takes '{serviceType.Name}' as a " +
+                "constructor parameter. Building it would resolve the decorated registration again and recurse forever. " +
+                "This usually means the decorator itself was auto-registered as an implementation of the service " +
+                "(convention scanning covers the module's own assembly, including a test project's). Register the " +
+                "decorated instance explicitly instead - e.g. RemoveAll<TService>() then Add{Lifetime}<TService>(sp => " +
+                "new TDecorated(<inner built directly>, ...)).");
+        }
+
         // Remove the descriptor we intend to replace (original or previous decorator)
         services.RemoveAt(lastIndex);
 

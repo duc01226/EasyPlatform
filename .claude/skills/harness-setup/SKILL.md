@@ -21,8 +21,19 @@ description: '[Quality] Use when setting up an agent quality harness with feedfo
 
 - BLOCK on the `/linter-setup` prerequisite first — computational sensors (linters, hooks, CI gates) MUST exist before any phase runs; this skill never installs them itself.
 - Walk phases A→F as a hard barrier sequence: detect stack → author feedforward guides (CLAUDE.md conventions, anti-patterns, pattern catalog) → confirm computational sensors → wire inferential review skills to lifecycle gates → define behaviour/test strategy → emit inventory.
-- Treat every feedforward-guide and sensor choice as `AskUserQuestion`-gated — never auto-decide content, because harness conventions bind every future agent and silent choices propagate.
-- Write `.ai/workspace/harness/harness-inventory.md` incrementally (append per phase, not held in memory), keeping it a living document updated as new sensors are added.
+- Treat every feedforward-guide and sensor choice as `AskUserQuestion`-gated — never auto-decide content — why: harness conventions bind every future agent and silent choices propagate.
+- Write `.ai/workspace/harness/harness-inventory.md` incrementally (append per phase, never held in memory) — keep it a LIVING document updated as new sensors are added.
+
+**Main steps (run in order — each BLOCKS the next):**
+
+1. **Guards** — BLOCK until `/linter-setup` verified (linter config + pre-commit hook + CI gate present); detect existing inventory (enhance, never skip).
+2. **Phase A — Stack Detection** — read plan / architecture-design / tech-stack reports; write `stack-profile.md`; `AskUserQuestion` on any undetectable field.
+3. **Phase B — Feedforward Guides** — author/enhance CLAUDE.md/AGENTS.md (architecture patterns, anti-patterns, naming, module boundaries) + skill-activation rules + `docs/architecture/*` notes + pattern catalog; confirm via `AskUserQuestion`.
+4. **Phase C — Computational Sensors** — confirm `/linter-setup` outputs; list config paths (invoke `/linter-setup` if any missing).
+5. **Phase D — Inferential Sensors** — wire review skills to lifecycle gates (`/why-review` pre-impl · `/code-review` pre-commit · `/domain-entities-review` post-impl · `/production-readiness-review` + `/security-review` pre-release · `/scan-codebase-health` recurring); record under "## Review Gates".
+6. **Phase E — Behaviour Harness** — pick spec format, define test pyramid + approved fixtures, gate on mutation score (NEVER line %), add property/behavior coverage; write `test-strategy.md`.
+7. **Phase F — Inventory Report** — append `harness-inventory.md` (feedforward + computational/inferential sensors + open gaps); present via `AskUserQuestion`.
+8. **Next Steps** — `AskUserQuestion`: `/feature-implement` (recommended) · `/why-review` · skip.
 
 **Produces:**
 
@@ -89,7 +100,7 @@ For each guide type, check if it exists; if not, create or enhance:
 **2. Skill activation rules**
 
 - Document in CLAUDE.md which skills auto-activate for common task types in this stack
-- Example: "When modifying domain entities → activate `/review-domain-entities`"
+- Example: "When modifying domain entities → activate `/domain-entities-review`"
 - Example: "Before any commit → run `/code-review`"
 
 **3. Architecture notes**
@@ -138,7 +149,7 @@ Configure which AI review skills fire at each lifecycle stage. Present to user v
 
 **Post-implementation (domain model changes):**
 
-- `/review-domain-entities` — when domain entity files are in the changeset
+- `/domain-entities-review` — when domain entity files are in the changeset
 
 **Pre-release (mandatory gates):**
 
@@ -220,7 +231,7 @@ Stack: {detected stack from Phase A}
 | ------------------- | ---------------------------- | ------------------------------ |
 | Pre-implementation  | /why-review                  | Design rationale gaps          |
 | Pre-commit          | /code-review                 | Convention drift, logic errors |
-| Post-implementation | /review-domain-entities      | Domain model quality           |
+| Post-implementation | /domain-entities-review      | Domain model quality           |
 | Pre-release         | /production-readiness-review | Operational readiness          |
 | Pre-release         | /security-review             | Security vulnerabilities       |
 
@@ -263,8 +274,9 @@ Present inventory to user for review via `AskUserQuestion`.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -318,6 +330,8 @@ Present inventory to user for review via `AskUserQuestion`.
 - **Critical Thinking:** critical + sequential thinking; every claim traced, confidence >80% to act.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Harness Engineering:** feedforward + feedback loops; gate on mutation score, never line-coverage %, keep quality left.
+
+**IMPORTANT MUST ATTENTION Main steps (in order — each BLOCKS the next):** Guards (verify `/linter-setup`) → A Stack Detection (`stack-profile.md`) → B Feedforward Guides (CLAUDE.md patterns/anti-patterns/naming/boundaries + skill-activation rules + pattern catalog) → C Computational Sensors (confirm linter/hook/CI) → D Inferential Sensors (wire `/why-review`, `/code-review`, `/domain-entities-review`, `/production-readiness-review`, `/security-review`, `/scan-codebase-health` to gates) → E Behaviour Harness (spec format + test pyramid + mutation-score gate + `test-strategy.md`) → F Inventory Report (`harness-inventory.md`) → Next Steps. NEVER skip or reorder — why: each phase consumes the prior phase's verified output.
 
 **IMPORTANT MUST ATTENTION** BLOCK on the `/linter-setup` prerequisite first — ALWAYS verify computational sensors (linter config, pre-commit hook, CI gate) exist before any phase runs — why: keep quality left; cheapest gates must precede inferential ones, and this skill never installs them itself
 **IMPORTANT MUST ATTENTION** NEVER auto-decide feedforward-guide or sensor content — present the draft and confirm via `AskUserQuestion` — why: harness conventions bind every future agent; silent choices propagate to all later sessions

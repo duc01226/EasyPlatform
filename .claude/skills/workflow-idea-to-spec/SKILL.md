@@ -78,18 +78,21 @@ Before authoring the spec, validate the idea framing with `/why-review`:
 
 These steps run in sequence. **Spec-driven order: idea → draft Feature Spec → test specs → review.**
 
-| Step                                 | Purpose                                                                                                                  | Output                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| `/idea`                              | Capture the converged idea as a structured artifact                                                                      | `team-artifacts/ideas/{date}-po-idea-{slug}.md` |
-| `/spec [mode=draft]`                 | Author the canonical tech-free 8-section Feature Spec §1-7 FROM the idea text (no code grep; `provisional: true` marker) | `docs/specs/{Bucket}/README.{Feature}.md`       |
-| `/spec [mode=tests]`                 | Author §8 TC-{FEATURE}-{NNN} behavioral test cases (`Evidence: TBD`, `Status: Planned` — before any code)                | Feature Spec §8 Test Specifications             |
-| `/review-artifact --type=spec-tests` | Test-spec quality check                                                                                                  | Reviewed §8 TCs                                 |
-| `/review-artifact`                   | Feature Spec quality check                                                                                               | Reviewed Feature Spec                           |
-| `/spec-clarify`                      | Brainstorm open questions, audit non-obvious decisions, confirm with user (BLOCKING)                                     | Clarified spec + Decisions Log                  |
-| `/why-review`                        | Validate the authored spec's rationale and completeness                                                                  | Why-Review checklist                            |
-| `/docs-update`                       | Sync the Feature Spec (§8) and derived bucket indexes                                                                    | Docs-update report                              |
+| Step                                 | Purpose                                                                                                                                                            | Output                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| `/idea`                              | Capture the converged idea as a structured artifact                                                                                                                | `team-artifacts/ideas/{date}-po-idea-{slug}.md` |
+| `/spec [mode=draft]`                 | Author the canonical tech-free 8-section Feature Spec §1-7 FROM the idea text (no code grep; `provisional: true` marker)                                           | `docs/specs/{Bucket}/README.{Feature}.md`       |
+| `/spec [mode=tests]`                 | Author §8 TC-{FEATURE}-{NNN} behavioral test cases (`Evidence: TBD`, `Status: Planned` — before any code)                                                          | Feature Spec §8 Test Specifications             |
+| `/artifact-review --type=spec-tests` | Test-spec quality check                                                                                                                                            | Reviewed §8 TCs                                 |
+| `/artifact-review`                   | Feature Spec quality check                                                                                                                                         | Reviewed Feature Spec                           |
+| `/design-spec`                       | UI ideas only — author tech-agnostic UI specs (NO mockup/backlog; spec-only contract preserved); gated by `SYNC:existing-ui-research`. Skip for backend-only ideas | UI design specs                                 |
+| `/spec-clarify`                      | Brainstorm open questions, audit non-obvious decisions, confirm with user (BLOCKING)                                                                               | Clarified spec + Decisions Log                  |
+| `/why-review`                        | Validate the authored spec's rationale and completeness                                                                                                            | Why-Review checklist                            |
+| `/docs-update`                       | Sync the Feature Spec (§8) and derived bucket indexes                                                                                                              | Docs-update report                              |
 
 **Provisional output:** because no code exists yet, the spec is provisional — §8 TCs carry `Evidence: TBD` and `Status: Planned`, and frontmatter carries `provisional: true`. The first `workflow-code-to-spec` / `spec [mode=update]` run against real code upgrades `TBD` → real `[Source:]` anchors and clears the provisional flag.
+
+> **Spec-hub coupling (§6 interaction surface ↔ UI artifacts):** the `/design-spec` produced here is NOT a standalone artifact — it is the deep companion of the governing Feature Spec's **§6 interaction surface** (View Inventory / Navigation Map / Key UI States / per-story click-path). `design-spec` seeds from §6 and records its own path in the spec's `design_spec:` frontmatter so the spec stays the navigable hub: a reader goes spec → §6 thin intent → `design-spec` deep companion, and the two never drift. Keep deep visual fidelity (layout, tokens, pixel detail) in the `design-spec`, never in §6. See the `SYNC:ui-intent-layer` block below for the full rule — do not restate it here. Backend-only ideas (no UI) → skip `/design-spec` and state that reason.
 
 ### 4. Handoff
 
@@ -109,14 +112,14 @@ At `/workflow-end`, AI presents:
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /web-research -> /deep-research -> /brainstorm -> /spec-discovery -> /domain-analysis -> /why-review -> /idea -> /spec [mode=draft] -> /spec [mode=tests] -> /review-artifact --type=spec-tests -> /review-artifact -> /spec-clarify -> /why-review -> /docs-update -> /workflow-end -> /watzup
+**IMPORTANT MANDATORY Steps:** /web-research -> /deep-research -> /brainstorm -> /spec-discovery -> /domain-analysis -> /why-review -> /idea -> /spec [mode=draft] -> /spec [mode=tests] -> /artifact-review --type=spec-tests -> /artifact-review -> /design-spec -> /spec-clarify -> /why-review -> /docs-update -> /feature-presentation -> /workflow-end -> /watzup
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `workflow-idea-to-spec` workflow. Run `/start-workflow workflow-idea-to-spec` with the user's prompt as context.
 
 **Steps:**
-/web-research → /deep-research → /brainstorm → /spec-discovery → /domain-analysis → /why-review → /idea → /spec [mode=draft] → /spec [mode=tests] → /review-artifact --type=spec-tests → /review-artifact → /spec-clarify → /why-review → /docs-update → /workflow-end → /watzup
+/web-research → /deep-research → /brainstorm → /spec-discovery → /domain-analysis → /why-review → /idea → /spec [mode=draft] → /spec [mode=tests] → /artifact-review --type=spec-tests → /artifact-review → /design-spec → /spec-clarify → /why-review → /docs-update → /feature-presentation → /workflow-end → /watzup
 
 > **Scale awareness:** When the brainstorm converges on multiple distinct capabilities, this workflow authors one Feature Spec per capability. For 4+ capabilities, spawn one `spec` sub-agent per capability in ONE message (each gets the framing context + output path); the main context assembles and reviews. Use incremental-write patterns to prevent context overrun.
 
@@ -129,8 +132,9 @@ Activate the `workflow-idea-to-spec` workflow. Run `/start-workflow workflow-ide
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -204,6 +208,22 @@ Activate the `workflow-idea-to-spec` workflow. Run `/start-workflow workflow-ide
 
 <!-- /SYNC:subagent-return-contract -->
 
+<!-- SYNC:ui-intent-layer -->
+
+> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
+>
+> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
+> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
+> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
+> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
+> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
+>
+> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
+
+<!-- /SYNC:ui-intent-layer -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -222,6 +242,12 @@ Activate the `workflow-idea-to-spec` workflow. Run `/start-workflow workflow-ide
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- SYNC:ui-intent-layer:reminder -->
+
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+
+<!-- /SYNC:ui-intent-layer:reminder -->
 
 ## Closing Reminders
 

@@ -35,15 +35,19 @@ public class PlatformAzureFileStorageDirectory : IPlatformFileStorageDirectory
         "CLOCK$"
     ];
 
-    public PlatformAzureFileStorageDirectory(BlobContainerClient blobContainer, string directoryRelativePath)
+    public PlatformAzureFileStorageDirectory(BlobContainerClient blobContainer, string directoryRelativePath, string publicBlobEndpoint = null)
     {
-        DirectoryAbsoluteUri = blobContainer.Uri;
+        DirectoryAbsoluteUri = string.IsNullOrWhiteSpace(publicBlobEndpoint)
+            ? blobContainer.Uri
+            : PlatformAzureFileStorageFileItem.BuildPublicAbsoluteUri(publicBlobEndpoint, blobContainer.Name);
         BlobContainer = blobContainer;
         DirectoryRelativePathPrefix = directoryRelativePath;
+        PublicBlobEndpoint = publicBlobEndpoint;
         RootDirectoryName = blobContainer.Name;
     }
 
     public BlobContainerClient BlobContainer { get; }
+    public string PublicBlobEndpoint { get; }
 
     public string RootDirectoryName { get; }
     public Uri DirectoryAbsoluteUri { get; set; }
@@ -53,14 +57,15 @@ public class PlatformAzureFileStorageDirectory : IPlatformFileStorageDirectory
     {
         return new PlatformAzureFileStorageDirectory(
             BlobContainer,
-            $"{DirectoryRelativePathPrefix}/{directoryRelativePath}");
+            $"{DirectoryRelativePathPrefix}/{directoryRelativePath}",
+            PublicBlobEndpoint);
     }
 
     public IEnumerable<IPlatformFileStorageFileItem> GetFileItems()
     {
         var result = BlobContainer.GetBlobs(BlobTraits.Metadata, BlobStates.None, DirectoryRelativePathPrefix)
             .Where(p => !ReservedFileNames.Any(s => p.Name.EndsWith(s)))
-            .Select(p => PlatformAzureFileStorageFileItem.Create(p, BlobContainer));
+            .Select(p => PlatformAzureFileStorageFileItem.Create(p, BlobContainer, PublicBlobEndpoint));
 
         return result;
     }

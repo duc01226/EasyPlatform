@@ -68,16 +68,78 @@ public interface IPlatformMessageBusConsumer
         return consumerGenericType.GetGenericArguments()[0];
     }
 
+    /// <summary>
+    /// The single funnel every consume-failure log goes through — the retry sites in
+    /// <c>PlatformMessageBusConsumer</c> and <c>PlatformApplicationBusMessageConsumer</c> all call THIS method, which is
+    /// why it is the only correct place to decide what a failed consume may write.
+    /// <para>
+    /// <b>The message PAYLOAD is deliberately NOT logged.</b> This previously used the structured-logging destructure
+    /// operator (<c>{@Message}</c>), which serializes the entire object graph of whatever failed. Bus messages routinely
+    /// carry personal data — email addresses, names, attachment filenames, free-text bodies — so every consumer in every
+    /// service emitted that data at ERROR level on any fault, to a sink with its own retention, entirely outside the
+    /// reach of a right-to-erasure request. A per-consumer opt-out cannot fix it: the retry call sites are NOT gated by
+    /// <c>LogErrorOnException</c>, so a consumer that declared itself quiet still leaked on the retry path.
+    /// </para>
+    /// <para>
+    /// <b>Diagnosability is preserved, not traded away.</b> What a failed consume actually needs is which message, of
+    /// which type, in which consumer, and why — so the log keeps the consumer type, the message type, the exception with
+    /// its stack, and the message's IDENTITY (<c>TrackingId</c> plus creation time) when it is trackable. The TrackingId
+    /// is the handle to the authoritative copy already persisted in the outbox/inbox store, so an operator can still
+    /// retrieve the full payload deliberately, under whatever access control that store has, instead of finding it
+    /// pre-copied into a log. The trace names causes and handles; the store holds content.
+    /// </para>
+    /// <para>
+    /// A consumer that genuinely needs a specific field in its failure log should log that ONE field from its own
+    /// handler, where the author can judge whether it is personal data. That is a deliberate, reviewable decision;
+    /// destructuring the whole message was neither.
+    /// </para>
+    /// <para>
+    /// Mechanically this is done with payload-free MESSAGE diagnostics (type name only) and bounded EXCEPTION
+    /// diagnostics (type, message, demystified stack trace, inner type chain), both produced by
+    /// <see cref="PlatformMessageBusDiagnosticFormatter" /> so this site emits the same shape as the inbox/outbox
+    /// failure paths that share it. The two halves have deliberately different rules: the message body is business
+    /// data with a safe alternative, the exception is often the only record of what went wrong.
+    /// </para>
+    /// </summary>
+    /// <typeparam name="TMessage">The consumed message type.</typeparam>
+    /// <param name="logger">Target logger.</param>
+    /// <param name="consumerType">Consumer that failed.</param>
+    /// <param name="message">The message being consumed; only its type reaches the log.</param>
+    /// <param name="e">
+    /// The RAW exception. Callers must pass it as-is — do NOT pre-transform it (for example with a stack-trace
+    /// beautifier). This method decides what of the exception is safe to emit; handing it a pre-rendered exception
+    /// only re-opens that decision at every call site, and a beautifier additionally MUTATES the exception, changing
+    /// what an outer handler later logs.
+    /// </param>
+    /// <param name="prefix">Optional category prefix (for example <c>"Retry"</c>).</param>
+    /// <remarks>
+    /// The exception is NOT passed to <see cref="ILogger" /> as its exception argument. That is deliberate: doing so
+    /// hands the logging pipeline the whole object graph — including <see cref="Exception.Data" /> and every inner
+    /// exception's message — which routinely carries connection strings, tokens, and the entity values that caused
+    /// the failure, and structured sinks expand all of it unbounded. Routing through
+    /// <see cref="PlatformMessageBusDiagnosticFormatter" /> instead selects a bounded, deliberate subset: the
+    /// exception's type, message, demystified stack trace, and inner TYPE names — enough to fix the failure — while
+    /// the message payload stays a type name only.
+    /// </remarks>
     public static void LogError<TMessage>(ILogger logger, Type consumerType, TMessage message, Exception e, string prefix = "")
         where TMessage : class, new()
     {
+        // No null-conditional on `message`: the signature is non-nullable and every call site passes the message it just
+        // failed to handle. `as` still guards the common case that a message type simply is not trackable.
+        var trackable = message as IPlatformTrackableBusMessage;
+
         logger.LogError(
-            e.BeautifyStackTrace(),
-            "Error Consume message bus.{Prefix} [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; [Message:{@Message}];",
+            "Error Consume message bus.{Prefix} [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; "
+            + "[TrackingId:{TrackingId}]; [MessageCreatedUtcDate:{MessageCreatedUtcDate}]; "
+            + "[MessageDiagnostics:{MessageDiagnostics}]; [ExceptionDiagnostics:{ExceptionDiagnostics}]; "
+            + "[Payload omitted — may contain personal data; retrieve by TrackingId from the outbox/inbox store];",
             prefix,
             consumerType.FullName,
             message.GetType().GetNameOrGenericTypeName(),
-            message
+            trackable?.TrackingId,
+            trackable?.CreatedUtcDate,
+            PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(message),
+            PlatformMessageBusDiagnosticFormatter.FormatException(e)
         );
     }
 }
@@ -201,11 +263,11 @@ public abstract class PlatformMessageBusConsumer : IPlatformMessageBusConsumer
                     if (elapsedMilliseconds >= toCheckSlowProcessWarningTimeMilliseconds)
                     {
                         logger?.LogWarning(
-                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. Consumer:{Consumer} BusMessage:{@BusMessage}",
+                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. Consumer:{Consumer} MessageDiagnostics:{MessageDiagnostics}",
                             toCheckSlowProcessWarningTimeMilliseconds,
                             elapsedMilliseconds,
                             consumer.GetType().FullName,
-                            busMessage
+                            PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(busMessage)
                         );
                     }
                 }
@@ -332,7 +394,7 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
                     {
                         // Log only after 75% of retry budget consumed. See Util.TaskRunner.LogErrorRetryThreshold.
                         if (retryAttempt > Util.TaskRunner.LogErrorRetryThreshold(RetryOnFailedTimes))
-                            IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e.BeautifyStackTrace(), "Retry");
+                            IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e, "Retry");
                     },
                     ignoreExceptionTypes: [typeof(IPlatformValidationException)]
                 );
@@ -343,7 +405,7 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
         catch (Exception e)
         {
             if (LogErrorOnException)
-                IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e.BeautifyStackTrace());
+                IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e);
             throw;
         }
     }

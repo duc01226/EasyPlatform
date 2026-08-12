@@ -117,6 +117,8 @@ docs/project-config.json
 ├── referenceDocs[] — { filename, purpose, sections[] }
 ├── integrationTestVerify — { guidance, referenceDocs[], quickRunCommand, testProjectPattern, testProjects[], systemCheckCommand, runScript, startupScript }
 ├── workflowPatterns — { architectureStyle, codeHierarchy, cssMethodology, stateManagement, crossModuleValidation, featureDocTemplate, reviewRulesDoc }
+├── specRoots — { business{ path, authorship, m1Policy }, technical{ path, authorship, m1Policy } }  (drives /spec + /tech-spec)
+├── techSpecScan — { sourceRoot, fileExtensions[], annotationPattern }  (enables /tech-spec) | else _techSpecScanNote (deliberate-omission carrier)
 └── DEPRECATED: backendServices, frontendApps, scss, componentFinder, sharedNamespace
 ```
 
@@ -134,6 +136,41 @@ docs/project-config.json
 | `examples`                            | `scssExamples`                   |
 | `"exact"`, `"contains"`               | `"key-equals"`, `"key-contains"` |
 | `glob`, `fileGlob`                    | `filePattern`                    |
+
+---
+
+## Deriving the Spec-System Config From Source (`specRoots` + `techSpecScan`)
+
+> These two sections drive `/spec` (hand-authored business specs) and `/tech-spec` (derived technical specs). They are **optional in the schema but effectively required for any project that wants `/tech-spec`** — the generator exits non-zero when `techSpecScan` is absent. Derive each value from THIS project's own source; never copy another project's literals. `--describe` (Phase 0b) now emits a `#` derivation note per field — read it.
+
+**`specRoots`** — declare each tree's location AND semantics:
+
+| Field                                         | Derive from                                                       | Typical value          |
+| --------------------------------------------- | ----------------------------------------------------------------- | ---------------------- |
+| `business.path`                               | The hand-authored feature-spec dir (where `/spec` writes).        | e.g. `docs/specs`      |
+| `business.authorship` / `business.m1Policy`   | Business tree is human-authored, tech-free prose.                 | `hand` / `strict`      |
+| `technical.path`                              | The generated technical-view dir (where `/tech-spec` writes).     | e.g. `docs/tech-specs` |
+| `technical.authorship` / `technical.m1Policy` | Technical tree is projected from code — naming code IS the point. | `derived` / `exempt`   |
+
+**`techSpecScan`** — how `/tech-spec` finds annotated tests. Derive all three from the stack:
+
+1. **`sourceRoot`** — the project's primary source dir (from `project.` layout / `modules[].pathRegex`), e.g. `src`.
+2. **`fileExtensions`** — the source-language extensions (from `project.languages`), e.g. `[".cs"]`, `[".ts"]`, `[".java"]`.
+3. **`annotationPattern`** — a regex matching THIS project's spec-annotation convention. **CONTRACT (hard): exactly two capture groups — group 1 = trait name (`TestSpec` or `TechnicalSpec`), group 2 = the non-empty spec id.** The generator validates both at parse time and refuses to run on a mismatch. Detect the convention by grepping existing tests, then build the pattern:
+
+    | Stack / convention (illustrative) | Example annotation in source        | `annotationPattern`                                        |
+    | --------------------------------- | ----------------------------------- | ---------------------------------------------------------- |
+    | C# xUnit `[Trait]`                | `[Trait("TestSpec", "TC-001")]`     | `\[Trait\("(TestSpec\|TechnicalSpec)"\s*,\s*"([^"]+)"\)\]` |
+    | Java/Kotlin JUnit `@Tag`          | `@Tag("TestSpec:TC-001")`           | `@Tag\("(TestSpec\|TechnicalSpec):([^"]+)"\)`              |
+    | TS/JS test title tag              | `describe('[TestSpec:TC-001] ...')` | `\[(TestSpec\|TechnicalSpec):([^\]]+)\]`                   |
+
+    Adapt to whatever the project actually uses — the table is illustrative, not a fixed list. **Validate the 2-group contract before saving:**
+
+    ```bash
+    node -e "const p=/YOUR_PATTERN/; const c=(new RegExp(p.source+'|')).exec('').length-1; console.log('capture groups:', c, c===2?'OK':'FIX — must be exactly 2 (trait, id)')"
+    ```
+
+4. **No spec-annotation convention?** Do NOT invent one and do NOT leave `techSpecScan` half-filled. **Omit `techSpecScan` and set `_techSpecScanNote`** with a one-line reason — the generator then exits cleanly naming the missing key instead of reporting zero annotations, and the omission reads as a decision.
 
 ---
 
@@ -342,8 +379,9 @@ Include the project scale, the selected full-coverage task grouping, and confirm
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

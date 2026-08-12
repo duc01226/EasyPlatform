@@ -63,7 +63,7 @@ If `codebaseHealth` section is missing, discover source roots from project confi
 
 **Think:** Which numeric claims in docs can actually be verified? What's the drift threshold that signals a real maintenance problem vs normal growth?
 
-Scan `docs/` for numeric claims: "N files", "N tests", "N hooks", "N services", "N skills", "N components".
+Scan `docs/` **and the AI-harness instruction surface when present** (`.claude/**/*.md`, root `AGENTS.md`, `CLAUDE.md`) for numeric claims: "N files", "N tests", "N hooks", "N services", "N skills", "N components", "N stages", "N verifiers", "N agents", "N workflows". The harness docs embed counts that are directly derivable by globbing `.claude/` (skill dirs, hook entries, `scripts/**/verify-*` scripts, pipeline stages, agent files, `workflows.json` entries) — the highest-drift claims because a new skill/verifier/stage bumps the real count while the prose claim stays frozen. This scope is generic: any project carrying a `.claude/` harness gets it; it hardcodes no project- or framework-specific count.
 For each claim:
 
 1. Extract number and what it counts
@@ -231,8 +231,9 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->

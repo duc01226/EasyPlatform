@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -56,14 +57,15 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Validate a PBI artifact against the Definition of Ready (DoR/M1-M6) checklist so that only grooming-ready PBIs pass the gate — every failure is caught with its concrete section/line citation, blocking ambiguous, untestable, or unimplementable stories from reaching the team.
+**Goal:** Validate a PBI artifact against the Definition of Ready (DoR/M1-M7) checklist so that only grooming-ready PBIs pass the gate — every failure is caught with its concrete section/line citation, blocking ambiguous, untestable, or unimplementable stories from reaching the team.
 
 **Summary:**
 
-- This is an automated quality gate, NOT a collaborative review — it runs two checklists: the 7 Required DoR criteria (story template, testable AC, wireframes, UI design, AI pre-review, story points, dependencies) AND the M1-M6 compliance gate; ANY single failure across either set returns FAIL.
-- The DoR is self-contained here (BA Refinement Context section) — no external protocol file is needed; every verdict must cite the concrete PBI section + line/AC, and a PASS over any M1-M5 violation is itself defective.
-- Verify story-point estimation frontmatter (Fibonacci 1-21 + complexity, man-days range, blast-radius) per the SYNC estimation framework; story points >13 trigger a SHOULD-SPLIT WARN (not a FAIL).
-- Emit the DoR Gate Result template (checklist table + Blocking Items + Verdict), then route via a direct user question — never auto-decide the next step.
+- **Purpose:** an automated quality gate (NOT a collaborative review — `$pbi-challenge` is for that) running two checklists — the 7 Required DoR criteria (story template, testable AC, wireframes, UI design, AI pre-review, story points, dependencies) AND the M1-M7 compliance gate; ANY single failure across either set returns FAIL.
+- **Main steps (run in order):** (1) Locate PBI in `team-artifacts/pbis/` or active plan; (2) apply the self-contained DoR 7-criteria checklist; (3) parse each PBI section against all 7 items (template format, GIVEN/WHEN/THEN AC ×3+, wireframes, UI design, AI pre-review, story-point frontmatter, dependencies table); (4) run the M1-M7 mandate gate; (5) verify estimation frontmatter; (6) classify PASS/FAIL; (7) emit the DoR Gate Result template, then route by asking the user directly.
+- The DoR is self-contained here (BA Refinement Context section) — no external protocol file needed; every verdict MUST cite the concrete PBI section + line/AC, and a PASS over any M1-M5 or M7 violation is itself defective.
+- Verify story-point estimation frontmatter (Fibonacci 1-21 + complexity, man-days range, blast-radius) per the SYNC estimation framework; story points >13 trigger a SHOULD-SPLIT WARN (NOT a FAIL).
+- Carriers are EXEMPT from M1/M2 — flag source-identifier leakage ONLY in narrative prose, never inside `[Source: ...]` / `**Evidence**` / frontmatter / ` ```mermaid``` ` carriers.
 
 **Key distinction:** Automated quality gate (not collaborative review — use `$pbi-challenge` for that).
 
@@ -78,7 +80,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
     - Scan AC for vague language ("should", "might", "TBD", "etc.", "various")
     - Verify GIVEN/WHEN/THEN format (min 3 scenarios)
     - Check for wireframe/mockup references (or explicit "N/A" for backend-only)
-    - Check for UI design status
+    - Check for UI design status (incl. design-spec link or inline UI specs for UI PBIs)
     - Verify story_points and complexity fields present with valid values
     - Verify dependencies table with correct columns
 4. **Classify result:**
@@ -93,14 +95,16 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - MUST ATTENTION verify **User story template** — "As a {role}, I want {goal}, so that {benefit}" present
 - MUST ATTENTION verify **AC testable** — All AC use GIVEN/WHEN/THEN, no vague language, min 3 scenarios
 - MUST ATTENTION verify **Wireframes/mockups** — Present or explicit "N/A" for backend-only
-- MUST ATTENTION verify **UI design ready** — Completed or "N/A" for backend-only
-- MUST ATTENTION verify **AI pre-review** — `$review-artifact --type=pbi` or `$pbi-challenge` result is PASS or WARN
+- MUST ATTENTION verify **UI design ready** — Completed incl. design-spec linked (`$design-spec` artifact or inline UI specs in `## UI Layout`) for UI PBIs; or "N/A" for backend-only
+- MUST ATTENTION verify **AI pre-review** — `$artifact-review --type=pbi` or `$pbi-challenge` result is PASS or WARN
 - MUST ATTENTION verify **Story points** — Valid Fibonacci (1-21) + complexity (Low/Medium/High)
 - MUST ATTENTION verify **Dependencies table** — Complete with Type column (must-before/can-parallel/blocked-by/independent)
 
-### M1-M6 Compliance Gate (BLOCKING — each check FAILs the gate)
+### M1-M7 Compliance Gate (BLOCKING — each check FAILs the gate)
 
-> **Contract:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)". DoR enforces M6: a PBI that violates any of M1-M5 is NOT ready for grooming — return FAIL and name the violated mandate ID with its concrete PBI section + line/AC citation. A DoR PASS over an M1-M5 violation is itself defective.
+> **Contract:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)". DoR enforces M6: a PBI that violates any of M1-M5 or M7 is NOT ready for grooming — return FAIL and name the violated mandate ID with its concrete PBI section + line/AC citation. A DoR PASS over an M1-M5 or M7 violation is itself defective.
+>
+> **M1 governs vocabulary; M7 governs subject matter.** A technical case written in impeccably tech-free prose satisfies M1 while violating M7 — that gap is the most common way business specs rot. Passing M1 is NEVER evidence of passing M7; run both.
 >
 > Carriers are EXEMPT from M1/M2 — source identifiers are CORRECT inside `[Source: ...]`, `**Evidence**`, `**IntegrationTest**` fields, YAML frontmatter, and ` ```mermaid ``` ` blocks. Only flag leakage in PBI narrative prose (problem statement, AC text, scope, rule descriptions). Banned prose token list: `spec-principles.md` §3.2.
 
@@ -109,6 +113,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - MUST ATTENTION verify **M3 — Abstract-IDs-first** — FAIL if a requirement/rule lacks a logical ID (`FR-/BR-/OP-`), has a logical ID but no `[Source: namespace/service/id]` abstract-anchor evidence, uses physical code coordinates or repository-root paths instead of an abstract anchor, or makes the anchor its primary citation. Evidence is REQUIRED and KEPT, but SECONDARY to the logical ID (physical coordinates live only in the provenance sidecar).
 - MUST ATTENTION verify **M4 — Unambiguous AC** — FAIL if any AC uses vague language ("handle appropriately", "process normally", "as needed"), two engineers could implement it differently while both claiming conformance, or no observable completion state / named error condition exists. (Reinforces the "AC testable" required criterion above.)
 - MUST ATTENTION verify **M5 — Implementable from artifact alone** — FAIL if a competent team with ZERO codebase knowledge could not implement the PBI on a different stack from the PBI alone (relies on reading source to understand it). Cite section + missing detail.
+- MUST ATTENTION verify **M7 — Business-visibility** — apply the demo test to each case's BODY: _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY. Every `Given` = a state a user could arrange; every `When` = an action a user could take; every `Then` = an outcome a user could see. FAIL a `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count. Judge the BODY, never the title or ID. Cite section + the offending `Given`/`When`/`Then` line.
 
 If ANY box fails → DoR result is FAIL; list each violated mandate ID with its concrete section/line citation in the Blocking Items.
 
@@ -122,8 +127,8 @@ If ANY box fails → DoR result is FAIL; list each violated mandate ID with its 
 
 - [ ] User story template (As a... I want... So that...)
 - [ ] AC testable (GIVEN/WHEN/THEN, no vague language; min 3 scenarios + 1 auth scenario)
-- [ ] Wireframes attached (UX BA) + UI design ready (Designer BA); backend-only → explicit "N/A"
-- [ ] AI pre-review passed (`$review-artifact --type=pbi` or `$pbi-challenge` returned PASS or WARN)
+- [ ] Wireframes attached (UX BA) + UI design ready (Designer BA) — incl. design-spec linked (`$design-spec` artifact or inline UI specs in `## UI Layout`) for UI PBIs; backend-only → explicit "N/A"
+- [ ] AI pre-review passed (`$artifact-review --type=pbi` or `$pbi-challenge` returned PASS or WARN)
 - [ ] Story points estimated (Fibonacci 1-21 + complexity); >13 SP → recommend split
 - [ ] Dependencies table complete (Dependency · Type must-before/can-parallel/blocked-by/independent · Status)
 
@@ -170,7 +175,7 @@ If ANY box fails → DoR result is FAIL; list each violated mandate ID with its 
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use ask the user directly to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"$prioritize (Recommended)"** — If PASS: PBI is grooming-ready; prioritize into the backlog
 - **"$refine"** — If FAIL: revise PBI
@@ -190,8 +195,9 @@ If ANY box fails → DoR result is FAIL; list each violated mandate ID with its 
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -397,7 +403,7 @@ If ANY box fails → DoR result is FAIL; list each violated mandate ID with its 
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Only grooming-ready PBIs pass the gate — every DoR/M1-M6 failure caught with its concrete section/line citation, so no ambiguous, untestable, or unimplementable story reaches the team.
+**IMPORTANT MUST ATTENTION Goal:** Only grooming-ready PBIs pass the gate — every DoR/M1-M7 failure caught with its concrete section/line citation, so no ambiguous, untestable, or unimplementable story reaches the team.
 
 **IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries; each is a signpost to its canonical body above, NEVER a replacement):**
 
@@ -405,23 +411,25 @@ If ANY box fails → DoR result is FAIL; list each violated mandate ID with its 
 - **Estimation:** bottom-up phase hours drive man-days; SP derived; >13 SHOULD-SPLIT.
 - **Critical Thinking:** traced proof per claim, confidence >80% to act, never guess.
 
-**MANDATORY IMPORTANT MUST ATTENTION** FAIL blocks grooming — ANY of the 7 required criteria OR any M1-M5 mandate fails → return FAIL, name the violated ID with its concrete PBI section + line/AC citation. NEVER PASS over an M1-M5 violation — a PASS over one is itself defective. — why: an unready story poisons grooming and ships ambiguity downstream.
-**IMPORTANT MUST ATTENTION** automated quality gate, NOT collaborative review — run both checklists (7 required + M1-M6); route `$pbi-challenge` for collaborative review. — why: conflating gate with review lets soft-pass judgments through a hard gate.
+**IMPORTANT MUST ATTENTION** run the gate steps in order — Locate PBI → apply self-contained DoR 7-criteria → evaluate each criterion against the PBI → run the M1-M7 mandate gate → verify estimation frontmatter → classify PASS/FAIL → emit result template → route ask the user directly; NEVER skip the M1-M7 gate or the estimation check. — why: a skipped sub-check silently passes an unready story.
+**MANDATORY IMPORTANT MUST ATTENTION** FAIL blocks grooming — ANY of the 7 required criteria OR any M1-M5 or M7 mandate fails → return FAIL, name the violated ID with its concrete PBI section + line/AC citation. NEVER PASS over an M1-M5 or M7 violation — a PASS over one is itself defective. — why: an unready story poisons grooming and ships ambiguity downstream.
+**IMPORTANT MUST ATTENTION** automated quality gate, NOT collaborative review — run both checklists (7 required + M1-M7); route `$pbi-challenge` for collaborative review. — why: conflating gate with review lets soft-pass judgments through a hard gate.
 **IMPORTANT MUST ATTENTION** cite `file:line`/section evidence for EVERY verdict (confidence >80% to act, <60% DO NOT decide) — every check references the concrete PBI section + line/AC; NEVER guess a criterion's status. — why: an uncited PASS/FAIL is unauditable and pattern-matched, not verified.
 **IMPORTANT MUST ATTENTION** carriers EXEMPT from M1/M2 — source identifiers are CORRECT inside `[Source: ...]`, `**Evidence**`, `**IntegrationTest**`, YAML frontmatter, ` ```mermaid ``` `; flag leakage ONLY in PBI narrative prose (banned tokens: `spec-principles.md` §3.2). — why: flagging a carrier as a violation is a false FAIL that blocks a ready PBI.
 **IMPORTANT MUST ATTENTION** verify story-point frontmatter per the SYNC estimation framework — Fibonacci 1-21 + complexity, bottom-up `man_days` range, blast-radius; story points >13 → SHOULD-SPLIT WARN, NOT a FAIL. — why: a WARN escalated to a FAIL wrongly blocks a groomable large story.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks via task tracking BEFORE starting; add a final review todo verifying every verdict cites its PBI section/line.
-**MANDATORY IMPORTANT MUST ATTENTION** emit the DoR Gate Result template (checklist table + Blocking Items + Verdict), then route via a direct user question — never auto-decide the next step.
+**MANDATORY IMPORTANT MUST ATTENTION** emit the DoR Gate Result template (checklist table + Blocking Items + Verdict), then route by asking the user directly — never auto-decide the next step.
 
 **Anti-Rationalization:**
 
-| Evasion                                          | Rebuttal                                                                                               |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| "AC looks testable enough, pass it"              | Show GIVEN/WHEN/THEN ×3 + 1 auth scenario, no vague tokens. No proof = FAIL.                           |
-| "M1-M5 is minor, the rest passes — PASS overall" | ANY M1-M5 violation = FAIL. A PASS over an M1-M5 violation is itself defective.                        |
-| "Source name in `[Source: ...]` — flag it M1/M2" | Carriers are EXEMPT. Flag leakage ONLY in narrative prose, never in evidence carriers.                 |
-| "Story points >13, fail the gate"                | >13 SP = SHOULD-SPLIT WARN, not a FAIL. Do not escalate a WARN to a FAIL.                              |
-| "Skip a direct user question, result is obvious" | NEVER auto-decide. Emit the result template, then route via a direct user question — the user decides. |
+| Evasion                                          | Rebuttal                                                                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| "AC looks testable enough, pass it"              | Show GIVEN/WHEN/THEN ×3 + 1 auth scenario, no vague tokens. No proof = FAIL.                                              |
+| "M1-M5 is minor, the rest passes — PASS overall" | ANY M1-M5 or M7 violation = FAIL. A PASS over one is itself defective.                                                    |
+| "No tech words in it — M7 passes"                | M1 ≠ M7. Apply the demo test to the BODY: what would a stakeholder SEE change? No answer → FAIL, however clean the prose. |
+| "Source name in `[Source: ...]` — flag it M1/M2" | Carriers are EXEMPT. Flag leakage ONLY in narrative prose, never in evidence carriers.                                    |
+| "Story points >13, fail the gate"                | >13 SP = SHOULD-SPLIT WARN, not a FAIL. Do not escalate a WARN to a FAIL.                                                 |
+| "Skip ask the user directly, result is obvious"  | NEVER auto-decide. Emit the result template, then route by asking the user directly — the user decides.                   |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
@@ -429,9 +437,9 @@ If ANY box fails → DoR result is FAIL; list each violated mandate ID with its 
 
 ---
 
-**IMPORTANT MUST ATTENTION** FAIL blocks grooming on ANY required-criterion or M1-M5 failure — name the violated ID + cite PBI section/line; NEVER PASS over an M1-M5 violation.
+**IMPORTANT MUST ATTENTION** FAIL blocks grooming on ANY required-criterion or M1-M5/M7 failure — name the violated ID + cite PBI section/line; NEVER PASS over an M1-M5 or M7 violation.
 **IMPORTANT MUST ATTENTION** cite `file:line`/section for EVERY verdict (>80% confidence to act); NEVER guess a check's status.
-**IMPORTANT MUST ATTENTION** emit the DoR Gate Result template, then route via a direct user question — never auto-decide.
+**IMPORTANT MUST ATTENTION** emit the DoR Gate Result template, then route by asking the user directly — never auto-decide.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
 
@@ -513,8 +521,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -525,6 +534,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

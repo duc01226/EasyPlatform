@@ -1,7 +1,7 @@
 # Team-wide Codex defaults for this repository.
 # Applied when the project is trusted by Codex.
-model = "gpt-5.5"
-model_reasoning_effort = "high"
+model = "gpt-5.6-terra"
+model_reasoning_effort = "max"
 
 # Shared completion notifications. Codex passes a JSON payload to this command.
 notify = ["node", ".codex/scripts/codex/codex-notify.mjs"]
@@ -19,8 +19,8 @@ status_line = ["model-with-reasoning", "current-dir", "project-root", "context-u
 
 [agents]
 # Keep delegation predictable and aligned with current team workflow.
-max_threads = 6
-max_depth = 1
+max_threads = 10
+max_depth = 2
 
 [features]
 # Prefer HTTPS streaming on this repo to avoid websocket fallback/reconnect instability.

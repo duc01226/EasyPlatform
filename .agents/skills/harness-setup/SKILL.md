@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -62,8 +63,19 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 - BLOCK on the `$linter-setup` prerequisite first — computational sensors (linters, hooks, CI gates) MUST exist before any phase runs; this skill never installs them itself.
 - Walk phases A→F as a hard barrier sequence: detect stack → author feedforward guides (CLAUDE.md conventions, anti-patterns, pattern catalog) → confirm computational sensors → wire inferential review skills to lifecycle gates → define behaviour/test strategy → emit inventory.
-- Treat every feedforward-guide and sensor choice as a direct user question-gated — never auto-decide content, because harness conventions bind every future agent and silent choices propagate.
-- Write `.ai/workspace/harness/harness-inventory.md` incrementally (append per phase, not held in memory), keeping it a living document updated as new sensors are added.
+- Treat every feedforward-guide and sensor choice as ask the user directly-gated — never auto-decide content — why: harness conventions bind every future agent and silent choices propagate.
+- Write `.ai/workspace/harness/harness-inventory.md` incrementally (append per phase, never held in memory) — keep it a LIVING document updated as new sensors are added.
+
+**Main steps (run in order — each BLOCKS the next):**
+
+1. **Guards** — BLOCK until `$linter-setup` verified (linter config + pre-commit hook + CI gate present); detect existing inventory (enhance, never skip).
+2. **Phase A — Stack Detection** — read plan / architecture-design / tech-stack reports; write `stack-profile.md`; ask the user directly on any undetectable field.
+3. **Phase B — Feedforward Guides** — author/enhance CLAUDE.md/AGENTS.md (architecture patterns, anti-patterns, naming, module boundaries) + skill-activation rules + `docs/architecture/*` notes + pattern catalog; confirm by asking the user directly.
+4. **Phase C — Computational Sensors** — confirm `$linter-setup` outputs; list config paths (invoke `$linter-setup` if any missing).
+5. **Phase D — Inferential Sensors** — wire review skills to lifecycle gates (`$why-review` pre-impl · `$code-review` pre-commit · `$domain-entities-review` post-impl · `$production-readiness-review` + `$security-review` pre-release · `$scan-codebase-health` recurring); record under "## Review Gates".
+6. **Phase E — Behaviour Harness** — pick spec format, define test pyramid + approved fixtures, gate on mutation score (NEVER line %), add property/behavior coverage; write `test-strategy.md`.
+7. **Phase F — Inventory Report** — append `harness-inventory.md` (feedforward + computational/inferential sensors + open gaps); present by asking the user directly.
+8. **Next Steps** — ask the user directly: `$feature-implement` (recommended) · `$why-review` · skip.
 
 **Produces:**
 
@@ -87,13 +99,13 @@ Before running any phases, verify `$linter-setup` completed by checking for:
 - Pre-commit hook config (e.g., `.husky/`, `.pre-commit-config.yaml`)
 - CI quality gate definition
 
-If any missing → a direct user question: "$linter-setup appears incomplete. Computational feedback sensors must be in place before harness setup. Run $linter-setup first, then return here?"
+If any missing → ask the user directly: "$linter-setup appears incomplete. Computational feedback sensors must be in place before harness setup. Run $linter-setup first, then return here?"
 **BLOCK** Phase A/B/C/D/E until linter-setup verification passes.
 
 **Check 2 — Existing harness inventory:**
 Check for `.ai/workspace/harness/harness-inventory.md`
 
-- If found → a direct user question: "Harness inventory already exists — re-run to enhance existing harness, or skip?"
+- If found → ask the user directly: "Harness inventory already exists — re-run to enhance existing harness, or skip?"
 - Proceed even when `CLAUDE.md`/`AGENTS.md` present — those are feedforward guides this skill may enhance, NEVER signals to skip
 
 ---
@@ -112,7 +124,7 @@ Extract:
 
 Write detection result to `.ai/workspace/harness/stack-profile.md`.
 
-If any field undetectable → a direct user question to confirm before proceeding.
+If any field undetectable → ask the user directly to confirm before proceeding.
 
 ---
 
@@ -130,7 +142,7 @@ For each guide type, check if it exists; if not, create or enhance:
 **2. Skill activation rules**
 
 - Document in CLAUDE.md which skills auto-activate for common task types in this stack
-- Example: "When modifying domain entities → activate `$review-domain-entities`"
+- Example: "When modifying domain entities → activate `$domain-entities-review`"
 - Example: "Before any commit → run `$code-review`"
 
 **3. Architecture notes**
@@ -146,7 +158,7 @@ For each guide type, check if it exists; if not, create or enhance:
 - Document each pattern chosen in `$architecture-design` with DO/DON'T examples
 - Anchor to actual project files once scaffolding produces them
 
-Present list of guides created/updated via a direct user question: "Feedforward guides above will be created/enhanced. Confirm or adjust?"
+Present list of guides created/updated by asking the user directly: "Feedforward guides above will be created/enhanced. Confirm or adjust?"
 
 ---
 
@@ -166,7 +178,7 @@ Output: confirmation that computational sensors are in place, with file paths li
 
 ## Phase D — Inferential Feedback Sensors
 
-Configure which AI review skills fire at each lifecycle stage. Present to user via a direct user question:
+Configure which AI review skills fire at each lifecycle stage. Present to user by asking the user directly:
 "Which inferential sensors should be mandatory vs optional for this repository?"
 
 **Pre-implementation (planning gate):**
@@ -179,7 +191,7 @@ Configure which AI review skills fire at each lifecycle stage. Present to user v
 
 **Post-implementation (domain model changes):**
 
-- `$review-domain-entities` — when domain entity files are in the changeset
+- `$domain-entities-review` — when domain entity files are in the changeset
 
 **Pre-release (mandatory gates):**
 
@@ -200,7 +212,7 @@ Define the project's behaviour harness plan:
 
 **Functional spec format:**
 
-- a direct user question: "Feature documentation format?" Options: feature-spec (8-section tech-free), TDD specs only, lightweight ADRs
+- ask the user directly: "Feature documentation format?" Options: feature-spec (8-section tech-free), TDD specs only, lightweight ADRs
 - Establish `docs/specs/` or equivalent spec home
 
 **Test strategy pyramid:**
@@ -217,7 +229,7 @@ Define the project's behaviour harness plan:
 **Test-strength sensors (NOT a line-coverage gate):**
 
 - **Line coverage is a diagnostic only — NEVER gate a build on it.** Low coverage is a useful NEGATIVE signal (an area is untested → investigate); high coverage is NOT evidence of quality (lines can execute with no meaningful assertion). Report it as a diagnostic; do not fail CI on a coverage %.
-- **Mutation score is the real test-strength metric — gate on this.** a direct user question: "Configure a mutation-testing tool (e.g. Stryker / PITest / mutmut, per stack) as the CI test-quality gate?" A surviving mutant = a fault your tests did not catch = a missing/weak assertion. Add a minimum mutation-score threshold to CI as the computational test-strength sensor.
+- **Mutation score is the real test-strength metric — gate on this.** ask the user directly: "Configure a mutation-testing tool (e.g. Stryker / PITest / mutmut, per stack) as the CI test-quality gate?" A surviving mutant = a fault your tests did not catch = a missing/weak assertion. Add a minimum mutation-score threshold to CI as the computational test-strength sensor.
 - **Property coverage (optional second sensor):** each named business invariant guarded by ≥1 property/metamorphic test. Track which invariants have a property test; an unguarded invariant is a gap to fill.
 - **Keep behavior/change-coverage (meaningful, not a %):** every behavior-changing file must have a test that asserts the changed outcome — see `$integration-test-review` Gate 7. This is the right notion of "coverage"; the line-% is not.
 
@@ -261,7 +273,7 @@ Stack: {detected stack from Phase A}
 | ------------------- | ---------------------------- | ------------------------------ |
 | Pre-implementation  | $why-review                  | Design rationale gaps          |
 | Pre-commit          | $code-review                 | Convention drift, logic errors |
-| Post-implementation | $review-domain-entities      | Domain model quality           |
+| Post-implementation | $domain-entities-review      | Domain model quality           |
 | Pre-release         | $production-readiness-review | Operational readiness          |
 | Pre-release         | $security-review             | Security vulnerabilities       |
 
@@ -272,13 +284,13 @@ Stack: {detected stack from Phase A}
 | {area not yet harnessed} | {reason} | {LOW/MED/HIGH} |
 ```
 
-Present inventory to user for review via a direct user question.
+Present inventory to user for review by asking the user directly.
 
 ---
 
 ## Next Steps
 
-a direct user question:
+ask the user directly:
 
 - **"$feature-implement (Recommended)"** — Begin implementing the project plan with full harness in place
 - **"$why-review"** — Review harness design rationale before proceeding
@@ -304,8 +316,9 @@ a direct user question:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -360,8 +373,10 @@ a direct user question:
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Harness Engineering:** feedforward + feedback loops; gate on mutation score, never line-coverage %, keep quality left.
 
+**IMPORTANT MUST ATTENTION Main steps (in order — each BLOCKS the next):** Guards (verify `$linter-setup`) → A Stack Detection (`stack-profile.md`) → B Feedforward Guides (CLAUDE.md patterns/anti-patterns/naming/boundaries + skill-activation rules + pattern catalog) → C Computational Sensors (confirm linter/hook/CI) → D Inferential Sensors (wire `$why-review`, `$code-review`, `$domain-entities-review`, `$production-readiness-review`, `$security-review`, `$scan-codebase-health` to gates) → E Behaviour Harness (spec format + test pyramid + mutation-score gate + `test-strategy.md`) → F Inventory Report (`harness-inventory.md`) → Next Steps. NEVER skip or reorder — why: each phase consumes the prior phase's verified output.
+
 **IMPORTANT MUST ATTENTION** BLOCK on the `$linter-setup` prerequisite first — ALWAYS verify computational sensors (linter config, pre-commit hook, CI gate) exist before any phase runs — why: keep quality left; cheapest gates must precede inferential ones, and this skill never installs them itself
-**IMPORTANT MUST ATTENTION** NEVER auto-decide feedforward-guide or sensor content — present the draft and confirm via a direct user question — why: harness conventions bind every future agent; silent choices propagate to all later sessions
+**IMPORTANT MUST ATTENTION** NEVER auto-decide feedforward-guide or sensor content — present the draft and confirm by asking the user directly — why: harness conventions bind every future agent; silent choices propagate to all later sessions
 **IMPORTANT MUST ATTENTION** write `.ai/workspace/harness/harness-inventory.md` incrementally (append after each phase) — NEVER hold findings in memory — why: long context drifts and silently drops findings
 **IMPORTANT MUST ATTENTION** walk phases A→F as a hard barrier sequence — NEVER skip or reorder; each phase BLOCKS the next until its guard passes — why: a later phase consumes the prior phase's verified output
 **IMPORTANT MUST ATTENTION** gate the behaviour harness on mutation score + property coverage — NEVER fail a build on a line-coverage % — why: lines execute without asserting intent, so coverage % is a diagnostic only, never a quality gate
@@ -373,15 +388,15 @@ a direct user question:
 
 **Anti-Rationalization:**
 
-| Evasion                                          | Rebuttal                                                                                           |
-| ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| "Linter probably set up — skip the prereq check" | Grep for the config files. No `file:line` proof = BLOCK Phase A/B/C/D/E until verified.            |
-| "I'll pick the obvious linter myself"            | NEVER auto-decide — present top 2-3 via a direct user question; the user owns binding conventions. |
-| "High line coverage means tests are strong"      | Coverage is a diagnostic, not a gate. Gate on mutation score; lines run without asserting.         |
-| "Inventory's small, I'll hold it in memory"      | Append per phase to the inventory file — context loss silently drops findings.                     |
-| "CLAUDE.md exists, harness already done"         | CLAUDE.md is a feedforward guide to ENHANCE, never a signal to skip phases.                        |
+| Evasion                                          | Rebuttal                                                                                            |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| "Linter probably set up — skip the prereq check" | Grep for the config files. No `file:line` proof = BLOCK Phase A/B/C/D/E until verified.             |
+| "I'll pick the obvious linter myself"            | NEVER auto-decide — present top 2-3 by asking the user directly; the user owns binding conventions. |
+| "High line coverage means tests are strong"      | Coverage is a diagnostic, not a gate. Gate on mutation score; lines run without asserting.          |
+| "Inventory's small, I'll hold it in memory"      | Append per phase to the inventory file — context loss silently drops findings.                      |
+| "CLAUDE.md exists, harness already done"         | CLAUDE.md is a feedforward guide to ENHANCE, never a signal to skip phases.                         |
 
-**IMPORTANT MUST ATTENTION** BLOCK on `$linter-setup` before any phase · NEVER auto-decide harness content (a direct user question-gate) · gate behaviour on mutation score, NEVER on line-coverage %.
+**IMPORTANT MUST ATTENTION** BLOCK on `$linter-setup` before any phase · NEVER auto-decide harness content (ask the user directly-gate) · gate behaviour on mutation score, NEVER on line-coverage %.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
 
@@ -463,8 +478,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -475,6 +491,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

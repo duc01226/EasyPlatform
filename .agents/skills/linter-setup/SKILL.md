@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -60,10 +61,9 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
-- Detect the stack first (from `plan.md` / architecture report), then research each tool category (linter, formatter, type checker, static analyzer, dependency scanner, architecture fitness) via QUERY TEMPLATES — NEVER hardcode tool names; present top 2-3 options per category through a direct user question and let the user pick.
-- Configure with the STRICTEST reasonable defaults (loosen ONLY with explicit user approval), always emit a stack-agnostic `.editorconfig`, and add tool cache dirs to `.gitignore`.
-- Wire BOTH a pre-commit hook (formatter→linter→type-check, staged-files-only, <30s) AND a matching CI quality gate — the local and CI checks MUST NOT diverge.
-- Prove it works: fire the pre-commit hook with an intentional violation and confirm it blocks the commit before declaring complete.
+- **Purpose** — install the full computational feedback sensor layer for the detected stack so no code change reaches main unguarded: strict-by-default, research-driven (NEVER hardcode tools), local-and-CI with zero divergence, proven to block.
+- **Main steps, in order:** (1) **Detect stack** — read `plan.md` → architecture report → tech-stack report, write `stack-profile.md`; ask the user directly if a critical field is undetectable. (2) **Research each tool category** — linter, formatter, type checker, static analyzer, dependency scanner, architecture fitness — via QUERY TEMPLATES; score top 3; present top 2-3 per category by asking the user directly, user picks. (3) **Install & configure** — STRICTEST reasonable defaults (loosen ONLY with explicit user approval), document what each rule catches, add cache dirs to `.gitignore`, ALWAYS emit a stack-agnostic `.editorconfig`. (4) **Wire the pre-commit hook** — formatter→linter→type-check, staged-files-only, <30s; document setup in `README.md`. (5) **Configure the CI quality gate** to MIRROR the hook (format→lint→type→static→dep-scan), coverage diagnostic-only. (6) **Verify** — fire the hook with an INTENTIONAL violation, confirm it blocks before declaring complete. (7) **Next steps** — ask the user directly to continue to `$harness-setup`.
+- **Non-negotiables** — research-driven tool choice (NEVER hardcode), strict-by-default, local↔CI zero divergence, prove the gate blocks before done.
 
 **Output:** Config files at project root + pre-commit hook config + CI quality gate step + `.editorconfig`.
 
@@ -101,7 +101,7 @@ CI Provider/Tooling: {github-actions/gitlab-ci/azure-pipelines/etc}
 Test Framework: {framework}
 ```
 
-If any critical field undetectable → a direct user question to confirm before research.
+If any critical field undetectable → ask the user directly to confirm before research.
 
 ---
 
@@ -124,9 +124,23 @@ For each tech stack layer detected, research these TOOL CATEGORIES using the que
 
 1. Search with query template (WebSearch if available, otherwise apply knowledge with explicit confidence %)
 2. Score top 3 candidates: community adoption, last release date, CI integration ease, config complexity
-3. Present via a direct user question: "For {category} in {language}, which tool?" — top 2-3 as options + brief pros/cons
+3. Present by asking the user directly: "For {category} in {language}, which tool?" — top 2-3 as options + brief pros/cons
 
 **IMPORTANT:** Confidence in current ecosystem <80% (fast-moving ecosystem, unfamiliar stack) → use WebSearch to verify before presenting options. — why: tool ecosystems churn fast; stale recommendations cargo-cult dead tools.
+
+### Dependency-Boundary Enforcement (Architecture Fitness detail — options, not defaults)
+
+The **Architecture Fitness** category above is where **dependency-direction / module-boundary** enforcement is chosen. It consumes the `architecture-design` "Arch rules / fitness" scaffold handoff. Treat the following only as **example candidates to research and evaluate for stack fit** — never mandatory installs. Research the current ecosystem, then present the top 2-3 by asking the user directly and let the user confirm:
+
+| Stack family | Example dependency-boundary tools (evaluate, do NOT hardcode)                             |
+| ------------ | ----------------------------------------------------------------------------------------- |
+| JS / TS      | dependency-cruiser, eslint-plugin-boundaries (eslint-boundaries), Nx module-boundary lint |
+| .NET         | NetArchTest, ArchUnitNET                                                                  |
+| JVM          | ArchUnit                                                                                  |
+| Python       | import-linter                                                                             |
+| Go           | go-arch-lint / depguard                                                                   |
+
+Only add a boundary tool when the architecture actually declares dependency directions to enforce. If no cross-module rules are declared, record `N/A — no cross-module dependency rules declared` rather than installing a tool speculatively. Chosen rules MUST encode the architecture's dependency directions and fail CI on a violation, mirroring the pre-commit posture (local↔CI zero divergence). Init/audit grading of whether boundaries exist at all is owned by `architecture-scalability-review`; per-change boundary drift is owned by `architecture-review`. — why: a boundary tool with no declared rules is ceremony; enforcement without CI teeth is documentation.
 
 ---
 
@@ -137,7 +151,7 @@ After user selects tools per category:
 1. Generate install command for detected package manager
 2. Generate config file with STRICTEST reasonable defaults
     - Rationale: starting strict is easier to loosen than starting loose is to tighten
-    - Loosen ONLY with explicit user approval via a direct user question
+    - Loosen ONLY with explicit user approval by asking the user directly
 3. Document what each enabled rule catches and why (one line per rule group)
 4. Generate sample config file: `.{tool}rc`, `{tool}.config.{ext}`, `pyproject.toml` section, etc.
 5. Add tool cache directories to `.gitignore`
@@ -202,7 +216,7 @@ Detect CI provider/tooling from repository files:
 - `Jenkinsfile` → Jenkins
 - `bitbucket-pipelines.yml` → Bitbucket Pipelines
 
-If not detected → a direct user question: "Which CI provider/tooling does this repository use?"
+If not detected → ask the user directly: "Which CI provider/tooling does this repository use?"
 
 Generate CI job/step that:
 
@@ -212,7 +226,7 @@ Generate CI job/step that:
 4. Runs type checker (fail on any error)
 5. Runs static analyzer (fail on threshold: configurable complexity and duplication)
 6. Runs dependency vulnerability scanner (fail on HIGH/CRITICAL CVEs)
-7. Reports line-coverage as a DIAGNOSTIC only — NEVER fail the build on a coverage %. Low coverage is a useful untested-area signal; high coverage is not evidence of quality. If a test-strength gate is wanted, a direct user question: "Configure a mutation-testing tool (e.g. Stryker / PITest / mutmut, per stack) as the CI test-quality gate?" — gate on mutation score (surviving mutant = missing/weak assertion), with line-coverage reported but ungated. Keep behavior/change-coverage (each behavior-changing file has a test asserting the changed outcome) as the meaningful coverage notion.
+7. Reports line-coverage as a DIAGNOSTIC only — NEVER fail the build on a coverage %. Low coverage is a useful untested-area signal; high coverage is not evidence of quality. If a test-strength gate is wanted, ask the user directly: "Configure a mutation-testing tool (e.g. Stryker / PITest / mutmut, per stack) as the CI test-quality gate?" — gate on mutation score (surviving mutant = missing/weak assertion), with line-coverage reported but ungated. Keep behavior/change-coverage (each behavior-changing file has a test asserting the changed outcome) as the meaningful coverage notion.
 
 **MANDATORY:** CI gate must match pre-commit hooks. If a check runs locally, it runs in CI. No divergence.
 
@@ -233,7 +247,7 @@ After all config files generated, verify MUST ATTENTION each item:
 
 ## Next Steps
 
-a direct user question:
+ask the user directly:
 
 - **"$harness-setup continues (Recommended)"** — Set up feedforward guides + inferential sensors to complete the outer harness
 - **"$feature-implement"** — Skip harness inventory and begin implementation
@@ -259,8 +273,9 @@ a direct user question:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -280,18 +295,20 @@ a direct user question:
 
 **IMPORTANT MUST ATTENTION Goal:** Every code change is caught by an automated quality sensor — both locally (fast feedback) AND in CI (enforcement gate) — before it reaches main, with ZERO divergence between the two, by installing the full sensor layer (linter, formatter, type checker, static analyzer, dependency scanner, architecture fitness, pre-commit hook, CI gate) for the detected stack.
 
+**IMPORTANT MUST ATTENTION Main steps (in order — do not skip):** (1) detect stack → (2) research tool categories, present 2-3 per category by asking the user directly → (3) install & configure strict + `.editorconfig` + `.gitignore` → (4) wire pre-commit hook (format→lint→type, staged-only, <30s) → (5) mirror it in a CI quality gate → (6) verify the hook blocks an INTENTIONAL violation → (7) offer `$harness-setup` next.
+
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
 - **Critical Thinking:** MUST ATTENTION apply critical/sequential thinking; cite proof, NEVER present guess as fact.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
 **IMPORTANT MUST ATTENTION** use QUERY TEMPLATES in Tool Research — NEVER hardcode tool names in the research phase; research the detected stack's current ecosystem and present options — why: tool ecosystems churn fast, hardcoded names cargo-cult dead tools.
-**IMPORTANT MUST ATTENTION** present top 2-3 options per category via a direct user question — let the user pick; NEVER auto-select — why: tool choice is a team-owned decision, not the skill's.
+**IMPORTANT MUST ATTENTION** present top 2-3 options per category by asking the user directly — let the user pick; NEVER auto-select — why: tool choice is a team-owned decision, not the skill's.
 **IMPORTANT MUST ATTENTION** verify the pre-commit hook fires with an INTENTIONAL violation (add a lint error, attempt commit, confirm it blocks) before marking complete — why: an unproven gate is no gate.
 **IMPORTANT MUST ATTENTION** CI gate MUST match pre-commit hooks — if a check runs locally it runs in CI, no divergence — why: divergent local/CI checks let violations slip through one path.
 
-**MUST ATTENTION** detect the stack FIRST (`plan.md` → architecture report → tech-stack report); if a critical field is undetectable, a direct user question before research — why: every downstream tool choice depends on the stack profile.
-**MUST ATTENTION** configure with the STRICTEST reasonable defaults; loosen ONLY with explicit user approval via a direct user question — why: starting strict is easier to loosen than starting loose is to tighten.
+**MUST ATTENTION** detect the stack FIRST (`plan.md` → architecture report → tech-stack report); if a critical field is undetectable, ask the user directly before research — why: every downstream tool choice depends on the stack profile.
+**MUST ATTENTION** configure with the STRICTEST reasonable defaults; loosen ONLY with explicit user approval by asking the user directly — why: starting strict is easier to loosen than starting loose is to tighten.
 **MUST ATTENTION** ALWAYS emit a stack-agnostic `.editorconfig` and add tool cache dirs to `.gitignore` — why: editorconfig is the one truly portable cross-tool baseline; cached artifacts must never be committed.
 **MUST ATTENTION** order hooks formatter→linter→type-check, staged-files-only, <30s; defer slow checks (static analysis, full type-check) to CI — why: a slow hook gets bypassed, killing local feedback.
 **MUST ATTENTION** report line-coverage as a DIAGNOSTIC only — NEVER fail the build on a coverage %; gate on mutation score if a test-strength gate is wanted — why: high coverage is not evidence of assertion quality.
@@ -304,16 +321,16 @@ a direct user question:
 
 **Anti-Rationalization:**
 
-| Evasion                                          | Rebuttal                                                                                                 |
-| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| "I know the best linter for this stack"          | Ecosystems churn — research current options, present 2-3 via a direct user question. Hardcoding = stale. |
-| "Strict defaults are too aggressive, loosen now" | Start strict; loosen ONLY with explicit user approval. Easier to loosen than to tighten later.           |
-| "Hook works, no need to test it"                 | Fire an INTENTIONAL violation and confirm it blocks. Unproven gate = no gate.                            |
-| "Local checks are enough, skip CI"               | CI gate MUST mirror pre-commit. No divergence — a local-only check is bypassable.                        |
-| "Coverage % is high, gate on it"                 | Coverage is diagnostic only. Gate on mutation score; high coverage ≠ strong assertions.                  |
-| "Simple stack, skip task tracking"               | Still bootstrap task tracking. Skip depth, never skip tracking.                                          |
+| Evasion                                          | Rebuttal                                                                                                  |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| "I know the best linter for this stack"          | Ecosystems churn — research current options, present 2-3 by asking the user directly. Hardcoding = stale. |
+| "Strict defaults are too aggressive, loosen now" | Start strict; loosen ONLY with explicit user approval. Easier to loosen than to tighten later.            |
+| "Hook works, no need to test it"                 | Fire an INTENTIONAL violation and confirm it blocks. Unproven gate = no gate.                             |
+| "Local checks are enough, skip CI"               | CI gate MUST mirror pre-commit. No divergence — a local-only check is bypassable.                         |
+| "Coverage % is high, gate on it"                 | Coverage is diagnostic only. Gate on mutation score; high coverage ≠ strong assertions.                   |
+| "Simple stack, skip task tracking"               | Still bootstrap task tracking. Skip depth, never skip tracking.                                           |
 
-**IMPORTANT MUST ATTENTION** use QUERY TEMPLATES — NEVER hardcode tool names; present top 2-3 via a direct user question.
+**IMPORTANT MUST ATTENTION** use QUERY TEMPLATES — NEVER hardcode tool names; present top 2-3 by asking the user directly.
 **IMPORTANT MUST ATTENTION** prove the pre-commit hook blocks an intentional violation before declaring complete.
 **IMPORTANT MUST ATTENTION** CI gate must match pre-commit hooks — zero divergence between local and CI checks.
 
@@ -399,8 +416,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -411,6 +429,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

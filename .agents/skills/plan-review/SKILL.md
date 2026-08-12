@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -58,12 +59,13 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Goal:** Block any plan from reaching implementation unless it is hallucination-free (every existing-code claim proven at `file:line`) and implementation-ready (every step concrete, small enough to code from immediately) — by auto-reviewing implementation plans for validity, correctness, and best practices. **Recursive:** when any findings exist, validate findings with `$why-review --validate-findings`, fix only validated findings in plan files, and rerun the full plan review until no findings remain.
 
-**Summary:**
+**Summary:** AI self-review (automatic, NOT a user interview like `$plan-validate`) that gates a plan before implementation.
 
-- Review as a SKEPTIC, not a validator: every existing-code claim in the plan needs `file:line` proof (Anti-Hallucination Gate), and every phase must clear the "Detailed & Small Enough" granularity gate (≤5 files, ≤3h, no planning verbs) — too vague → detail it, too big → break it.
-- Detect the plan type FIRST (Phase 0) so the right focus applies — bugfix plans MANDATE the Behavioral Delta Matrix; security/performance/refactor/contract/infra each add their own targeted checks.
-- Findings are never fixed blindly: run the `$why-review --validate-findings` gate BEFORE editing any `plan.md`/`phase-*.md`, fix only validated findings, then restart the FULL review with a fresh, zero-memory sub-agent — loop until a clean pass with zero findings.
-- No arbitrary round cap; a clean pass ends the loop immediately. Escalate via a direct user question only when the same blocker survives 3 consecutive full re-reviews with no progress.
+- **Purpose:** review as a SKEPTIC, not validator — every existing-code claim needs `file:line` proof (Anti-Hallucination Gate); every phase must clear the "Detailed & Small Enough" granularity gate (≤5 files, ≤3h, no planning verbs) — too vague → detail it, too big → break it.
+- **Main steps (run in order):** Phase 0 detect plan type → Step 1 read `plan.md` + `goal.md` + all `phase-*.md`, extract requirements/steps/files/risks → Step 2 evaluate the 4 checklist groups: **Validity** (summary, requirements, steps, files) · **Correctness** (Granularity Gate + Anti-Hallucination/Code-Proof Gate + spec/TC coverage + Goal-Contract mapping) · **Best Practices** (YAGNI/KISS/DRY/architecture) · **Completeness** (risks, testing, success criteria, security, graph-dependency) → run the 11 Adversarial techniques + Anti-Bias Gate + 7 Plan Dimensions → graph-trace each modified file (when graph.db exists) → Step 3 score PASS/WARN/FAIL → Step 4 output result → Step 5 recursive validate-fix-re-review loop.
+- **Detect plan type FIRST (Phase 0)** so the right focus applies — bugfix MANDATES the Behavioral Delta Matrix; security/performance/refactor/contract/infra/data-schema each add targeted checks.
+- **Findings are never fixed blindly:** run the `$why-review --validate-findings` gate BEFORE editing any `plan.md`/`phase-*.md`, fix only validated findings at the smallest responsible location, then restart the FULL review with a fresh, zero-memory sub-agent — loop until a clean pass with zero findings.
+- **Round cap 5 — a ceiling, NEVER a target;** a clean pass ends the loop immediately at ANY round (round 1 included). Escalate by asking the user directly when the same blocker survives 3 consecutive full re-reviews with no progress, when round 5 completes with findings still open, or when a finding needs product/owner judgment — cap exhaustion escalates, it NEVER becomes a PASS.
 
 **Workflow:**
 
@@ -72,7 +74,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 3. **Evaluate Checklist** — Validity (summary, requirements, steps, files), Correctness (specific, paths, no conflicts), Best Practices (YAGNI/KISS/DRY, architecture), Completeness (risks, testing, success, security)
 4. **Score & Classify** — PASS (all Required + ≥50% Recommended), WARN (all Required + <50% Recommended), FAIL (any Required fails)
 5. **Output Result** — Status, checks passed, issues, recommendations, verdict
-6. **If any findings remain** — Run `$why-review --validate-findings` on the plan-review report first; fix only validated actionable issues in plan files, then re-review (loop back to step 2 until zero findings, unless the repeated-blocker cap applies)
+6. **If any findings remain** — Run `$why-review --validate-findings` on the plan-review report first; fix only validated actionable issues in plan files, then re-review (loop back to step 2 until zero findings, unless the repeated-blocker rule or the 5-round cap applies)
 
 **Core Principle — Detailed & Small Enough:**
 
@@ -85,8 +87,8 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - **No hallucination**: Every plan claim about existing source code must have `file:line` proof — unverified paths, class names, or behaviors = FAIL
 - **PASS**: Proceed to implementation
 - **WARN**: Proceed with caution, note gaps
-- **FAIL (any findings)**: Validate findings with `$why-review --validate-findings`, fix only validated plan issues, then **re-run the FULL review from the start**. Repeat this self-loop — no maximum round count, no forced minimum — until a complete pass finds ZERO findings.
-- **No-progress safety (not a round cap)**: only if the SAME blocker survives 3 consecutive full re-reviews with no progress, STOP and escalate to user via a direct user question. A clean pass ends the loop immediately, even on round 1.
+- **FAIL (any findings)**: Validate findings with `$why-review --validate-findings`, fix only validated plan issues, then **re-run the FULL review from the start**. Repeat this self-loop — no forced minimum, capped at 5 rounds MAX — until a complete pass finds ZERO findings.
+- **Bounded loop — two escalation triggers, neither a completion criterion**: (a) **no-progress safety** — the SAME blocker surviving 3 consecutive full re-reviews with no progress; (b) **round cap** — round 5 completing with findings still open. Whichever trips first → STOP and escalate to user by asking the user directly, never a silent "good enough" PASS. A clean pass ends the loop immediately, even on round 1 — the cap is a ceiling, not a quota.
 - **Constructive**: Focus on implementation-blocking issues, not pedantic details
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -485,7 +487,7 @@ After the sub-agent returns:
 1. **Read** the sub-agent's report
 2. **Integrate** findings as `## Re-Review {N} Findings` in the main report — DO NOT filter or override
 3. **If FAIL, WARN, or any findings remain:** run the Findings Validation Gate, fix only validated actionable findings in plan files, then restart the full plan-review protocol from the first review step
-4. **Repeated blocker cap:** if the same blocker repeats across 3 full invocations with no progress, escalate via a direct user question
+4. **Repeated blocker cap:** if the same blocker repeats across 3 full invocations with no progress, escalate by asking the user directly
 5. **Final verdict** must incorporate findings from ALL review passes that actually ran
 
 ### Flow
@@ -523,12 +525,12 @@ After the sub-agent returns:
         │  new agents for that restarted pass.    │
         └──────┬──────────────────────────────────┘
                │
-               └──→ Loop until zero findings or repeated-blocker cap
+               └──→ Loop until zero findings, repeated-blocker rule, or 5-round cap
 ```
 
 ### Iteration Rules
 
-1. **Repeated blocker cap** — continue until a complete full review pass has zero findings; if the same blocker repeats across 3 full invocations with no progress, STOP and escalate to user via a direct user question
+1. **Repeated blocker cap** — continue until a complete full review pass has zero findings; if the same blocker repeats across 3 full invocations with no progress, STOP and escalate to user by asking the user directly
 2. **Track round count** — log "Plan review Round N (full re-review)" at the start of each cycle
 3. **Zero findings = exit** — proceed only when a complete plan-review pass has no findings. WARN remains a finding unless it is explicitly accepted as non-actionable by the user/owner.
 4. **Diminishing scope** — each round should find FEWER issues. If Round N finds MORE than Round N-1, STOP and escalate
@@ -540,14 +542,14 @@ After the sub-agent returns:
     - Over-engineering → simplify, remove unnecessary complexity
     - Missing TC mappings → add TC references or "TBD" with rationale
 7. **After each validated fix cycle** — rerun the full plan-review protocol from the first review step; when that restarted protocol uses agents, spawn NEW Agent calls and never reuse prior agents
-8. **No silent fallback** — if the same blocker repeats across 3 full invocations with no progress, escalate via a direct user question. NEVER fall back to any prior protocol.
+8. **No silent fallback** — if the same blocker repeats across 3 full invocations with no progress, escalate by asking the user directly. NEVER fall back to any prior protocol.
 
 ## Next Steps
 
 - **If PASS with zero findings**: Announce "Plan review complete. Proceeding with next workflow step."
 - **If WARN or other findings remain**: Run the Findings Validation Gate; fix only validated actionable findings in plan files, or ask the user to explicitly accept non-actionable risk before proceeding.
 - **If FAIL**: Run the Findings Validation Gate, fix only validated actionable findings in plan files, then rerun the full plan-review protocol recursively.
-- **If repeated blocker cap is reached**: List remaining issues. STOP. Ask user to fix or regenerate plan via a direct user question.
+- **If repeated blocker cap is reached**: List remaining issues. STOP. Ask user to fix or regenerate plan by asking the user directly.
 
 ## Important Notes
 
@@ -558,16 +560,16 @@ After the sub-agent returns:
 
 ---
 
-## Skill Interconnection (Standalone: MUST ATTENTION ask user via a direct user question. Skip if inside workflow.)
+## Skill Interconnection (Standalone: MUST ATTENTION ask user by asking the user directly. Skip if inside workflow.)
 
-**MANDATORY — NO EXCEPTIONS** after completing this skill, you MUST use a direct user question to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+**MANDATORY — NO EXCEPTIONS** after completing this skill, you MUST use ask the user directly to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
 
 - **"Proceed with full workflow (Recommended)"** — I'll detect the best workflow to continue from here (plan reviewed). This ensures validation, implementation, testing, and docs steps aren't skipped.
 - **"$plan-validate"** — Interview user to confirm plan assumptions
 - **"$feature-implement" or "$plan-execute"** — If plan is approved and ready for implementation
 - **"Skip, continue manually"** — user decides
 
-> **[BLOCKING]** This is a validation gate. MUST ATTENTION use a direct user question to present review findings and get user confirmation. Completing without asking at least one question is a violation.
+> **[BLOCKING]** This is a validation gate. MUST ATTENTION use ask the user directly to present review findings and get user confirmation. Completing without asking at least one question is a violation.
 
 > **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI must ask user whether to skip.
 
@@ -653,7 +655,7 @@ After the sub-agent returns:
 > - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
 > - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `spawn_agent` call
-> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via a direct user question
+> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate by asking the user directly
 > - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
@@ -710,7 +712,7 @@ After the sub-agent returns:
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -723,11 +725,11 @@ After the sub-agent returns:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -751,6 +753,14 @@ After the sub-agent returns:
 
 > **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
 >
+> _aka **Self-Review Convergence Loop**._ The name is historical — there is **NO 2-round cap**; "double-round-trip" only means a validated-finding fix cycle forces at least one fresh re-review. It runs until a clean pass, bounded by the **5-round ceiling** below.
+>
+> **Round cap — 5 rounds MAX (a ceiling, NEVER a target).** A clean pass ENDS the loop immediately at ANY round — round 1 included; the cap never obliges you to keep spinning. Hitting round 5 with validated findings still open → **STOP and escalate by asking the user directly** with the still-open findings listed; NEVER emit a silent "good enough" PASS on cap exhaustion, and NEVER let the cap substitute for the clean-review requirement. The 3-repeated-no-progress blocker rule stays an EARLIER exit — escalate at whichever trips first.
+>
+> **Universal scope (any new output/judgment):** any newly produced output or judgment gets **≥1 self-review**; any **new judgment** gets **≥1 `$why-review --validate-findings` pass**; anything flagged to re-check is re-checked **≥1 time** — before that output is treated as final. This loop is the default convergence contract for ANY work-producing skill, not review skills only.
+>
+> **Routing invariant (author-facing):** a skill that validates findings MUST route them through `$why-review --validate-findings` (the terminal validator) — NEVER fork an inline finding-validation. Routing through why-review is what makes the finding-survival bar and this loop apply; the `verify-review-validate-coverage` sensor enforces this exact route mechanically.
+>
 > **Round 1:** Main-session review. Read target files, build understanding, note issues. Output findings + verdict (PASS / FAIL).
 >
 > **Decision after Round 1:**
@@ -767,16 +777,18 @@ After the sub-agent returns:
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues. If the same validated finding repeats for 3 full invocations with no progress, or a fix requires product/owner input, escalate via a direct user question.
+> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues, **capped at 5 rounds**. Escalate by asking the user directly at whichever comes first: the same validated finding repeats for 3 full invocations with no progress · a fix requires product/owner input · round 5 completes with validated findings still open. NEVER loop past 5 rounds, and NEVER convert cap exhaustion into a PASS.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
 > - NEVER fix unvalidated findings; validate first using the caller's validation gate
+> - Every surviving finding must additionally clear the **finding-survival bar** defined in why-review's Findings Validation Routine (a deliberately higher bar than the generic act-gate — "keep this finding?" is a stricter question than "act on this evidence?"); a finding below the bar is demoted or dropped, not kept
 > - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
 > - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - No arbitrary sub-agent-round cap replaces the clean-review requirement; use the 3 repeated-no-progress blocker rule only to avoid infinite spinning
+> - The 5-round cap NEVER replaces the clean-review requirement — it bounds runaway looping, it does not authorize shipping an un-clean review; a clean pass ends the loop early at any round, and cap exhaustion escalates rather than passes
+> - Enforce the round cap of 5 alongside the 3 repeated-no-progress blocker rule; both are escalation triggers, neither is a completion criterion
 > - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
@@ -969,8 +981,9 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -995,6 +1008,46 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:severity-rubric -->
 
+<!-- SYNC:goal-contract-satisfaction-loop -->
+
+> **Goal Contract Satisfaction Loop** — Persist the user goal in an external file, execute against it, and loop review/fix until every saved required criterion passes or a blocker escalates. Bounded closed loop — NEVER open-ended autonomous exploration.
+>
+> 1. **Resolve the active goal** (in order): active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create a new Goal Contract from the current user request (template: `.claude/templates/goal-contract-template.md`).
+> 2. **Required sections:** Original Request, Purpose, Success Criteria (checkboxes; mark required vs optional), Constraints, Evidence Required, Iteration Log, Goal Satisfaction matrix.
+> 3. **Before work:** read the active goal and map planned work to saved success criteria — execution serves the saved criteria, never chat memory alone.
+> 4. **After execution/verification:** append an Iteration Log entry — result, evidence references (`file:line`, command output, report path), remaining gaps.
+> 5. **Review gate:** emit a Goal Satisfaction matrix — `| Success Criterion | Evidence | Status |` with PASS/FAIL/BLOCKED. Overall PASS requires every required criterion PASS.
+> 6. **Loop rule (retry):** required criterion FAIL → validate the gap is real → fix → re-review only the affected criteria. Stop cleanly when all required criteria PASS.
+> 7. **Escalation rule (stop):** two consecutive iterations with no criterion progressing, or a blocker needing user input → mark the criterion BLOCKED with a user-facing reason and escalate. NEVER loop indefinitely.
+> 8. **Skip rule:** tiny conversational tasks may skip the goal file ONLY with a recorded one-line reason. User-accepted gate skips are recorded in the goal file with reason and scope.
+> 9. **Security:** NEVER store secrets, tokens, credentials, or private customer data in goal files — store evidence references and redact sensitive values.
+>
+> **Blocked until:** active goal resolved (or skip reason recorded) · saved success criteria read before edits · iteration evidence appended after execution · Goal Satisfaction matrix emitted before any PASS verdict.
+
+<!-- /SYNC:goal-contract-satisfaction-loop -->
+
+<!-- SYNC:trade-off-interrogation-gate -->
+
+> **Trade-Off Interrogation Gate** — ALWAYS ask these THREE questions before ANY verdict, score, finding, or recommendation — about the thing under review AND about every recommendation YOU make. — why: naming a benefit without its price is an endorsement, not a review; the costliest trade-offs are the ones nobody wrote down.
+>
+> 1. **Is there any trade-off?** Name what it SACRIFICES. "None" / "pure win" is an unfinished analysis, NOT an answer — to claim none, state which dimensions you checked and why each is unaffected: future change cost · complexity · performance/latency · memory/cost · coupling · reversibility · migration burden · operational load · blast radius · security posture · testability · team skill/ramp · delivery time · UX.
+> 2. **Is it worth it?** Weigh gain against sacrifice EXPLICITLY — what is gained (with a metric) · what it costs · WHO pays · WHEN it comes due — then emit **WORTH IT / NOT WORTH IT / UNCLEAR**. "Better" with no metric and no cost FAILS this question. NOT WORTH IT → withdraw or replace the recommendation, never keep it as-is.
+> 3. **Is the trade-off material enough to CONFIRM WITH THE USER?** A material trade-off is the user's call, never yours. **MATERIAL** when ANY holds: irreversible / one-way door (data migration, public contract, storage format, vendor lock-in) · cost shifted onto someone else (another team, ops/on-call, future maintainer, end user) · one quality attribute traded for another (correctness↔speed, security↔convenience, latency↔cost, simplicity↔flexibility) · a boundary crossed (client↔server tier, service contract, event contract, shared library) · a high-consequence path (auth, money, data integrity, breaking change, High/Medium residual risk) · the worth-it verdict is UNCLEAR.
+>
+> **MATERIAL → STOP and confirm by asking the user directly BEFORE the verdict stands** — state the trade-off, both options, what each sacrifices, and your recommendation. **NOT material →** record it inline with a one-line justification and proceed.
+>
+> **Non-asking execution contexts — ESCALATE BY HANDOFF, never by silence.** ask the user directly reaches only the main interactive agent: a sub-agent cannot ask the user, and a terminal/verdict-only mode asks nothing by design. When you are running in such a context, the obligation is **redirected, never waived** — do ALL of: (a) complete questions 1 and 2 normally; (b) decide materiality and record it in the Trade-Off Assessment row with `confirmed? = NO — cannot ask from this context`; (c) **name the unconfirmed MATERIAL trade-off explicitly in your returned summary/verdict so the CALLER (or parent orchestrator) escalates it by asking the user directly on your behalf** — a material trade-off mentioned only inside a report file on disk is NOT a handoff; (d) do not emit an unqualified PASS — mark the verdict as carrying an unconfirmed material trade-off, so the caller's gate stays closed until the user answers. The caller inherits the escalation duty the moment it reads your return.
+>
+> This carve-out is about **reachability, not convenience**: it applies ONLY where the tool genuinely cannot reach the user (spawned sub-agent, terminal validate/verdict-only mode, non-interactive/headless run). It is NEVER a licence to skip the question, to self-approve a one-way door, or to downgrade materiality because asking is inconvenient — if you CAN ask, you MUST ask.
+>
+> **Emit a Trade-Off Assessment row** per reviewed decision and per recommendation: `| decision | sacrifices | gain (metric) | who pays, when | WORTH IT/NOT/UNCLEAR | material? | confirmed? |`.
+>
+> **BLOCKED until:** trade-off named (or dimensions-checked justification given) · worth-it verdict emitted · materiality decided · every MATERIAL trade-off either confirmed with the user OR — in a non-asking context — handed off in the returned verdict for the caller to confirm. A MATERIAL trade-off that is neither confirmed nor handed off can NEVER be PASS, and NEVER gets buried as a Low-severity note.
+>
+> **NEVER** answer "no trade-off" without checking · decide a material trade-off silently on the user's behalf · let convergence/delivery pressure authorize walking through a one-way door · bundle several material trade-offs into one vague "proceed?".
+
+<!-- /SYNC:trade-off-interrogation-gate -->
+
 <!-- SYNC:understand-code-first:reminder -->
 
 **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
@@ -1008,8 +1061,10 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:double-round-trip-review:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop: review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review.
-  <!-- /SYNC:double-round-trip-review:reminder -->
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop (aka **Self-Review Convergence Loop**): review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review. Any newly produced output/judgment gets ≥1 self-review; any new judgment gets ≥1 `$why-review --validate-findings` pass before it is treated as final.
+- **MANDATORY** enforce the **round cap of 5 — a ceiling, NEVER a target**: a clean pass ends the loop immediately at any round (round 1 included), and round 5 completing with validated findings still open → **STOP & escalate by asking the user directly**, never a silent PASS. The 3-repeated-no-progress blocker rule is an earlier exit — escalate at whichever trips first. NEVER loop open-ended.
+
+<!-- /SYNC:double-round-trip-review:reminder -->
 
 <!-- SYNC:graph-assisted-investigation:reminder -->
 
@@ -1050,8 +1105,8 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -1070,6 +1125,13 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
+<!-- SYNC:severity-rubric:reminder -->
+
+- **MANDATORY** Classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS until fixed or owner-accepted.
+- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
+
+<!-- /SYNC:severity-rubric:reminder -->
+
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
@@ -1081,16 +1143,19 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
-<!-- SYNC:severity-rubric:reminder -->
+<!-- SYNC:trade-off-interrogation-gate:reminder -->
 
-- **MANDATORY** Classify findings Critical/High/Medium/Low by consequence; Critical/High block PASS until fixed or owner-accepted.
-- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
+- **MANDATORY MUST ATTENTION ALWAYS ASK THE 3 TRADE-OFF QUESTIONS** — on the thing under review AND on every recommendation you make: (1) **is there any trade-off?** name what it SACRIFICES (change cost · complexity · perf · coupling · reversibility · migration · ops load · blast radius · security · testability · delivery time · UX) — "none"/"pure win" is an unfinished analysis, so state the dimensions checked; (2) **is it worth it?** gain (with a metric) vs cost, WHO pays, WHEN → emit **WORTH IT / NOT WORTH IT / UNCLEAR**; NOT WORTH IT → withdraw or replace it; (3) **is it material enough to confirm with the user?** irreversible/one-way door · cost shifted onto another team/ops/maintainer/user · one quality attribute traded for another · a tier/service/event/library boundary crossed · auth/money/data-integrity/breaking-change/High-or-Medium-risk path · verdict UNCLEAR → **STOP and confirm by asking the user directly BEFORE the verdict**.
+- **MANDATORY** A MATERIAL trade-off with no user confirmation can NEVER be PASS; NEVER bury one as a Low-severity note, NEVER decide it silently, and NEVER let delivery or convergence pressure authorize a one-way door. — why: an un-walked-back one-way door is the user's call to make, not the reviewer's.
+- **MANDATORY — non-asking contexts escalate BY HANDOFF, never by silence.** ask the user directly reaches only the main interactive agent: a sub-agent cannot ask the user, and a terminal/verdict-only mode asks nothing by design. There the duty is REDIRECTED, not waived — still name the trade-off, still decide materiality, record `confirmed? = NO — cannot ask from this context`, **state the unconfirmed MATERIAL trade-off in your RETURNED verdict/summary so the CALLER escalates it** (a note only in an on-disk report is not a handoff), and never emit an unqualified PASS. Applies ONLY where the user is genuinely unreachable (spawned sub-agent, terminal validate mode, headless run) — if you CAN ask, you MUST ask.
 
-<!-- /SYNC:severity-rubric:reminder -->
+<!-- /SYNC:trade-off-interrogation-gate:reminder -->
 
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Block any plan reaching implementation unless hallucination-free (every existing-code claim proven at `file:line`) AND implementation-ready (every step concrete, small enough to code from immediately) — recursive review until a complete pass finds zero findings.
+
+**IMPORTANT MUST ATTENTION Main steps (run in order, one task each):** Phase 0 detect plan type → Step 1 read `plan.md`/`goal.md`/all `phase-*.md` → Step 2 evaluate the 4 checklist groups (Validity · Correctness [Granularity + Anti-Hallucination + spec/TC coverage + Goal-Contract mapping] · Best Practices · Completeness) + 11 Adversarial techniques + Anti-Bias Gate + 7 Plan Dimensions + graph-trace each modified file → Step 3 score PASS/WARN/FAIL → Step 4 output result → Step 5 recursive `$why-review`-validate → fix validated findings → full re-review until zero findings — why: AI keeps forgetting the skill's own step pipeline; this is the read-this-if-nothing-else order.
 
 **IMPORTANT MUST ATTENTION** Protocols in force (concise digest of the SYNC/shared blocks this skill carries) — each line is a signpost to its canonical body above; NEVER treat the digest as a substitute for the full block, and ALWAYS apply every protocol below in full:
 
@@ -1115,10 +1180,10 @@ Every finding MUST have file:line evidence. Speculation is forbidden.
 **MANDATORY IMPORTANT MUST ATTENTION** detect plan type FIRST (Phase 0) — bugfix MANDATES the Behavioral Delta Matrix (≥3 rows, ≥1 outside the bug report, any REGRESSION → FAIL until a preservation test covers it); security/perf/refactor/contract/infra each add their own focus.
 **MANDATORY IMPORTANT MUST ATTENTION** spec-loop scheduling — plan must schedule property/invariant test specs for every `[HARD]` §4 rule / §5 invariant + a MUTATION-SCORE quality bar; FAIL a plan targeting a line-coverage % instead of a mutation-score bar.
 **MANDATORY IMPORTANT MUST ATTENTION** when ANY finding exists, run `$why-review --validate-findings` BEFORE editing any `plan.md`/`phase-*.md`; fix ONLY validated findings at the smallest responsible location, then restart the FULL review with a fresh zero-memory sub-agent — loop until a clean pass; NEVER edit plan files before this gate passes — why: unvalidated fixes corrupt the plan and waste review rounds.
-**MANDATORY IMPORTANT MUST ATTENTION** no arbitrary round cap — a clean pass ends the loop immediately; escalate via a direct user question ONLY when the SAME blocker survives 3 consecutive full re-reviews with no progress, or a finding needs product/owner judgment.
+**MANDATORY IMPORTANT MUST ATTENTION** round cap 5 — a CEILING, never a target: a clean pass ends the loop immediately at any round; escalate by asking the user directly when the SAME blocker survives 3 consecutive full re-reviews with no progress, when round 5 completes with findings still open, or when a finding needs product/owner judgment. NEVER loop past 5 rounds and NEVER convert cap exhaustion into a PASS.
 **MANDATORY IMPORTANT MUST ATTENTION** bootstrap task tracking task breakdown BEFORE reads/grep/edits (one task per file read); persist findings to `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` incrementally and synthesize from disk; add a final review task — why: long plan files exhaust context, the report file is ground truth.
 **MANDATORY IMPORTANT MUST ATTENTION** run a graph trace on each "files to modify" entry when `.code-graph/graph.db` exists; flag any downstream file NOT listed in the plan as "potentially missed" — why: catches cross-service/event-handler impact the author overlooked.
-**MANDATORY IMPORTANT MUST ATTENTION** standalone runs end with a direct user question presenting findings + next-step options; skip ONLY inside a workflow.
+**MANDATORY IMPORTANT MUST ATTENTION** standalone runs end with ask the user directly presenting findings + next-step options; skip ONLY inside a workflow.
 **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every finding (confidence >80% to act, <60% DO NOT recommend); NEVER mark PASS while any spec/test/code face disagrees without a logged finding.
 **MANDATORY IMPORTANT MUST ATTENTION** READ before reviewing: `.claude/docs/development-rules.md`, `docs/project-reference/code-review-rules.md`, `lessons.md`, plus skill-specific pattern refs (backend/frontend/integration-test).
 
@@ -1228,8 +1293,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -1240,6 +1306,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

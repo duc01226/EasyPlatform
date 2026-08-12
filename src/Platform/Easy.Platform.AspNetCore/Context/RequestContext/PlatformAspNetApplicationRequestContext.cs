@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Security.Claims;
+using System.Text.Json;
 using Easy.Platform.Application;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.AspNetCore.Context.RequestContext.RequestContextKeyToClaimTypeMapper.Abstract;
@@ -34,9 +35,57 @@ namespace Easy.Platform.AspNetCore.Context.RequestContext;
 /// - Automatic mapping between context keys and JWT claim types
 /// - Exception handling for disposed HTTP contexts
 /// - Implements both generic and non-generic access patterns
+///
+/// <para>
+/// <b>Trust model.</b> Two boundaries govern this class and are easy to miss when adding a context key:
+/// </para>
+/// <para>
+/// 1. <b>Inbound</b> — a value may come from a validated claim or from a request header. The header path exists so
+/// callers can supply their own per-request preferences; it must never supply a value that states who the caller is
+/// or what they may do. Keys listed in
+/// <see cref="IPlatformApplicationRequestContextKeyToClaimTypeMapper.NotFromRequestHeaderContextKeys" /> therefore
+/// lose that fallback — see <see cref="TryGetValueFromHttpContext{T}" />.
+/// </para>
+/// <para>
+/// 2. <b>Outbound</b> — only keys named in
+/// <see cref="IPlatformApplicationRequestContextKeyToClaimTypeMapper.TrustedPropagationContextKeys" /> cross an
+/// event, message, or background-job boundary, bounded in count and size. <see cref="GetAllKeyValues" /> returns
+/// that allowlisted view, NOT the full context; use <see cref="GetAllIncludeIgnoredKeyValues" /> when the complete
+/// in-process context is genuinely needed.
+/// </para>
+/// <para>
+/// Both default to DENY. Adding an application context key that is authority-bearing, or that must survive a
+/// boundary, means overriding the mapper — not relying on the platform's defaults to happen to allow it.
+/// </para>
 /// </remarks>
 public class PlatformAspNetApplicationRequestContext : IPlatformApplicationRequestContext
 {
+    /// <summary>
+    /// Maximum number of keys carried across a propagation boundary. Bounds fan-out when an application registers a
+    /// large allowlist; keys are taken in <see cref="PropagationPriority" /> order so the correlation and identity
+    /// keys survive truncation and only low-priority extras are dropped.
+    /// </summary>
+    internal const int MaxPropagatedRequestContextKeyCount = 32;
+
+    /// <summary>
+    /// Maximum length of a propagated key name. Longer keys are skipped outright — a key name that large is a
+    /// malformed or hostile registration, not a legitimate context key.
+    /// </summary>
+    internal const int MaxPropagatedRequestContextKeySize = 256;
+
+    /// <summary>Maximum measured size of any single propagated value; larger values are dropped, not truncated.</summary>
+    internal const int MaxPropagatedRequestContextValueSize = 8192;
+
+    /// <summary>
+    /// Maximum measured size of the whole propagated context.
+    /// <para />These four caps exist because this context is copied onto every outgoing bus message, event, and
+    /// background job. Without a bound, one request carrying an oversized context value multiplies it across the
+    /// entire downstream fan-out — inflating every message payload and every inbox/outbox row derived from it.
+    /// Dropping a value is always preferred over truncating it: a truncated value is silently wrong, and downstream
+    /// code cannot tell the difference between "not present" and "present but mangled".
+    /// </summary>
+    internal const int MaxPropagatedRequestContextTotalSize = 32768;
+
     /// <summary>
     /// Cached reflection information for the generic GetValue method.
     /// This enables dynamic invocation of the generic GetValue method when the type is only known at runtime.
@@ -266,35 +315,45 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     }
 
     /// <summary>
-    /// Retrieves all context keys excluding those marked as ignored in the application settings.
-    /// This method initializes the cached request context data and returns only the non-ignored keys.
+    /// Retrieves the keys of the TRUSTED PROPAGATION context — the explicitly allowlisted keys that resolved to a
+    /// value on this request — not every key the request happens to carry.
     /// </summary>
-    /// <returns>A list containing context keys that are not marked as ignored</returns>
+    /// <returns>Allowlisted keys that resolved, capped and ordered as described on <see cref="GetAllKeyValues" />.</returns>
     /// <remarks>
-    /// This method provides access to context keys that are actively tracked and not filtered out by ignore settings.
-    /// It's the standard way to get available context keys for most use cases.
+    /// Use <see cref="GetAllIncludeIgnoredKeyValues" /> when the full in-process context is genuinely required.
+    /// This method is the boundary-crossing view and is deliberately narrower.
     /// </remarks>
     public List<string> GetAllKeys()
     {
-        InitAllKeyValuesForCachedRequestContextData();
-
-        return GetAllKeys(CurrentHttpContext());
+        return BuildTrustedPropagationContext(CurrentHttpContext()).Keys.ToList();
     }
 
     /// <summary>
-    /// Retrieves all context key-value pairs excluding those marked as ignored in the application settings.
-    /// This method initializes the cached request context data if not already done and returns a filtered dictionary.
+    /// Retrieves the TRUSTED PROPAGATION context: the values of keys explicitly allowlisted by
+    /// <see cref="IPlatformApplicationRequestContextKeyToClaimTypeMapper.TrustedPropagationContextKeys" />, bounded
+    /// in count and size.
     /// </summary>
-    /// <returns>A dictionary containing context key-value pairs that are not marked as ignored</returns>
+    /// <returns>A case-insensitive dictionary of allowlisted keys that resolved to a value on this request.</returns>
     /// <remarks>
-    /// This method provides access to the actively tracked context data while respecting ignore settings.
-    /// It's the standard way to get all available context data for most use cases.
+    /// <para>
+    /// <b>Why this is an allowlist, not the full context.</b> This method feeds the copy of request context that
+    /// rides along on outgoing bus messages, CQRS events, and background jobs. Anything it returns leaves the
+    /// request that produced it and is re-established as ambient context in a different process. Returning the full
+    /// context made that boundary transitive: any value reachable from the request — including values a caller
+    /// supplied by header — would be re-asserted downstream as if the platform had established it, and would be
+    /// persisted into inbox/outbox rows. An allowlist inverts the default: a key crosses the boundary because it was
+    /// named, never because nothing denied it.
+    /// </para>
+    /// <para>
+    /// <b>Behaviour change.</b> This previously returned every non-ignored key. Callers that need the complete
+    /// in-process context must use <see cref="GetAllIncludeIgnoredKeyValues" />; applications that legitimately
+    /// need a business key downstream must add it to their mapper's allowlist rather than rely on it leaking
+    /// through.
+    /// </para>
     /// </remarks>
     public IDictionary<string, object?> GetAllKeyValues()
     {
-        InitAllKeyValuesForCachedRequestContextData();
-
-        return GetAllKeyValues(CurrentHttpContext());
+        return BuildTrustedPropagationContext(CurrentHttpContext());
     }
 
     /// <summary>
@@ -464,7 +523,13 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     /// <param name="useHttpContext">The HttpContext instance to use.</param>
     /// <param name="fullCachedRequestContextData">The ConcurrentDictionary instance that contains cached user context data.</param>
     /// <param name="hasFoundValue">hasFoundValue</param>
-    /// <param name="claimTypeMapper">The IPlatformApplicationRequestContextKeyToClaimTypeMapper instance that maps user context keys to claim types.</param>
+    /// <param name="claimTypeMapper">
+    /// The IPlatformApplicationRequestContextKeyToClaimTypeMapper instance that maps user context keys to claim types.
+    /// REQUIRED — must not be null. It also carries
+    /// <see cref="IPlatformApplicationRequestContextKeyToClaimTypeMapper.NotFromRequestHeaderContextKeys" />, the
+    /// policy that decides which keys lose the request-header fallback; passing null would disable that guard for
+    /// every key.
+    /// </param>
     /// <returns>The value associated with the specified context key. If the specified key is not found, a default value is returned.</returns>
     /// <typeparam name="T">The type of the value to get.</typeparam>
     /// <exception cref="ArgumentNullException">Thrown when the contextKey is null.</exception>
@@ -484,7 +549,11 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
         ConcurrentDictionary<string, object?> fullCachedRequestContextData,
         ConcurrentDictionary<string, object?> notIgnoredRequestContextKeysRequestContextData,
         out bool hasFoundValue,
-        IPlatformApplicationRequestContextKeyToClaimTypeMapper? claimTypeMapper = null
+        // REQUIRED, deliberately not optional: the mapper carries NotFromRequestHeaderContextKeys, which is what
+        // stops an authority-bearing key from being read off a request header. A null mapper makes that guard
+        // evaluate false and silently restores the header fallback for EVERY key — a security control must not
+        // default to "allow" when its policy source is absent. Callers hold a non-null mapper already.
+        IPlatformApplicationRequestContextKeyToClaimTypeMapper claimTypeMapper
     )
     {
         ArgumentNullException.ThrowIfNull(contextKey);
@@ -564,6 +633,251 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     }
 
     /// <summary>
+    /// Materialises the allowlisted, size-bounded context that may cross a process or message boundary.
+    /// </summary>
+    /// <param name="useHttpContext">The current HTTP context, or <c>null</c> outside a request.</param>
+    /// <returns>Resolved allowlisted keys, ordered by importance and cut off at the configured caps.</returns>
+    /// <remarks>
+    /// <para>
+    /// Ordering is deliberate and comes before the caps are applied: <see cref="PropagationPriority" /> first, then
+    /// key name for a stable tie-break. Because the caps truncate, order decides WHAT survives — an unordered walk
+    /// would let an incidental key crowd out the correlation id or user id, and would produce a different surviving
+    /// set on different runs for the same request.
+    /// </para>
+    /// <para>
+    /// The request id is fetched as <c>string</c> rather than <c>object</c> because its resolution path falls back to
+    /// the HTTP trace identifier, which the typed accessor is what triggers. Everything else is fetched untyped so a
+    /// value keeps whatever shape the application stored.
+    /// </para>
+    /// <para>
+    /// A key that does not resolve (<c>hasFoundValue == false</c>) is omitted rather than propagated as null, so
+    /// downstream code can distinguish "absent here" from "explicitly null". Values are budgeted by
+    /// <see cref="TryMeasurePropagationValue" /> BEFORE being added — measuring after would mean the oversized value
+    /// had already been admitted, and the total cap accounts for key length as well as value size because the key
+    /// names travel too.
+    /// </para>
+    /// <para>
+    /// Note the loop skips rather than breaks when a value fails its budget: a single oversized value must not
+    /// discard the smaller, lower-priority keys behind it.
+    /// </para>
+    /// </remarks>
+    private Dictionary<string, object?> BuildTrustedPropagationContext(HttpContext? useHttpContext)
+    {
+        var propagatedContext = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        var measuredTotalSize = 0;
+
+        foreach (var key in claimTypeMapper.TrustedPropagationContextKeys
+                     .Where(key => !string.IsNullOrWhiteSpace(key) && key.Length <= MaxPropagatedRequestContextKeySize)
+                     .OrderBy(PropagationPriority)
+                     .ThenBy(key => key, StringComparer.OrdinalIgnoreCase))
+        {
+            if (propagatedContext.Count >= MaxPropagatedRequestContextKeyCount)
+                break;
+
+            object? value;
+            bool hasFoundValue;
+            if (key.Equals(PlatformApplicationCommonRequestContextKeys.RequestIdContextKey, StringComparison.OrdinalIgnoreCase))
+            {
+                value = GetValue<string?>(
+                    key,
+                    useHttpContext,
+                    ApplicationSettingContext,
+                    FullCachedRequestContextData,
+                    NotIgnoredRequestContextKeysRequestContextData,
+                    out hasFoundValue,
+                    claimTypeMapper);
+            }
+            else
+            {
+                value = GetValue<object?>(
+                    key,
+                    useHttpContext,
+                    ApplicationSettingContext,
+                    FullCachedRequestContextData,
+                    NotIgnoredRequestContextKeysRequestContextData,
+                    out hasFoundValue,
+                    claimTypeMapper);
+            }
+            if (!hasFoundValue)
+                continue;
+
+            var remainingTotalSize = MaxPropagatedRequestContextTotalSize - measuredTotalSize - key.Length;
+            if (remainingTotalSize < 0
+                || !TryMeasurePropagationValue(value, Math.Min(MaxPropagatedRequestContextValueSize, remainingTotalSize), out var measuredValueSize))
+                continue;
+
+            propagatedContext[key] = value;
+            measuredTotalSize += key.Length + measuredValueSize;
+        }
+
+        return propagatedContext;
+    }
+
+    /// <summary>
+    /// Ranks a key's importance when the propagation caps force truncation — lower wins.
+    /// </summary>
+    /// <param name="key">A key from the trusted allowlist.</param>
+    /// <returns>The rank; unranked application keys share the trailing bucket and tie-break by name.</returns>
+    /// <remarks>
+    /// The order encodes what a downstream consumer cannot work without. Request id ranks first because losing it
+    /// breaks cross-service correlation for the entire downstream chain — the one value whose absence degrades
+    /// diagnosis of every other failure. Identity follows, then the pipeline key that the circular-handler guard
+    /// depends on. Application-specific keys default to the trailing bucket; an application that needs one of its own
+    /// keys to survive truncation ahead of the platform ones should raise its allowlist discipline rather than
+    /// reorder this, since these are the keys the platform itself depends on downstream.
+    /// </remarks>
+    private static int PropagationPriority(string key)
+    {
+        return key switch
+        {
+            PlatformApplicationCommonRequestContextKeys.RequestIdContextKey => 0,
+            PlatformApplicationCommonRequestContextKeys.UserIdContextKey => 1,
+            PlatformApplicationCommonRequestContextKeys.UserNameContextKey => 2,
+            PlatformApplicationCommonRequestContextKeys.EmailContextKey => 3,
+            PlatformApplicationCommonRequestContextKeys.UserRolesContextKey => 4,
+            PlatformApplicationCommonRequestContextKeys.ConsumerOrEventHandlerPipeLineKey => 5,
+            _ => 100
+        };
+    }
+
+    /// <summary>
+    /// Decides whether a value fits the remaining propagation budget, measuring it WITHOUT serializing it.
+    /// </summary>
+    /// <param name="value">The candidate value.</param>
+    /// <param name="remainingSize">Budget left for this value.</param>
+    /// <param name="measuredSize">Measured size when the value fits; meaningless when the method returns false.</param>
+    /// <param name="depth">Current nesting depth; the walk refuses to go deeper than 4.</param>
+    /// <returns><c>true</c> when the value is both measurable and within budget.</returns>
+    /// <remarks>
+    /// <para>
+    /// <b>Why measure instead of serialize.</b> The obvious implementation — serialize the value and check the
+    /// string length — costs an allocation proportional to the value on the hot path of every request, and does it
+    /// precisely for values that turn out to be too big to keep. It also runs the value's own converters and
+    /// getters, so a hostile or merely expensive model could stall or throw inside context propagation. This walks
+    /// the shape instead and allocates nothing beyond the enumerators.
+    /// </para>
+    /// <para>
+    /// <b>Why unknown object graphs are refused.</b> An arbitrary POCO cannot be measured without invoking its
+    /// getters, so the final <c>return false</c> drops it. That is fail-closed by design: an unmeasurable value is
+    /// also an unbounded one, and letting it through would defeat the caps it could not be checked against.
+    /// Applications that need a complex value downstream should propagate a string or a plain dictionary.
+    /// </para>
+    /// <para>
+    /// The depth limit and the 128-item collection limits terminate cyclic and pathologically wide graphs. Both are
+    /// hard refusals rather than partial measurements — a partially measured value would be admitted with an
+    /// understated size and blow the very budget being enforced. Note <c>depth</c> guards nesting only; sibling
+    /// breadth is bounded separately by the item counts.
+    /// </para>
+    /// </remarks>
+    private static bool TryMeasurePropagationValue(object? value, int remainingSize, out int measuredSize, int depth = 0)
+    {
+        measuredSize = 0;
+        if (remainingSize < 0 || depth > 4)
+            return false;
+        if (value == null)
+            return true;
+
+        if (value is string stringValue)
+        {
+            measuredSize = stringValue.Length;
+            return measuredSize <= remainingSize;
+        }
+
+        if (value is JsonElement jsonElement)
+            return TryMeasureJsonElement(jsonElement, remainingSize, out measuredSize, depth);
+
+        var valueType = value.GetType();
+        if (valueType.IsPrimitive || valueType.IsEnum || value is decimal or Guid or DateTime or DateTimeOffset or TimeSpan)
+        {
+            measuredSize = value.ToString()?.Length ?? 0;
+            return measuredSize <= remainingSize;
+        }
+
+        if (value is IDictionary dictionary)
+        {
+            foreach (DictionaryEntry item in dictionary)
+            {
+                if (dictionary.Count > 128
+                    || !TryMeasurePropagationValue(item.Key, remainingSize - measuredSize, out var keySize, depth + 1)
+                    || !TryMeasurePropagationValue(item.Value, remainingSize - measuredSize - keySize, out var valueSize, depth + 1))
+                    return false;
+
+                measuredSize += keySize + valueSize;
+            }
+
+            return true;
+        }
+
+        if (value is IEnumerable values)
+        {
+            var itemCount = 0;
+            foreach (var item in values)
+            {
+                itemCount++;
+                if (itemCount > 128
+                    || !TryMeasurePropagationValue(item, remainingSize - measuredSize, out var itemSize, depth + 1))
+                    return false;
+
+                measuredSize += itemSize;
+            }
+
+            return true;
+        }
+
+        // Unknown object graphs are intentionally refused rather than invoking arbitrary getters or allocating an
+        // unbounded serialization merely to decide whether the value is safe to propagate.
+        return false;
+    }
+
+    /// <summary>
+    /// Measures a <see cref="JsonElement" /> branch of the propagation walk.
+    /// </summary>
+    /// <param name="element">The element to measure.</param>
+    /// <param name="remainingSize">Budget left for this element.</param>
+    /// <param name="measuredSize">Measured size when the element fits.</param>
+    /// <param name="depth">Current nesting depth, shared with <see cref="TryMeasurePropagationValue" />.</param>
+    /// <returns><c>true</c> when the element is within budget.</returns>
+    /// <remarks>
+    /// <see cref="JsonElement" /> needs its own arm because it is a value that already IS parsed JSON — it arrives
+    /// whenever a context value was deserialized rather than set in-process, and the generic object walk would fall
+    /// through to the unknown-graph refusal and drop it. Strings are measured by decoded length while numbers and
+    /// booleans are measured by raw text, because that is what each will actually occupy once re-emitted.
+    /// <see cref="JsonValueKind.Undefined" /> is treated as empty like null, and any unrecognised kind is refused —
+    /// the same fail-closed default as the object walk.
+    /// </remarks>
+    private static bool TryMeasureJsonElement(JsonElement element, int remainingSize, out int measuredSize, int depth)
+    {
+        measuredSize = 0;
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Null:
+            case JsonValueKind.Undefined:
+                return true;
+            case JsonValueKind.String:
+                measuredSize = element.GetString()?.Length ?? 0;
+                return measuredSize <= remainingSize;
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+            case JsonValueKind.Number:
+                measuredSize = element.GetRawText().Length;
+                return measuredSize <= remainingSize;
+            case JsonValueKind.Array:
+                return TryMeasurePropagationValue(element.EnumerateArray(), remainingSize, out measuredSize, depth + 1);
+            case JsonValueKind.Object:
+                foreach (var property in element.EnumerateObject())
+                {
+                    if (!TryMeasureJsonElement(property.Value, remainingSize - measuredSize - property.Name.Length, out var propertySize, depth + 1))
+                        return false;
+                    measuredSize += property.Name.Length + propertySize;
+                }
+
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
     /// GetAllKeyValues also from HttpContext and other source to auto save data into CachedRequestContext
     /// </summary>
     protected void InitAllKeyValuesForCachedRequestContextData()
@@ -596,10 +910,27 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
         return httpContextAccessor.HttpContext;
     }
 
+    /// <summary>
+    /// Resolves a context key from the live HTTP context, in trust order: request id (trace identifier) → validated
+    /// user claims → request headers. The ordering is the security property, not an optimisation — a claim, having
+    /// been established by authentication, always wins over anything the caller sent, and authority-bearing keys are
+    /// cut off before the header step is ever reached.
+    /// </summary>
+    /// <typeparam name="T">Expected value type.</typeparam>
+    /// <param name="useHttpContext">Current HTTP context; a null, featureless, or aborted context resolves nothing.</param>
+    /// <param name="contextKey">Key to resolve.</param>
+    /// <param name="claimTypeMapper">
+    /// Claim mapping AND header-fallback policy. Non-nullable: see the inline note below and on
+    /// <see cref="GetValue{T}" />.
+    /// </param>
+    /// <param name="foundValue">The resolved value, or <c>default</c>.</param>
+    /// <returns><c>true</c> when a value was resolved from the HTTP context.</returns>
     private static bool TryGetValueFromHttpContext<T>(
         HttpContext? useHttpContext,
         string contextKey,
-        IPlatformApplicationRequestContextKeyToClaimTypeMapper? claimTypeMapper,
+        // Non-nullable: this method hosts the header-fallback guard below, which must never be reachable without
+        // the mapper that defines which keys the guard protects. See the note on GetValue's parameter.
+        IPlatformApplicationRequestContextKeyToClaimTypeMapper claimTypeMapper,
         out T? foundValue
     )
     {
@@ -621,6 +952,17 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
 
             if (TryGetValueFromUserClaims(useHttpContext.User, contextKey, claimTypeMapper, out foundValue))
                 return true;
+
+            // Authority-bearing keys stop here: present as a validated claim, or not present at all.
+            // Falling through to the header lookup would let the caller assert the value the system was supposed to
+            // establish about them — impersonation for a user id, privilege escalation for a role, side-effect
+            // suppression for a trusted internal flag.
+            // See IPlatformApplicationRequestContextKeyToClaimTypeMapper.NotFromRequestHeaderContextKeys.
+            if (claimTypeMapper.NotFromRequestHeaderContextKeys.Contains(contextKey))
+            {
+                foundValue = default;
+                return false;
+            }
 
             if (TryGetValueFromRequestHeaders(useHttpContext.Request.Headers, contextKey, claimTypeMapper, out foundValue))
                 return true;

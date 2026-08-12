@@ -21,6 +21,7 @@ const {
   checkWorkflowDebuggerTracePolicy,
   checkGoalContractSkillCompliance,
   checkGoalContractFileLifecycle,
+  checkReviewChangesInlineExecutionPolicy,
 } = await import(pathToFileURL(verifyScript).href);
 
 const workflowIds = [
@@ -36,7 +37,7 @@ const sequenceByWorkflow = {
     "plan",
     "spec",
     "spec [mode=tests]",
-    "review-artifact --type=spec-tests",
+    "artifact-review --type=spec-tests",
     "feature-implement",
     "integration-test",
     "integration-test-review",
@@ -52,7 +53,7 @@ const sequenceByWorkflow = {
     "spec [mode=amend]",
     "plan",
     "spec [mode=tests]",
-    "review-artifact --type=spec-tests",
+    "artifact-review --type=spec-tests",
     "fix",
     "integration-test",
     "integration-test-review",
@@ -68,7 +69,7 @@ const sequenceByWorkflow = {
     "spec",
     "plan",
     "spec [mode=tests]",
-    "review-artifact --type=spec-tests",
+    "artifact-review --type=spec-tests",
     "feature-implement",
     "integration-test",
     "integration-test-review",
@@ -82,7 +83,7 @@ const sequenceByWorkflow = {
     "spec",
     "plan",
     "spec [mode=tests]",
-    "review-artifact --type=spec-tests",
+    "artifact-review --type=spec-tests",
     "feature-implement",
     "integration-test",
     "integration-test-review",
@@ -95,7 +96,7 @@ const sequenceByWorkflow = {
   "spec-sync": [
     "workflow-review-changes",
     "spec [mode=tests]",
-    "review-artifact --type=spec-tests",
+    "artifact-review --type=spec-tests",
     "spec [mode=sync]",
     "integration-test",
     "integration-test-review",
@@ -409,7 +410,7 @@ test("verify-workflow-cycle-compliance enforces spec before implementation plann
       "plan",
       "spec",
       "spec [mode=tests]",
-      "review-artifact --type=spec-tests",
+      "artifact-review --type=spec-tests",
       "feature-implement",
       "integration-test",
       "integration-test-review",
@@ -561,7 +562,7 @@ test("checkGoalContractSkillCompliance accepts marker or active-goal wording, fa
 
 test("checkGoalContractSkillCompliance requires Goal Satisfaction wording on review/workflow surfaces", () => {
   const markerOnly = "<!-- SYNC:goal-contract-satisfaction-loop:reminder -->";
-  const failures = checkGoalContractSkillCompliance("review-changes", markerOnly, {
+  const failures = checkGoalContractSkillCompliance("changes-review", markerOnly, {
     requireSatisfaction: true,
   });
   assert.equal(failures.length, 1);
@@ -569,12 +570,64 @@ test("checkGoalContractSkillCompliance requires Goal Satisfaction wording on rev
 
   assert.deepEqual(
     checkGoalContractSkillCompliance(
-      "review-changes",
+      "changes-review",
       `${markerOnly}\nEmit the Goal Satisfaction matrix before PASS.`,
       { requireSatisfaction: true }
     ),
     []
   );
+});
+
+test("checkReviewChangesInlineExecutionPolicy enforces inline-in-main-session, rejects sub-agent regression", () => {
+  const wrcRel = ".claude/skills/workflow-review-changes/SKILL.md";
+  const swfRel = ".claude/skills/start-workflow/SKILL.md";
+
+  // PASS: workflow-review-changes SKILL declares inline-in-main-session, no obsolete mandate.
+  assert.deepEqual(
+    checkReviewChangesInlineExecutionPolicy(
+      wrcRel,
+      "[WORKFLOW-IN-WORKFLOW: MUST RUN INLINE IN THE MAIN SESSION — never as a sub-agent] ..."
+    ),
+    []
+  );
+
+  // FAIL: regression to the obsolete 'MUST RUN AS SUB-AGENT' whole-workflow mandate.
+  const subagentRegression = checkReviewChangesInlineExecutionPolicy(
+    wrcRel,
+    "[WORKFLOW-IN-WORKFLOW: MUST RUN AS SUB-AGENT when inside another workflow] ..."
+  );
+  assert.ok(
+    subagentRegression.some((f) => /MUST RUN AS SUB-AGENT/.test(f)),
+    "expected the obsolete sub-agent mandate to be rejected"
+  );
+  // ...and it also lacks the required inline declaration, so the require check fails too.
+  assert.ok(subagentRegression.some((f) => /missing inline-in-main-session execution mandate/.test(f)));
+
+  // FAIL: start-workflow keeps the old code-reviewer sub-agent delegation row.
+  const delegationRowRegression = checkReviewChangesInlineExecutionPolicy(
+    swfRel,
+    [
+      "| Step | Workflow activated | Step count source | Agent type |",
+      "| --- | --- | --- | --- |",
+      "| `/workflow-review-changes` | `workflow-review-changes` | `len(...)` | `code-reviewer` |",
+    ].join("\n")
+  );
+  assert.ok(
+    delegationRowRegression.some((f) => /sub-agent delegation row/.test(f)),
+    "expected the obsolete code-reviewer delegation row to be rejected"
+  );
+
+  // PASS: start-workflow declares the inline exception for workflow-review-changes.
+  assert.deepEqual(
+    checkReviewChangesInlineExecutionPolicy(
+      swfRel,
+      "EXCEPTION — `workflow-review-changes` runs INLINE in the main session (never a sub-agent)."
+    ),
+    []
+  );
+
+  // Unknown surface ⇒ no-op (no false positives on unrelated files).
+  assert.deepEqual(checkReviewChangesInlineExecutionPolicy("some/other/file.md", "anything"), []);
 });
 
 test("checkGoalContractFileLifecycle validates a full goal-contract lifecycle", () => {

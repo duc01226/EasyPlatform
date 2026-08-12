@@ -65,10 +65,10 @@ CLOSING = """
 TARGETS: list[tuple[str, list[str]]] = [
     # --- Review tier ---
     ("code-review", [r"^## Core Principles \(ENFORCE ALL\)"]),
-    ("review-changes", [r"^## Core Principles \(ENFORCE ALL\)"]),
-    ("review-architecture", [r"^## Review Mindset \(NON-NEGOTIABLE\)"]),
-    ("review-domain-entities", [r"^## Phase 0: "]),
-    ("review-artifact", [r"^## Adversarial Review Mindset \(NON-NEGOTIABLE\)"]),
+    ("changes-review", [r"^## Core Principles \(ENFORCE ALL\)"]),
+    ("architecture-review", [r"^## Review Mindset \(NON-NEGOTIABLE\)"]),
+    ("domain-entities-review", [r"^## Phase 0: "]),
+    ("artifact-review", [r"^## Adversarial Review Mindset \(NON-NEGOTIABLE\)"]),
     ("why-review", [r"^## Adversarial Review Mindset \(NON-NEGOTIABLE\)"]),
     ("plan-review", [r"^## Adversarial Review Mindset \(NON-NEGOTIABLE\)"]),
     ("integration-test-review", [r"^## Phase 0: Scope Detection"]),

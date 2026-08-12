@@ -4,7 +4,9 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Net;
 using System.Text.RegularExpressions;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
@@ -182,7 +184,7 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
             {
                 RootDirectory = rootDirectory,
                 FullFilePath = PlatformAzureFileStorageFileItem.GetFullFilePath(blobClient),
-                AbsoluteUri = blobClient.Uri.AbsoluteUri,
+                AbsoluteUri = ToPublicBlobUri(blobClient.Uri).AbsoluteUri,
                 ContentType = blobHttpHeaders.ContentType,
                 Etag = response.Value.ETag.ToString(),
                 Size = properties.Value.ContentLength,
@@ -222,7 +224,9 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
 
         var blobClient = containerClient.GetBlobClient(pureFilePath);
 
-        return await blobClient.ExistsAsync(cancellationToken).Then(p => p.HasValue);
+        // Response<bool>.Value is the blob-existence result; .HasValue only reports whether the HTTP response carried a
+        // payload (true for every successful call), which made this method report "exists" for never-uploaded paths.
+        return await blobClient.ExistsAsync(cancellationToken).Then(p => p.Value);
     }
 
     public async Task<bool> DeleteAsync(string fullFilePath, CancellationToken cancellationToken = default)
@@ -292,10 +296,35 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
     public async Task<Stream> GetStreamAsync(string fullFilePath, CancellationToken cancellationToken = default)
     {
         var blobClient = await GetBlobClientAsync(fullFilePath);
-        var innerStream = await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
+        var innerStream = await OpenReadTranslatingNotFoundAsync(blobClient, fullFilePath, cancellationToken);
 
         // Wrap stream to rate-limit read operations
         return new RateLimitedReadStream(innerStream, StreamReadLimiter);
+    }
+
+    /// <summary>
+    /// Opens the blob for reading, translating Azure's native 404 into the PROVIDER-NEUTRAL
+    /// <see cref="PlatformFileStorageNotFoundException" />.
+    /// <para>
+    /// Recognising the vendor error is THIS layer's responsibility. Callers hold only the storage-agnostic
+    /// <see cref="IPlatformFileStorageService" />, so they must be able to detect "file is gone" without referencing
+    /// <c>Azure.RequestFailedException</c> — and without matching it by type-name string, which keeps compiling but
+    /// silently stops matching after a rename or a provider swap. The native exception is kept as InnerException.
+    /// </para>
+    /// </summary>
+    private static async Task<Stream> OpenReadTranslatingNotFoundAsync(
+        BlobClient blobClient,
+        string filePathForError,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
+        }
+        catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound)
+        {
+            throw new PlatformFileStorageNotFoundException($"File not found in storage: '{filePathForError}'.", ex);
+        }
     }
 
     /// <summary>
@@ -308,7 +337,7 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
         var pureFilePath = filePath.RemoveSpecialCharactersUri();
         var blobClient = containerClient.GetBlobClient(pureFilePath);
 
-        var innerStream = await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
+        var innerStream = await OpenReadTranslatingNotFoundAsync(blobClient, $"{rootDirectory}/{pureFilePath}", cancellationToken);
 
         // Wrap stream to rate-limit read operations
         return new RateLimitedReadStream(innerStream, StreamReadLimiter);
@@ -320,7 +349,7 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
 
         return !await blobClient.ExistsAsync(cancellationToken)
             ? null
-            : CreateBlobSharedAccessUri(blobClient, expirationTime ?? fileStorageConfiguration.DefaultSharedPrivateFileUriAccessTimeMinutes.Minutes());
+            : ToPublicBlobUri(CreateBlobSharedAccessUri(blobClient, expirationTime ?? fileStorageConfiguration.DefaultSharedPrivateFileUriAccessTimeMinutes.Minutes()));
     }
 
     public async Task<Uri?> CreateSharedAccessUriAsync(
@@ -333,7 +362,7 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
 
         return !await blobClient.ExistsAsync(cancellationToken)
             ? null
-            : CreateBlobSharedAccessUri(blobClient, expirationTime ?? fileStorageConfiguration.DefaultSharedPrivateFileUriAccessTimeMinutes.Minutes());
+            : ToPublicBlobUri(CreateBlobSharedAccessUri(blobClient, expirationTime ?? fileStorageConfiguration.DefaultSharedPrivateFileUriAccessTimeMinutes.Minutes()));
     }
 
     /// <summary>
@@ -465,7 +494,7 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
         {
             RootDirectory = rootDirectory,
             FullFilePath = PlatformAzureFileStorageFileItem.GetFullFilePath(destBlobClient),
-            AbsoluteUri = destBlobClient.Uri.AbsoluteUri,
+            AbsoluteUri = ToPublicBlobUri(destBlobClient.Uri).AbsoluteUri,
             ContentType = destProperties.Value.ContentType,
             Etag = destProperties.Value.ETag.ToString(),
             Size = destProperties.Value.ContentLength,
@@ -554,14 +583,14 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
 
     public string GetFileStorageEndpoint()
     {
-        return blobServiceClient.Uri.AbsoluteUri;
+        return GetPublicBlobEndpoint();
     }
 
     public async Task<IPlatformFileStorageDirectory> GetDirectoryAsync(
         string rootDirectory,
         string directoryPath)
     {
-        return new PlatformAzureFileStorageDirectory(await GetAzureBlobContainerClientAsync(rootDirectory, null), directoryPath);
+        return new PlatformAzureFileStorageDirectory(await GetAzureBlobContainerClientAsync(rootDirectory, null), directoryPath, GetPublicBlobEndpoint());
     }
 
     /// <summary>
@@ -582,7 +611,7 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
         {
             RootDirectory = rootDirectory,
             FullFilePath = PlatformAzureFileStorageFileItem.GetFullFilePath(blobClient),
-            AbsoluteUri = blobClient.Uri.AbsoluteUri,
+            AbsoluteUri = ToPublicBlobUri(blobClient.Uri).AbsoluteUri,
             ContentType = PlatformFileMimeTypeMapper.Instance.GetMimeType(filePath),
             Description = PlatformAzureFileStorageFileItem.GetMetadata(
                 blobProperties.Value.Metadata,
@@ -700,6 +729,36 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
     private Task<BlobClient> GetBlobClientAsync(string rootDirectory, string filePath, PlatformFileStorageOptions.PublicAccessTypes? publicAccessType = null)
     {
         return GetBlobClientAsync(PlatformAzureBlobPathInfo.Create(rootDirectory, filePath), publicAccessType);
+    }
+
+    private string GetPublicBlobEndpoint()
+    {
+        var configuredPublicBlobEndpoint = fileStorageConfiguration.GetPublicBlobEndpoint();
+
+        return string.IsNullOrWhiteSpace(configuredPublicBlobEndpoint)
+            ? blobServiceClient.Uri.AbsoluteUri
+            : configuredPublicBlobEndpoint;
+    }
+
+    private Uri ToPublicBlobUri(Uri blobUri)
+    {
+        return ToPublicBlobUri(blobServiceClient.Uri.AbsoluteUri, fileStorageConfiguration.GetPublicBlobEndpoint(), blobUri);
+    }
+
+    /// <summary>
+    /// Rewrites <paramref name="blobUri"/> so the internal storage endpoint prefix is replaced by the configured
+    /// public endpoint, while preserving the blob path and any SAS query. Returns the URI unchanged when no public
+    /// endpoint is configured or when the URI does not start with the internal endpoint. The SAS signature is computed
+    /// over the blob path and account (not the host), so a SAS URI stays valid after the host swap.
+    /// <para>
+    /// Pure and static so the host-rewrite contract is unit-testable without a live <see cref="BlobServiceClient"/>
+    /// (the key case is local Docker, where the SDK connects via the internal <c>azurite</c> host but clients must
+    /// receive the host-visible <c>127.0.0.1</c> endpoint). See TC-SUP-INF-001.
+    /// </para>
+    /// </summary>
+    public static Uri ToPublicBlobUri(string internalEndpoint, string? publicBlobEndpoint, Uri blobUri)
+    {
+        return PlatformBlobUriRewriter.Rewrite(internalEndpoint, publicBlobEndpoint, blobUri);
     }
 
     /// <summary>

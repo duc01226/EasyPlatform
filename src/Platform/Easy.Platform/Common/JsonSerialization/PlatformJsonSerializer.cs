@@ -165,6 +165,58 @@ public static class PlatformJsonSerializer
     }
 
     /// <summary>
+    /// Serializes a payload-free type diagnostic for logs and traces without traversing the value.
+    /// Normal transport and persistence serialization remain on <see cref="Serialize{TValue}(TValue)"/>.
+    /// </summary>
+    /// <typeparam name="TValue">Declared type of the observed value.</typeparam>
+    /// <param name="value">The observed value. Only its type is read; it is never traversed and may be null.</param>
+    /// <param name="forceUseRuntimeType">
+    /// Report the runtime type instead of <typeparamref name="TValue" />. Diagnostic call sites should pass
+    /// <c>true</c>: they typically hold the value as <see cref="object" /> or a base type, so the declared type
+    /// would name the abstraction rather than the command, event, or entity that actually failed.
+    /// </param>
+    /// <param name="writeIndented">Whether to pretty-print the envelope.</param>
+    /// <returns>A JSON envelope containing only a type name. Never throws.</returns>
+    /// <remarks>
+    /// <b>Use this at every observability sink</b> — log message arguments, distributed-trace tags, and persisted
+    /// diagnostic fields — in place of <c>ToFormattedJson()</c> or <c>{@Destructured}</c> logging. Those sinks reach a
+    /// far wider audience than the data itself, and a command, entity, or event serialized into them discloses
+    /// whatever it carries. <c>PlatformDiagnosticSinkSourceShapeTests</c> asserts the known sinks route through here.
+    /// </remarks>
+    public static string SerializeForDiagnostics<TValue>(
+        TValue value,
+        bool forceUseRuntimeType = false,
+        bool writeIndented = false)
+    {
+        return PlatformDiagnosticJsonSerializer.Serialize(value, forceUseRuntimeType, writeIndented);
+    }
+
+    /// <summary>
+    /// Serializes debuggable exception metadata for logs and persisted diagnostic fields: the exception type,
+    /// message, demystified stack trace, and inner exception TYPE names, bounded to a fixed byte cap.
+    /// <see cref="Exception.Data" /> and inner exception MESSAGES are never read, and no observed payload object is
+    /// ever traversed. See <c>PlatformDiagnosticJsonSerializer.SerializeException</c> for the full trade-off,
+    /// including the accepted disclosure of credential-bearing exception messages.
+    /// </summary>
+    /// <param name="exception">The failure; may be null.</param>
+    /// <param name="writeIndented">Whether to pretty-print the envelope.</param>
+    /// <returns>
+    /// A JSON envelope carrying the exception type, message, demystified stack trace, and inner exception TYPE
+    /// names, bounded to a fixed byte cap. Never throws.
+    /// </returns>
+    /// <remarks>
+    /// Prefer this over passing the exception to <see cref="Microsoft.Extensions.Logging.ILogger" /> as its exception
+    /// argument on high-volume or externally-visible paths. Doing that hands the pipeline the entire object graph,
+    /// which structured sinks expand — and exception text is a routine carrier of connection strings, tokens, and the
+    /// entity values that caused the failure. Where full detail is genuinely needed for diagnosis, it belongs in a
+    /// debugger or a dedicated error store, not a sink that repeats on every retry.
+    /// </remarks>
+    public static string SerializeExceptionForDiagnostics(Exception exception, bool writeIndented = false)
+    {
+        return PlatformDiagnosticJsonSerializer.SerializeException(exception, writeIndented);
+    }
+
+    /// <summary>
     /// Serializes the specified value to a JSON string using the provided options or the current default options.
     /// </summary>
     /// <typeparam name="TValue">The type of the value to serialize.</typeparam>
@@ -174,6 +226,13 @@ public static class PlatformJsonSerializer
     /// <param name="propPredicate">propPredicate</param>
     /// <param name="objType">use objType instead of generic type</param>
     /// <returns>The JSON string representation of the serialized value.</returns>
+    /// <remarks>
+    /// A null <paramref name="value" /> is safe here even when <paramref name="forceUseRuntimeType" /> is true: there
+    /// is no runtime type to resolve, so the declared type is used. Before that guard, forcing runtime typing on a
+    /// null threw <see cref="NullReferenceException" /> from inside the serializer — reachable in practice because
+    /// parameterless recurring background jobs execute with a null param and every diagnostic caller forces runtime
+    /// typing.
+    /// </remarks>
     public static string Serialize<TValue>(
         TValue value,
         JsonSerializerOptions customSerializerOptions,
@@ -183,7 +242,11 @@ public static class PlatformJsonSerializer
     {
         var givenObjectType = objType ?? typeof(TValue);
 
-        var givenOrRuntimeObjType = givenObjectType.IsAbstract || forceUseRuntimeType ? value.GetType() : givenObjectType;
+        // A null value has no runtime type to resolve, so callers that force runtime typing must fall back
+        // to the declared type.
+        var givenOrRuntimeObjType = value is not null && (givenObjectType.IsAbstract || forceUseRuntimeType)
+            ? value.GetType()
+            : givenObjectType;
 
         if (propPredicate != null)
         {

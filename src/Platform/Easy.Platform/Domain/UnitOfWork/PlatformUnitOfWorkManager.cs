@@ -616,11 +616,11 @@ public abstract class PlatformUnitOfWorkManager : IPlatformUnitOfWorkManager
             );
             uow.OnDisposedActions.Add(
                 () =>
-                    Task.Run(() =>
-                    {
-                        FreeCreatedUnitOfWorks.TryRemove(uow.Id, out _);
-                        CompletedUows.TryRemove(uow.Id, out _);
-                    })
+                {
+                    FreeCreatedUnitOfWorks.TryRemove(uow.Id, out _);
+                    CompletedUows.TryRemove(uow.Id, out _);
+                    return Task.CompletedTask;
+                }
             );
         }
 
@@ -802,12 +802,12 @@ public abstract class PlatformUnitOfWorkManager : IPlatformUnitOfWorkManager
             );
             newUow.OnDisposedActions.Add(
                 () =>
-                    Task.Run(() =>
-                    {
-                        cachedCurrentUow = null;
-                        CurrentUnitOfWorksDict.TryRemove(newUow.Id, out _);
-                        CompletedUows.TryRemove(newUow.Id, out _);
-                    })
+                {
+                    cachedCurrentUow = null;
+                    CurrentUnitOfWorksDict.TryRemove(newUow.Id, out _);
+                    CompletedUows.TryRemove(newUow.Id, out _);
+                    return Task.CompletedTask;
+                }
             );
 
             return newUow;

@@ -125,6 +125,21 @@ function carrierFiles() {
         if (!d.isDirectory()) continue;
         const p = path.join(SKILLS_DIR, d.name, 'SKILL.md');
         if (fs.existsSync(p)) out.push(p);
+
+        // references/*.md carry procedure bodies a skill loads per mode, and they duplicate
+        // across skills exactly as SKILL.md does — a forked sync procedure lives there, not
+        // in SKILL.md. Scanning only SKILL.md put that duplication structurally OUT OF REACH
+        // of this property: a SYNC: block in references/ could diverge forever and stay green.
+        // Must stay aligned with find_target_files() in sync-update-blocks.py, which writes
+        // the same set — a carrier this test guards but the writer never updates is a
+        // permanently-red test, and one the writer updates but this test ignores is no guard.
+        // That alignment is ASSERTED by the PARITY test at the bottom of this suite, not by
+        // this comment — a comment is not a sensor.
+        const refDir = path.join(SKILLS_DIR, d.name, 'references');
+        if (!fs.existsSync(refDir)) continue;
+        for (const f of fs.readdirSync(refDir, { withFileTypes: true })) {
+            if (f.isFile() && f.name.endsWith('.md')) out.push(path.join(refDir, f.name));
+        }
     }
     for (const f of fs.readdirSync(AGENTS_DIR, { withFileTypes: true })) {
         if (f.isFile() && f.name.endsWith('.md')) out.push(path.join(AGENTS_DIR, f.name));
@@ -150,8 +165,8 @@ for (const t of TAGS) {
 
 // --- OVERRIDE-substance contract (review-protocol-injection) ---------------------
 // Canonical's review-protocol-injection template tells a fresh review sub-agent to embed
-// N protocol blocks VERBATIM. Three review skills (integration-test-review, review-architecture,
-// review-ui) copy that template inside an <!-- OVERRIDE:review-protocol-injection --> block ONLY
+// N protocol blocks VERBATIM. Three review skills (integration-test-review, architecture-review,
+// ui-review) copy that template inside an <!-- OVERRIDE:review-protocol-injection --> block ONLY
 // to swap canonical's generic `code-reviewer` for a domain specialist (integration-tester /
 // architect / ui-ux-designer). Because OVERRIDE is excluded from the equality property and is
 // NOT touched by sync-update-blocks.py, those copies can silently fall behind canonical on the
@@ -222,19 +237,23 @@ module.exports = {
             },
         },
         {
-            // Pinned carrier count (no silent cap): review-protocol-injection reaches 13 carriers =
-            // 8 review SKILLs (code-review, review-changes, review-artifact, knowledge-review,
-            // production-readiness-review, plan-review, why-review, spec-clarify) + 5 review AGENTS
-            // (code-reviewer, spec-compliance-reviewer, quality-gate-review, planner, integration-tester).
+            // Pinned carrier count (no silent cap): review-protocol-injection reaches 14 carriers =
+            // 9 review SKILLs (code-review, changes-review, artifact-review, knowledge-review,
+            // production-readiness-review, plan-review, why-review, spec-clarify, architecture-review-full)
+            // + 5 review AGENTS (code-reviewer, spec-compliance-reviewer, quality-gate-review, planner,
+            // integration-tester).
             // spec-clarify (the post-spec clarification gate) joined as the 8th skill: it runs INLINE for
             // its AskUserQuestion gate but performs the SAME validate→fix→fresh-full-re-review cycle as its
             // review-family peers, so it carries the trio (double-round-trip / fresh-context / protocol-injection)
-            // at parity with review-artifact. A 14th appearing — or one vanishing — must surface loudly here
+            // at parity with artifact-review. architecture-review-full (the whole-project architecture-health
+            // audit) joined as the 9th skill: it is an adoption-matrix review skill (BATCHING + SEVERITY in
+            // inject_review_skill_blocks.py) that synthesizes a consolidated report, so it carries the plain
+            // review-protocol trio at parity. A 15th appearing — or one vanishing — must surface loudly here
             // rather than quietly widen/narrow the guarded set.
-            name: 'COVERAGE: review-protocol-injection reaches all 13 carriers and carries the Triangulation protocol (post-P1)',
+            name: 'COVERAGE: review-protocol-injection reaches all 14 carriers and carries the Triangulation protocol (post-P1)',
             fn() {
                 const carriers = PAIRS.filter((p) => p.tag === 'review-protocol-injection');
-                assertEqual(carriers.length, 13, `expected 13 review-protocol-injection carriers, found ${carriers.length}`);
+                assertEqual(carriers.length, 14, `expected 14 review-protocol-injection carriers, found ${carriers.length}`);
                 const canon = CANON_BODY.get('review-protocol-injection');
                 assertTrue(
                     canon != null && /Spec ↔ Tests ↔ Code Triangulation/.test(canon),
@@ -262,7 +281,7 @@ module.exports = {
                 assertEqual(
                     OVERRIDE_CARRIERS.length,
                     3,
-                    `expected 3 OVERRIDE:${RPI} carriers (integration-test-review, review-architecture, review-ui), found ${OVERRIDE_CARRIERS.length}: ` +
+                    `expected 3 OVERRIDE:${RPI} carriers (integration-test-review, architecture-review, ui-review), found ${OVERRIDE_CARRIERS.length}: ` +
                         `${OVERRIDE_CARRIERS.map((o) => o.carrier).join(', ') || '(none)'}`
                 );
                 const drift = [];
@@ -343,6 +362,70 @@ module.exports = {
                     'carrier extractor must return null on a missing marker'
                 );
                 assertTrue(readCanonicalBody('definitely-not-a-real-tag-xyz') === null, 'canonical extractor must return null on a missing tag');
+            },
+        },
+        {
+            // The parity property above can only guard carriers `carrierFiles()` returns, and
+            // sync-update-blocks.py can only repair carriers `find_target_files()` returns. The
+            // two sets were kept aligned by a COMMENT in each file and nothing else — so a scope
+            // edit on one side alone fails SILENTLY in whichever direction it goes:
+            //   writer ⊃ test  → the writer rewrites a carrier no property inspects; it can drift
+            //                    from canonical forever while this suite stays green.
+            //   test ⊃ writer  → the property fails on a carrier the writer cannot repair, and the
+            //                    failure message below emits `sync-update-blocks.py <tag>` as the
+            //                    remedy — a fix that provably cannot work. Permanently red, lying.
+            // Comparing against the REAL writer (not a third re-implementation of its glob, which
+            // would just be one more copy free to drift) is what makes this a sensor rather than
+            // another comment.
+            name: 'PARITY: carrierFiles() and sync-update-blocks.py find_target_files() cover the SAME file set',
+            fn() {
+                const { spawnSync } = require('child_process');
+                // Same resolution order as count-drift.test.cjs — `python3` is an MS Store alias
+                // stub on Windows and exits 49, so it is deliberately not a candidate.
+                const candidates = [
+                    { command: 'python', baseArgs: [] },
+                    { command: 'py', baseArgs: ['-3'] },
+                ];
+                const script =
+                    'import json,sys;sys.path.insert(0,r"' +
+                    path.join(REPO, '.claude', 'scripts') +
+                    '");' +
+                    'import importlib.util as u;' +
+                    's=u.spec_from_file_location("swb",r"' +
+                    path.join(REPO, '.claude', 'scripts', 'sync-update-blocks.py') +
+                    '");m=u.module_from_spec(s);s.loader.exec_module(m);' +
+                    'print(json.dumps(m.find_target_files()))';
+
+                let out = null;
+                for (const c of candidates) {
+                    const r = spawnSync(c.command, [...c.baseArgs, '-c', script], { encoding: 'utf8' });
+                    if (r.status === 0 && r.stdout) {
+                        out = r.stdout;
+                        break;
+                    }
+                }
+                // Fail LOUD, never skip silently: an unavailable interpreter must not read as
+                // "scopes agree" — that is the same silent-pass this test exists to prevent.
+                assertTrue(out !== null, 'could not run sync-update-blocks.py find_target_files() (tried: python, py -3)');
+
+                const rel = (p) => path.relative(REPO, p).split(path.sep).join('/');
+                const writerSet = new Set(JSON.parse(out).map(rel));
+                const testSet = new Set(carrierFiles().map(rel));
+
+                const missingFromTest = [...writerSet].filter((f) => !testSet.has(f)).sort();
+                const missingFromWriter = [...testSet].filter((f) => !writerSet.has(f)).sort();
+
+                assertEqual(
+                    missingFromTest.length,
+                    0,
+                    `writer updates ${missingFromTest.length} carrier(s) this suite never guards (they can drift silently): ${missingFromTest.join(', ')}`
+                );
+                assertEqual(
+                    missingFromWriter.length,
+                    0,
+                    `this suite guards ${missingFromWriter.length} carrier(s) the writer cannot repair (its suggested fix would not work): ${missingFromWriter.join(', ')}`
+                );
+                assertTrue(writerSet.size > 0, 'writer scope resolved to an EMPTY set — a vacuous comparison, not a passing one');
             },
         },
     ],

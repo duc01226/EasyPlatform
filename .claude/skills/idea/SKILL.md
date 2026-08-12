@@ -19,6 +19,8 @@ description: '[Project Management] Use when capturing new ideas, feature request
 
 **Summary:**
 
+- **Purpose:** capture a raw idea as a structured, validated backlog artifact — preserve problem intent, leak no solution/stack, hand a clean narrative to `/refine`.
+- **Main steps/tasks (run in order):** (1) Gather info — problem/value/users/scope; (2) Generate artifact `IDEA-{YYMMDD}-{NNN}`, status `draft`, from `idea-template.md`; (3) Capture problem statement/value/users; (4) Detect project module via `Glob("docs/specs/*/README.md")` (silent; prompt only if ambiguous); (5) Load feature context (8-12K token budget — entities, BR-/TC- patterns); (6) Save to canonical path; (6.5) **Discovery Interview** — 3-5 `AskUserQuestion`; (7) **Validate** — 2-3 `AskUserQuestion`; (8) Suggest next → `/refine`.
 - Two interview gates are NON-NEGOTIABLE: Discovery Interview (Step 6.5, 3-5 `AskUserQuestion` items incl. the always-on testability question) AND Validation (Step 7, 2-3 items) — never skip either even for "simple" ideas.
 - Keep the problem statement strictly tech-agnostic (M1): name no framework/product/language/pattern, and do NOT assign logical IDs — the downstream PBI inherits the clean narrative and owns `FR-`/`BR-` assignment.
 - Auto-detect the project module silently via `Glob("docs/specs/*/README.md")` and load feature context (8-12K token budget); prompt only when ambiguous. Greenfield (no real code dirs) → skip module detection and NEVER ask about tech stack.
@@ -43,7 +45,7 @@ description: '[Project Management] Use when capturing new ideas, feature request
 - Auto-detect module silently; prompt only when ambiguous
 - MUST ATTENTION include `t_shirt_size` (XS/S/M/L/XL) in artifact for early sizing
 - **[BLOCKING] Tech-agnostic output (M1):** the problem statement stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 (all modes, not only greenfield) — name no framework/product/language/design-pattern; defer any stack preference to the later tech-research phase.
-- **M3 Logical-ID Assignment (forward to PBI):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. An idea is a tech-agnostic business-intent definition only — do NOT assign logical IDs yet. When the idea advances to a PBI (via `/refine`), the PBI assigns logical IDs (`FR-`/`BR-`) as the PRIMARY citation spine and tracks `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths) in a SEPARATE carrier from the business-intent prose. Keep the idea's problem/value narrative free of source identifiers so the PBI can inherit it cleanly.
+- **M3 Logical-ID Assignment (forward to PBI):** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. An idea is a tech-agnostic business-intent definition only — do NOT assign logical IDs yet. When the idea advances to a PBI (via `/refine`), the PBI assigns logical IDs (`FR-`/`BR-`) as the PRIMARY citation spine and tracks `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths) in a SEPARATE carrier from the business-intent prose. Keep the idea's problem/value narrative free of source identifiers so the PBI can inherit it cleanly.
 
 ## Greenfield Mode
 
@@ -235,7 +237,7 @@ Module detected: "Module context from {module} will be used during refinement."
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** Not already in workflow → MUST ATTENTION use `AskUserQuestion`:
 >
-> 1. **Activate `workflow-idea-to-pbi` workflow** (Recommended) — idea → refine → review-artifact --type=pbi → story → review-artifact --type=story → prioritize
+> 1. **Activate `workflow-idea-to-pbi` workflow** (Recommended) — idea → refine → artifact-review --type=pbi → story → artifact-review --type=story → prioritize
 > 2. **Execute `/idea` directly** — run standalone
 
 ---
@@ -271,8 +273,9 @@ Module detected: "Module context from {module} will be used during refinement."
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -340,6 +343,8 @@ Module detected: "Module context from {module} will be used during refinement."
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Turn a vague product idea into a validated, tech-agnostic, module-anchored backlog artifact ready for `/refine` to convert into a PBI — preserving problem intent without leaking solution or stack choices.
+
+**IMPORTANT MUST ATTENTION — Main steps (run in order, NEVER skip/reorder):** (1) Gather info; (2) Generate artifact `IDEA-{YYMMDD}-{NNN}` draft from `idea-template.md`; (3) Capture problem/value/users; (4) Detect module via `Glob("docs/specs/*/README.md")`; (5) Load feature context (8-12K budget); (6) Save to canonical path; (6.5) Discovery Interview (`AskUserQuestion` 3-5); (7) Validate (`AskUserQuestion` 2-3); (8) Suggest next → `/refine`. — why: AI keeps dropping the skill's own mid-pipeline steps; the two gates and module detection are the most-forgotten.
 
 **IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 

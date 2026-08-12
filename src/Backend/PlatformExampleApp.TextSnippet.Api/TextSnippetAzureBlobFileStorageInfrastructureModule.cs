@@ -14,6 +14,6 @@ public class TextSnippetAzureBlobFileStorageInfrastructureModule : PlatformAzure
         PlatformAzureFileStorageConfiguration configs)
     {
         configs.ConnectionString = "DefaultEndpointsProtocol=https;AccountName=xxx;AccountKey=xxx;EndpointSuffix=core.windows.net";
-        configs.BlobEndpoint = "https://xxxxx.blob.core.windows.net/";
+        configs.PublicBlobEndpoint = "https://xxxxx.blob.core.windows.net/";
     }
 }

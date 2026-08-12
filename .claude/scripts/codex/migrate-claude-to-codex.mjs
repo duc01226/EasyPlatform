@@ -52,11 +52,21 @@ function stripQuotes(value) {
     if (!value) return value;
     const trimmed = value.trim();
     if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-        return trimmed.slice(1, -1).trim();
+        // Double-quoted YAML escapes with a backslash. De-wrapping alone leaked `\"` and `\/`
+        // into the Codex mirror while the CLAUDE.md/AGENTS.md path decoded them, so the SAME
+        // description rendered differently per surface — the exact defect class the single-quoted
+        // branch below was fixed for, on the other branch.
+        return trimmed
+            .slice(1, -1)
+            .replace(/\\(["\\/])/g, '$1')
+            .trim();
     }
     if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
         // Decode YAML single-quoted escaping and collapse repeated double-escaping
-        // introduced by legacy non-idempotent normalization.
+        // introduced by legacy non-idempotent normalization. Cost of the repeat-until-stable
+        // collapse: a description carrying two GENUINE consecutive apostrophes (`don''''t` in
+        // YAML) over-collapses to one. Accepted — legacy double-escaping is real and observed,
+        // consecutive literal apostrophes in a one-line description are not.
         let unescaped = trimmed.slice(1, -1).trim();
         let previous = '';
         while (unescaped !== previous) {
@@ -305,7 +315,8 @@ function buildCodexProjectReferenceBlock() {
         '**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.',
         '',
         '**Situation-based docs:**',
-        '- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`',
+        '- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`',
+        '- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`',
         '- Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`',
         '- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`',
         '- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above',

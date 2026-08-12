@@ -8,7 +8,7 @@ Sub-agents under ``.claude/agents/*.md`` are wired into block *body* sync
 ``inject_*`` coverage campaigns only ever targeted *skills*. Result: every
 agent carries the same generic baseline and ZERO role-specific rigor -- the
 flagship ``code-reviewer`` agent had none of the 14 review-quality blocks its
-twin ``code-review`` / ``review-changes`` skills carry. This module is the
+twin ``code-review`` / ``changes-review`` skills carry. This module is the
 manifest that closes that gap: per-agent, which QUALITY blocks to ADD.
 
 POLICY: QUALITY propagates, ORCHESTRATION does not
@@ -37,12 +37,24 @@ sourced at injection time from the canonical registry
 ``sync_blocks.load_wrapped_sync_block`` -- never hand-typed here. ``validate()``
 hard-fails on any tag absent from that registry (catches hallucinated tags).
 
-ADDITIVE INVARIANT
-------------------
-Each agent's list is the set of blocks to ADD, computed by DIFFING the agent's
-current ``SYNC:`` set against the target. A block the agent already carries must
-NOT appear here -- a non-additive entry skews the injector's dry-run insert
-count. ``validate()`` warns on any such already-present block.
+TARGET-SET INVARIANT
+--------------------
+Each agent's list is the FULL set of quality blocks that agent should carry --
+a persistent declarative target, not a one-shot delta. A block the agent already
+carries STAYS listed: the manifest is the single source of truth for intended
+per-agent state, so an audit can read the target here instead of reconstructing
+it from 26 agent files.
+
+Injection is therefore idempotent, not additive. The injector skips a block the
+agent already carries (``inject_agent_protocol_blocks.py`` marks it ``present``)
+and writes only the absent ones, so the REAL dry-run insert count is the number
+of declared blocks NOT yet present -- see ``pending_insertions()``. Never report
+the manifest's size as an insert count; at steady state every block is present
+and a real run inserts zero.
+
+``validate()`` check (c) warns on the inverse condition: a declared block MISSING
+from its agent, meaning the manifest moved ahead of the agent files and the
+injector has not been run.
 
 SPAWN-CAPABILITY GUARD (/why-review F-WR2)
 ------------------------------------------
@@ -92,6 +104,14 @@ EXCLUDED_ORCHESTRATION = {
     "sub-agent-selection",        # a dispatcher choosing which sub-agents to spawn
     "subagent-return-contract",   # instructs *its* sub-agents how to return (inverted for a leaf)
     "parallel-phase-advancement", # all-return barrier across a parallel workflow phase group
+    # Session-scoped goal-file loop owned by the CALLER, not a leaf agent: step 1
+    # resolves the goal from "the current user request" (a sub-agent sees only its
+    # task prompt, never the parent conversation), step 6 drives the review->fix
+    # ->re-review convergence loop, and step 7 escalates to the user. A headless
+    # leaf cannot do any of the three. Its per-finding rigor twin
+    # ``trade-off-interrogation-gate`` (same 20 review skills) DOES propagate --
+    # that block explicitly defines non-asking sub-agent behaviour.
+    "goal-contract-satisfaction-loop",
 }
 
 # Per-agent exceptions: a normally-excluded block IS legitimate content for this
@@ -140,6 +160,25 @@ CORE_ONLY_AGENTS = {
     "knowledge-worker", "product-owner", "project-manager", "quality-gate-review",
 }
 
+# CODE_TIER_TAGS splits on a second axis (agent-universal-rules.test.cjs TC-UAR-004):
+# READONLY_CODE agents locate/read code but never mutate it, so they carry the
+# reading-discipline tags ONLY. Assigning a MUTATION tag to one is a tier leak the
+# framework test rejects -- guarded by check (g) so it fails HERE, not at the gate.
+MUTATION_CODE_TAGS = {
+    "cross-service-check",
+    "fix-layer-accountability",
+}
+READONLY_CODE_AGENTS = {
+    "researcher", "scout", "scout-external", "ui-ux-designer",
+}
+
+# Blocks deliberately REMOVED from a carrier as off-role (TC-UAR-016). Re-adding one
+# silently regresses that decision, so check (h) hard-fails on it. Mirrors the
+# ``removed`` manifest in agent-universal-rules.test.cjs.
+OFF_ROLE_TRIMS = {
+    "architect": {"source-test-drift-check", "scaffold-production-readiness"},
+}
+
 # ---------------------------------------------------------------------------
 # Agent -> additive quality-block lists (source: research/agent-skill-mapping.md
 # section 4; grouped per family for --family-scoped injection of <=5 agents/phase)
@@ -152,31 +191,47 @@ AGENT_QUALITY_BLOCKS = {
         "review-protocol-injection", "bug-detection", "complexity-prevention",
         "design-patterns-quality", "rationalization-prevention",
         "graph-assisted-investigation", "source-test-drift-check", "test-spec-verification",
+        # wave 2 (twin: code-review / changes-review)
+        "trade-off-interrogation-gate", "cross-stack-impact-trace", "spec-drift-adjudication",
+        "integration-test-sync-check",
     ],
     "security-auditor": [
         "severity-rubric", "systematic-review-batching", "category-review-thinking",
         "fresh-context-review", "graph-assisted-investigation", "incremental-persistence",
         "source-test-drift-check",
+        # wave 2 (twin: security-review)
+        "trade-off-interrogation-gate", "double-round-trip-review",
     ],
     "performance-optimizer": [
         "severity-rubric", "systematic-review-batching", "category-review-thinking",
         "graph-assisted-investigation", "graph-impact-analysis",
+        # wave 2 (twin: performance-review)
+        "trade-off-interrogation-gate", "scenario-stress-eval",
     ],
     "spec-compliance-reviewer": [
         "severity-rubric", "double-round-trip-review", "fresh-context-review",
         "review-protocol-injection", "behavioral-delta-matrix", "spec-drift-adjudication",
         "test-spec-verification",
+        # wave 2 (twin: artifact-review / spec)
+        "trade-off-interrogation-gate", "spec-tests-code-triangulation", "ui-intent-layer",
     ],
     "quality-gate-review": [
         "severity-rubric", "double-round-trip-review", "fresh-context-review",
         "review-protocol-injection", "refinement-dor-checklist", "estimation-framework",
+        # wave 2 (twin: quality-gate-review / quality-gate)
+        "trade-off-interrogation-gate", "source-test-drift-check",
     ],
 
     # --- investigation / research family ---------------------------------
     "debugger": [
         "end-to-start-debugger-trace", "root-cause-debugging", "red-flag-stop-conditions",
         "graph-assisted-investigation", "incremental-persistence",
+        # wave 2 (twin: debug-investigate / investigate)
+        "test-failure-fault-adjudication", "source-test-drift-check",
     ],
+    # NOTE: the `scout` SKILL carries `cross-service-check`, but scout/scout-external
+    # are READONLY_CODE agents -- that tag is a MUTATION_CODE_TAG reserved for
+    # code-mutating agents (TC-UAR-004). Deliberate non-parity; do NOT "fix".
     "scout": [
         "graph-assisted-investigation",
         "incremental-persistence", "rationalization-prevention",
@@ -191,6 +246,8 @@ AGENT_QUALITY_BLOCKS = {
     "knowledge-worker": [
         "web-research", "incremental-persistence", "output-quality-principles",
         "severity-rubric",
+        # wave 2 (twin: knowledge-review)
+        "trade-off-interrogation-gate",
     ],
 
     # --- planning / product / architecture family ------------------------
@@ -199,15 +256,24 @@ AGENT_QUALITY_BLOCKS = {
         "iterative-phase-quality", "preservation-inventory", "behavioral-delta-matrix",
         "severity-rubric", "fresh-context-review", "double-round-trip-review",
         "graph-assisted-investigation", "review-protocol-injection",
+        # wave 2 (twin: plan-review)
+        "trade-off-interrogation-gate",
     ],
     "architect": [
         "severity-rubric", "systematic-review-batching", "category-review-thinking",
         "double-round-trip-review", "graph-assisted-investigation",
         "design-patterns-quality",
+        # wave 2 (twin: architecture-design / architecture-review)
+        # NOT source-test-drift-check: an explicit off-role trim for architect
+        # (TC-UAR-016, commit 698195a5). Deliberate non-parity; do NOT "fix".
+        "trade-off-interrogation-gate", "scale-technique-gate", "scenario-stress-eval",
     ],
     "solution-architect": [
         "design-patterns-quality", "scaffold-production-readiness",
         "estimation-framework", "module-detection",
+        # wave 2 -- already carries the companion `scenario-stress-eval`; the base
+        # gate it explicitly pairs with was missing (twin: tech-stack-research)
+        "scale-technique-gate",
     ],
     "business-analyst": [
         "estimation-framework", "refinement-dor-checklist", "ba-team-decision-model",
@@ -223,16 +289,27 @@ AGENT_QUALITY_BLOCKS = {
         "graph-impact-analysis", "incremental-persistence", "rationalization-prevention",
         "severity-rubric", "systematic-review-batching", "category-review-thinking",
         "fresh-context-review", "double-round-trip-review", "review-protocol-injection",
+        # wave 2 (twin: integration-test / integration-test-review)
+        "trade-off-interrogation-gate", "test-failure-fault-adjudication",
+        "integration-test-execution-discipline", "spec-tests-code-triangulation",
+        "spec-drift-adjudication", "test-data-isolation",
+        "real-world-fidelity-testing",
     ],
     "tester": [
         "source-test-drift-check", "repeatable-test-principle",
         "test-spec-verification", "red-flag-stop-conditions",
+        # wave 2 (twin: test)
+        "test-failure-fault-adjudication", "real-world-fidelity-testing",
     ],
     "e2e-runner": [
         "source-test-drift-check", "repeatable-test-principle",
+        # wave 2 (twin: e2e-test)
+        "test-failure-fault-adjudication", "real-world-fidelity-testing",
     ],
     "database-admin": [
         "graph-impact-analysis",
+        # wave 2 (twin: db-migrate)
+        "source-test-drift-check",
     ],
 
     # --- design / craft / docs family ------------------------------------
@@ -241,27 +318,42 @@ AGENT_QUALITY_BLOCKS = {
         "design-patterns-quality", "severity-rubric", "systematic-review-batching",
         "category-review-thinking", "double-round-trip-review", "fresh-context-review",
         "source-test-drift-check", "graph-assisted-investigation",
+        # wave 2 (twin: ui-review / design / design-spec)
+        "trade-off-interrogation-gate", "ui-intent-layer", "existing-ui-research",
     ],
     "code-simplifier": [
         "complexity-prevention", "design-patterns-quality", "severity-rubric",
         "shared-protocol-duplication-policy",
+        # wave 2 (twin: code-simplifier)
+        "source-test-drift-check",
     ],
     "docs-manager": [
         "incremental-persistence",
     ],
     "framework-maintainer": [
         "context-engineering-principles", "sub-agent-selection",  # sub-agent-selection whitelisted
+        # wave 2 (twin: skill-creator / custom-agent) -- it EDITS SYNC blocks, so the
+        # policy governing inline-protocol duplication is core subject matter for it
+        "shared-protocol-duplication-policy", "output-quality-principles",
     ],
 
     # --- implementer family (no review twin -> role-derived blocks) ------
+    # `ui-system-context` goes only to the two UI-touching implementers -- its body
+    # gates on .ts/.html/.scss/.css work, so it is dead weight on backend-developer.
     "backend-developer": [
         "design-patterns-quality", "complexity-prevention",
+        # wave 2 (twin: plan-execute / feature-implement)
+        "source-test-drift-check", "graph-assisted-investigation",
     ],
     "frontend-developer": [
         "design-patterns-quality", "complexity-prevention",
+        # wave 2 (twin: plan-execute / feature-implement)
+        "source-test-drift-check", "graph-assisted-investigation", "ui-system-context",
     ],
     "fullstack-developer": [
         "design-patterns-quality", "complexity-prevention",
+        # wave 2 (twin: plan-execute / feature-implement)
+        "source-test-drift-check", "graph-assisted-investigation", "ui-system-context",
     ],
 }
 
@@ -315,6 +407,24 @@ def agent_present_tags(agent: str) -> set[str]:
         return set()
     text = f.read_text(encoding="utf-8")
     return set(re.findall(r"<!-- SYNC:([a-z0-9-]+) -->", text))
+
+
+def pending_insertions() -> tuple[int, dict[str, list[str]]]:
+    """Return ``(count, {agent: [absent_tags]})`` -- the REAL dry-run insert count.
+
+    Under the TARGET-SET INVARIANT the manifest lists every block an agent should
+    carry, so its size is NOT an insert count. The injector writes only blocks the
+    agent lacks (it marks an already-present block ``present`` rather than
+    inserting it), so the number a dry run would actually insert is exactly the
+    declared-but-absent set computed here. At steady state this is ``0``.
+    """
+    absent: dict[str, list[str]] = {}
+    for agent, blocks in AGENT_QUALITY_BLOCKS.items():
+        present = agent_present_tags(agent)
+        missing = [tag for tag in blocks if tag not in present]
+        if missing:
+            absent[agent] = missing
+    return sum(len(tags) for tags in absent.values()), absent
 
 
 def agent_tools(agent: str) -> str | None:
@@ -387,15 +497,22 @@ def validate() -> tuple[list[str], list[str]]:
     if overlap:
         errors.append(f"(partition) excluded ops agent(s) wrongly enhanced: {sorted(overlap)}")
 
-    # (c) additive-only -- WARN if a target block is already present in the agent.
-    for agent, blocks in AGENT_QUALITY_BLOCKS.items():
-        present = agent_present_tags(agent)
-        for tag in blocks:
-            if tag in present:
-                warnings.append(
-                    f"(c) agent '{agent}' already carries '{tag}' (non-additive; "
-                    f"would skew dry-run insert count)"
-                )
+    # (c) target-set drift -- WARN ONCE when agent files trail the manifest.
+    # Presence is the EXPECTED steady state under the TARGET-SET INVARIANT (the
+    # manifest asserts what each agent SHOULD carry), so it is never warned -- a
+    # warning that fires on every row carries no signal and trains the maintainer
+    # to ignore the channel. The actionable condition is the inverse: a declared
+    # block ABSENT from its agent means the injector has not been run.
+    n_pending, pending_by_agent = pending_insertions()
+    if n_pending:
+        detail = ", ".join(
+            f"{agent}:{len(tags)}" for agent, tags in sorted(pending_by_agent.items())
+        )
+        warnings.append(
+            f"(c) {n_pending} declared block(s) absent from {len(pending_by_agent)} "
+            f"agent(s) [{detail}] -- run inject_agent_protocol_blocks.py to apply "
+            f"the target set"
+        )
 
     # (d) spawn-capability guard (F-WR2) -- HARD FAIL.
     for agent, blocks in AGENT_QUALITY_BLOCKS.items():
@@ -427,6 +544,28 @@ def validate() -> tuple[list[str], list[str]]:
                 f"but is not in REVIEW_CYCLE_AGENTS"
             )
 
+    # (g) readonly-code tier (TC-UAR-004) -- HARD FAIL. A READONLY_CODE agent reads
+    # and locates code but never mutates it, so mutation-tier tags are off-role even
+    # when its twin SKILL carries them.
+    for agent, blocks in AGENT_QUALITY_BLOCKS.items():
+        if agent in READONLY_CODE_AGENTS:
+            leaked = sorted(set(blocks) & MUTATION_CODE_TAGS)
+            if leaked:
+                errors.append(
+                    f"(g) readonly-code agent '{agent}' assigns mutation-tier tag(s) "
+                    f"{leaked} (TC-UAR-004 restricts these to code-mutating agents)"
+                )
+
+    # (h) off-role trim regression (TC-UAR-016) -- HARD FAIL. A block deliberately
+    # removed from a carrier must not be re-added by a later parity sweep.
+    for agent, blocks in AGENT_QUALITY_BLOCKS.items():
+        regressed = sorted(set(blocks) & OFF_ROLE_TRIMS.get(agent, set()))
+        if regressed:
+            errors.append(
+                f"(h) agent '{agent}' re-adds off-role-trimmed block(s) {regressed} "
+                f"(TC-UAR-016 requires these stay removed)"
+            )
+
     return errors, warnings
 
 
@@ -441,7 +580,8 @@ def _main(argv: list[str]) -> int:
 
     errors, warnings = validate()
     n_agents = len(AGENT_QUALITY_BLOCKS)
-    n_blocks = sum(len(b) for b in AGENT_QUALITY_BLOCKS.values())
+    n_declared = sum(len(b) for b in AGENT_QUALITY_BLOCKS.values())
+    n_pending, _ = pending_insertions()
 
     for w in warnings:
         print(f"WARN {w}")
@@ -452,11 +592,12 @@ def _main(argv: list[str]) -> int:
         return 1
 
     print(
-        f"OK: {n_agents} agents, {n_blocks} block insertions, "
+        f"OK: {n_agents} agents, {n_declared} declared block(s), "
+        f"{n_pending} pending insert(s), "
         f"{len(FAMILIES)} families. All tags canonical; no orchestration leak; "
         f"partition clean; spawn-capability guard clear; tier policy clear; "
         "review-cycle relevance clear."
-        + (f" ({len(warnings)} additive warning(s))" if warnings else "")
+        + (f" ({len(warnings)} drift warning(s))" if warnings else "")
     )
     return 0
 

@@ -494,7 +494,7 @@ test("runChecks passes positive SDD fixture", async () => {
       ],
       [
         ".agents/skills/spec/references/sync.md",
-        "emergency recovery AskUserQuestion recovery report from-integration-tests",
+        "emergency recovery ask the user directly recovery report from-integration-tests",
       ],
       [
         ".claude/skills/spec/references/spec-tests-template.md",
@@ -577,6 +577,27 @@ test("scanProseForBannedTokens flags prose, non-mermaid fence, and Platform-pref
 
 test("scanProseForBannedTokens whitelists source/evidence/IT/frontmatter/mermaid carriers (TC-SDD-022-002)", async () => {
   const content = await fs.readFile(path.join(fixturesDir, "sdd022-evidence-ok.md"), "utf8");
+  assert.deepEqual(scanProseForBannedTokens(content), []);
+});
+
+// Guards the canonical `CoveredBy:` coverage carrier against silent removal from
+// EVIDENCE_CARRIER_LABELS. The payload must be BANNED TECH TOKENS, not a source
+// filename: scanProseForBannedTokens flags tech/project tokens, and a bare
+// `Foo.cs::Method` payload is clean under ANY label — a filename-based fixture
+// would pass with or without the exemption and prove nothing.
+// The control assertion below pins that non-vacuity in the test itself.
+test("scanProseForBannedTokens whitelists the canonical CoveredBy coverage carrier (TC-SDD-022-006)", async () => {
+  const content = await fs.readFile(path.join(fixturesDir, "sdd022-evidence-coveredby-ok.md"), "utf8");
+
+  // Control: the SAME payload under an unrecognised label MUST be flagged. If this
+  // ever returns clean, the fixture has stopped exercising the exemption and the
+  // assertion below would pass vacuously.
+  const control = scanProseForBannedTokens("**NotACarrier:** `Angular RabbitMQ MongoDB`");
+  assert.ok(
+    control.length > 0,
+    "fixture would be vacuous: the payload must be flaggable under a non-carrier label"
+  );
+
   assert.deepEqual(scanProseForBannedTokens(content), []);
 });
 

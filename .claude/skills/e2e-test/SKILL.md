@@ -18,10 +18,11 @@ description: '[Testing] Use when generating, updating, or maintaining E2E tests 
 
 **Summary:**
 
-- Read `docs/project-reference/e2e-test-reference.md` + the `e2eTesting` block of `docs/project-config.json` FIRST, then detect the framework from project files — never assume a stack or invent a TC-annotation marker.
-- Every test carries its `TC-{MODULE}-E2E-{NNN}` code traced to a spec, structured with the Page Object Model (locators/actions in the page class, assertions in the test).
-- Selector priority is semantic/BEM > data-testid > ARIA/role > visible text; AVOID generated classes, `:nth-child`, and XPath.
-- Generate unique self-sufficient data (GUID/timestamp), never depend on pre-existing DB state, never tear down seeded data; spawn the `e2e-runner` sub-agent for generation and baseline updates.
+- **Purpose:** turn recordings/specs/code changes into maintainable, spec-traceable E2E tests that break ONLY when intended business behavior breaks — never on cosmetic UI churn.
+- **Main steps (in order):** (1) detect the E2E framework from project files; (2) read `docs/project-reference/e2e-test-reference.md` + the `e2eTesting` block of `docs/project-config.json` FIRST — never assume a stack or invent a TC-annotation marker; (3) load `TC-{MODULE}-E2E-{NNN}` specs from `docs/specs/`; (4) pass the Real-World Fidelity Gate BEFORE writing test code — can this flow, timing, and data actually occur in production?; (5) generate/update tests via Page Object Model (spawn the `e2e-runner` sub-agent); (6) run tests with the project's configured command; (7) update `e2e-test-reference.md` with learnings.
+- Every test carries its `TC-{MODULE}-E2E-{NNN}` code traced to the §8 invariant/behavior it guards, structured with Page Object Model (locators/actions in the page class, assertions in the test).
+- Selector priority semantic/BEM > data-testid > ARIA/role > visible text; AVOID generated classes, `:nth-child`, XPath.
+- Generate unique self-sufficient data (GUID/timestamp); NEVER depend on pre-existing DB state, NEVER tear down seeded data; pick a workflow via `AskUserQuestion` when not already in one.
 
 **Workflow:**
 
@@ -32,6 +33,7 @@ description: '[Testing] Use when generating, updating, or maintaining E2E tests 
 **Key Rules:**
 
 - MUST ATTENTION keep claims evidence-based (`file:line`), confidence >80% to act.
+- MUST ATTENTION apply the Real-World Fidelity Gate before writing setup — a flow, pacing, or data shape production can never reach proves nothing; fix the SCENARIO, never the assertion.
 - MUST ATTENTION keep task tracking updated as each step starts/completes.
 - NEVER skip mandatory workflow or skill gates.
 
@@ -164,9 +166,10 @@ Document what must exist before test runs:
 1. **Detect framework** from project files
 2. **Read project E2E docs** for conventions and patterns
 3. **Load test specs** with TC codes from feature docs
-4. **Generate/update tests** following Page Object pattern
-5. **Run tests** using project's configured commands
-6. **Update e2e-test-reference.md** with any learnings
+4. **Check real-world fidelity** — BEFORE any test code is written, answer _"Can this flow, timing, and data actually occur in production?"_ State the real pacing between consecutive user actions (a user does not submit two distinct actions in the same millisecond) and, for each gap, the observable settle signal the next step waits on (rendered confirmation, persisted state change, audit/version stamp, request/worker idle marker). Any "no" → fix the SCENARIO, never the assertion. Full contract: `SYNC:real-world-fidelity-testing` below.
+5. **Generate/update tests** following Page Object pattern
+6. **Run tests** using project's configured commands
+7. **Update e2e-test-reference.md** with any learnings
 
 ---
 
@@ -229,6 +232,38 @@ Generate and maintain E2E tests using project's configured testing framework.
 
 <!-- /SYNC:source-test-drift-check -->
 
+<!-- SYNC:real-world-fidelity-testing -->
+
+> **Real-World Fidelity Gate** — MANDATORY when authoring, reviewing, or repairing any integration / E2E / system test.
+>
+> A test earns trust by reproducing a situation the system can actually meet in production. A scenario that could never occur in real life proves nothing when it passes, and wastes hours when it fails.
+>
+> 1. **Ask the fidelity question BEFORE writing the setup:** _"Can this sequence, timing, and data actually occur in production?"_ If no, the test is mis-specified — fix the SCENARIO, never the assertion.
+> 2. **Model real pacing between actor steps.** Two distinct actor actions that production separates by seconds, minutes, or hours MUST NOT be fired back-to-back in the same millisecond. Compressed pacing manufactures races the system was never designed to survive, then reports them as product defects.
+> 3. **Wait on a real signal, never a blind sleep.** Find an observable proving the prior step finished — a persisted state change, an audit/version stamp, a queue/worker idle marker, a completion event — and poll until it settles (unchanged across a short stability window). Use a fixed delay ONLY when no observable exists, and say so in a comment.
+> 4. **Barriers belong in ARRANGE, never in ASSERT.** Waiting for a precondition is fidelity. Widening an assertion's timeout, loosening a comparison, adding a retry around a failing assertion, or skipping the test is masking. NEVER do the latter to force green.
+> 5. **Distinguish harness-amplified from real.** Test topologies (shared infra, fan-out consumers, parallel suites, cold starts) can make a rare production race routine locally. Before filing a product defect, state whether the trigger exists in production and at what likelihood.
+> 6. **Keep the protected invariant intact.** Improving fidelity must NEVER reduce what the test protects. If a realistic scenario no longer exercises the rule, the rule needs a DIFFERENT realistic scenario — not a weaker assertion.
+> 7. **Deliberate impossible-state tests are allowed, but MUST be labelled.** Corruption-repair, migration, and fail-safe tests intentionally construct states production should never reach; comment WHY the state is reachable (upstream bug, partial write, legacy data), so they are never confused with unrealistic setups.
+
+<!-- /SYNC:real-world-fidelity-testing -->
+
+<!-- SYNC:test-failure-fault-adjudication -->
+
+> **Test-Failure Fault Adjudication** — When a test fails (or you are debugging or fixing a failure), the job is to determine _who is at fault — the source code or the test code_. Getting that verdict right matters more than turning the suite green. Binds every debug / fix / test skill identically.
+>
+> 1. **Root-cause first — never guess, never patch the symptom.** `/debug-investigate` and trace the failure end-to-start to its actual cause before touching either side. A green-again suite is NOT the goal; a correct verdict on what was actually wrong is.
+> 2. **Triangulate against the spec AND the source.** If a governing Feature Spec covers the behavior (e.g. `docs/specs/**` — §3 ACs / §4 BRs / §5 invariants / §8 TCs), it is the tiebreaker for _intended_ behavior — compare BOTH the production source and the failing test against it. With no spec, the documented intent / acceptance criteria / caller contract is the reference. Decide from this evidence whether the SOURCE is wrong or the TEST is wrong.
+> 3. **Classify who is at fault, then fix the wrong side at its root:**
+>     - **SOURCE-WRONG** — production code violates the spec's intended behavior or a clear invariant → fix the source at the owning layer; keep or strengthen the test that caught it.
+>     - **TEST-WRONG** — the test encodes a stale or incorrect assertion, setup, or expectation that contradicts intended behavior → fix the test at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green.
+>     - NEVER change a test to match broken source, and NEVER change source to satisfy a broken test. (Migration code excluded — schema/data migrations are one-time execution paths, not core application logic.)
+> 4. **Ask the user when intended behavior is unclear.** If no spec covers the behavior, the spec is silent, or the spec is ambiguous about which side is correct, STOP and `AskUserQuestion` (or consult the canonical spec owner) before editing either side — never silently pick source or test just to make the suite pass.
+>
+> Reconcile to intended behavior, never to whichever side currently passes — green can encode the very bug.
+
+<!-- /SYNC:test-failure-fault-adjudication -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -238,8 +273,9 @@ Generate and maintain E2E tests using project's configured testing framework.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -282,15 +318,18 @@ Generate and maintain E2E tests using project's configured testing framework.
 
 - **Sub-Agent Selection:** Route specialized domains to the matching specialist agent, NEVER `code-reviewer`.
 - **Source/Test Drift Check:** On source change, decide from evidence whether tests or source is wrong.
+- **Real-World Fidelity Gate:** only test flows, pacing, and data production can actually reach; wait on a real settle signal in ARRANGE — never a widened assertion.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Critical Thinking:** Traced `file:line` proof per claim, confidence >80% to act, NEVER guess as fact.
 
+**IMPORTANT MUST ATTENTION — Main steps (execute in order, track each):** (1) detect E2E framework from project files; (2) read `e2e-test-reference.md` + `e2eTesting` config FIRST; (3) load `TC-{MODULE}-E2E-{NNN}` specs from `docs/specs/`; (4) pass the Real-World Fidelity Gate BEFORE writing test code; (5) generate/update tests via Page Object Model through the `e2e-runner` sub-agent; (6) run tests with the configured command; (7) update `e2e-test-reference.md` with learnings — why: AI keeps dropping the skill's own step sequence under long context.
 **IMPORTANT MUST ATTENTION** read `docs/project-reference/e2e-test-reference.md` + the `e2eTesting` block of `docs/project-config.json` FIRST, then detect the framework from project files — NEVER assume a stack — why: the configured framework, paths, run commands, and TC format are project-specific, not framework defaults.
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act, <60% DO NOT recommend) — NEVER speculate without proof.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting; mark one `in_progress`, set `completed` immediately after each finishes; add a final review todo.
 **MANDATORY IMPORTANT MUST ATTENTION** search the codebase for 3+ similar existing E2E tests/page objects before creating new code; follow the local pattern over generic framework docs — why: projects carry local selector/data conventions that differ from defaults.
 **IMPORTANT MUST ATTENTION** evaluate fit before copying a nearby test — verify the new scenario shares the same base page class, fixtures, and preconditions — why: closest example ≠ matching preconditions.
 **MANDATORY IMPORTANT MUST ATTENTION** every E2E test carries its `TC-{MODULE}-E2E-{NNN}` code traced to the §8 invariant/behavior it guards — name the protected business rule, not just the click path — so it fails on intended-behavior breaks, not cosmetic UI churn.
+**MANDATORY IMPORTANT MUST ATTENTION** apply the Real-World Fidelity Gate BEFORE writing setup — ask "can this flow, timing, and data actually occur in production?", model real pacing between distinct user actions instead of firing them in the same millisecond, and wait on an observable settle signal in ARRANGE; NEVER widen an assertion timeout, loosen a comparison, or retry around a failing assertion to compensate — why: a scenario production can never reach proves nothing when it passes and manufactures phantom "product defects" when it fails.
 **IMPORTANT MUST ATTENTION** use the repository's configured test-case annotation mechanism — NEVER invent a framework-specific marker.
 **MANDATORY IMPORTANT MUST ATTENTION** selector priority semantic/BEM > data-testid > ARIA/role > visible text; NEVER use generated classes (`.ng-star-inserted`, `.MuiButton-root`), positional selectors (`:nth-child`), or XPath — why: generated/positional selectors break on unrelated markup churn.
 **MANDATORY IMPORTANT MUST ATTENTION** keep locators/actions in the Page Object class, assertions in the test file — why: encapsulation keeps the next UI change a one-place edit.

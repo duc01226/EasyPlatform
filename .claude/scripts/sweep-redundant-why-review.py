@@ -38,13 +38,13 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Review skills that embed the why-review findings-validation gate internally.
-# review-changes is intentionally excluded: the parent review-changes workflow
+# changes-review is intentionally excluded: the parent changes-review workflow
 # keeps an external why-review gate immediately after its first step.
 # (Verified via grep for validate-findings / double-round-trip-review / Findings
 #  Validation Gate across .claude/skills/*. why-review itself is excluded.)
 REVIEW_SKILLS = {
-    "review-architecture", "review-ui", "review-domain-entities",
-    "review-artifact", "plan-review",
+    "architecture-review", "ui-review", "domain-entities-review",
+    "artifact-review", "plan-review",
     "knowledge-review", "integration-test-review",
     "code-review", "production-readiness-review", "security-review", "performance",
 }

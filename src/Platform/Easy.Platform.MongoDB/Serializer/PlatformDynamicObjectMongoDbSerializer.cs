@@ -1,10 +1,12 @@
 #region
 
 using System.Collections;
-using System.Text.Json;
+using System.Globalization;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.JsonSerialization.Converters;
 using Easy.Platform.MongoDB.Serializer.Abstract;
 using MongoDB.Bson;
+using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 
@@ -16,92 +18,187 @@ namespace Easy.Platform.MongoDB.Serializer;
 
 public class PlatformDynamicObjectMongoDbSerializer : ClassSerializerBase<object>, IPlatformMongoAutoRegisterBaseSerializer<object>
 {
-    public override object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
-    {
-        return TryGetReflectionDynamic(BsonSerializer.Deserialize<BsonValue>(context.Reader));
-    }
+    public override object? Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        => ConvertFromBson(BsonSerializer.Deserialize<BsonValue>(context.Reader));
 
     public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+        => WriteValue(context.Writer, value);
+
+    private static void WriteValue(IBsonWriter writer, object? value)
     {
-        var valueToSerialize = value is JsonElement jsonElement ? PlatformObjectJsonConverter.TryGetReflectionDynamicIfJsonElement(jsonElement) : value;
+        value = PlatformObjectJsonConverter.TryGetReflectionDynamicIfJsonElement(value);
 
-        if (valueToSerialize == null)
+        switch (value)
         {
-            context.Writer.WriteNull();
-            return;
-        }
-
-        // Check if the value is a collection (but not a string or dictionary, which are also IEnumerable).
-        // This specifically targets arrays like object[], List<object>, etc.
-        // Serialize method encounters an object[], it looks up the default MongoDB serializer for object[]. This default serializer wraps each element in a document (like { "_v": "value-string" }) to handle the possibility of mixed types within the array.
-        if (valueToSerialize is IEnumerable enumerable and not IDictionary and not string)
-        {
-            context.Writer.WriteStartArray();
-
-            // Serialize each element in the collection. This will use the correct
-            // serializer for the element's actual type (e.g., StringSerializer for a string).
-            foreach (var item in enumerable) BsonSerializer.Serialize(context.Writer, item);
-
-            context.Writer.WriteEndArray();
-        }
-        else
-        {
-            // If it's not a collection, serialize it using the default lookup logic.
-            var actualType = valueToSerialize.GetType();
-
-            var serializer = BsonSerializer.LookupSerializer(actualType);
-
-            serializer.Serialize(context, args, valueToSerialize);
+            case null:
+                writer.WriteNull();
+                return;
+            case string stringValue:
+                writer.WriteString(stringValue);
+                return;
+            case char charValue:
+                writer.WriteString(charValue.ToString());
+                return;
+            case bool boolValue:
+                writer.WriteBoolean(boolValue);
+                return;
+            case byte or sbyte or short or ushort or int:
+                writer.WriteInt32(Convert.ToInt32(value, CultureInfo.InvariantCulture));
+                return;
+            case uint or long:
+                writer.WriteInt64(Convert.ToInt64(value, CultureInfo.InvariantCulture));
+                return;
+            case ulong ulongValue when ulongValue <= long.MaxValue:
+                writer.WriteInt64((long)ulongValue);
+                return;
+            case float or double:
+                writer.WriteDouble(Convert.ToDouble(value, CultureInfo.InvariantCulture));
+                return;
+            case decimal decimalValue:
+                writer.WriteDecimal128(new Decimal128(decimalValue));
+                return;
+            case DateTime dateTimeValue:
+                writer.WriteDateTime(BsonUtils.ToMillisecondsSinceEpoch(dateTimeValue.ToUniversalTime()));
+                return;
+            case DateTimeOffset dateTimeOffsetValue:
+                writer.WriteString(dateTimeOffsetValue.ToString("O", CultureInfo.InvariantCulture));
+                return;
+            case Guid guidValue:
+                writer.WriteString(guidValue.ToString());
+                return;
+            case DateOnly dateOnlyValue:
+                writer.WriteString(dateOnlyValue.ToString("O", CultureInfo.InvariantCulture));
+                return;
+            case TimeOnly timeOnlyValue:
+                writer.WriteString(timeOnlyValue.ToString("O", CultureInfo.InvariantCulture));
+                return;
+            case Enum enumValue:
+                writer.WriteString(enumValue.ToString());
+                return;
+            case BsonValue bsonValue:
+                BsonValueSerializer.Instance.Serialize(
+                    BsonSerializationContext.CreateRoot(writer),
+                    new BsonSerializationArgs { NominalType = typeof(BsonValue) },
+                    bsonValue);
+                return;
+            case IDictionary dictionary:
+                WriteDictionary(writer, dictionary);
+                return;
+            case IEnumerable enumerable:
+                WriteEnumerable(writer, enumerable);
+                return;
+            default:
+                WritePocoAsDynamicGraph(writer, value);
+                return;
         }
     }
 
-    private static dynamic TryGetReflectionDynamic(BsonValue dynamicObjectAsBsonValue)
+    private static void WriteDictionary(IBsonWriter writer, IDictionary dictionary)
     {
-        switch (dynamicObjectAsBsonValue.BsonType)
+        writer.WriteStartDocument();
+
+        foreach (DictionaryEntry entry in dictionary)
+        {
+            if (entry.Key is not string key)
+                throw new BsonSerializationException("Dynamic object dictionary keys must be strings.");
+
+            writer.WriteName(key);
+            WriteValue(writer, entry.Value);
+        }
+
+        writer.WriteEndDocument();
+    }
+
+    private static void WriteEnumerable(IBsonWriter writer, IEnumerable enumerable)
+    {
+        writer.WriteStartArray();
+        foreach (var item in enumerable) WriteValue(writer, item);
+        writer.WriteEndArray();
+    }
+
+    private static void WritePocoAsDynamicGraph(IBsonWriter writer, object value)
+    {
+        var json = PlatformJsonSerializer.SerializeWithDefaultOptions(value, useCamelCaseNaming: true);
+        var dynamicGraph = PlatformJsonSerializer.DeserializeWithDefaultOptions<object>(json, useCamelCaseNaming: true);
+
+        if (ReferenceEquals(dynamicGraph, value))
+            throw new BsonSerializationException($"Could not convert dynamic object value of type '{value.GetType()}' to a BSON-compatible graph.");
+
+        WriteValue(writer, dynamicGraph);
+    }
+
+    private static object? ConvertFromBson(BsonValue value)
+    {
+        switch (value.BsonType)
         {
             case BsonType.Int32:
-                return dynamicObjectAsBsonValue.AsInt32;
+                return value.AsInt32;
             case BsonType.Int64:
-                return dynamicObjectAsBsonValue.AsInt64;
+                return value.AsInt64;
             case BsonType.Double:
-                return dynamicObjectAsBsonValue.AsDouble;
+                return value.AsDouble;
             case BsonType.Decimal128:
-                return dynamicObjectAsBsonValue.AsDecimal;
+                return value.AsDecimal;
             case BsonType.DateTime:
-                return dynamicObjectAsBsonValue.ToUniversalTime();
+                return value.ToUniversalTime();
             case BsonType.Boolean:
-                return dynamicObjectAsBsonValue.AsBoolean;
+                return value.AsBoolean;
             case BsonType.String:
             {
-                if (DateTimeOffset.TryParse(dynamicObjectAsBsonValue.AsString, out var dateTimeOffsetValue))
+                if (DateTimeOffset.TryParse(value.AsString, out var dateTimeOffsetValue))
                     return dateTimeOffsetValue;
-                if (DateTime.TryParse(dynamicObjectAsBsonValue.AsString, out var dateValue))
+                if (DateTime.TryParse(value.AsString, out var dateValue))
                     return dateValue;
-                return dynamicObjectAsBsonValue.AsString;
+                return value.AsString;
             }
+            case BsonType.Binary:
+                return value.AsBsonBinaryData.Bytes;
+            case BsonType.ObjectId:
+                return value.AsObjectId.ToString();
             case BsonType.Array:
-                return dynamicObjectAsBsonValue
+                return value
                     .AsBsonArray
-                    .Select(TryGetReflectionDynamic)
+                    .Select(ConvertFromBson)
                     .ToArray();
             case BsonType.Document:
-            {
-                var doc = dynamicObjectAsBsonValue.AsBsonDocument;
-
-                // Check if the document is a wrapper object like { "_v": someValue }
-                if (doc.ElementCount == 1 && doc.GetElement(0).Name == "_v")
-                {
-                    // If so, unwrap it and process the inner value.
-                    return TryGetReflectionDynamic(doc.GetElement(0).Value);
-                }
-
-                // Otherwise, treat it as a regular document and convert to a dictionary.
-                return doc.ToDictionary(item => item.Name, item => TryGetReflectionDynamic(item.Value));
-            }
+                return ConvertDocument(value.AsBsonDocument);
             case BsonType.Undefined:
             case BsonType.Null:
-            default:
                 return null;
+            default:
+                return BsonTypeMapper.MapToDotNetValue(value);
         }
     }
+
+    private static object? ConvertDocument(BsonDocument document)
+    {
+        if (IsLegacyValueWrapper(document) || IsLegacyCollectionWrapper(document))
+            return ConvertFromBson(document["_v"]);
+
+        return document.ToDictionary(element => element.Name, element => ConvertFromBson(element.Value));
+    }
+
+    private static bool IsLegacyValueWrapper(BsonDocument document)
+        => document.ElementCount == 1 && document.GetElement(0).Name == "_v";
+
+    private static bool IsLegacyCollectionWrapper(BsonDocument document)
+    {
+        return document.ElementCount == 2
+               && document.Contains("_t")
+               && document.Contains("_v")
+               && IsSystemCollectionDiscriminator(document["_t"]);
+    }
+
+    private static bool IsSystemCollectionDiscriminator(BsonValue discriminator)
+    {
+        if (discriminator.IsString) return IsSystemCollectionTypeName(discriminator.AsString);
+
+        return discriminator.IsBsonArray
+               && discriminator.AsBsonArray.All(item => item.IsString)
+               && discriminator.AsBsonArray.Any(item => IsSystemCollectionTypeName(item.AsString));
+    }
+
+    private static bool IsSystemCollectionTypeName(string typeName)
+        => typeName.StartsWith("System.Collections.", StringComparison.Ordinal)
+           || (typeName.StartsWith("System.", StringComparison.Ordinal) && typeName.Contains('[', StringComparison.Ordinal));
 }

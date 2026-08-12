@@ -1,4 +1,4 @@
-> The `spec` skill (`../SKILL.md`) loads this body for `[mode=draft|init|update|audit|amend]` — the Feature Spec authoring + §8-shell modes. The shared M1-M6 contract, SYNC blocks, and prompt-enhance scaffolding live ONCE in the host SKILL.md; this body carries only the authoring procedure.
+> The `spec` skill (`../SKILL.md`) loads this body for `[mode=draft|init|update|audit|amend]` — the Feature Spec authoring + §8-shell modes. The shared M1-M7 contract, SYNC blocks, and prompt-enhance scaffolding live ONCE in the host SKILL.md; this body carries only the authoring procedure.
 
 ## Source Resolution (code vs idea) — resolve BEFORE Project Pattern Discovery
 
@@ -11,7 +11,7 @@ Every author-mode run sources from ONE of two inputs. Resolve which before any e
 
 **`mode=draft` (idea → provisional spec):** the implementation does not exist yet, so the code-extraction phases (Step 1-INIT.\* greps, graph trace, evidence verification) are **skipped**. Instead:
 
-1. Derive §1-7 (Overview, Glossary, User Stories & AC, Business Rules, Domain Model, Process Flows, Permissions & Roles) from the supplied idea/requirement/prompt — SAME 8-section tech-free template (`docs/templates/detailed-feature-spec-template.md`), SAME M1-M6 prose rules, SAME size caps. Draft does NOT get a lighter template — only a lighter evidence obligation.
+1. Derive §1-7 (Overview, Glossary, User Stories & AC, Business Rules, Domain Model, Process Flows & Interaction Surface, Permissions & Roles) from the supplied idea/requirement/prompt — SAME 8-section tech-free template (`docs/templates/detailed-feature-spec-template.md`), SAME M1-M5 + M7 mandate rules, SAME size caps. Draft does NOT get a lighter template — only a lighter evidence obligation. In particular M7 binds a draft exactly as it binds a code-sourced spec: an idea-sourced §8 TC shell is still judged by the demo test, and having no code yet is never a reason to admit a technical case. For a UI-bearing idea, populate §6.2–6.5 (View Inventory, Navigation Map, Key UI States, Per-Story Interaction Flow) per the §6 sub-procedure above from the idea text, and record any companion `design_spec:`/`mockup:` path supplied with the idea in YAML frontmatter; backend-only ideas state the §6 skip reason explicitly.
 2. Author §8 TC **shells** in the canonical `tc-format.md` template (Objective, GWT, AC, Test Data, Edge Cases) but set **`Evidence: TBD`** and **`Status: Planned`** — these are reference-only until code lands.
 3. Flag the spec provisional: add `provisional: true` to YAML frontmatter and a header banner `> **DRAFT — provisional spec, unverified until code lands. §8 evidence is TBD.**`.
 4. State the next step explicitly: _"Reconcile against real code via `/spec [mode=update]` once implemented — that run upgrades every `Evidence: TBD` to a real `[Source:]` anchor and clears the provisional flag."_
@@ -59,7 +59,7 @@ Namespace ∈ `operation | event | component | schema | requirement | rule | con
 | `[Source: component/orders/Order]`          | `{namespace}/{service}/{id}` (template) |
 | `[Source: event/accounts/AccountUserSaved]` | "Based on CQRS pattern" (vague)         |
 
-> **Carrier-field only:** the abstract anchor (and the `IntegrationTest` test link) appear ONLY inside the `**Evidence**` / `IntegrationTest` fields — never in a test case's behavioral description, which stays tech-agnostic (`spec-principles.md §3`). `IntegrationTest` is the lone exception that keeps physical `{TestFile}::{MethodName}` link(s) — it may list **several** covering tests, since one business TC maps to many tests (operational QA glue; see `tc-format.md` → TC ↔ Test Code Cardinality).
+> **Carrier-field only:** the abstract anchor (and the `CoveredBy` coverage link) appear ONLY inside the `**Evidence**` / `CoveredBy` fields — never in a test case's behavioral description, which stays tech-agnostic (`spec-principles.md §3`). `CoveredBy` is the lone exception that keeps physical `{TestFile}::{MethodName}` link(s), test-filter expressions, or manual-QC coverage — it may list **several** covering tests, since one business TC maps to many tests (operational QA glue; see `tc-format.md` → TC ↔ Test Code Cardinality). Legacy `IntegrationTest:` is accepted only as migration input.
 
 ---
 
@@ -74,7 +74,7 @@ docs/
 └── specs/
     ├── {Module}/                     # One folder per service/module in your project
     │   ├── INDEX.md                  # Navigation hub
-    │   └── README.{FeatureName}.md   # Tech-free Feature Spec (8-section; body ≤1200 / file ≤1800 lines)
+    │   └── README.{FeatureName}.md   # Tech-free Feature Spec (8-section; no line-count cap)
     └── ...
 ```
 
@@ -103,18 +103,30 @@ Map each module code to its folder name and service path. Example pattern:
 
 All feature documentation MUST follow this section order. The doc is **tech-free** — zero technical terms in prose (no API routes, command/handler names, message-bus/event-contract schemas, code, or file paths). Code is the technical source of truth; the doc owns the business truth. Technical sections (Commands, Events-as-contracts, API Reference, Cross-Service, Performance, Troubleshooting) are NOT spec-doc content and are removed.
 
-| #   | Section                            | Audience    |
-| --- | ---------------------------------- | ----------- |
-| 1   | Overview                           | All         |
-| 2   | Glossary                           | All         |
-| 3   | User Stories & Acceptance Criteria | PO, BA, QA  |
-| 4   | Business Rules                     | BA, Dev, QA |
-| 5   | Domain Model                       | BA, Dev     |
-| 6   | Process Flows                      | BA, QA      |
-| 7   | Permissions & Roles                | BA, Dev     |
-| 8   | Test Specifications                | QA, Dev     |
+| #   | Section                             | Audience    |
+| --- | ----------------------------------- | ----------- |
+| 1   | Overview                            | All         |
+| 2   | Glossary                            | All         |
+| 3   | User Stories & Acceptance Criteria  | PO, BA, QA  |
+| 4   | Business Rules                      | BA, Dev, QA |
+| 5   | Domain Model                        | BA, Dev     |
+| 6   | Process Flows & Interaction Surface | BA, QA, UX  |
+| 7   | Permissions & Roles                 | BA, Dev     |
+| 8   | Test Specifications                 | QA, Dev     |
 
 Plus YAML frontmatter (header/metadata). Domain events appear in Section 5 / Section 6 only as business-meaningful occurrences, never as bus/message schemas.
+
+### Section 6 — Process Flows & Interaction Surface authoring sub-procedure
+
+§6 carries a tech-agnostic interaction surface alongside the process flows, per the `SYNC:ui-intent-layer` block (carried in `spec/SKILL.md`). Author every UI-bearing spec's §6 with these subsections; describe everything by UX ROLE, observable state, and logical-ID cross-ref — NEVER by framework/route/CSS/component-class name (M1-clean):
+
+- **6.1 Process Flows** — the existing step tables + business-trigger flow diagrams (unchanged content).
+- **6.2 View Inventory** — one row per view by its UX role and purpose (e.g. "View Inventory" listing "list of items", "item editor", "confirmation step"): what information it presents, primary actions, and the driving `US-`/`OP-`.
+- **6.3 Navigation Map** — how a user moves between views: entry points, transitions (business triggers), exits; trace how this surface connects to neighbouring already-built features.
+- **6.4 Key UI States** — the distinct observable states per view (empty, loading, populated, error, success, permission-denied) described as what the user perceives, cross-referenced to the triggering `OP-`/`BR-`.
+- **6.5 Per-Story Interaction Flow** — per `US-{FC}-NN`: the numbered click/action path from intent to outcome (actor action → observable system response), cross-referenced to the logical IDs the spec already owns.
+
+When a companion `design-spec`/mockup exists, record its path in the spec frontmatter (`design_spec:` / `mockup:`) so the spec stays the navigable hub; keep deep visual fidelity (layout, tokens, pixel detail) OUT of §6 and in that companion. **Skip §6.2–6.5 ONLY** when the feature is backend-only (no UI) — state that reason explicitly in §6.
 
 ### Stakeholder Quick Navigation
 
@@ -150,18 +162,46 @@ Plus YAML frontmatter (header/metadata). Domain events appear in Section 5 / Sec
 
 > **Mode: AMEND (bugfix scope — NOT a re-author).** Triggered by `spec [mode=amend]` from the bugfix workflow (inserted after `debug-investigate`, before `plan`). A bug fix changes a narrow slice of behavior. Do the MINIMUM — touch only the sections the bug touches.
 >
-> **Branch FIRST — amend vs init (mirrors `fix` standalone §3 spec-correctness check).** Before amending, confirm a governing Feature Spec exists for the buggy area under `docs/specs/`:
+> ### [GATE — BLOCKING] Business-visibility gate (**mandate M7**) — run BEFORE any other branch
+>
+> **This gate IS mandate M7** (`shared/sdd-artifact-contract.md` → _AI-SDD Mandates_, _Business-Visibility Gate_). Record the verdict with the mandate ID so it is greppable and a reviewer can re-check it: **M7 is enforced at BOTH authoring and review**, and a verdict that names no mandate is one a reviewer cannot audit.
+>
+> **Answer this first, in writing, with evidence:**
+>
+> > **Did this bug change what a user or QC can observe, demo, or rely on — the business rule, the user-visible outcome, or the business data state?**
+>
+> - **NO → TECHNICAL-ONLY. The correct output is a NO-OP on this spec.** Record `M7 TECHNICAL-ONLY — no business behavior changed; no §8 TC added` naming the surface with `file:line` evidence, and **STOP**. Route the regression to the **technical spec tree** and to an integration test, which is where regression protection belongs. **A no-op here is the CORRECT, EXPECTED result — never a coverage failure, never a gap, and never something to apologize for.**
+> - **YES → BUSINESS-VISIBLE.** Continue to the amend/init branch below and author the TC in demo form (actor → flow → observable expectation).
+>
+> **TECHNICAL-ONLY (→ no §8 TC):** a consumer/event-handler/sync-processor not firing; a read-model or projection lag; a serialization, mapping, or round-trip persistence defect; a null-reference/exception; a query/index performance fix; a race or idempotency defect; a DI/config/migration error; a retry/timeout; a UI rendering, CSS, layout, or overflow defect; a data-load or pagination mechanic — **where the business rule, the user-visible outcome, and the business data state are all unchanged.** _(Illustrative, not exhaustive — the test below governs.)_
+>
+> **BUSINESS-VISIBLE (→ §8 TC required):** the system enforced the wrong business rule; a user saw a wrong value, total, status, or permission decision; a business data state ended up incorrect; a documented AC did not hold.
+>
+> ⚠️ **The test is NOT "can I phrase this without technical words."** Any technical case can be laundered into tech-free prose — _"the system correctly synchronizes the employee record"_ is a technical TC in a business costume, and it is **exactly** the failure this gate exists to stop. **The operative test:**
+>
+> > **Could a QC engineer DEMO this as a business outcome, and would a stakeholder recognize the value?** If the only way to observe it is to inspect a queue, a projection, a log, a consumer, or a database row that no user-facing behavior depends on — **it is TECHNICAL-ONLY.**
+>
+> **Most bugfixes are TECHNICAL-ONLY, and that is normal.** The feature was always _supposed_ to work this way; the code failed to deliver it. **When pre-fix and post-fix business behavior are identical — the business rule was already correctly specified — there is no new business rule to state and NO business TC to add.** The spec was not wrong; the code was.
+>
+> **[HARD] Never manufacture a business TC to satisfy a process.** A spec that gains a TC per bugfix becomes a changelog of defects instead of a statement of intended behavior — un-demoable, and useless for re-implementing the system on a different architecture.
+>
+> **Record the verdict either way, naming the surface with `file:line`.** A bare _"TECHNICAL-ONLY"_ with no named surface is a rubber stamp; the citation is what makes the verdict reviewable.
+>
+> ---
+>
+> **Branch (BUSINESS-VISIBLE only) — amend vs init (mirrors `fix` standalone §3 spec-correctness check).** Before amending, confirm a governing Feature Spec exists for the buggy area under `docs/specs/`:
 >
 > - **Governing spec exists** → do the scoped AMEND below.
-> - **No governing spec exists** → do NOT no-op. Route to **INIT** (code exists to source from) or **DRAFT** (no code yet) to create the spec, then add the bug case as a regression `TC-{FC}-NNN` to §8. Record `No governing spec — created via {INIT|DRAFT}, bug case seeded as TC-{FC}-NNN` with `file:line` evidence.
-> - **Governing spec exists, §1-§7 already correct, but NO existing TC covered the bug case** → skip the §4/§3 wording edits and add ONLY the regression `TC-{FC}-NNN` (item 3). The spec was _correct but lacked the bug case_ — never leave it undocumented.
+> - **No governing spec exists** → do NOT no-op **(this branch is reached only for a BUSINESS-VISIBLE bug — the gate above has already ruled out TECHNICAL-ONLY)**. Route to **INIT** (code exists to source from) or **DRAFT** (no code yet) to create the spec, then add the bug case as a regression `TC-{FC}-NNN` to §8. Record `No governing spec — created via {INIT|DRAFT}, bug case seeded as TC-{FC}-NNN` with `file:line` evidence.
+> - **Governing spec exists, §1-§7 already correct, but NO existing TC covered the bug case** → skip the §4/§3 wording edits and add ONLY the regression `TC-{FC}-NNN` (item 3). The spec was _correct but lacked the bug case_ — never leave a **business-visible** case undocumented.
 >
 > Scoped AMEND steps (governing spec exists):
 >
 > 1. **§4 Business Rules** — if the bug violated or mis-stated a rule, correct ONLY that rule's wording (preserve its `BR-{FC}-NNN` ID verbatim, keep its [HARD]/[SOFT] tag). If the spec documented the _buggy_ behavior (Spec Bug per the bugfix SPEC-BUG GATE), fix the rule to the intended behavior.
 > 2. **§3 Acceptance Criteria** — adjust ONLY the AC the fix changes; add a new `AC-{FC}-NN` if the fix guarantees a new behavior. Preserve existing AC IDs.
-> 3. **§8 Test Specifications** — add the regression `TC-{FC}-NNN` guarding the fix (GIVEN bug repro / WHEN fixed path / THEN correct outcome) + its `IntegrationTest: {File}::{Method}` once the regression test exists (Status `Untested` until it lands).
-> 4. Do NOT re-extract the domain model, re-scout the whole module, or rewrite §1/§2/§5/§6/§7.
+> 3. **§8 Test Specifications** — add the regression `TC-{FC}-NNN` guarding the fix (GIVEN bug repro / WHEN fixed path / THEN correct outcome) + its `CoveredBy: {File}::{Method}` once the regression test exists (Status `Untested` until it lands).
+> 4. **§6 Interaction Surface** — touch ONLY if the fix changed an observable UI behavior the spec records (a view's role, a navigation transition, an observable state, or a per-story click-path); then correct ONLY that affected §6.2–6.5 line, M1-clean. Otherwise leave §6 alone.
+> 5. Do NOT re-extract the domain model, re-scout the whole module, or rewrite §1/§2/§5/§7 (or §6 beyond the scoped line in item 4).
 >
 > Scale doc work to change size — full INIT/UPDATE extraction is FORBIDDEN in AMEND.
 
@@ -193,7 +233,7 @@ Map module's codebase before reading any file in detail:
 
 #### Step 1-INIT.1.5: Use Case Enumeration [BLOCKING — MUST complete before Step 2 / Phase A]
 
-**Goal:** Count ALL operations before planning extraction tasks. This number is the minimum TC count for Section 8 (Test Specifications).
+**Goal:** Enumerate operations to discover **what the system does**, so no capability is missed when authoring §3 journeys and §7 permissions. **This number is NOT the minimum TC count for Section 8** — the business TC floor is `business_floor` (below), which reads only spec sections. Operation counts are architecture-derived and belong to the technical spec tree.
 
 **Write-side entry points:**
 
@@ -217,7 +257,9 @@ grep -r "{query-handler-marker}" {module-source-root}/ --include="{backend-sourc
 grep -r "{read-endpoint-markers}" {module-source-root}/ --include="{backend-source-glob}" -l
 ```
 
-**Actor/Role Discovery (feeds Phase E + Section 7 Permissions & Roles):**
+**Actor/Role Discovery — §7 (Permissions & Roles) AUTHORING ONLY:**
+
+⚠️ **[HARD] These greps are a discovery aid for §7 content. They MUST NOT feed any TC count.** `count(§2 actors)` in `business_floor` reads **§2's actor list**, never this grep. A permission attribute is an implementation of a role, not the role itself — sourcing a count from it makes the floor move when authorization is refactored, with zero business change. **Use these to discover roles you then write into §2 as business nouns; from that point on, §2 is the only source.**
 
 ```bash
 # Authorization markers (permission checks + role guards) — substitute your stack's auth markers
@@ -228,17 +270,31 @@ grep -r "{role-and-permission-enum-markers}" {module-source-root}/ --include="{b
 grep -r "{route-guard-markers}" {frontend-root}/ --include="{frontend-source-glob}" -l 2>/dev/null | grep -i {module} | head -5
 ```
 
-**Use Case Inventory Output:**
-
-| Layer    | Write Ops (N) | Read Ops (M) | Event-Driven (K) | Background (J) |  Total  | Actor Roles       |
-| -------- | :-----------: | :----------: | :--------------: | :------------: | :-----: | ----------------- |
-| {Module} |       N       |      M       |        K         |       J        | N+M+K+J | [roles from grep] |
-
 **[GATE — BLOCKING before Phase A extraction]:**
 
-- Grand Total (N+M+K+J) = minimum Section 8 (Test Specifications) TC count
-- If Grand Total ≥ 20: MUST split extraction into operation groups (≤20 ops each). Create one `TaskCreate` per group before starting any extraction phase.
-- Actor catalog must list ≥1 role or flag as "No roles found — verify auth attributes manually"
+- **The minimum Section 8 (Test Specifications) TC count is `business_floor`** — defined below. **It is NOT a function of the operation count.** The enumeration above informs _what to write about_; it MUST NOT set _how many_ business TCs exist.
+- If `business_floor` ≥ 20: MUST split extraction into operation groups (≤20 ops each). Create one `TaskCreate` per group before starting any extraction phase.
+- Actor catalog must list ≥1 role or flag as "No roles found — verify §2's actor list manually"
+
+**The business TC floor:**
+
+```
+business_floor = (§3 US × AC)
+               + count([HARD] §4 business rules)
+               + count(§5 entity invariants)
+               + count(§5 state transitions) × 2     // valid + invalid
+               + count(§2 actors) × 2                // authorized + unauthorized
+               + count(observable §6 states)
+```
+
+**All inputs are business-shaped; _re-architecting cannot move the number_.** That sentence is the whole point of the floor, and it is true **only because every term names the spec section it reads from**. Adding a handler, a consumer, an event handler, or a background job does **not** move `business_floor` — none of them is an input to it.
+
+**[HARD] No term may be fed by a source grep.** The floor's inputs are a **closed set of spec-section references**. This block MUST contain zero `grep`/`rg` over `{module-source-root}`.
+
+- **`count(§2 actors)` reads §2's actor list — NEVER a permission-guard grep.** A role is a business noun; a permission attribute is not. Sourcing actors from `{authorization-markers}` would let a new auth attribute move a "business" floor by +2 with zero business change — a technical floor wearing a business name.
+- **Falsifier (the test that matters):** add an authorization attribute naming a new role, **and** add a handler → **`business_floor` MUST NOT move.** If it moves, this gate is architecture-derived regardless of what it is called.
+
+> **Why this floor and not an operation count.** A business spec must be re-implementable on _any_ architecture — the same feature as a monolith or as microservices yields the **same** user stories, acceptance criteria, and TCs. A floor derived from handler/consumer/job counts makes the spec a mirror of one implementation: re-architect, and the "business" TC count changes though no business behavior did. Operation-derived coverage is a **real obligation** — it belongs to the **technical** spec tree, which is architecture-bound by design.
 
 #### Step 1-INIT.2: Domain Model Extraction (Phase A)
 
@@ -279,7 +335,9 @@ For each application-layer entry point — read in this priority order:
 
 Write operation description in business language only — no language/framework type names or class names. Write with `[Source: operation/{service}/{Operation}]` abstract anchor per entry.
 
-**MUST: Every operation in Use Case Inventory (Step 1-INIT.1.5) → exactly one Phase C entry.** After Phase C: count entries. If count < Grand Total from inventory → create fill tasks before Phase D.
+**MUST: Every business capability a user can observe or invoke → exactly one Phase C entry.** After Phase C: confirm every §3 user story and every observable §6 state is reachable through ≥1 entry. If a capability has no entry → create fill tasks before Phase D.
+
+**Coverage is measured against business capabilities, not against the operation count.** Two handlers serving one user-visible capability are **one** entry, not two; one handler serving two distinct capabilities is **two**. The mapping is deliberately not 1:1 with the architecture — that is what makes the spec survive re-implementation.
 
 #### Step 1-INIT.4.5: Graph Trace for Cross-Service Scope (before Domain Model events)
 
@@ -299,7 +357,49 @@ python .claude/scripts/code_graph connections {path-to-primary-controller-file} 
 grep -rn "{message-bus-and-event-markers}" {module-source-root}/ --include="{backend-source-glob}"
 ```
 
-Use graph output to enumerate: outbound events (produces), inbound events (consumes), cross-service reactions. Feed all findings into **Section 5 (Domain Model)** as business-meaningful occurrences (e.g. "Order Placed" → owner notified, order becomes active) and into **Section 8 (Test Specifications)** as integration test cases — NEVER as bus/message/payload schemas (those live in code).
+Use graph output to enumerate: outbound events (produces), inbound events (consumes), cross-service reactions. Feed business-visible findings into **Section 5 (Domain Model)** as business-meaningful occurrences (e.g. "Order Placed" → owner notified, order becomes active) and into **Section 8 (Test Specifications)** only when the case passes M7 as a demoable business outcome. Technical-only publish/consume, payload, retry, idempotency, and projection mechanics belong in the technical spec tree and test code — NEVER as bus/message/payload schemas in the business Feature Spec.
+
+#### Step 1-INIT.4.6: Full-Chain Vertical Trace [BLOCKING — the completeness backbone]
+
+**Why this step exists:** Phases A–D enumerate each layer _in isolation_ (entities, rules, operations, events). A spec authored from layer-parallel inventories silently misses behavior that lives only in the _seams_ — a UI action whose handler was never enumerated, a write operation that no screen ever invokes (dead or headless?), a read model populated by an event with no documented producer. **A correct, nothing-missed spec requires tracing the COMPLETE vertical slice front-to-back for every user-facing capability**, not just listing the layers. This is the operative guard for "the spec is correct and nothing is missed."
+
+**For EACH user-facing capability (and each background/event-driven flow), trace the full chain end-to-end:**
+
+```
+UI view / entry point
+  → user action (click / submit / navigation)
+    → API call / route
+      → command OR query handler (application layer)
+        → domain entity + business rule(s) invoked / invariant enforced
+          → persistence (state change)
+          → domain/integration event emitted (if any)
+            → consumer(s) / saga / background reaction
+              → read model / projection updated
+  → API response
+    → UI observable state change (success / error / empty / loading / permission-denied)
+```
+
+**Tooling (use in this order; each link must be evidenced, never inferred):**
+
+1. **Frontend→backend links — `graph-connect-api`** (or grep the UI service/data layer for API call sites): map each view/screen action to the backend route/operation it invokes. This is the seam Phase C (backend-only) and Phase E (UI-only) each see from one side; this step JOINS them.
+2. **Backend flow — `graph-trace`** (`python .claude/scripts/code_graph trace {entry-file} --direction both --json`): from each handler, trace down to entity/rule and outward to events/consumers. Reuse the 1-INIT.4.5 cross-service output for the event tail.
+3. **Read-side closure:** for every write that emits an event, trace to the projection/read model and to the view that displays it — so the chain returns to the UI, not just to persistence.
+
+**Output — Full-Chain Trace Map** (working note in `.ai/workspace/analysis/{Module}-chain-map.md`; folds into §6 flows + §8 TCs):
+
+| Chain ID    | UI view + action  | API/operation | Handler | Entity + BR enforced | Event(s)     | Consumer/read-model        | UI outcome state      | Status            |
+| ----------- | ----------------- | ------------- | ------- | -------------------- | ------------ | -------------------------- | --------------------- | ----------------- |
+| CH-{MOD}-01 | {view} · {action} | {operation}   | {OP-id} | {entity} · {BR-id}   | {event or —} | {consumer/projection or —} | {success/error state} | COMPLETE / BROKEN |
+
+**[GATE — BLOCKING before Phase E / §6 / §8] Chain Reconciliation — flag every unmatched link:**
+
+- [ ] **No orphan UI:** every view/action in the UI inventory maps to ≥1 backend operation — an action with no backend link is either dead UI or a missing-operation discovery (investigate, don't drop).
+- [ ] **No orphan capability:** every §3 user story and every observable §6 state appears in ≥1 chain — surfaced in a view, OR explicitly justified as observable only through a later business outcome, with the reason recorded.
+- [ ] **Event closure:** every emitted domain/integration event has both a traced producer AND ≥1 consumer/read-model (or is recorded as fire-and-observe with no consumer by design); no event dead-ends silently.
+- [ ] **Read-side closure:** every event-driven projection/read model terminates at a view or a documented downstream consumer — the chain returns to an observable outcome.
+- [ ] **BROKEN links surfaced, never hidden:** any chain that cannot be completed end-to-end is recorded `Status: BROKEN` with the missing link named and confidence stated — a BROKEN chain is a spec-correctness finding, not an omission.
+
+**Feeds:** each `COMPLETE` chain → one §6.5 Per-Story Interaction Flow + ≥1 §8 TC spanning the full slice (not a handler-only TC); each `BROKEN`/headless chain → an explicit note in §6 (or the §6 backend-only skip reason) and a `Status: Planned`/flagged TC. **Skip the UI columns ONLY** for a backend-only module (no UI) — still trace operation → entity → event → consumer → read model and run the operation/event/read-side reconciliation rows.
 
 #### Step 1-INIT.5: Events & Jobs Extraction (Phase D)
 
@@ -309,7 +409,7 @@ For each event handler and bus consumer:
 2. Background jobs: schedule, purpose, side effects, abort condition
 3. Write with `[Source: event/{service}/{Event}]` abstract anchor (use `operation/{service}/{Job}` for background jobs)
 
-> **Working notes only — NOT doc prose.** Payload fields / ordering guarantees / schedules captured here are extraction notes. They fold into **Section 5 (Domain Model)** as business-meaningful occurrences (what happens, who reacts, the business outcome) and **Section 8** integration Test Specs — NEVER into prose as bus/message/payload schemas (those are the code's responsibility). See Step 1-INIT.7.
+> **Working notes only — NOT doc prose.** Payload fields / ordering guarantees / schedules captured here are extraction notes. They fold into **Section 5 (Domain Model)** as business-meaningful occurrences (what happens, who reacts, the business outcome) and into **Section 8** only when they produce a demoable business outcome — NEVER into prose as bus/message/payload schemas (those are the code's responsibility). Technical-only event/job mechanics belong in the technical spec tree and test code. See Step 1-INIT.7.
 
 #### Step 1-INIT.6: User Journey Synthesis (Phase E)
 
@@ -343,7 +443,7 @@ For each event handler and bus consumer:
 
 **Per-phase E completeness checklist (BLOCKING before proceeding to Step 1-INIT.7):**
 
-- [ ] Journey count ≥ Phase C entry count (Grand Total from Use Case Inventory)
+- [ ] Journey count ≥ Phase C entry count
 - [ ] Every actor in actor catalog appears in ≥1 journey
 - [ ] Every UI route discovered has ≥1 screen story
 - [ ] Every GET/query with filter params has a search/list/view story
@@ -354,14 +454,15 @@ For each event handler and bus consumer:
 
 After extraction is complete, fold the extracted content into the 8 business sections. Technical artifacts (commands/handlers, API routes, message/event contracts, UI component names) are the code's responsibility and are NOT written into the doc — they only _inform_ the business sections and test cases below:
 
-| Extracted Phase    | Target Section(s)                                                                                                                     |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase A entities   | Section 5 (Domain Model) — relationships + business-meaning columns, plain types + `[Source: component/{service}/{Entity}]`           |
-| Phase B rules      | Section 4 (Business Rules, BR-XX) + Section 3 (the acceptance criteria they constrain)                                                |
-| Phase C operations | Section 3 (User Stories & AC — the business need behind each operation) + Section 8 (Test Specs) — **NOT** a Commands/API section     |
-| Phase D events     | Section 5 (Domain Model — as business-meaningful occurrences) + Section 8 (integration Test Specs) — **NEVER** as bus/message schemas |
-| Phase E journeys   | Section 6 (Process Flows) + Section 3 (User Stories & AC) + Section 8 (Test Specs)                                                    |
-| Auth rules         | Section 7 (Permissions & Roles — business RBAC matrix, no auth-implementation detail)                                                 |
+| Extracted Phase                              | Target Section(s)                                                                                                                                                                                                                                                                                               |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase A entities                             | Section 5 (Domain Model) — relationships + business-meaning columns, plain types + `[Source: component/{service}/{Entity}]`                                                                                                                                                                                     |
+| Phase B rules                                | Section 4 (Business Rules, BR-XX) + Section 3 (the acceptance criteria they constrain)                                                                                                                                                                                                                          |
+| Phase C operations                           | Section 3 (User Stories & AC — the business need behind each operation) + Section 8 (Test Specs) — **NOT** a Commands/API section                                                                                                                                                                               |
+| Phase D events                               | Section 5 (Domain Model — as business-meaningful occurrences) + Section 8 only for demoable business outcomes — **NEVER** as bus/message schemas                                                                                                                                                                |
+| Phase E journeys                             | Section 6 (§6.1 Process Flows) + Section 3 (User Stories & AC) + Section 8 (Test Specs)                                                                                                                                                                                                                         |
+| UI interaction surface (UI-bearing features) | Section 6 (§6.2 View Inventory, §6.3 Navigation Map, §6.4 Key UI States, §6.5 Per-Story Interaction Flow) per the §6 sub-procedure — UX roles + observable states + `US-`/`OP-`/`BR-` cross-refs only; record companion `design_spec:`/`mockup:` frontmatter when present; backend-only specs state the §6 skip |
+| Auth rules                                   | Section 7 (Permissions & Roles — business RBAC matrix, no auth-implementation detail)                                                                                                                                                                                                                           |
 
 **[BLOCKING] Section 8 Readiness Gate** — Before writing Section 8 (Test Specifications), verify foundational sections are complete:
 
@@ -376,17 +477,18 @@ If 2 or more of these sections are missing or empty → use `AskUserQuestion` to
 
 **[BLOCKING] Section 8 Quantity Gate (runs after Readiness Gate):**
 
-Before writing any TCs, verify the planned TC count covers the Use Case Inventory:
+Before writing any TCs, verify the planned TC count meets the **business** floor:
 
-| Check                | Required                            | Planned | Status    |
-| -------------------- | ----------------------------------- | ------- | --------- |
-| CRUD/Core TCs        | ≥ Write Ops (N) from inventory      | {n}     | PASS/FAIL |
-| Read/View TCs        | ≥ Read Ops with filters (M)         | {n}     | PASS/FAIL |
-| Event/Background TCs | ≥ Event-Driven (K) + Background (J) | {n}     | PASS/FAIL |
-| Permission TCs       | ≥ actor count × 2                   | {n}     | PASS/FAIL |
-| **Total**            | ≥ Grand Total (N+M+K+J)             | {n}     | PASS/FAIL |
+| Check          | Required               | Planned | Status    |
+| -------------- | ---------------------- | ------- | --------- |
+| Permission TCs | ≥ count(§2 actors) × 2 | {n}     | PASS/FAIL |
+| **Total**      | ≥ `business_floor`     | {n}     | PASS/FAIL |
 
-If any row FAILS or planned count < Grand Total: split TC generation into operation-group batches (≤20 ops per `TaskCreate`). Do NOT write TCs until all batch tasks are planned and the total is ≥ Grand Total.
+If any row FAILS or planned count < `business_floor`: split TC generation into operation-group batches (≤20 ops per `TaskCreate`). Do NOT write TCs until all batch tasks are planned and the total is ≥ `business_floor`.
+
+⚠️ **This gate deliberately does NOT contain rows for Write Ops (N), Read Ops (M), or Event-Driven (K) + Background (J).** Those rows made the business TC count a function of the architecture — a `K + J` row mints a business TC for every consumer, event handler, and background job, which is exactly how sync/consumer/event-handler test cases entered a tech-free business spec. **Those coverage obligations are real and are NOT abolished — they are owned by the technical spec tree**, where counting handlers is correct because a technical spec is architecture-bound by definition.
+
+**`count(§2 actors)` reads §2's actor list.** Never source it from a permission-guard grep — see the `business_floor` definition.
 
 **[REQUIRED] TC ID Collision Prevention:**
 
@@ -408,12 +510,12 @@ Note the highest existing ID before assigning new ones. See `.claude/skills/shar
 > ```markdown
 > ## Related Documentation
 >
-> | Type                 | Path                           | Description                                                                                                                  |
-> | -------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-> | Spec Index (derived) | `docs/specs/{Bucket}/INDEX.md` | DERIVED navigation catalog over the Feature Specs (regenerate via /spec-index) — §8 in this doc is the canonical TC registry |
-> | Integration Tests    | `{configured-test-path}/`      | Test code; linked to TCs by the configured test-spec annotation (key `TestSpec`)                                             |
-> | Parent Feature       | _(if sub-feature)_             |                                                                                                                              |
-> | Child Features       | _(if this doc is a parent)_    |                                                                                                                              |
+> | Type                 | Path                           | Description                                                                                                                           |
+> | -------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+> | Spec Index (derived) | `docs/specs/{Bucket}/INDEX.md` | DERIVED navigation catalog over the Feature Specs (regenerate via /spec-index) — §8 in this doc is the canonical business TC registry |
+> | Integration Tests    | `{configured-test-path}/`      | Test code; linked to TCs by the configured test-spec annotation (key `TestSpec`)                                                      |
+> | Parent Feature       | _(if sub-feature)_             |                                                                                                                                       |
+> | Child Features       | _(if this doc is a parent)_    |                                                                                                                                       |
 > ```
 >
 > Fill in `{app-bucket}`, `{system-name}`, `{Module}`, `{ServiceName}` from the current module context.
@@ -430,7 +532,7 @@ When audit mode is triggered:
 
 1. Read `docs/specs/{Bucket}/README.{Feature}.md` frontmatter → `last_updated`
 2. Run `git log --since="{last_updated}" --name-only -- {module-source-root}/`
-3. If changed files found → flag sections using Phase 1.5 impact mapping table
+3. If changed files found → flag sections using Phase 1.5 impact mapping table — this includes flagging **§6 (Process Flows & Interaction Surface)** STALE when changed UI-affecting source implies a new/changed view, navigation, observable state, or click-path the spec's §6.2–6.5 no longer reflects.
 4. Output `docs/specs/{Bucket}/AUDIT-{date}.md`:
 
     ```markdown
@@ -438,10 +540,11 @@ When audit mode is triggered:
 
     ## {FeatureName}
 
-    | Section                    | Status     | Changed Source Files         | Action              |
-    | -------------------------- | ---------- | ---------------------------- | ------------------- |
-    | Section 5 (Domain Model)   | ⚠️ STALE   | EntityX (changed 2026-04-18) | Re-extract entities |
-    | Section 4 (Business Rules) | ✅ Current | —                            | —                   |
+    | Section                         | Status     | Changed Source Files         | Action                                       |
+    | ------------------------------- | ---------- | ---------------------------- | -------------------------------------------- |
+    | Section 5 (Domain Model)        | ⚠️ STALE   | EntityX (changed 2026-04-18) | Re-extract entities                          |
+    | Section 6 (Interaction Surface) | ⚠️ STALE   | ViewY (changed 2026-04-18)   | Refresh §6.2–6.5 (view/nav/state/click-path) |
+    | Section 4 (Business Rules)      | ✅ Current | —                            | —                                            |
     ```
 
 ---
@@ -519,22 +622,23 @@ When UPDATING existing feature docs (not from scratch):
 
 ### Step 1.5.2: Section Impact Mapping
 
-| Change Type              | Impacted Sections                                                             |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| New entity property      | 5 (Domain Model), 4 (Business Rules if it adds a constraint)                  |
-| New capability/operation | 3 (User Stories & AC), 4 (Business Rules), 6 (Process Flows if a new journey) |
-| New access/role rule     | 7 (Permissions & Roles)                                                       |
-| New filter/query         | 3 (User Stories & AC — a view/search story)                                   |
-| Any new functionality    | **8 (Test Specifications)** — MANDATORY                                       |
-| Any change               | 1 (Overview) — only if scope shifts                                           |
+| Change Type                                                                        | Impacted Sections                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New entity property                                                                | 5 (Domain Model), 4 (Business Rules if it adds a constraint)                                                                                                                                                                                  |
+| New capability/operation                                                           | 3 (User Stories & AC), 4 (Business Rules), 6 (§6.1 Process Flows if a new journey)                                                                                                                                                            |
+| UI behavior change (new/changed view, navigation, observable state, or click-path) | 6 (§6.2 View Inventory, §6.3 Navigation Map, §6.4 Key UI States, §6.5 Per-Story Interaction Flow — refresh the affected interaction-surface subsections); refresh companion `design_spec:`/`mockup:` frontmatter if the linked artifact moved |
+| New access/role rule                                                               | 7 (Permissions & Roles)                                                                                                                                                                                                                       |
+| New filter/query                                                                   | 3 (User Stories & AC — a view/search story)                                                                                                                                                                                                   |
+| Any new business-visible functionality                                             | **8 (Test Specifications)** — MANDATORY                                                                                                                                                                                                       |
+| Any change                                                                         | 1 (Overview) — only if scope shifts                                                                                                                                                                                                           |
 
 ### Step 1.5.3: Mandatory Test Coverage (Section 8 — Test Specifications)
 
-**CRITICAL**: When documenting ANY new functionality, MUST update:
+**CRITICAL**: When documenting ANY new business-visible functionality, MUST update:
 
-- **Section 8 (Test Specifications)**: Add test cases (TC-{FEATURE}-{NNN}) for new features.
+- **Section 8 (Test Specifications)**: Add business test cases (TC-{FEATURE}-{NNN}) for new or changed demoable user/QC outcomes. Technical-only changes with no business-visible result produce zero business TCs and are routed to the technical spec tree and test code.
 
-> **[BLOCKING] TC Format:** Use canonical format in `.claude/skills/shared/tc-format.md`. NEVER use abbreviated flat GIVEN/WHEN/THEN — use full template with all required fields (Objective, Preconditions, GWT steps, Acceptance Criteria, Test Data, Edge Cases, Evidence, IntegrationTest, Status). Section 8 owned exclusively by `spec [mode=tests]` — the author modes populate it only during authoring (INIT with real `[Source:]`, DRAFT with `Evidence: TBD`). Existing TCs MUST NOT be overwritten during UPDATE mode (the draft→update run only UPGRADES `Evidence: TBD` → real anchors, never rewrites the TC body).
+> **[BLOCKING] TC Format:** Use canonical format in `.claude/skills/shared/tc-format.md`. NEVER use abbreviated flat GIVEN/WHEN/THEN — use full template with all required fields (Objective, Preconditions, GWT steps, Acceptance Criteria, Test Data, Edge Cases, Evidence, CoveredBy, Status). Section 8 owned exclusively by `spec [mode=tests]` — the author modes populate it only during authoring (INIT with real `[Source:]`, DRAFT with `Evidence: TBD`). Existing TCs MUST NOT be overwritten during UPDATE mode (the draft→update run only UPGRADES `Evidence: TBD` → real anchors, never rewrites the TC body).
 
 > **[BLOCKING] TC ID Collision Prevention:** Before assigning new TC IDs, check highest existing ID:
 >
@@ -544,7 +648,7 @@ When UPDATING existing feature docs (not from scratch):
 >
 > Assign next sequential ID. See `.claude/skills/shared/tc-format.md` — Decade-Based Numbering section for range rules.
 
-**Failure to update Section 8 = blocking quality issue.**
+**Failure to update Section 8 for business-visible changed behavior = blocking quality issue. Adding Section 8 cases for technical-only changes that do not pass M7 is also a blocking quality issue.**
 
 ---
 
@@ -624,7 +728,7 @@ Generate at `docs/specs/{Bucket}/README.{FeatureName}.md`.
 - {Invalid scenario} → {Expected error/behavior}
 
 **Evidence:** `[Source: {namespace}/{service}/{id}]`
-**IntegrationTest:** one or more covering tests for the configured test environment — `{TestFile}::{MethodName}` (comma-separated **on one line** when several cover this TC), a test-filter expression (e.g. `TestSpec=TC-{FEATURE}-{NNN}`), or `Untested`
+**CoveredBy:** one or more covering tests for the configured test environment — `{TestFile}::{MethodName}` (comma-separated **on one line** when several cover this TC), a test-filter expression (e.g. `TestSpec=TC-{FEATURE}-{NNN}`), `Manual-QC`, or `Untested`
 **Status:** Tested | Untested | Planned
 ```
 
@@ -694,7 +798,7 @@ No `.ai.md` companion files. Single `README.{Feature}.md` only output. Template:
 - **No code details** in sections 1-7 — no file paths, no source-code types, no API/command/handler/message names
 - **Evidence only in Section 8** — `[Source: namespace/service/id]` abstract-anchor references in the per-TC hidden carrier
 - **Acceptance criteria MUST cross-reference BR-{FC}-NN** — each AC names the business rules it enforces
-- **Size caps** — body (sections 1-7) ≤1200 lines, whole file ≤1800 (hard). **Split** the capability when body>1200 OR TCs>40 (or when two distinct module-level capabilities emerge):
+- **Split criteria** — no line-count cap applies to Feature Specs. **Split** the capability when TCs>40 or when two distinct module-level capabilities emerge:
     1. Create `README.{FeatureName}-Part1.md` and `README.{FeatureName}-Part2.md`
     2. Keep Business Rules (S4) + Domain Model (S5) in Part1; secondary stories/edge cases → Part2
     3. Preserve TC ID continuity — both parts share `TC-{FEATURE}-` prefix; NEVER renumber
@@ -771,6 +875,7 @@ Flag items requiring implementation assumptions:
 - **S3 (User Stories & Acceptance Criteria):** Every US-XX has ≥1 AC-XX with explicit success AND failure outcome in Given/When/Then. Vague AC → INCOMPLETE.
 - **S4 (Business Rules):** Every BR-XX needs: trigger condition, rule content, error message, `[Source: rule/{service}/{RuleName}]`. Missing field → flag.
 - **S3↔S4 linkage:** Every acceptance criterion that enforces a constraint references the BR-XX it enforces. AC with an unstated rule → flag.
+- **S6 (Process Flows & Interaction Surface — UI/UX re-implementability):** For every UI-bearing capability, §6.2 View Inventory, §6.3 Navigation Map, §6.4 Key UI States, and §6.5 Per-Story Interaction Flow are all present and M1-clean (UX roles/states/flows only — zero framework/route/CSS/component-class names). Every US-XX with a user-facing outcome has a §6.5 click-path; every view lists its observable states; the companion `design_spec:`/`mockup:` path is recorded in frontmatter when one exists. Missing/partial §6 on a UI feature (with no explicit backend-only skip reason) → INCOMPLETE — the app cannot be rebuilt on another stack from business logic + tests alone without the interaction surface.
 - **S7 (Permissions & Roles):** Permission matrix with explicit role × action × condition cells. Blank cells → flag.
 - **Concrete examples:** ≥1 example (input + expected output) per core operation. Abstract-only → LOW.
 
@@ -780,7 +885,7 @@ _Reference: `.claude/skills/shared/sdd-artifact-contract.md` → "AI-Implementab
 
 ### M5 — Rebuild-From-Scratch Test
 
-See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Before completing, answer this for the whole doc:
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. Before completing, answer this for the whole doc:
 
 > **Could a team with zero knowledge of this codebase re-implement the identical business behavior on ANY stack — using §1-8 prose alone, with `[Source:]` evidence stripped out?**
 
@@ -790,14 +895,17 @@ If the answer is NO because the prose depends on framework/product/language word
 
 ## Quality Checklist
 
-### Mandate Compliance (M1-M6)
+### Mandate Compliance (M1-M5 + M7)
 
-See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria.
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. M6 is absent from this checklist by design — it binds the REVIEWER (a review that passes an M1-M5/M7 violation is itself defective), never the artifact. The artifact-facing set is M1-M5 and M7.
 
 - [ ] **Mandate Quality Check:** §1-8 prose contains ZERO banned tech terms (`spec-principles.md` §3.2) and NO code identifiers (class/method names, file paths, namespaces) outside evidence carriers (M1/M2)
 - [ ] Every FR / BR / operation carries a logical ID (FR-/BR-/OP-/TC-) AND a separate `[Source: namespace/service/id]` abstract-anchor evidence carrier (never physical code coordinates or repository-root paths) — `[Source:]` retained, not folded into prose (M3)
 - [ ] Every requirement is testable with one interpretation and named success/failure outcomes (M4)
 - [ ] Rebuild-From-Scratch Test answered YES — doc is re-implementable on any stack from §1-8 prose alone (M5)
+- [ ] **Business-visibility:** every §8 case passes the demo test applied to its BODY — _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY. A `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count FAILS. Judge the BODY, never the title or ID. No TC count is derived from an architecture inventory (M7 — see the Business-visibility gate above)
+
+> **M1 governs vocabulary; M7 governs subject matter.** A technical case in impeccably tech-free prose satisfies M1 while violating M7 — so a clean pass on the M1/M2 banned-token check above is NOT evidence of M7 compliance. Only the demo test decides.
 
 ### Structure
 
@@ -806,9 +914,10 @@ See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6
 - [ ] **YAML frontmatter** present with module, service, feature_code, entities[]
 - [ ] Derived spec artifact refresh flagged for `/spec-index` when Feature Specs were created, renamed, split, or deleted
 - [ ] Stakeholder navigation table present
-- [ ] **Size caps** — body (sections 1-7) ≤1200 lines, whole file ≤1800 (hard); split when body>1200 OR TCs>40 (follow split procedure in Key Principles)
+- [ ] **Split criteria** — no line-count cap applies; split when TCs>40 or distinct module-level capabilities emerge (follow split procedure in Key Principles)
 - [ ] **No code details** in sections 1-7 (no file paths, no source-code types, no command/handler/API/message names)
 - [ ] **Acceptance criteria reference BR-{FC}-NN** IDs they enforce
+- [ ] **§6 Interaction Surface complete for UI-bearing features** — §6.2 View Inventory, §6.3 Navigation Map, §6.4 Key UI States, §6.5 Per-Story Interaction Flow all present, M1-clean, and `US-`/`OP-`/`BR-`-cross-referenced; companion `design_spec:`/`mockup:` recorded in frontmatter; backend-only features state the §6 skip reason explicitly (so the spec carries business logic + tests + UI/UX = re-implementable on any stack)
 
 ### Test Case Evidence (MANDATORY)
 
@@ -847,11 +956,12 @@ See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6
 
 ### Completeness Gates (Init Mode)
 
-- [ ] [C-gate] Phase C entry count ≥ Grand Total from Use Case Inventory (Step 1-INIT.1.5)
+- [ ] [C-gate] Every business capability (§3 user story / observable §6 state) has ≥1 Phase C entry
 - [ ] [E-gate] Phase E journey count ≥ Phase C entry count
-- [ ] [Actor-gate] Every actor in actor catalog appears in ≥1 Phase E journey
-- [ ] [TC-gate] Section 8 TC count ≥ Grand Total from Use Case Inventory
+- [ ] [Actor-gate] Every §2 actor appears in ≥1 Phase E journey
+- [ ] [TC-gate] Section 8 TC count ≥ `business_floor`
 - [ ] [Source-gate] Every Phase C entry and every Phase E journey has `[Source: namespace/service/id]` abstract anchor
+- [ ] [Chain-gate] Full-Chain Reconciliation (Step 1-INIT.4.6) passed — no orphan UI, no orphan operation, event + read-side closure verified; every BROKEN chain recorded as a spec-correctness finding (never silently dropped)
 
 ## Standalone Chain
 
@@ -868,11 +978,11 @@ spec [author mode] (you are here)
   │     CREATE: new feature doc just created → write TCs from spec.
   │     UPDATE: existing doc updated → update TCs to match changed behavior.
   │
-  ├─ [REQUIRED] → /review-artifact --type=spec-tests
+  ├─ [REQUIRED] → /artifact-review --type=spec-tests
   │     Validates TC coverage, GIVEN/WHEN/THEN completeness, no duplicate TC codes.
   │
   ├─ [REQUIRED] → spec [mode=sync]
-  │     Forward-syncs Section 8 TCs ↔ integration test code (§8 canonical; test code implements it).
+  │     Forward-syncs Section 8 TCs ↔ executing test code (§8 canonical; test code implements it).
   │
   ├─ [RECOMMENDED] → /integration-test [from-changes or from-prompt mode]
   │     Generates/updates integration test files from changed TCs.
@@ -896,11 +1006,11 @@ Template to insert or verify in `docs/specs/{Bucket}/README.{FeatureName}.md`:
 ```markdown
 ## Related Documentation
 
-| Type                 | Link                                                          | Description                                                                                                           |
-| -------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Spec Index (derived) | [docs/specs/{Bucket}/INDEX.md](../../specs/{Bucket}/INDEX.md) | DERIVED navigation catalog over the Feature Specs (regenerate via /spec-index) — §8 here is the canonical TC registry |
-| Integration Tests    | `{configured-test-path}/`                                     | Test code linked to TCs via the configured test-spec annotation (key `TestSpec`)                                      |
-| Related Modules      | _(list any cross-module dependencies here)_                   |                                                                                                                       |
+| Type                 | Link                                                          | Description                                                                                                                    |
+| -------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Spec Index (derived) | [docs/specs/{Bucket}/INDEX.md](../../specs/{Bucket}/INDEX.md) | DERIVED navigation catalog over the Feature Specs (regenerate via /spec-index) — §8 here is the canonical business TC registry |
+| Integration Tests    | `{configured-test-path}/`                                     | Test code linked to TCs via the configured test-spec annotation (key `TestSpec`)                                               |
+| Related Modules      | _(list any cross-module dependencies here)_                   |                                                                                                                                |
 ```
 
 Fill in `{Bucket}`, `{FeatureName}`, `{Module}`, and `{ServiceName}` from context.

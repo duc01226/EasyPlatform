@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations.Exceptions;
 using Easy.Platform.Domain.Events;
@@ -439,6 +440,12 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     /// background-lock infrastructure owns its pool-name constant (no central catalog).
     /// </summary>
     private const string BgPoolName = "EventHandlerFanOut";
+
+    /// <summary>
+    /// Stand-in emitted when an event's correlation id is absent or unreadable. A literal placeholder is logged
+    /// rather than an empty token so a reader can tell "this event had no id" apart from "the id was dropped".
+    /// </summary>
+    private const string UnknownEventId = "unknown";
 
     /// <summary>
     /// Factory for creating loggers with appropriate categorization for this handler type.
@@ -893,7 +900,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
                         {
                             // Log only after 75% of retry budget consumed. See Util.TaskRunner.LogErrorRetryThreshold.
                             if (retryAttempt > Util.TaskRunner.LogErrorRetryThreshold(RetryOnFailedTimes))
-                                LogError(thisHandlerInstanceEvent, e.BeautifyStackTrace(), LoggerFactory, "Retry");
+                                LogError(thisHandlerInstanceEvent, e, LoggerFactory, "Retry");
                         },
                         cancellationToken: cancellationToken,
                         ignoreExceptionTypes: [typeof(IPlatformValidationException)]
@@ -903,7 +910,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
                 {
                     if (ThrowExceptionOnHandleFailed)
                         throw;
-                    LogError(thisHandlerInstanceEvent, e.BeautifyStackTrace(), LoggerFactory);
+                    LogError(thisHandlerInstanceEvent, e, LoggerFactory);
                 }
             }
         }
@@ -911,7 +918,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
         {
             if (ThrowExceptionOnHandleFailed)
                 throw;
-            LogError(@event, e.BeautifyStackTrace(), LoggerFactory);
+            LogError(@event, e, LoggerFactory);
         }
     }
 
@@ -1417,7 +1424,12 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
             {
                 activity?.AddTag("Type", GetType().FullName);
                 activity?.AddTag("EventType", typeof(TEvent).FullName);
-                activity?.AddTag("Event", @event.ToFormattedJson());
+                activity?.AddTag(
+                    "Event",
+                    PlatformJsonSerializer.SerializeForDiagnostics(
+                        @event,
+                        forceUseRuntimeType: true,
+                        writeIndented: true));
 
                 await handleAsync();
             }
@@ -1477,8 +1489,11 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     /// This provides context about what operation failed.
     /// </param>
     /// <param name="exception">
-    /// The exception that occurred during event processing.
-    /// The exception's details and stack trace will be logged for debugging.
+    /// The RAW exception that occurred during event processing. Pass it unmodified — callers must NOT pre-render it
+    /// (for example through a stack-trace beautifier); this method owns the decision about what is safe to emit.
+    /// Its type, message, demystified stack trace, and inner exception TYPE names are logged, because on the
+    /// default non-inbox path this handler swallows the exception and this line is the only record of it.
+    /// <see cref="Exception.Data" /> and inner exception MESSAGES are not logged.
     /// </param>
     /// <param name="loggerFactory">
     /// Factory for creating the appropriate logger instance.
@@ -1492,9 +1507,10 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     /// <para>
     /// <strong>Comprehensive Error Context:</strong>
     /// The log message includes essential debugging information:
-    /// - Exception message and beautified stack trace
+    /// - Exception diagnostics: type, message, demystified stack trace, and inner exception TYPE chain
     /// - Event type and handler type for component identification
-    /// - Complete event content for reproducing the error condition
+    /// - The event's correlation id, so the failing RECORD can be identified and not just the failing code
+    /// - Payload-free event diagnostics — the event's type name only; its contents are never serialized
     /// - Optional prefix for categorizing different error scenarios
     /// </para>
     ///
@@ -1526,14 +1542,54 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     {
         CreateLogger(loggerFactory)
             .LogError(
-                exception.BeautifyStackTrace(),
-                "[PlatformCqrsEventHandler] {Prefix} Handle event failed. [[Message:{Message}]] [[EventType:{EventType}]]; [[HandlerType:{HandlerType}]]. [[EventContent:{@EventContent}]].",
+                "[PlatformCqrsEventHandler] {Prefix} Handle event failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]] [[EventType:{EventType}]]; [[HandlerType:{HandlerType}]]; [[EventId:{EventId}]]. [[EventDiagnostics:{EventDiagnostics}]].",
                 prefix,
-                exception.Message,
+                PlatformJsonSerializer.SerializeExceptionForDiagnostics(exception),
                 notification.GetType().Name,
                 GetType().Name,
-                notification
+                TryReadEventId(notification),
+                PlatformJsonSerializer.SerializeForDiagnostics(
+                    notification,
+                    forceUseRuntimeType: true,
+                    writeIndented: true)
             );
+    }
+
+    /// <summary>
+    /// Reads the event's correlation id behind a guard, so the identifier that makes a swallowed failure locatable
+    /// can never itself become the reason the failure goes unrecorded.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// WHY an id at all: on the default non-inbox path this handler SWALLOWS the exception
+    /// (<c>ThrowExceptionOnHandleFailed</c> defaults to <c>false</c>), so this log line is the only record. A stack
+    /// trace tells a developer WHERE the failure happened; without an id they still cannot tell WHICH record
+    /// triggered it, and so cannot reproduce it.
+    /// </para>
+    /// <para>
+    /// WHY guarded: <see cref="IPlatformCqrsEvent.Id" /> is computed as <c>$"{EventAction}-{AuditTrackId}"</c> over
+    /// members a derived event may override, and this method runs inside <c>catch</c> blocks. An exception escaping
+    /// here would replace the failure being logged — the same never-throw rule the diagnostic serializer follows.
+    /// </para>
+    /// <para>
+    /// The id is an opaque surrogate key (a <c>Ulid</c>): it correlates the record without disclosing anything
+    /// about it, which is why this addition carries no confidentiality cost.
+    /// </para>
+    /// </remarks>
+    /// <param name="notification">The event whose correlation id to read.</param>
+    /// <returns>The event id, or <see cref="UnknownEventId" /> if it is absent or unreadable; never throws.</returns>
+    private static string TryReadEventId(TEvent notification)
+    {
+        try
+        {
+            var eventId = notification.Id;
+
+            return string.IsNullOrWhiteSpace(eventId) ? UnknownEventId : eventId;
+        }
+        catch (Exception)
+        {
+            return UnknownEventId;
+        }
     }
 
     /// <summary>

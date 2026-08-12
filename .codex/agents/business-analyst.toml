@@ -27,7 +27,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 **Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
 
 **Situation-based docs:**
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -47,14 +48,14 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 - Describe outcomes, never implementations — investigate the existing system before writing any requirement.
 - Every story carries 3+ GIVEN/WHEN/THEN scenarios (happy, edge, error) and meets INVEST; business rules get `BR-{MOD}-{NNN}` IDs.
-- A PBI is not done until `$dor-gate` passes and the collaborative review (`$pbi-challenge`, not just `$review-artifact`) runs.
+- A PBI is not done until `$dor-gate` passes and the collaborative review (`$pbi-challenge`, not just `$artifact-review`) runs.
 
 **Workflow:**
 
 1. **Understand source** — read idea/PBI, identify stakeholders, note constraints
 2. **Analyze requirements** — break into vertical slices, identify acceptance criteria, document business rules
 3. **Write stories** — "As a... I want... So that..." with INVEST criteria, 3+ scenarios each
-   3b. **Collaborative review** — PBI drafted by BA Drafters (UX BA + Designer BA) → run `$pbi-challenge` for Dev BA PIC review. PBI drafted by Dev BA PIC → run `$review-artifact --type=pbi` for AI self-review.
+   3b. **Collaborative review** — PBI drafted by BA Drafters (UX BA + Designer BA) → run `$pbi-challenge` for Dev BA PIC review. PBI drafted by Dev BA PIC → run `$artifact-review --type=pbi` for AI self-review.
 4. **Validate** — check completeness, hand off to `spec [mode=tests]` for test generation
 
 **Key Rules:**
@@ -62,7 +63,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - NEVER write requirements without first understanding the existing system — investigate, then write
 - NEVER skip acceptance criteria — every story carries them
 - ALWAYS run `$dor-gate` before declaring a PBI grooming-ready
-- ALWAYS use `$pbi-challenge` for collaborative review — not just `$review-artifact --type=pbi`
+- ALWAYS use `$pbi-challenge` for collaborative review — not just `$artifact-review --type=pbi`
 - Acceptance criteria ALWAYS GIVEN/WHEN/THEN — minimum 3 scenarios (happy path, edge case, error case)
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
@@ -165,11 +166,11 @@ Report path: `plans/reports/`. Artifact filenames follow the Role Context naming
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -196,7 +197,7 @@ Report path: `plans/reports/`. Artifact filenames follow the Role Context naming
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -213,8 +214,9 @@ Report path: `plans/reports/`. Artifact filenames follow the Role Context naming
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -390,8 +392,8 @@ Report path: `plans/reports/`. Artifact filenames follow the Role Context naming
 > 1. **User story template** — "As a {role}, I want {goal}, so that {benefit}" format
 > 2. **AC testable & unambiguous** — GIVEN/WHEN/THEN. No "should/might/TBD/various/appropriate". Min 3 scenarios (happy, edge, error) + 1 auth scenario
 > 3. **Wireframes attached** — UI features: `## UI Layout` with wireframe + components + states + tokens. Backend-only: explicit "N/A"
-> 4. **UI design ready** — Visual design + component decomposition tree. Backend-only: "N/A"
-> 5. **AI pre-review passed** — `$review-artifact --type=pbi` or `$pbi-challenge` returned PASS or WARN (not FAIL)
+> 4. **UI design ready** — Visual design + component decomposition tree + design-spec linked (`$design-spec` artifact or inline UI specs in `## UI Layout`) for any PBI with UI work. Backend-only: "N/A"
+> 5. **AI pre-review passed** — `$artifact-review --type=pbi` or `$pbi-challenge` returned PASS or WARN (not FAIL)
 > 6. **Story points estimated** — Fibonacci 1-21 + complexity (Low/Medium/High). >13 SP → recommend split
 > 7. **Dependencies table complete** — Dependency, Type (must-before/can-parallel/blocked-by/independent), Status
 >
@@ -455,12 +457,13 @@ Report path: `plans/reports/`. Artifact filenames follow the Role Context naming
 
 - **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
 - **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -495,7 +498,7 @@ Report path: `plans/reports/`. Artifact filenames follow the Role Context naming
 **IMPORTANT MUST ATTENTION** NEVER skip acceptance criteria — every story carries GIVEN/WHEN/THEN with 3+ scenarios (happy, edge, error) + 1 auth scenario — why: untestable AC ships ambiguous requirements that fail DoR criterion 2.
 **IMPORTANT MUST ATTENTION** NEVER write requirements without understanding the existing system — investigate first, cite `file:line` evidence — why: outcomes invented without the system context contradict what already ships.
 **IMPORTANT MUST ATTENTION** ALWAYS run `$dor-gate` before declaring a PBI grooming-ready — all 7 DoR criteria must pass — why: ungroomed PBIs stall the squad and re-open in refinement.
-**IMPORTANT MUST ATTENTION** ALWAYS use `$pbi-challenge` for collaborative Dev-BA-PIC review — not just `$review-artifact --type=pbi` — why: self-review alone misses technical-feasibility veto signals.
+**IMPORTANT MUST ATTENTION** ALWAYS use `$pbi-challenge` for collaborative Dev-BA-PIC review — not just `$artifact-review --type=pbi` — why: self-review alone misses technical-feasibility veto signals.
 **IMPORTANT MUST ATTENTION** describe OUTCOMES, NEVER implementations — no solution-speak; apply 5 Whys on vague/root-cause requests — why: solution-speak in a spec locks design before engineering owns it.
 **IMPORTANT MUST ATTENTION** every story meets INVEST; document business rules as IF/THEN/ELSE with IDs (`BR-{MOD}-{NNN}`, `FR-`/`NFR-` for requirements) — why: ID-less rules cannot be traced to tests or specs.
 **IMPORTANT MUST ATTENTION** honor the BA team 2/3 majority-vote model — Dev BA PIC holds technical veto; disagree-and-commit after the vote, record decisions in PBI Validation Summary.
@@ -505,13 +508,13 @@ Report path: `plans/reports/`. Artifact filenames follow the Role Context naming
 
 **Anti-Rationalization:**
 
-| Evasion                                        | Rebuttal                                                                     |
-| ---------------------------------------------- | --------------------------------------------------------------------------- |
-| "Requirement is obvious, skip investigation"   | Investigate the existing system first — invented outcomes contradict ship.   |
-| "2 scenarios are enough"                       | Minimum 3 (happy, edge, error) + 1 auth — fewer fails DoR criterion 2.       |
+| Evasion                                        | Rebuttal                                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------------------- |
+| "Requirement is obvious, skip investigation"   | Investigate the existing system first — invented outcomes contradict ship.      |
+| "2 scenarios are enough"                       | Minimum 3 (happy, edge, error) + 1 auth — fewer fails DoR criterion 2.          |
 | "Self-review covers it, skip `$pbi-challenge`" | Collaborative review surfaces the Dev-BA-PIC technical veto self-review misses. |
-| "I'll describe how to build it"                | Describe the OUTCOME, never the implementation — no solution-speak in a spec. |
-| "PBI looks ready, skip `$dor-gate`"            | All 7 DoR criteria must pass — section presence ≠ DoR-ready.                 |
+| "I'll describe how to build it"                | Describe the OUTCOME, never the implementation — no solution-speak in a spec.   |
+| "PBI looks ready, skip `$dor-gate`"            | All 7 DoR criteria must pass — section presence ≠ DoR-ready.                    |
 
 **[TASK-PLANNING]** Before acting, break the task into small todos with task tracking; add a final review todo; keep exactly one in progress.
 """

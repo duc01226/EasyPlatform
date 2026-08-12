@@ -20,7 +20,7 @@ Copy the entire `.claude/` directory to your target project. This includes:
 - `skills/` — planning, implementation, review, testing, setup, and sync skills
 - `agents/` — specialized agents (code-reviewer, debugger, architect, etc.)
 - `hooks/` — context injection, workflow routing, enforcement, and setup gates
-- `workflows/` + `workflows.json` — 17 workflow definitions (feature, bugfix, refactor, etc.)
+- `workflows/` + `workflows.json` — 18 workflow definitions (feature, bugfix, refactor, etc.)
 - `scripts/` — Catalog generators, audit scripts, Codex sync/verification tooling
 - `docs/` — Framework documentation
 

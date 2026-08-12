@@ -74,6 +74,18 @@ public sealed class DemoBatchScrollingBackgroundJobExecutor
     }
 
     /// <summary>
+    /// Opening text of the stamp <c>ProcessEntitiesAsync</c> appends to <c>FullText</c>, and the needle
+    /// <c>EntitiesQueryBuilder</c> uses to skip entities a previous run already processed.
+    /// <para>
+    /// Single-sourced deliberately: the write and the skip-filter are two halves of one idempotency guard, and when they were written
+    /// as separate literals they silently disagreed — the filter searched for <c>[BatchProcessed]</c> while the stamp was
+    /// <c>[BatchProcessed: T at ...]</c>. Nothing was ever skipped, so the job re-stamped every entity on every run and its workload
+    /// grew without bound. Keep both sides referencing this constant.
+    /// </para>
+    /// </summary>
+    private const string BatchProcessedMarkerPrefix = "[BatchProcessed";
+
+    /// <summary>
     /// Optional: Override batch key page size for batch discovery.
     /// Controls how many batch keys are processed per page during batch discovery.
     /// </summary>
@@ -137,10 +149,14 @@ public sealed class DemoBatchScrollingBackgroundJobExecutor
         // Apply parameter-based filtering
         if (param?.ProcessingMode == BatchProcessingMode.UpdateFullText)
         {
-            // Only process entities that haven't been updated recently
+            // Skip entities already stamped by a previous run. MUST be matched against the SAME constant
+            // ProcessEntitiesAsync writes — this filter previously looked for a literal "[BatchProcessed]",
+            // which the stamp "[BatchProcessed: {key} at {time}]" never contains, so it excluded nothing:
+            // every run re-processed every entity and appended another stamp, growing both FullText and the
+            // per-run workload without bound until the job outran its callers' timeouts.
             baseQuery = baseQuery.Where(entity =>
                 string.IsNullOrEmpty(entity.FullText) ||
-                !entity.FullText.Contains("[BatchProcessed]"));
+                !entity.FullText.Contains(BatchProcessedMarkerPrefix));
         }
         else if (param?.ProcessingMode == BatchProcessingMode.CleanupOld)
         {
@@ -209,8 +225,11 @@ public sealed class DemoBatchScrollingBackgroundJobExecutor
                 switch (param?.ProcessingMode)
                 {
                     case BatchProcessingMode.UpdateFullText:
-                        // Demonstrate business logic: update FullText with processing info
-                        entity.FullText = $"{entity.FullText ?? ""} [BatchProcessed: {batchKey} at {Clock.UtcNow:yyyy-MM-dd HH:mm:ss}]";
+                        // Demonstrate business logic: update FullText with processing info.
+                        // The stamp MUST start with BatchProcessedMarkerPrefix — that prefix is what
+                        // EntitiesQueryBuilder uses to skip already-processed entities on the next run.
+                        entity.FullText =
+                            $"{entity.FullText ?? ""} {BatchProcessedMarkerPrefix}: {batchKey} at {Clock.UtcNow:yyyy-MM-dd HH:mm:ss}]";
                         break;
 
                     case BatchProcessingMode.CleanupOld:

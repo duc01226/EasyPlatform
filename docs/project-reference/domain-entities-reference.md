@@ -1,4 +1,4 @@
-<!-- Last scanned: 2026-06-12 -->
+<!-- Last scanned: 2026-08-12 -->
 
 # Domain Entities Reference
 
@@ -95,7 +95,7 @@ Single service: **TextSnippet**. All domain entities live in `PlatformExampleApp
 DTOs use `With*()` methods for optional related data loading and `WithIf()` for conditional loading:
 
 ```csharp
-// src/Backend/.../Application/Dtos/EntityDtos/TextSnippetEntityDto.cs:250
+// src/Backend/.../Application/Dtos/EntityDtos/TextSnippetEntityDto.cs:257
 public static TextSnippetEntityDto FromEntityWithRelated(
     TextSnippetEntity entity,
     TextSnippetCategory? category = null,

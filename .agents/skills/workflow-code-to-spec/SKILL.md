@@ -33,7 +33,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -80,17 +81,20 @@ Resolve service→bucket assignments from the canonical table in [`docs/project-
 
 | Mode        | When to Use                                  | Step Sequence                                                                                                                                                                                                                           |
 | ----------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `init-full` | Zero — no Feature Spec for target scope      | scout → **size-evaluation** → **plan** → **plan-review** → **plan-validate** → spec [mode=init] → **spec [mode=tests]** → **review-artifact --type=spec-tests** → review-artifact → **docs-update(final sync)** → workflow-end → watzup |
-| `update`    | Code changed, new requirement, new PBI       | workflow-review-changes → spec [mode=update] → **spec [mode=tests]** → **review-artifact --type=spec-tests** → spec [mode=sync] → review-changes → **docs-update(final sync)** → workflow-end → watzup                                  |
-| `audit`     | Quarterly health check, verify doc freshness | scout → spec [mode=audit] → review-artifact → **docs-update(final sync)** → workflow-end → watzup                                                                                                                                       |
+| `init-full` | Zero — no Feature Spec for target scope      | scout → **size-evaluation** → **plan** → **plan-review** → **plan-validate** → spec [mode=init] → **spec [mode=tests]** → **artifact-review --type=spec-tests** → artifact-review → **docs-update(final sync)** → workflow-end → watzup |
+| `update`    | Code changed, new requirement, new PBI       | workflow-review-changes → spec [mode=update] → **spec [mode=tests]** → **artifact-review --type=spec-tests** → spec [mode=sync] → changes-review → **docs-update(final sync)** → workflow-end → watzup                                  |
+| `audit`     | Quarterly health check, verify doc freshness | scout → spec [mode=audit] → artifact-review → **docs-update(final sync)** → workflow-end → watzup                                                                                                                                       |
 
 **Key Rules:**
 
 - MUST ATTENTION define success criteria before execution and loop until observable verification passes.
 - MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
-- Confirm mode via a direct user question BEFORE any action — NEVER skip Step 0
+- Confirm mode by asking the user directly BEFORE any action — NEVER skip Step 0
 - Invoke skill invocation for EACH step — NEVER batch-complete or mark done without invocation
 - Spawn sub-agents for 4+ capabilities in ONE message — NEVER sequential
+- Every spec carries the THREE layers needed for stack-agnostic rebuild: business logic (§1-7), UI/UX interaction surface (§6.2-6.5 for UI-bearing features), and test specs (§8) — a spec missing any layer is incomplete
+- Trace the FULL vertical chain (UI → API → handler → domain → event → read model → UI) per capability and reconcile it (Step 1-INIT.4.6) — a layer-parallel inventory silently misses seam behavior; nothing-missed requires the end-to-end trace
+- For multi-bucket/whole-project scope, maintain the resumable Coverage Ledger (Step B.3) and clear the Whole-Project Completeness Gate before `$workflow-end`
 - §1-7 of every Feature Spec are STRICTLY tech-free; the §5 Mermaid ERD is authored **inside** the Feature Spec — there is no separate ERD file
 - Write findings incrementally after each section — NEVER hold in memory
 - If shared skills/workflows/hooks/sync tooling changed, run `npm run codex:sync` before `$workflow-end` or record explicit N/A evidence; verify generated mirrors are current.
@@ -99,7 +103,7 @@ Resolve service→bucket assignments from the canonical table in [`docs/project-
 
 ## Step 0 — Mode Detection (MANDATORY FIRST)
 
-Use a direct user question to confirm mode before any action.
+Use ask the user directly to confirm mode before any action.
 
 **Auto-detection rules:**
 
@@ -138,26 +142,66 @@ Starting from zero: no `docs/specs/{Bucket}/README.{Feature}.md` for the target 
 $scout
   → Holistic codebase map — capability registry, entry points, integration boundaries
   → Identify the set of capabilities in scope (one Feature Spec each)
-  → Task tracking: "scout — enumerate capabilities + entry points for {Bucket}"
+  → **Full-chain awareness:** map not just backend layers but the complete vertical slice per
+     capability — UI view/action → API → handler → domain entity/rule → event → consumer/read model
+     → UI outcome. The detailed per-capability trace + reconciliation gate runs inside
+     `$spec [mode=init]` Step 1-INIT.4.6 (use `graph-connect-api` for frontend→backend links,
+     `graph-trace` for backend flow); scout just confirms both ends (frontend + backend) are in scope
+     so no seam is invisible at planning time.
+  → Task tracking: "scout — enumerate capabilities + full FE→BE→domain entry points for {Bucket}"
 
 ## Step B — Size Evaluation and Divide-and-Conquer Planning (MANDATORY — runs BEFORE plan)
 
 **[BLOCKING GATE]** Before writing any plan, evaluate scope and recursively decompose until
-each capability is an independently authorable Feature Spec.
+each capability is an independently authorable Feature Spec. **The task may be huge — an entire
+project's worth of code-to-spec is the explicit worst case. Size it honestly first, then break it
+into many small, independently-completable units; never start authoring against an unsized scope.**
 
-ESTIMATE:
-  capability_count = count of distinct capabilities found in scout
-  IF capability_count > 10:
-    → SPLIT into groups: max 10 capabilities per run, run groups sequentially
-  IF 4 ≤ capability_count ≤ 10:
-    → Sub-agents mandatory (one spec sub-agent per capability)
-  IF capability_count ≤ 3:
-    → Single-session authoring
+### B.1 — Classify scope breadth FIRST
 
-**Recursive decomposition rule:** If a single capability's Feature Spec would exceed the caps
-(body §1-7 >1200 lines OR >40 TCs), split the capability into sibling specs.
+| Scope | Signal | Strategy |
+| ----- | ------ | -------- |
+| **Single capability** | one feature named / one diff | single-session authoring |
+| **Single bucket** | one module/service | per-capability decomposition within the bucket |
+| **Whole project** | "all specs", "the whole project", "every feature", no bucket named | **enumerate ALL buckets × ALL capabilities → build the Coverage Ledger (B.3) → run bucket-by-bucket across resumable sessions** |
 
-Task tracking: "size-evaluation — count capabilities, decide split strategy"
+### B.2 — Estimate per run
+
+```
+capability_count = count of distinct capabilities in the current scope
+  IF capability_count > 10:  → SPLIT into groups: max 10 capabilities per run, run groups sequentially
+  IF 4 ≤ capability_count ≤ 10: → Sub-agents mandatory (one spec sub-agent per capability)
+  IF capability_count ≤ 3:   → Single-session authoring
+```
+
+**Recursive decomposition rule:** Feature Specs have no line-count cap. If a single capability has
+>40 TCs or contains distinct module-level capabilities, split the capability into sibling specs.
+
+### B.3 — Whole-Project Coverage Ledger [BLOCKING for whole-project scope; recommended for multi-bucket]
+
+When the scope spans more than one bucket, a single session cannot hold it — so coverage MUST be
+tracked in a **persistent, resumable ledger on disk**, not in memory or the task list alone. This is
+the guard for "the whole-project code-to-spec works flawlessly and nothing is missed."
+
+1. **Enumerate the full target set:** for every bucket (App Bucket Mapping), list every capability
+   discovered in scout. This is the denominator — the complete set that MUST end with a Feature Spec.
+2. **Write the ledger** to `plans/reports/code-to-spec-coverage-{date}.md`:
+
+   | Bucket | Capability | Spec path | §1-7 | §6 (UI) | §8 TCs | Chain trace | Status |
+   | ------ | ---------- | --------- | :--: | :-----: | :----: | :---------: | ------ |
+   | {Bucket} | {Capability} | docs/specs/{Bucket}/README.{Feature}.md | ⬜ | ⬜ | 0 | ⬜ | NOT STARTED |
+
+3. **Update the ledger row after each capability completes** (incremental persistence — never batch).
+   `Status` ∈ NOT STARTED → IN PROGRESS → SPEC DONE → REVIEWED. `§6 (UI)` is `n/a` for backend-only.
+4. **Resume rule:** on any session start / after compaction, read the ledger FIRST, re-glob
+   `docs/specs/**` to confirm, and continue from the first non-REVIEWED row — NEVER re-author a done
+   capability, NEVER re-run scout for already-enumerated buckets.
+5. **[BLOCKING] Whole-Project Completeness Gate (before `$workflow-end`):** every row is `REVIEWED`,
+   OR carries an explicit, recorded deferral reason. A bucket/capability discovered in scout but
+   absent from `docs/specs/**` with no deferral reason = the workflow is NOT complete. Report the
+   final coverage as `{reviewed}/{total} capabilities` in `$watzup`.
+
+Task tracking: "size-evaluation — classify scope breadth, count capabilities, build coverage ledger (whole-project), decide split strategy"
 
 ## Step C — Plan
 
@@ -188,26 +232,26 @@ $spec [mode=init]
   → §1-7 STRICTLY tech-free; identifiers live only in §8 evidence carriers + `[Source: ns/service/id]` + ` ```mermaid ``` ` blocks
   → Output: docs/specs/{Bucket}/README.{Feature}.md + bucket INDEX.md
   → Sub-agents for 4+ capabilities (BLOCKING: ONE message spawn); each prompt includes capability name, output path, tech-agnostic contract, SYNC protocols
-  → Caps: body §1-7 ≤1200 lines, whole file ≤1800 (hard) — split when body>1200 OR TCs>40
+  → No line-count cap applies — split when TCs>40 or distinct module-level capabilities emerge
 
 $spec [mode=tests]
-  → Populate Section 8 with TC-{FEATURE}-{NNN} entries (BDD, Business Intent, abstract Evidence, IntegrationTest field, Status)
+  → Populate Section 8 with demoable business TC-{FEATURE}-{NNN} entries (BDD, Business Intent, abstract Evidence, CoveredBy field, Status)
 
-$review-artifact --type=spec-tests
+$artifact-review --type=spec-tests
   → Review §8 TCs for invariant coverage, GIVEN/WHEN/THEN completeness, duplicate TC IDs
 
-$review-artifact
+$artifact-review
   → Quality check the Feature Spec(s):
     - §1-7 strictly tech-free (zero framework/product/language terms in prose)
     - §5 Mermaid ERD present with entities, relationships, cardinalities
-    - §8 every TC has Business Intent, abstract `[Source: ns/service/id]` anchor, IntegrationTest field, Status
-    - YAML frontmatter present; body ≤1200 / whole file ≤1800 lines
+    - §8 every TC has Business Intent, abstract `[Source: ns/service/id]` anchor, CoveredBy field, Status
+    - YAML frontmatter present; no line-count cap applied
   → PASS criteria: zero [UNVERIFIED] without exclusion reason + zero tech terms in §1-7
-  → Gap found → validate findings → fix validated gaps → restart full review-artifact pass from the first check
+  → Gap found → validate findings → fix validated gaps → restart full artifact-review pass from the first check
 
 $docs-update
   → Near-final synchronization sweep across project docs, the Feature Spec(s), and Section 8
-  → MUST run after review-artifact fixes and before $workflow-end
+  → MUST run after artifact-review fixes and before $workflow-end
   → (Optional) regenerate the derived bucket INDEX / ERD via $spec-index
   → Report skipped sub-phases explicitly when no impacted docs exist
 
@@ -248,7 +292,7 @@ $spec [mode=tests]
   → Mode detection: new commands/queries/endpoints → implement-first; PBI-driven → TDD-first; TC edits only → update
   → Write/update TCs in Section 8; grep existing IDs before assigning; never overwrite Tested TCs
 
-$review-artifact --type=spec-tests
+$artifact-review --type=spec-tests
   → Review updated/planned TCs for invariant coverage, GIVEN/WHEN/THEN completeness, stale TC handling, duplicate IDs
   → SKIP if $spec [mode=tests] skipped — mark "Skipped: no TC changes"
   → BLOCK sync if review finds missing invariants, ambiguous behavior, or TC/code/spec drift
@@ -257,13 +301,15 @@ $spec [mode=sync]
   → Refresh the derived bucket INDEX TC counts from Section 8 (Section 8 stays canonical — no separate dashboard)
   → SKIP if no TC changes in this cycle
 
-$review-changes
+> **UI-intent maintenance (conditional)** — runs alongside the `$spec [mode=sync]` / spec authoring step, **only when the change carries user-facing behavior** (else state the skip reason — backend-only change, no §6 change). When the reverse-engineered code carries user-facing behavior, the spec authoring step MUST refresh the Feature Spec **§6** interaction surface from the implemented capability — View Inventory, Key UI States, and the per-story (`US-`/`OP-`/`BR-`) click-path — and link the governing `$design-spec`/mockup in the spec frontmatter so §6 and the design artifact stay coupled to what the code actually does. The rules live in the shared block below (`SYNC:ui-intent-layer`) — follow it; do not restate it here.
+
+$changes-review
   → Holistic review of Feature Spec changes
   → Verify: spec changes match code changes (no over/under documentation); §8 covers all new functionality
 
 $docs-update
   → Near-final synchronization sweep across project docs, the Feature Spec(s), and Section 8
-  → MUST run after review-changes fixes and before $workflow-end
+  → MUST run after changes-review fixes and before $workflow-end
   → Report skipped sub-phases explicitly when no impacted docs exist
 
 $workflow-end
@@ -284,7 +330,7 @@ After $workflow-review-changes:
   → $pbi-mockup: required when the PBI changes user-facing UI/journeys; skip with reason for backend-only requirements
   → Treat as "speculative update": add new rules/sections to the Feature Spec marked [PLANNED — not yet implemented]
   → Add corresponding TCs in Section 8 marked Status: Planned
-  → $review-artifact --type=spec-tests: review planned TCs before refreshing the derived index
+  → $artifact-review --type=spec-tests: review planned TCs before refreshing the derived index
   → These become implementation guidance, not verified spec
 ```
 
@@ -315,14 +361,14 @@ $spec [mode=audit]
   → Compare each Feature Spec's last_updated vs git log of the source it documents
   → Output: stale capabilities/sections table with recommended update scope
 
-$review-artifact
+$artifact-review
   → Consolidated audit report
   → Produce: plans/reports/spec-audit-{date}-{Bucket}.md
   → Include: total stale coverage %, estimated update effort, priority order
   → (Optional) $spec-index [mode=audit] — report which DERIVED index/ERD aids lag their source specs
 
 $docs-update
-  → Near-final synchronization sweep; MUST run after review-artifact conclusions and before $workflow-end
+  → Near-final synchronization sweep; MUST run after artifact-review conclusions and before $workflow-end
   → Report skipped sub-phases explicitly when no impacted docs exist
 
 $workflow-end
@@ -343,10 +389,10 @@ $watzup
 | `$spec [mode=tests]` in init                   | User explicitly requests a behavior-doc-only pass (TCs deferred to a later cycle)                              |
 | `$dor-gate` in update                          | Update source is code diff only, existing PBI is already DoR-ready, or no PBI readiness decision is being made |
 | `$pbi-mockup` in update                        | Backend-only/non-UI requirement, code diff only, or existing mockup already covers the change                  |
-| `$review-artifact --type=spec-tests` in update | `$spec [mode=tests]` skipped because there were no TC changes                                                  |
+| `$artifact-review --type=spec-tests` in update | `$spec [mode=tests]` skipped because there were no TC changes                                                  |
 | `$spec [mode=sync]`                            | No TC changes in this update cycle                                                                             |
 | `$docs-update` near-final sync                 | Never skip entirely; sub-phases may be skipped only with explicit reason in the docs-update report             |
-| `$review-artifact` audit pass                  | No stale specs found AND no UNVERIFIED items                                                                   |
+| `$artifact-review` audit pass                  | No stale specs found AND no UNVERIFIED items                                                                   |
 | `$spec-index` (derived)                        | No derived index/ERD is maintained for this bucket, or it is already current                                   |
 
 ---
@@ -357,7 +403,7 @@ $watzup
 2. Spawn `spec` sub-agents (one per capability) in ONE message
 3. Wait for all sub-agents to complete
 4. Spawn `spec [mode=tests]` sub-agents (one per capability) in ONE message to populate Section 8
-5. Main context assembles + verifies in `$review-artifact`
+5. Main context assembles + verifies in `$artifact-review`
 
 Each `spec` sub-agent receives:
 
@@ -377,7 +423,7 @@ docs-update (as workflow step):
   Phase 1: Project docs (inline — unchanged)
   Phase 2: $spec update mode (impacted sections of the Feature Spec)
   Phase 3: $spec [mode=tests] (Section 8 TCs)
-  Phase 3.5: $review-artifact --type=spec-tests (required when Phase 3 changes TCs)
+  Phase 3.5: $artifact-review --type=spec-tests (required when Phase 3 changes TCs)
   Phase 4: $spec [mode=sync] (refresh derived INDEX TC counts)
   Phase 4.5: $spec-index (OPTIONAL — regenerate derived bucket INDEX / ERD if one is maintained)
 ```
@@ -415,10 +461,10 @@ The Feature Spec stays in sync on every feature/bugfix/refactor workflow.
 
 ---
 
-**IMPORTANT MANDATORY Steps:** $scout -> $plan -> $plan-review -> $plan-validate -> $spec -> $spec [mode=tests] -> $review-artifact --type=spec-tests -> $review-artifact -> $docs-update -> $workflow-end -> $watzup
+**IMPORTANT MANDATORY Steps:** $scout -> $plan -> $plan-review -> $plan-validate -> $spec -> $spec [mode=tests] -> $artifact-review --type=spec-tests -> $artifact-review -> $docs-update -> $workflow-end -> $watzup
 
 > **[BLOCKING]** Invoke skill invocation for EACH step — NEVER batch-complete, NEVER mark done without skill invocation.
-> **[BLOCKING]** Confirm mode via a direct user question BEFORE any action — NEVER skip Step 0.
+> **[BLOCKING]** Confirm mode by asking the user directly BEFORE any action — NEVER skip Step 0.
 > **[BLOCKING]** Spawn sub-agents for 4+ capabilities in ONE message — NEVER sequential spawning.
 > **[BLOCKING — Context Compaction / Session Resume]** At any session start or after context compaction: (1) the current task list FIRST — resume existing, NEVER create duplicates; (2) re-glob `docs/specs/{Bucket}/` to see which capabilities already have a Feature Spec — skip those; (3) NEVER re-run `$scout` or `$plan` in a resumed session.
 > **[BLOCKING]** Read `docs/project-reference/spec-principles.md` before running any author/update/audit step — it is the shared spec quality baseline (tech-agnostic rule + banned-token list).
@@ -456,8 +502,9 @@ The Feature Spec stays in sync on every feature/bugfix/refactor workflow.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -509,6 +556,22 @@ The Feature Spec stays in sync on every feature/bugfix/refactor workflow.
 
 <!-- /SYNC:subagent-return-contract -->
 
+<!-- SYNC:ui-intent-layer -->
+
+> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
+>
+> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
+> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
+> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
+> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
+> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
+>
+> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
+
+<!-- /SYNC:ui-intent-layer -->
+
 <!-- SYNC:nested-task-creation:reminder -->
 
 - **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
@@ -522,6 +585,12 @@ The Feature Spec stays in sync on every feature/bugfix/refactor workflow.
 - **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
 
 <!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
+
+<!-- SYNC:ui-intent-layer:reminder -->
+
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+
+<!-- /SYNC:ui-intent-layer:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
@@ -546,17 +615,20 @@ The Feature Spec stays in sync on every feature/bugfix/refactor workflow.
 - **Incremental Persistence:** persist findings to `plans/reports/` per section; NEVER hold in memory.
 - **Sub-Agent Return Contract:** sub-agents return summary only; NEVER request full output inline.
 
-- **[BLOCKING]** Confirm mode via a direct user question BEFORE any action — NEVER skip Step 0
+- **[BLOCKING]** Confirm mode by asking the user directly BEFORE any action — NEVER skip Step 0
 - **[BLOCKING]** Invoke skill invocation for EACH step — NEVER batch-complete or mark done without invocation
 - **[BLOCKING]** Spawn sub-agents for 4+ capabilities in ONE message — NEVER sequential spawning
 - **[BLOCKING]** ONE canonical artifact — the Feature Spec at `docs/specs/{Bucket}/README.{Feature}.md`; the §5 Mermaid ERD is authored INSIDE it (no separate ERD file, no A-E tree)
 - **[BLOCKING]** Scout holistically FIRST — capability registry MUST exist before plan creation; NEVER re-run scout or plan in a resumed session
-- **[BLOCKING]** Plan decomposes big→small — ONE task per capability Feature Spec; split a capability when body §1-7 >1200 lines OR TCs >40
+- **[BLOCKING]** Trace the FULL vertical chain per capability (UI → API → handler → domain/rule → event → consumer → read model → UI) and pass the Step 1-INIT.4.6 reconciliation gate — no orphan UI, no orphan operation, event + read-side closure; a BROKEN chain is a spec-correctness finding, never silently dropped
+- **[BLOCKING]** Every spec ships all three rebuild layers — business logic (§1-7) + UI/UX interaction surface (§6.2-6.5, or stated backend-only skip) + test specs (§8); a UI feature missing §6 fails review
+- **[BLOCKING]** Whole-project / multi-bucket scope → size it via Step B (classify breadth → build the resumable Coverage Ledger), and clear the Whole-Project Completeness Gate (every capability REVIEWED or explicitly deferred) before `$workflow-end` — report `{reviewed}/{total}` in `$watzup`
+- **[BLOCKING]** Plan decomposes big→small — ONE task per capability Feature Spec; split a capability when TCs >40 or distinct module-level capabilities emerge
 - **[BLOCKING]** Per-section authoring: write each section immediately — NEVER accumulate across sections
 - **[REQUIRED]** §1-7 STRICTLY tech-free (no framework names, no language constructs, no class names in prose); identifiers live only in §8 evidence carriers, `[Source: ns/service/id]`, and ` ```mermaid ``` ` blocks — mark `[UNVERIFIED]` not blank
 - **[REQUIRED]** Each sub-agent prompt MUST include: capability name, output path, tech-agnostic contract, SYNC protocols (critical-thinking, evidence-based, incremental-persistence, cross-scope boundary)
 - **[BLOCKING]** Context compaction / session resume → the current task list first, re-glob existing Feature Specs, skip done capabilities — NEVER re-run scout or plan
-- **[BLOCKING]** review-artifact: PASS = zero `[UNVERIFIED]` without exclusion reason + zero tech terms in §1-7; gap found → validate findings → fix validated gaps → restart the full review-artifact pass from the first check
+- **[BLOCKING]** artifact-review: PASS = zero `[UNVERIFIED]` without exclusion reason + zero tech terms in §1-7; gap found → validate findings → fix validated gaps → restart the full artifact-review pass from the first check
 - **[BLOCKING]** Verify the current task list count ≥ capability_count before any authoring begins — this is the plan completeness gate
 - **[REQUIRED]** Apply critical thinking — every claim needs traced proof, confidence >80% to act. Anti-hallucination: never present guess as fact.
 - **[REQUIRED]** Apply AI mistake prevention — holistic-first debugging, fix at responsible layer, surface ambiguity before coding, re-read files after compaction.
@@ -651,8 +723,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -663,6 +736,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

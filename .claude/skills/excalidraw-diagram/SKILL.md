@@ -22,12 +22,16 @@ description: '[Utilities] Use when the user wants to visualize workflows, archit
 - Assess depth FIRST: simple/conceptual (abstract shapes) vs comprehensive/technical — technical diagrams MUST research real specs (actual event names, JSON formats, API/method names) and embed evidence artifacts across the three zoom levels (summary flow + section boundaries + concrete detail).
 - Build comprehensive JSON section-by-section, never in one pass (hard ~32k-token output limit) — use descriptive string IDs, namespace seeds per section (100xxx, 200xxx), and update cross-section `boundElements` as you go; pull all colors from `references/color-palette.md` and never invent new ones.
 - The Render & Validate loop is MANDATORY, not a final check: render to PNG via `render_excalidraw.py`, Read the image, audit against your planned vision plus visual defects (clipping, overlaps, arrows crossing shapes), fix, and re-render — typically 2-4 iterations until it matches the conceptual design.
+- Main steps (Design Process — never skip one): **0 Assess depth → 1 Understand deeply → 2 Map concepts to patterns → 3 Ensure variety → 4 Sketch the flow → 5 Generate JSON (section-by-section) → 6 Render & Validate (mandatory loop)**.
 
 **Workflow:**
 
-1. **Detect** — classify request scope and target artifacts.
-2. **Execute** — apply required steps with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
+1. **Assess depth** — simple/conceptual (abstract shapes) vs comprehensive/technical; if technical, research real specs (event names, JSON formats, APIs) FIRST.
+2. **Understand deeply** — per concept ask what it DOES and what a viewer must SEE, not just read about.
+3. **Map concepts to patterns** — pick the visual pattern that mirrors each behavior (fan-out, convergence, tree, timeline, cycle, assembly line).
+4. **Ensure variety + sketch flow** — each major concept a DIFFERENT pattern (no card grids); mentally trace the eye's path before any JSON.
+5. **Generate JSON** — section-by-section for comprehensive diagrams (32k limit), free-floating text default (<30% boxed), colors only from `references/color-palette.md`.
+6. **Render & Validate (MANDATORY)** — render PNG via `render_excalidraw.py` → Read image → audit vision + defects → fix → re-render (2-4 iterations) until it matches the design.
 
 **Key Rules:**
 
@@ -688,8 +692,9 @@ Generate `.excalidraw` JSON files that **argue visually**, not just display info
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -733,6 +738,7 @@ Generate `.excalidraw` JSON files that **argue visually**, not just display info
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Critical Thinking:** Apply critical + sequential thinking; every claim needs traced proof, confidence >80% to act.
 
+**IMPORTANT MUST ATTENTION** execute the Design Process steps in order — **0 Assess depth → 1 Understand deeply → 2 Map concepts to patterns → 3 Ensure variety → 4 Sketch flow → 5 Generate JSON → 6 Render & Validate** — NEVER skip, reorder, or merge a step, and Step 6 is mandatory not a final formality — why: the skill's own steps are the easiest thing to forget, and skipping them ships structureless, unvalidated diagrams
 **IMPORTANT MUST ATTENTION** diagrams must ARGUE not DISPLAY — pass the Isomorphism Test (structure alone communicates the concept); NEVER ship a card grid or equal-box layout — map each concept to a DIFFERENT visual pattern (fan-out, convergence, timeline, tree, cycle) — why: uniform containers display labels, they do not argue meaning
 **IMPORTANT MUST ATTENTION** the Render & Validate loop is MANDATORY — NEVER ship JSON without rendering to PNG via `render_excalidraw.py`, Reading the image, and fixing visual defects (clipping, overlaps, arrows crossing shapes) across 2-4 iterations — why: you cannot judge a diagram from JSON alone
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim with confidence >80% to act (<60% DO NOT recommend) — why: speculation produces wrong diagrams that pass silent review

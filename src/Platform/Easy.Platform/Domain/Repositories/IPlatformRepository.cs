@@ -825,15 +825,27 @@ public interface IPlatformRootRepository<TEntity, TPrimaryKey> : IPlatformReposi
         CancellationToken cancellationToken = default
     );
 
+    /// <summary>
+    /// Idempotent single insert: creates <paramref name="entity" /> only if no existing row matches, otherwise returns the
+    /// passed entity untouched (existing data wins — never updated).
+    /// <br /><br />
+    /// Existence is resolved in this precedence: (1) the explicit <paramref name="predicate" /> when supplied; else
+    /// (2) the entity's composite-id expression via <see cref="IUniqueCompositeIdSupport{TEntity}.FindByUniqueCompositeIdExpr" />
+    /// when the entity implements it; else (3) match by primary <see cref="IEntity{TPrimaryKey}.Id" />.
+    /// </summary>
     public async Task<TEntity> CreateIfNotExistAsync(
         TEntity entity,
-        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<TEntity, bool>> predicate = null,
         bool dismissSendEvent = false,
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default
     )
     {
-        var isExisted = await AnyAsync(predicate, cancellationToken);
+        var checkExistingPredicate = predicate
+            ?? (entity as IUniqueCompositeIdSupport<TEntity>)?.FindByUniqueCompositeIdExpr()
+            ?? IEntity.IdentifyExpr(entity);
+
+        var isExisted = await AnyAsync(checkExistingPredicate, cancellationToken);
         if (isExisted)
             return entity;
 
@@ -1144,6 +1156,126 @@ public interface IPlatformQueryableRootRepository<TEntity, TPrimaryKey>
         await DeleteManyAsync(items, dismissSendEvent, eventCustomConfig, cancellationToken);
 
         return items;
+    }
+
+    /// <summary>
+    /// Idempotent bulk insert: creates ONLY the entities that do not already exist in the store, skipping the rest
+    /// (existing rows are left untouched — never updated).
+    /// <br /><br />
+    /// Existence is resolved with the same precedence as <see cref="CreateOrUpdateManyAsync(List{TEntity}, bool, bool, Func{TEntity, Expression{Func{TEntity, bool}}}, Action{PlatformCqrsEntityEvent}, CancellationToken)" />:
+    /// (1) <paramref name="customCheckExistingPredicateBuilder" /> when supplied; else (2) the entity's composite-id
+    /// expression via <see cref="IUniqueCompositeIdSupport{TEntity}.FindByUniqueCompositeIdExpr" /> when it implements it;
+    /// else (3) the primary <see cref="IEntity{TPrimaryKey}.Id" /> — and only the matching Ids are projected (not full
+    /// rows) on that fast path, so it stays memory-bounded for large batches.
+    /// <br /><br />
+    /// Use it when the same entity must not be written twice and existing data must win — e.g. resuming an interrupted
+    /// data migration/backfill after a restart, or backfilling a read model while live projections may already have
+    /// written fresher rows.
+    /// </summary>
+    public async Task<List<TEntity>> CreateManyIfNotExistAsync(
+        List<TEntity> entities,
+        bool dismissSendEvent = false,
+        Func<TEntity, Expression<Func<TEntity, bool>>> customCheckExistingPredicateBuilder = null,
+        Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var notExistingEntities = await FilterNotExistingByIdAsync(entities, customCheckExistingPredicateBuilder, cancellationToken);
+        if (notExistingEntities.IsNullOrEmpty())
+            return notExistingEntities;
+
+        return await CreateManyAsync(notExistingEntities, dismissSendEvent, eventCustomConfig, cancellationToken);
+    }
+
+    /// <summary>
+    /// Same skip-existing semantics as <see cref="CreateManyIfNotExistAsync" />, but the create runs immediately in its
+    /// own new unit of work, out of the context of any current active uow.
+    /// </summary>
+    public async Task<List<TEntity>> CreateManyIfNotExistImmediatelyAsync(
+        List<TEntity> entities,
+        bool dismissSendEvent = false,
+        Func<TEntity, Expression<Func<TEntity, bool>>> customCheckExistingPredicateBuilder = null,
+        Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var notExistingEntities = await FilterNotExistingByIdAsync(entities, customCheckExistingPredicateBuilder, cancellationToken);
+        if (notExistingEntities.IsNullOrEmpty())
+            return notExistingEntities;
+
+        return await CreateManyImmediatelyAsync(notExistingEntities, dismissSendEvent, eventCustomConfig, cancellationToken);
+    }
+
+    /// <summary>
+    /// Returns the subset of <paramref name="entities" /> that is not yet persisted, resolving existence by
+    /// custom predicate → composite id → primary Id (see <see cref="CreateManyIfNotExistAsync" />).
+    /// <br /><br />
+    /// The primary-Id fast path projects ONLY the already-existing Ids (never full rows), keeping memory bounded
+    /// regardless of batch/store size. The custom-predicate / composite-id path loads only the existing rows that match
+    /// an OR of the per-entity match expressions (bounded by the input batch), mirroring how
+    /// <c>CreateOrUpdateManyAsync</c> resolves matches — but here matched rows are skipped instead of updated.
+    /// <br /><br />
+    /// PERFORMANCE: prefer the primary-Id fast path (no <paramref name="customCheckExistingPredicateBuilder" />, entity is
+    /// not <see cref="IUniqueCompositeIdSupport{TEntity}" />) — it is O(N) with an Id-set skip. The composite-id path is
+    /// also O(N) (dedupe by hashed <c>GetUniqueId()</c>). The custom-predicate path, however, has no shared key to hash
+    /// on, so it compiles each entity's predicate and linearly scans the loaded rows — O(N·M) plus N expression
+    /// compilations. Supply <paramref name="customCheckExistingPredicateBuilder" /> ONLY for small batches; for large
+    /// batches rely on the primary-Id or composite-id path.
+    /// </summary>
+    private async Task<List<TEntity>> FilterNotExistingByIdAsync(
+        List<TEntity> entities,
+        Func<TEntity, Expression<Func<TEntity, bool>>> customCheckExistingPredicateBuilder,
+        CancellationToken cancellationToken
+    )
+    {
+        if (entities.IsNullOrEmpty())
+            return entities;
+
+        var shouldMatchByCustomPredicate = customCheckExistingPredicateBuilder != null;
+        var shouldMatchByCompositeId = !shouldMatchByCustomPredicate
+            && entities[0] is IUniqueCompositeIdSupport<TEntity> compositeIdEntity
+            && compositeIdEntity.FindByUniqueCompositeIdExpr() != null;
+
+        // Fast path — match by primary Id only. Project ONLY the matching Ids (not full entity rows) so memory scales
+        // with the number of keys, not row size, staying safe for large backfill batches.
+        if (!shouldMatchByCustomPredicate && !shouldMatchByCompositeId)
+        {
+            var ids = entities.Select(entity => entity.Id).ToList();
+
+            var existingIds = await GetAllAsync(
+                    queryBuilder: query => query.Where(entity => ids.Contains(entity.Id)).Select(entity => entity.Id),
+                    cancellationToken)
+                .Then(existing => existing.ToHashSet());
+
+            return entities.Where(entity => !existingIds.Contains(entity.Id)).ToList();
+        }
+
+        // Composite-id / custom-predicate path — an entity's identity is NOT its primary Id, so build an OR of the
+        // per-entity match expressions and load only the existing rows that match (bounded by the input batch).
+        var existingEntitiesPredicate = entities
+            .Select(entity => shouldMatchByCustomPredicate
+                ? customCheckExistingPredicateBuilder(entity)
+                : ((IUniqueCompositeIdSupport<TEntity>)entity).FindByUniqueCompositeIdExpr())
+            .Aggregate((current, next) => current.Or(next));
+
+        var existingEntities = await GetAllAsync(query => query.Where(existingEntitiesPredicate), cancellationToken);
+        if (existingEntities.IsNullOrEmpty())
+            return entities;
+
+        if (shouldMatchByCustomPredicate)
+        {
+            // Custom predicate has no shared key to hash on, so test each entity's own predicate against the loaded rows.
+            // This compiles a predicate per entity and scans in-memory — O(N·M) plus N compilations; intended for small
+            // batches only. Large batches should use the primary-Id or composite-id path (see the method's summary).
+            return entities
+                .Where(entity => !existingEntities.Any(customCheckExistingPredicateBuilder(entity).Compile()))
+                .ToList();
+        }
+
+        // Composite id — two entities are the same logical row when their composite UniqueId matches (their primary Ids
+        // may differ across a re-projection), so dedupe by GetUniqueId().
+        var existingUniqueIds = existingEntities.Select(entity => entity.GetUniqueId()).ToHashSet();
+        return entities.Where(entity => !existingUniqueIds.Contains(entity.GetUniqueId())).ToList();
     }
 
     /// <summary>

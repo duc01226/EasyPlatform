@@ -19,9 +19,10 @@ description: '[Testing] Use when you need to run tests locally and analyze the s
 
 **Summary:**
 
-- Always run tests through the `tester` subagent — never invoke test commands directly — then analyze its summary report.
-- This skill is strictly READ-ONLY: report pass/fail counts, failing-test names, and the report path; stop at reporting and NEVER start implementing fixes (that is `/fix`'s job).
-- After the run, resolve the active Goal Contract and append verification evidence (command, exact counts, report path) to the goal file's Iteration Log, updating the Goal Satisfaction matrix; record "No active goal" inline when none exists. Never copy sensitive fixture data into the goal file.
+- **Purpose:** give the user the TRUE test state — accurate pass/fail verdict, exact counts, failing-test names, report path — without applying any fix.
+- **Main steps (run in order):** (1) **Delegate** — launch the `tester` subagent with the test scope from arguments; NEVER invoke test commands directly. (2) **Analyze** — review the subagent's summary report; identify failures and patterns. (3) **Report** — summarize pass/fail counts, highlight failing tests, cite the report path. (4) **Goal evidence** — resolve the active Goal Contract, append verification evidence, update the Goal Satisfaction matrix.
+- READ-ONLY: stop at reporting; NEVER start implementing fixes — why: fixing is `/fix`'s job and mixing it into the report hides the true test state.
+- After the run, append verification evidence (command, exact counts, report path) to the goal file's Iteration Log and update the Goal Satisfaction matrix; record "No active goal — evidence reported inline only." when none exists; NEVER copy sensitive fixture data into the goal file — why: the goal file is the durable PASS/FAIL ledger, not a secrets store.
 
 **Workflow:**
 
@@ -34,6 +35,7 @@ description: '[Testing] Use when you need to run tests locally and analyze the s
 - READ-ONLY: do not implement fixes, only report results
 - Activate relevant skills from catalog during process
 - Always use `tester` subagent, not direct test commands
+- An INTERMITTENT failure (red in one run, green in another) is NOT yet a product defect — route it through the same adjudication `/integration-test-verify` uses before reporting it as one: (a) unrealistic scenario / compressed actor pacing, (b) harness topology amplification (shared infra, fan-out consumers, suite parallelism, cold start), or (c) a genuine product race. Report the verdict with its evidence, or report the failure as UNADJUDICATED — never as a product defect on the strength of one red run
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -122,6 +124,38 @@ below — if a downstream rule would raise change cost, this principle wins.
 
 <!-- /SYNC:source-test-drift-check -->
 
+<!-- SYNC:test-failure-fault-adjudication -->
+
+> **Test-Failure Fault Adjudication** — When a test fails (or you are debugging or fixing a failure), the job is to determine _who is at fault — the source code or the test code_. Getting that verdict right matters more than turning the suite green. Binds every debug / fix / test skill identically.
+>
+> 1. **Root-cause first — never guess, never patch the symptom.** `/debug-investigate` and trace the failure end-to-start to its actual cause before touching either side. A green-again suite is NOT the goal; a correct verdict on what was actually wrong is.
+> 2. **Triangulate against the spec AND the source.** If a governing Feature Spec covers the behavior (e.g. `docs/specs/**` — §3 ACs / §4 BRs / §5 invariants / §8 TCs), it is the tiebreaker for _intended_ behavior — compare BOTH the production source and the failing test against it. With no spec, the documented intent / acceptance criteria / caller contract is the reference. Decide from this evidence whether the SOURCE is wrong or the TEST is wrong.
+> 3. **Classify who is at fault, then fix the wrong side at its root:**
+>     - **SOURCE-WRONG** — production code violates the spec's intended behavior or a clear invariant → fix the source at the owning layer; keep or strengthen the test that caught it.
+>     - **TEST-WRONG** — the test encodes a stale or incorrect assertion, setup, or expectation that contradicts intended behavior → fix the test at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green.
+>     - NEVER change a test to match broken source, and NEVER change source to satisfy a broken test. (Migration code excluded — schema/data migrations are one-time execution paths, not core application logic.)
+> 4. **Ask the user when intended behavior is unclear.** If no spec covers the behavior, the spec is silent, or the spec is ambiguous about which side is correct, STOP and `AskUserQuestion` (or consult the canonical spec owner) before editing either side — never silently pick source or test just to make the suite pass.
+>
+> Reconcile to intended behavior, never to whichever side currently passes — green can encode the very bug.
+
+<!-- /SYNC:test-failure-fault-adjudication -->
+
+<!-- SYNC:real-world-fidelity-testing -->
+
+> **Real-World Fidelity Gate** — MANDATORY when authoring, reviewing, or repairing any integration / E2E / system test.
+>
+> A test earns trust by reproducing a situation the system can actually meet in production. A scenario that could never occur in real life proves nothing when it passes, and wastes hours when it fails.
+>
+> 1. **Ask the fidelity question BEFORE writing the setup:** _"Can this sequence, timing, and data actually occur in production?"_ If no, the test is mis-specified — fix the SCENARIO, never the assertion.
+> 2. **Model real pacing between actor steps.** Two distinct actor actions that production separates by seconds, minutes, or hours MUST NOT be fired back-to-back in the same millisecond. Compressed pacing manufactures races the system was never designed to survive, then reports them as product defects.
+> 3. **Wait on a real signal, never a blind sleep.** Find an observable proving the prior step finished — a persisted state change, an audit/version stamp, a queue/worker idle marker, a completion event — and poll until it settles (unchanged across a short stability window). Use a fixed delay ONLY when no observable exists, and say so in a comment.
+> 4. **Barriers belong in ARRANGE, never in ASSERT.** Waiting for a precondition is fidelity. Widening an assertion's timeout, loosening a comparison, adding a retry around a failing assertion, or skipping the test is masking. NEVER do the latter to force green.
+> 5. **Distinguish harness-amplified from real.** Test topologies (shared infra, fan-out consumers, parallel suites, cold starts) can make a rare production race routine locally. Before filing a product defect, state whether the trigger exists in production and at what likelihood.
+> 6. **Keep the protected invariant intact.** Improving fidelity must NEVER reduce what the test protects. If a realistic scenario no longer exercises the rule, the rule needs a DIFFERENT realistic scenario — not a weaker assertion.
+> 7. **Deliberate impossible-state tests are allowed, but MUST be labelled.** Corruption-repair, migration, and fail-safe tests intentionally construct states production should never reach; comment WHY the state is reachable (upstream bug, partial write, legacy data), so they are never confused with unrealistic setups.
+
+<!-- /SYNC:real-world-fidelity-testing -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -131,8 +165,9 @@ below — if a downstream rule would raise change cost, this principle wins.
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -182,12 +217,14 @@ below — if a downstream rule would raise change cost, this principle wins.
 - **Critical Thinking:** ALWAYS apply critical + sequential thinking; traced proof, confidence >80%.
 - **Evidence:** ALWAYS cite `file:line` per claim; NEVER speculate without proof.
 - **Source/Test Drift:** when source changes, decide from evidence whether test or source is wrong; NEVER assume.
+- **Real-World Fidelity:** a scenario production could never reach proves nothing green and blames the product red; distinguish harness-amplified from real before calling an intermittent failure a product defect.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
 **MANDATORY IMPORTANT MUST ATTENTION** READ-ONLY — run tests, report pass/fail counts + failing-test names + report path; NEVER implement fixes here, stop at reporting — why: fixing is `/fix`'s job; mixing the two hides the true test state.
 **MANDATORY IMPORTANT MUST ATTENTION** ALWAYS run tests through the `tester` subagent; NEVER invoke test commands directly — why: the subagent isolates the run and produces the canonical summary report this skill analyzes.
 **MANDATORY IMPORTANT MUST ATTENTION** resolve the active Goal Contract after the run; append verification evidence (test command, exact pass/fail counts, report path) to the goal file's Iteration Log and update the Goal Satisfaction matrix; record `No active goal — evidence reported inline only.` when none exists; NEVER copy raw sensitive fixture data into the goal file — why: the goal file is the durable PASS/FAIL ledger, not a secrets store.
 **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim about a failure (confidence >80% to act, <80% verify first); NEVER speculate which test failed or why — read the report — why: a guessed failure verdict sends the user to fix the wrong thing.
+**MANDATORY IMPORTANT MUST ATTENTION** an INTERMITTENT failure is UNADJUDICATED, not a product defect — classify it as (a) unrealistic scenario / compressed actor pacing, (b) harness topology amplification (shared infra, fan-out consumers, suite parallelism, cold start), or (c) a genuine product race, with evidence, before reporting it as a defect; report it as UNADJUDICATED when the evidence is not there — why: a test-fidelity defect reported as a product defect sends the team to fix code that was never wrong.
 **MANDATORY IMPORTANT MUST ATTENTION** before asserting a test/source relationship, grep 3+ similar tests and match the local pattern; apply the source/test drift check — decide from evidence whether a failing test guards intended behavior or the source is the bug — why: a mismatched assumption mislabels a real bug as a flaky test.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting; mark one `in_progress`, complete immediately after evidence; add a final review todo to verify work quality.
 **MANDATORY IMPORTANT MUST ATTENTION** validate route/decisions with the user via `AskUserQuestion` — NEVER auto-decide a workflow vs standalone run.
@@ -195,13 +232,14 @@ below — if a downstream rule would raise change cost, this principle wins.
 
 **Anti-Rationalization:**
 
-| Evasion                                   | Rebuttal                                                                                        |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| "Tests obviously pass, skip the run"      | Run via `tester` anyway — a guessed verdict is not a verdict. Report real counts.               |
-| "I can run the test command directly"     | NEVER — always delegate to the `tester` subagent; direct runs bypass the canonical report.      |
-| "Failure looks trivial, I'll just fix it" | Stop at reporting. Fixing is `/fix`'s job; this skill is strictly READ-ONLY.                    |
-| "No goal file, skip the evidence step"    | Record `No active goal — evidence reported inline only.` Never silently skip the Goal Contract. |
-| "I know which test failed"                | Show `file:line` + the report path. No proof = no claim.                                        |
+| Evasion                                   | Rebuttal                                                                                                    |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| "Tests obviously pass, skip the run"      | Run via `tester` anyway — a guessed verdict is not a verdict. Report real counts.                           |
+| "I can run the test command directly"     | NEVER — always delegate to the `tester` subagent; direct runs bypass the canonical report.                  |
+| "Failure looks trivial, I'll just fix it" | Stop at reporting. Fixing is `/fix`'s job; this skill is strictly READ-ONLY.                                |
+| "No goal file, skip the evidence step"    | Record `No active goal — evidence reported inline only.` Never silently skip the Goal Contract.             |
+| "I know which test failed"                | Show `file:line` + the report path. No proof = no claim.                                                    |
+| "It failed once — that's a product bug"   | Intermittent = unadjudicated. Rule out unrealistic scenario and harness amplification first, with evidence. |
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
 

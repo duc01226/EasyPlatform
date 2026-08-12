@@ -3,6 +3,7 @@ using Easy.Platform.Application.Persistence;
 using Easy.Platform.Application.Persistence.BulkUpdate;
 using Easy.Platform.Common.Exceptions.Extensions;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Events;
@@ -13,6 +14,28 @@ using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.Persistence.Domain;
 
+/// <summary>
+/// Base persistence repository: wraps write operations in a unit of work, a trace activity, and the bad-query
+/// warning handler.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>Entity trace tags are payload-free.</b> Every write path here opens an activity tagged with
+/// <c>EntityType</c> and <c>Entity</c>. The <c>Entity</c> tag carries the entity's TYPE only, produced by
+/// <see cref="PlatformJsonSerializer.SerializeForDiagnostics{TValue}" /> — never the entity itself.
+/// </para>
+/// <para>
+/// This is the single largest disclosure surface in the platform if it is got wrong: these methods run on every
+/// create, update, and delete in every service, so serializing the entity would mirror essentially the entire
+/// database, field for field, into the tracing backend as a side effect of ordinary writes — including the bulk
+/// overloads, where one tag would carry a whole batch.
+/// </para>
+/// <para>
+/// <b>When adding a write method:</b> copy the existing tag pair verbatim.
+/// <c>PlatformDiagnosticSinkSourceShapeTests</c> counts <c>AddTag("Entity", ...)</c> occurrences against those
+/// routed through the diagnostic serializer and fails the build if a new one bypasses it.
+/// </para>
+/// </remarks>
 public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, TDbContext> : PlatformRepository<TEntity, TPrimaryKey, TUow>
     where TEntity : class, IEntity<TPrimaryKey>, new()
     where TUow : class, IPlatformPersistenceUnitOfWork<TDbContext>
@@ -312,7 +335,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(CreateAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entity.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entity, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteAutoOpenUowUsingOnceTimeForWrite(
                     uow => GetUowDbContext(uow).CreateAsync<TEntity, TPrimaryKey>(entity, dismissSendEvent, eventCustomConfig, cancellationToken),
@@ -363,7 +386,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
                     using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(CreateOrUpdateAsync)}"))
                     {
                         activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                        activity?.AddTag("Entity", entity.ToFormattedJson());
+                        activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entity, forceUseRuntimeType: true, writeIndented: true));
 
                         return await ExecuteAutoOpenUowUsingOnceTimeForWrite(
                             uow => GetUowDbContext(uow)
@@ -403,7 +426,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
                     using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(CreateOrUpdateAsync)}"))
                     {
                         activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                        activity?.AddTag("Entity", entity.ToFormattedJson());
+                        activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entity, forceUseRuntimeType: true, writeIndented: true));
 
                         return await ExecuteAutoOpenUowUsingOnceTimeForWrite(uow => GetUowDbContext(uow)
                             .CreateOrUpdateAsync<TEntity, TPrimaryKey>(
@@ -458,7 +481,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
                     using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(CreateOrUpdateManyAsync)}"))
                     {
                         activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                        activity?.AddTag("Entity", entities.ToFormattedJson());
+                        activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entities, forceUseRuntimeType: true, writeIndented: true));
 
                         return await ExecuteAutoOpenUowUsingOnceTimeForWrite(
                             uow => GetUowDbContext(uow)
@@ -514,7 +537,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(UpdateAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entity.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entity, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteAutoOpenUowUsingOnceTimeForWrite(
                     async uow => await GetUowDbContext(uow).SetAsync<TEntity, TPrimaryKey>(entity, cancellationToken),
@@ -540,7 +563,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(UpdateAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entity.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entity, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteAutoOpenUowUsingOnceTimeForWrite(
                     async uow => await GetUowDbContext(uow).UpdateAsync<TEntity, TPrimaryKey>(entity, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken),
@@ -598,7 +621,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(DeleteAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entity.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entity, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteAutoOpenUowUsingOnceTimeForWrite(uow =>
                     GetUowDbContext(uow).DeleteAsync<TEntity, TPrimaryKey>(entity, dismissSendEvent, eventCustomConfig, cancellationToken));
@@ -622,7 +645,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(CreateManyAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entities.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entities, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteAutoOpenUowUsingOnceTimeForWrite(uow =>
                     GetUowDbContext(uow).CreateManyAsync<TEntity, TPrimaryKey>(entities, dismissSendEvent, eventCustomConfig, cancellationToken));
@@ -647,7 +670,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(CreateManyAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entities.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entities, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteWithBadQueryWarningForWriteHandling(
                     uow => GetUowDbContext(uow).CreateManyAsync<TEntity, TPrimaryKey>(entities, dismissSendEvent, eventCustomConfig, cancellationToken),
@@ -674,7 +697,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(UpdateManyAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entities.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entities, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteAutoOpenUowUsingOnceTimeForWrite(uow =>
                     GetUowDbContext(uow).UpdateManyAsync<TEntity, TPrimaryKey>(entities, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken));
@@ -700,7 +723,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(UpdateManyAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entities.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entities, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteWithBadQueryWarningForWriteHandling(
                     uow => GetUowDbContext(uow).UpdateManyAsync<TEntity, TPrimaryKey>(entities, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken),
@@ -807,7 +830,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(DeleteManyAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entityIds.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entityIds, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteAutoOpenUowUsingOnceTimeForWrite(uow =>
                     GetUowDbContext(uow).DeleteManyAsync<TEntity, TPrimaryKey>(entityIds, dismissSendEvent, eventCustomConfig, cancellationToken));
@@ -899,7 +922,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(DeleteManyAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entities.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entities, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteWithBadQueryWarningForWriteHandling(
                     uow => GetUowDbContext(uow).DeleteManyAsync<TEntity, TPrimaryKey>(entities, dismissSendEvent, eventCustomConfig, cancellationToken),
@@ -925,7 +948,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             using (var activity = IPlatformRepository.ActivitySource.StartActivity($"Repository.{nameof(DeleteManyAsync)}"))
             {
                 activity?.AddTag("EntityType", typeof(TEntity).FullName);
-                activity?.AddTag("Entity", entities.ToFormattedJson());
+                activity?.AddTag("Entity", PlatformJsonSerializer.SerializeForDiagnostics(entities, forceUseRuntimeType: true, writeIndented: true));
 
                 return await ExecuteAutoOpenUowUsingOnceTimeForWrite(uow =>
                     GetUowDbContext(uow).DeleteManyAsync<TEntity, TPrimaryKey>(entities, dismissSendEvent, eventCustomConfig, cancellationToken));

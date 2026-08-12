@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -60,23 +61,29 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
+- **Purpose:** turn a raw idea into a groomable, Definition-of-Ready PBI a team can build without re-asking what or why.
+- **Main steps — run in order, track EACH (AI keeps forgetting sub-phases):** Phase 0 locate active plan → 1 idea intake + module detect → 2 domain research → 3 problem-hypothesis validation (GATE) → 4 BABOK elicitation → 5 BDD acceptance criteria → 5.1 AI-SDD M1-M5/M7 gate (BLOCKING) → 5.5 testability assessment → 6 prioritization + draft estimate → 7 validation interview (GATE, 3-5 Qs) → 7.5 RE-DERIVE estimate vs locked scope → 8 PBI artifact generation.
 - Two gates are NON-OPTIONAL: validate the problem hypothesis (Phase 3) before building, and run the 3-5 question validation interview (Phase 7) before writing the PBI — the user decides assumptions, scope, and dependencies, never the AI.
-- Acceptance criteria are BDD GIVEN/WHEN/THEN (min 3: happy/edge/error) and MUST satisfy the AI-SDD M1-M5 gate (Phase 5.1): tech-agnostic Business Intent, logical FR-/BR- IDs first, observable single-interpretation ACs, rebuild-from-scratch validity.
+- Acceptance criteria are BDD GIVEN/WHEN/THEN (min 3: happy/edge/error) and MUST satisfy the AI-SDD M1-M5 and M7 gate (Phase 5.1): tech-agnostic Business Intent, logical FR-/BR- IDs first, observable single-interpretation ACs, rebuild-from-scratch validity, and every AC demoable as a business outcome (M7).
 - Estimate twice: Phase 6 drafts story points/man-days against draft scope, then Phase 7.5 RE-DERIVES them against the locked post-interview scope (per SYNC:estimation-framework) — shipping stale Phase 6 numbers is the cardinal failure.
 - The PBI frontmatter MUST carry `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, and every PBI MUST include a complete Dependencies table (`must-before`/`can-parallel`/`blocked-by`/`independent`).
 
 **Workflow:**
 
-| Phase | Name                | Key Activity                     | Output                 |
-| ----- | ------------------- | -------------------------------- | ---------------------- |
-| 1     | Idea Intake         | Load artifact, detect module     | Context loaded         |
-| 2     | Domain Research     | WebSearch market/competitors     | Research summary       |
-| 3     | Problem Hypothesis  | Validate problem exists          | Confirmed hypothesis   |
-| 4     | Elicitation         | Apply BABOK techniques           | Requirements extracted |
-| 5     | Acceptance Criteria | Write BDD scenarios              | GIVEN/WHEN/THEN        |
-| 6     | Prioritization      | Apply RICE/MoSCoW + Story Points | Priority + estimate    |
-| 7     | Validation          | Interview user (MANDATORY)       | Assumptions confirmed  |
-| 8     | PBI Generation      | Create artifact                  | PBI file saved         |
+| Phase | Name                      | Key Activity                             | Output                 |
+| ----- | ------------------------- | ---------------------------------------- | ---------------------- |
+| 0     | Locate Active Plan        | Load `plan.md` if in workflow            | Plan context           |
+| 1     | Idea Intake               | Load artifact, detect module             | Context loaded         |
+| 2     | Domain Research           | WebSearch market/competitors             | Research summary       |
+| 3     | Problem Hypothesis (GATE) | Validate problem exists                  | Confirmed hypothesis   |
+| 4     | Elicitation               | Apply BABOK techniques                   | Requirements extracted |
+| 5     | Acceptance Criteria       | Write BDD scenarios                      | GIVEN/WHEN/THEN        |
+| 5.1   | AI-SDD Gate (M1-M5/M7)    | Tech-agnostic, FR/BR IDs first, demoable | Mandate-compliant ACs  |
+| 5.5   | Testability               | Test approach + per-AC outlines          | Test seed for `$spec`  |
+| 6     | Prioritization            | RICE/MoSCoW + DRAFT Story Points         | Priority + draft est.  |
+| 7     | Validation (GATE)         | Interview user (MANDATORY, 3-5Q)         | Assumptions confirmed  |
+| 7.5   | Re-estimate               | RE-DERIVE vs LOCKED scope                | Final estimate         |
+| 8     | PBI Generation            | Create artifact                          | PBI file saved         |
 
 **Key Rules:**
 
@@ -145,7 +152,7 @@ Use WebSearch with domain terms. Summarize in max 3 bullets (market context, com
 
 ## Phase 3: Problem Hypothesis Validation
 
-Validate hypothesis with user via ask the user directly. 42% of startups fail from no market need — validate before building.
+Validate hypothesis with user by asking the user directly. 42% of startups fail from no market need — validate before building.
 
 **Skip:** `--skip-hypothesis`, validated hypothesis exists, bug fix/tech debt.
 
@@ -252,20 +259,23 @@ Scenario: Approver reviews a submitted invoice
 
 ---
 
-### Phase 5.1: AI-SDD Mandate Gate (M1-M5) — BLOCKING
+### Phase 5.1: AI-SDD Mandate Gate (M1-M5 and M7) — BLOCKING
 
-See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. The generated PBI MUST satisfy M1-M5 or be reworked before Phase 8 writes it:
+See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. The generated PBI MUST satisfy M1-M5 and M7 or be reworked before Phase 8 writes it:
 
 - **Separate intent from implementation (M1/M2):** Keep a tech-agnostic **Business Intent** narrative (Description, Business Value, Acceptance Criteria) free of framework/product/language/design-pattern names and source identifiers. Put any optional implementation hints in a clearly separated **Implementation Notes** block, and put source references only in evidence carriers (`[Source: namespace/service/id]`, `**Evidence**`). Prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3.
 - **Logical Requirement ID first (M3):** Assign each requirement a logical ID (`FR-`/`BR-`) as the PRIMARY citation spine; keep `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths — those live only in the provenance sidecar) as a SECONDARY carrier in a separate evidence column/section — KEEP it, never remove it.
 - **Testable, observable acceptance criteria (M4):** Every acceptance criterion has ONE valid interpretation, observable completion states, named failure modes, and NO implementation details. Reject vague phrasing ("handle appropriately", "fast", "user-friendly").
 - **Rebuild-from-scratch validation (M5):** Before emitting, confirm a competent team with zero codebase knowledge could re-implement identical business behavior on ANY stack from the PBI alone. If a reader would have to guess a rule, limit, role, or failure mode, add it as a clarification — never guess.
+- **Business-visibility (M7):** Apply the demo test to each acceptance criterion's BODY: _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY and drop it from the PBI. Every `GIVEN` = a state a user could arrange; every `WHEN` = an action a user could take; every `THEN` = an outcome a user could see. FAIL a `WHEN` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `THEN` asserting schema/type/nullability/call-count. Judge the BODY, never the AC's title or ID. Never derive the AC count from an architecture inventory (handlers, consumers, jobs) — that count moves when the system is re-architected though no business behavior changed, falsifying M5.
+
+> **M1 governs vocabulary; M7 governs subject matter.** A technical AC in impeccably tech-free prose satisfies M1 while violating M7 — _"the system correctly synchronizes the record"_ names no framework and is still a technical case in a business costume. That gap is the most common way business specs rot. Ask what a user could SEE, not which words were used.
 
 ---
 
 ### Phase 5.5: Testability Assessment
 
-Use a direct user question with 2-3 questions:
+Use ask the user directly with 2-3 questions:
 
 1. "Which testing approach fits this PBI?"
     - TDD-first: Write test specs before implementation (Recommended for complex features)
@@ -332,7 +342,7 @@ Generate 3-5 questions covering assumptions, scope, dependencies, edge cases. Us
 | **Data Migration**  | "Does this change entity schema? Is data transformation needed?"            |
 
 1. Generate 3-5 questions from assumptions, scope, dependencies
-2. Use a direct user question to interview
+2. Use ask the user directly to interview
 3. Document in PBI under `## Validation Summary`
 4. Update PBI based on answers
 
@@ -388,11 +398,11 @@ Generate 3-5 questions covering assumptions, scope, dependencies, edge cases. Us
 
 Compute `delta_pct = (new_likely_days - draft_likely_days) / draft_likely_days × 100`.
 
-| Delta             | Action                                                                                                                                                                                                                                                                                                                            |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `\|delta\| ≤ 20%` | Keep draft estimate. Note `reestimate_delta_pct: <signed>` + `reestimate_reason: "within tolerance, no change"` in PBI frontmatter for transparency.                                                                                                                                                                              |
-| `\|delta\| > 20%` | UPDATE `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`. Add `reestimate_delta_pct: <signed>` + 1-line `reestimate_reason` explaining what changed (e.g., "auth scope confirmed wider", "seed data dropped per validation").                                                                                   |
-| `\|delta\| > 50%` | UPDATE values AND flag `SHOULD-RESCOPE`. Surface to user via a direct user question BEFORE Phase 8 writes the PBI: "Re-estimate is +/-X% vs original. Options: (a) accept new estimate as-is, (b) split into 2 PBIs, (c) trim scope back to original estimate, (d) defer." Record the user's decision in `## Validation Summary`. |
+| Delta             | Action                                                                                                                                                                                                                                                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `\|delta\| ≤ 20%` | Keep draft estimate. Note `reestimate_delta_pct: <signed>` + `reestimate_reason: "within tolerance, no change"` in PBI frontmatter for transparency.                                                                                                                                                                               |
+| `\|delta\| > 20%` | UPDATE `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`. Add `reestimate_delta_pct: <signed>` + 1-line `reestimate_reason` explaining what changed (e.g., "auth scope confirmed wider", "seed data dropped per validation").                                                                                    |
+| `\|delta\| > 50%` | UPDATE values AND flag `SHOULD-RESCOPE`. Surface to user by asking the user directly BEFORE Phase 8 writes the PBI: "Re-estimate is +/-X% vs original. Options: (a) accept new estimate as-is, (b) split into 2 PBIs, (c) trim scope back to original estimate, (d) defer." Record the user's decision in `## Validation Summary`. |
 
 ### Output
 
@@ -418,6 +428,7 @@ id: PBI-{YYMMDD}-{NNN}
 title: '{Brief descriptive title}'
 module: '{ModuleName — detect from project-config.json modules[]}'
 priority: Must Have | Should Have | Could Have | Won't Have
+rank: { numeric 1-999, ascending — populated/updated by $prioritize during cross-PBI ranking; omit until prioritized }
 story_points: 1 | 2 | 3 | 5 | 8 | 13 | 21
 complexity: Low | Medium | High | Very High
 man_days_traditional: '{ Xd (Yd code + Zd test) — from SP table }'
@@ -555,6 +566,8 @@ Then error "{message}"
 
 ## UI Layout
 
+**Design Spec:** {link to the `$design-spec` artifact — or inline UI specs ref — that owns this PBI's screen/component design. REQUIRED for any PBI with UI work. Produce it AFTER inventorying existing UI + connected flows (per `SYNC:existing-ui-research`) so it faithfully matches the current UI system. If backend-only: `N/A — Backend-only change. No UI affected.`}
+
 ### Wireframe
 
 {ASCII wireframe using box-drawing characters}
@@ -636,7 +649,8 @@ Then error "{message}"
 - [ ] User story template (As a... I want... So that...)
 - [ ] AC testable (GIVEN/WHEN/THEN, no vague language)
 - [ ] Wireframes attached (UX BA) + UI design ready (Designer BA)
-- [ ] AI pre-review passed (`$review-artifact --type=pbi` or `$pbi-challenge`)
+- [ ] (UI PBIs) Design spec linked — `$design-spec` artifact or inline UI specs present in `## UI Layout`; backend-only PBIs exempt (`N/A — Backend-only`)
+- [ ] AI pre-review passed (`$artifact-review --type=pbi` or `$pbi-challenge`)
 - [ ] Story points estimated by AI
 - [ ] Dependencies table complete
 
@@ -677,7 +691,7 @@ For domain PBIs: detect module from `docs/specs/` directory names, extract busin
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION** after completing this skill, use a direct user question to present these options. NEVER skip because task seems "simple" or "obvious":
+**MANDATORY IMPORTANT MUST ATTENTION** after completing this skill, use ask the user directly to present these options. NEVER skip because task seems "simple" or "obvious":
 
 - **"$why-review (Recommended)"** — Validate design rationale, alternatives, risk assessment before `$story` or implementation
 - **"$domain-analysis"** — If PBI creates/modifies domain entities, model bounded contexts before writing stories
@@ -703,8 +717,9 @@ For domain PBIs: detect module from `docs/specs/` directory names, extract busin
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -916,7 +931,7 @@ For domain PBIs: detect module from `docs/specs/` directory names, extract busin
 >
 > **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
 >
-> **Stop conditions:** confidence <80% on any critical decision → escalate via ask the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
+> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
 >
 > **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
 >
@@ -966,7 +981,8 @@ For domain PBIs: detect module from `docs/specs/` directory names, extract busin
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION Goal:** emit a Definition-of-Ready PBI — problem-validated, tech-agnostic, with testable acceptance criteria, estimates, and a Dependencies table — so a team can build it without re-asking what or why
+- **IMPORTANT MUST ATTENTION Goal:** transform a raw idea into a Definition-of-Ready PBI — problem-validated, tech-agnostic, with testable acceptance criteria, estimates, and a Dependencies table — so a team can build it without re-asking what or why.
+- **IMPORTANT MUST ATTENTION — run + track EVERY step (AI forgets sub-phases):** Phase 0 locate active plan → 1 idea intake + module detect → 2 domain research → 3 problem-hypothesis GATE → 4 BABOK elicitation → 5 BDD acceptance criteria → 5.1 AI-SDD M1-M5/M7 BLOCKING gate → 5.5 testability → 6 prioritization + DRAFT estimate → 7 validation interview GATE → 7.5 RE-DERIVE estimate vs locked scope → 8 PBI generation — NEVER skip, reorder, or merge a phase without explicit user approval.
 
 **Protocols in force — MUST ATTENTION (concise digest of the SYNC/shared blocks this skill carries):**
 
@@ -980,8 +996,9 @@ For domain PBIs: detect module from `docs/specs/` directory names, extract busin
 - **IMPORTANT MUST ATTENTION** Phase 3 problem-hypothesis validation + Phase 7 validation interview (3-5 questions) are NON-OPTIONAL for new features — user decides assumptions/scope/dependencies, AI NEVER auto-decides — why: 42% of products fail from no market need; a silent AI assumption ships an unvalidated build
 - **IMPORTANT MUST ATTENTION** Phase 7.5 RE-DERIVES `story_points`/`complexity`/`man_days_traditional`/`man_days_ai` against the LOCKED post-interview scope (per `SYNC:estimation-framework`) — NEVER ship stale Phase 6 draft numbers — why: pre-validation guesses are the #1 source of unreliable velocity data
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small tasks via task tracking BEFORE starting; mark one `in_progress`, complete it before the next; on context loss the current task list first — why: compaction wipes prior-work memory, resume don't duplicate
-- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user via a direct user question — NEVER auto-decide
-- **IMPORTANT MUST ATTENTION** acceptance criteria are BDD GIVEN/WHEN/THEN (min 3: happy/edge/error) and MUST satisfy the Phase 5.1 AI-SDD M1-M5 gate — tech-agnostic Business Intent, logical `FR-`/`BR-` IDs first, observable single-interpretation ACs, rebuild-from-scratch validity — why: a reader who must guess a rule/limit/role re-implements the wrong behavior
+- **MANDATORY IMPORTANT MUST ATTENTION** validate decisions with user by asking the user directly — NEVER auto-decide
+- **IMPORTANT MUST ATTENTION** acceptance criteria are BDD GIVEN/WHEN/THEN (min 3: happy/edge/error) and MUST satisfy the Phase 5.1 AI-SDD M1-M5 and M7 gate — tech-agnostic Business Intent, logical `FR-`/`BR-` IDs first, observable single-interpretation ACs, rebuild-from-scratch validity, every AC demoable as a business outcome — why: a reader who must guess a rule/limit/role re-implements the wrong behavior
+- **IMPORTANT MUST ATTENTION** apply the M7 demo test to every AC's BODY — _"what would a stakeholder SEE change?"_; no answer → TECHNICAL-ONLY, drop it. FAIL a `WHEN` that is an invocation (handler runs, consumer receives, job fires, data syncs) or a `THEN` asserting schema/type/nullability/call-count; NEVER derive the AC count from an architecture inventory — why: M1 governs vocabulary, M7 governs subject matter — a technical AC in tech-free prose passes M1 and still rots the PBI
 - **IMPORTANT MUST ATTENTION** every PBI MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` frontmatter AND a complete Dependencies table (`must-before`/`can-parallel`/`blocked-by`/`independent`) — fill even when `independent`
 - **IMPORTANT MUST ATTENTION** keep PBI Business Intent prose tech-agnostic — NO framework/product/language/design-pattern names; implementation hints go ONLY in `## Implementation Notes`, source refs ONLY in `[Source: namespace/service/id]` evidence carriers — why: a tech-leaked spec is not rebuildable on another stack (M1/M2)
 - **IMPORTANT MUST ATTENTION** greenfield mode: NEVER ask about tech stack during refinement — capture team skills/scale as signals only; tech decided after business analysis
@@ -1090,8 +1107,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -1102,6 +1120,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

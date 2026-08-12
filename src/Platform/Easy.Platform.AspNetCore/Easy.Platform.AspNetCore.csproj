@@ -9,6 +9,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      Grants the unit test project access to internal security boundaries that have no public surface by design:
+      PlatformHttpRequestBodyDiagnosticSerializer (request-body redaction) and the propagation size caps on
+      PlatformAspNetApplicationRequestContext. Making them public purely to test them would invite production
+      callers to bypass the middleware and context that are supposed to own them.
+    -->
+    <InternalsVisibleTo Include="Easy.Platform.Tests.Unit" />
+  </ItemGroup>
+
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="IdentityModel" Version="7.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />

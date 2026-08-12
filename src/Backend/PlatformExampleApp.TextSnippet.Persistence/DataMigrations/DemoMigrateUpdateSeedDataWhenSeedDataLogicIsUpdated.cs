@@ -20,7 +20,7 @@ internal sealed class DemoMigrateUpdateSeedDataWhenSeedDataLogicIsUpdated : Plat
     // Demo can override this to allow DataMigration execution parallel in background thread, allow not wait, do not block the application start
     public override bool AllowRunInBackgroundThread => true;
 
-    public override async Task Execute(TextSnippetDbContext dbContext)
+    protected override async Task InternalExecute(TextSnippetDbContext dbContext)
     {
         await demoSeedDataUseCommandSolutionDataSeeder.SeedData(isReplaceNewSeedData: true);
     }

@@ -266,6 +266,14 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     public bool HasErrorAndShouldNeverRetry { get; set; }
 
     /// <summary>
+    /// Set in <see cref="BeforeExecuteHandleLogicAsync" /> when a circular pipeline is detected, so
+    /// <see cref="ExecuteHandleLogicAsync" /> skips handling and the message completes as success.
+    /// Race-free: consumers are registered Transient (one instance per message). Reset to false on every
+    /// non-inbox path so a reused instance can never carry a stale skip decision.
+    /// </summary>
+    private bool skipHandleLogicDueToCircularPipeLine;
+
+    /// <summary>
     /// Executes the message handling logic, either using the inbox pattern or directly.
     /// </summary>
     /// <param name="message">The message being consumed.</param>
@@ -273,6 +281,10 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     public override async Task ExecuteHandleLogicAsync(TMessage message, string routingKey)
     {
+        // Circular pipeline detected in BeforeExecuteHandleLogicAsync: skip-and-succeed (no handling, no exception).
+        if (skipHandleLogicDueToCircularPipeLine)
+            return;
+
         // If the inbox pattern is enabled and allowed, handle the message using the inbox pattern.
         // Otherwise, handle the message directly.
         if (CanHandleExecutingInboxConsumer())
@@ -346,9 +358,12 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     public override async Task BeforeExecuteHandleLogicAsync(TMessage message, string routingKey)
     {
         if (!IsHandlingLogicForInboxMessage && HandleExistingInboxMessage == null)
+        {
+            skipHandleLogicDueToCircularPipeLine = false;
             ProcessConsumerPipeLineInRequestContext(message, routingKey);
+        }
         else
-            EnsureNoCircularPipeLine(message, routingKey);
+            skipHandleLogicDueToCircularPipeLine = ShouldSkipDueToCircularPipeLine(message, routingKey);
     }
 
     private void ProcessConsumerPipeLineInRequestContext(TMessage message, string routingKey)
@@ -368,27 +383,26 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
         RequestContextAccessor.Current.Upsert(PlatformApplicationCommonRequestContextKeys.ConsumerOrEventHandlerPipeLineKey, requestContextConsumerPipeLine);
     }
 
-    private void EnsureNoCircularPipeLine(TMessage message, string routingKey)
+    /// <summary>
+    /// Detects whether handling this message has entered a circular pipeline. On detection it logs one Error
+    /// (full pipeline trace + routing key) and returns <c>true</c> so the caller skips handling and the message
+    /// completes as success — instead of throwing and marking the bus/inbox message failed (and futilely retried).
+    /// Returns <c>false</c> for non-trackable messages (no pipeline to inspect).
+    /// </summary>
+    private bool ShouldSkipDueToCircularPipeLine(TMessage message, string routingKey)
     {
         if (message is not IPlatformTrackableBusMessage trackableBusMessage)
-            return;
+            return false;
 
         var requestContextConsumerPipeLine =
             trackableBusMessage.RequestContext.GetRequestContextValue<List<string>>(PlatformApplicationCommonRequestContextKeys.ConsumerOrEventHandlerPipeLineKey) ?? [];
         var pipelineRoutingKey = GetPipelineRoutingKey(routingKey, message);
 
-        // Prevent: A => [B, B => C, B => C => D] => A.
-        if (requestContextConsumerPipeLine.Count >= ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount * 2)
-        {
-            // p => p.Take(p.Count - 1).Count(p => p == pipelineRoutingKey) >= ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount => circular ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount times => could be forever
-            requestContextConsumerPipeLine
-                .ValidateNot(
-                    mustNot: p => p.Take(p.Count - 1).Count(p => p == pipelineRoutingKey) >=
-                                  ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount,
-                    $"The current [RequestContextConsumerPipeLine:{requestContextConsumerPipeLine.ToJson()}] lead to {pipelineRoutingKey} has circular call error."
-                )
-                .EnsureValid();
-        }
+        return requestContextConsumerPipeLine.ShouldSkipDueToCircularPipeLine(
+            pipelineRoutingKey,
+            ApplicationSettingContext.ProcessEventEnsureNoCircularPipeLineMaxCircularCount,
+            Logger,
+            "consumer handle logic");
     }
 
     protected virtual string GetPipelineRoutingKey(string routingKey, TMessage message)

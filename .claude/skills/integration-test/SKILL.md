@@ -24,7 +24,8 @@ context-budget: high
 - Three things make or break a test here: read handler/entity/event source first and assert specific changed fields (never smoke/DI-resolution-only), wrap EVERY DB assertion in async polling (not just async handlers), and drive state through real command/query/seeder paths — never direct repository writes that fabricate invalid state.
 - TC traceability is the spine: each test method carries a `TC-{FEATURE}-{NNN}` test-spec annotation; one business TC maps to MANY tests (1:N, integration + unit), so cover with as many tests as needed — never split a TC to force 1:1, and auto-create a TC in feature-doc Section 8 only for genuinely uncovered business behavior.
 - Always search existing tests in the SAME service and read `references/integration-test-patterns.md` before writing; match local conventions (collection, base class, helpers, unique-name generators) and organize files by domain feature, never by `Queries/`/`Commands/` CQRS type.
-- Done means repeatable, not green-once: the suite must pass 3 consecutive `/integration-test-verify` runs WITHOUT a DB reset; the in-skill `review`/`verify` modes are lightweight inline passes, distinct from the heavier standalone `/integration-test-review` and `/integration-test-verify` skills.
+- Done means repeatable, not green-once: the suite must pass 2 consecutive `/integration-test-verify` runs WITHOUT a DB reset; the in-skill `review`/`verify` modes are lightweight inline passes, distinct from the heavier standalone `/integration-test-review` and `/integration-test-verify` skills.
+- **Main steps (MANDATORY order):** (1) FIRST — for business-visible behavior, verify/upsert each `TC-{FEATURE}-{NNN}` in feature-doc Section 8 (create if missing, update if stale, output TC→method mapping); for technical-only behavior, record `TECHNICAL-ONLY — no business TC` and use a technical annotation instead; (2) MIDDLE — implement test files with the appropriate annotation, following the project's existing base classes/helpers; (3) FINAL — verify traceability bidirectionally across integration AND unit suites (business tests → exactly one doc TC; technical-only tests → `TechnicalSpec`; every doc TC → ≥1 test; flag orphans). Per-mode loop: Detect mode → Find targets → Gather context → Execute → Report.
 
 **Workflow:** Detect mode → Find targets → Gather context → Execute → Report
 
@@ -33,12 +34,13 @@ context-budget: high
 - NEVER write smoke-only tests — read handler/entity/event source first, assert specific field values
 - ALWAYS wrap ALL DB assertions in async polling — no exceptions, not just async handlers
 - NEVER create invalid test state by direct repository writes; use real use-case paths (commands, queries, production consumers/messages) or valid seeded fixtures
+- MUST ATTENTION apply the Real-World Fidelity Gate BEFORE writing setup — a sequence, pacing, or data shape production can never reach proves nothing when green; fix the SCENARIO, never the assertion
 - MUST ATTENTION search existing patterns FIRST before generating any test
 - MUST ATTENTION READ `references/integration-test-patterns.md` before writing
 - Organize by domain feature NEVER by CQRS type — NEVER create `Queries/` or `Commands/` folders
-- Every test method MUST have TC annotation — auto-create in Section 8 if missing
+- Every test method MUST have a traceability annotation: `TestSpec` for business §8 coverage or `TechnicalSpec` for technical-only regression coverage. Auto-create in Section 8 only for genuinely uncovered business behavior.
 - Minimum 3 tests per command
-- NEVER mark done until the relevant suite passes 3 consecutive `/integration-test-verify` runs without DB reset
+- NEVER mark done until the relevant suite passes 2 consecutive `/integration-test-verify` runs without DB reset
 
 ---
 
@@ -114,10 +116,10 @@ Before implementation, search codebase for patterns:
 - **CRITICAL MUST ATTENTION:** Test setup MUST mirror real workflows. Do not create or edit domain data through repositories when a command/query/seeder path exists; invalid shortcut data is a test bug.
 - **CRITICAL MUST ATTENTION:** ALWAYS wrap ALL DB assertions in async polling/retry — DEFAULT for ALL assertions, not just async handlers. **If asserting data in DB → use async polling. No exceptions.**
 - **CRITICAL MUST ATTENTION:** Before writing assertions, READ handler/entity/event source. Understand WHAT fields change, WHAT entities created/updated/deleted, WHAT event handlers fire. **Smoke-only FORBIDDEN** unless side effect truly unobservable.
-- **CRITICAL MUST ATTENTION:** Verification requires 3 consecutive successful runs of the relevant integration suite/project without resetting data. One green run proves only the current run, not repeatability.
+- **CRITICAL MUST ATTENTION:** Verification requires 2 consecutive successful runs of the relevant integration suite/project without resetting data. One green run proves only the current run, not repeatability.
 - Minimum 3 test methods: happy path, validation failure, DB state check
 - **Authorization tests:** Multiple user contexts — authorized succeeds AND unauthorized rejected
-- Every test method MUST have `// TC-{FEATURE}-{NNN}: Description` comment + test-spec annotation — before method, outside body. **Many test methods MAY carry the same TC** (one business TC → many tests across components/services); the test-spec annotation is the join key, so cover a TC with as many technical tests as the implementation needs without inventing extra TCs.
+- Every business test method MUST have `// TC-{FEATURE}-{NNN}: Description` comment + `TestSpec` annotation before the method, outside the body. Every technical-only test method MUST have a `TechnicalSpec` annotation and MUST NOT invent a business TC. **Many test methods MAY carry the same TC** (one business TC → many tests across components/services); the test-spec annotation is the join key, so cover a TC with as many tests as the implementation needs without inventing extra business TCs.
 - No TC in feature docs → **auto-create** in Section 8 before generating test (auto-create a TC only for genuinely uncovered **business** behavior — never create a TC just to mirror a new test method when an existing TC already covers that behavior)
 - For comprehensive spec generation before coding → `/spec [mode=tests]` first
 
@@ -140,9 +142,9 @@ ALWAYS create and execute tasks in this exact order:
 3. **FINAL: Verify traceability (cardinality: 1 TC : N tests)**
     - Grep test-spec annotations across **all** test projects/suites for the stack — integration **and** unit (a TC may be covered by tests in either — grep only the integration project and unit-only-covered TCs falsely look uncovered)
     - Grep all `TC-{FEATURE}-{NNN}` in feature doc Section 8 / specs doc
-    - Verify: every test method → **exactly one** doc TC (its `TestSpec` annotation); every doc TC → **≥1** covering test method. **One TC may be covered by many test methods** (integration + unit, across components/services) — that is the expected one-to-many shape. NEVER require one test per TC, and NEVER split/technicalize a business TC to make tests map 1:1 (breaks the spec's business/user-story orientation, M1/M5 — see `tc-format.md` → TC ↔ Test Code Cardinality).
-    - Flag orphans: tests whose `TestSpec` TC is absent from §8; doc TCs with **zero** covering tests. (Many tests sharing one TC is NOT an orphan and NOT a duplicate.)
-    - Update the `IntegrationTest` field in feature doc TCs with the covering tests — `{File}::{MethodName}` comma-separated **on one line**, or a test-filter expression when the set is large (the field is representative; the annotation in code is authoritative). The covering set MAY include unit tests, not only integration tests.
+    - Verify: every business test method → **exactly one** doc TC (its `TestSpec` annotation); every technical-only test method → a `TechnicalSpec` annotation; every doc TC → **≥1** covering test method. **One TC may be covered by many test methods** (integration + unit, across components/services) — that is the expected one-to-many shape. NEVER require one test per TC, and NEVER split/technicalize a business TC to make tests map 1:1 (breaks the spec's business/user-story orientation, M1/M5 — see `tc-format.md` → TC ↔ Test Code Cardinality).
+    - Flag orphans: tests whose `TestSpec` TC is absent from §8; technical-only tests that still carry business `TestSpec`; doc TCs with **zero** covering tests. (Many tests sharing one TC is NOT an orphan and NOT a duplicate.)
+    - Update the `CoveredBy` field in feature doc TCs with the covering tests — `{File}::{MethodName}` comma-separated **on one line**, or a test-filter expression when the set is large (the field is representative; the annotation in code is authoritative). The covering set MAY include unit tests, not only integration tests. Legacy `IntegrationTest:` is migration input only.
 
 ## Module Abbreviation Registry
 
@@ -238,6 +240,21 @@ Build mapping: test case description → TC code (e.g., "create valid order" →
 - No TC exists → **CREATE IT** in Section 8 before generating test. NOT optional.
 - TC outdated/incorrect → **UPDATE IT** first.
 - Section 8 missing → run `/spec [mode=tests]` first.
+
+## Step 2c: Real-World Fidelity Check (BEFORE any test code is written)
+
+MUST ATTENTION answer this BEFORE the Arrange block exists — never after a failure:
+
+> **"Can this sequence, timing, and data actually occur in production?"**
+
+For each planned test, state:
+
+- **Sequence** — can a real actor reach these steps, in this order, through the paths under test?
+- **Pacing** — how far apart does production separate consecutive actor actions (milliseconds, seconds, minutes, hours)? Firing two distinct actor actions back-to-back in the same millisecond is a fidelity defect, NOT a test speed-up.
+- **Data shape** — is every seeded value reachable through a real use-case path (see the direct-repository-write ban above)?
+- **Barrier** — for each gap between actor actions, name the observable that proves the prior step settled (persisted state change, audit/version stamp, queue/worker idle marker, completion event) and poll it in ARRANGE.
+
+Any "no" → fix the SCENARIO before writing the test; NEVER compensate afterwards by widening an assertion timeout. Full contract: `SYNC:real-world-fidelity-testing` below; barrier shape: `references/integration-test-patterns.md` → Pattern 10.
 
 ## Step 3: Generate Test File
 
@@ -388,6 +405,7 @@ Mode = REVIEW: audit existing integration tests for quality, flaky patterns, bes
 - MUST ATTENTION flag **missing retry for eventual consistency** — message bus / event handler / background job state without polling wrapper
 - MUST ATTENTION flag **hardcoded delays** — `Thread.Sleep()`, `Task.Delay()` instead of condition-based polling
 - MUST ATTENTION flag **race conditions** — tests modifying shared state without isolation (same entity ID, same user context)
+- MUST ATTENTION flag **shared mutable data** (see `SYNC:test-data-isolation`) — assertions hung off a shared mutable entity another test can change, OR off a parent a bulk re-sync/recompute/rebuild/cascade consumer can wipe → not parallel-safe, even without your test mutating it
 - MUST ATTENTION flag **non-unique test data** — hardcoded strings/IDs instead of unique generators
 - MUST ATTENTION flag **time-dependent assertions** — `DateTime.Now` without time abstraction
 
@@ -484,8 +502,9 @@ Test fails
 │   │   ├── Async assertion without polling → TEST BUG (add async polling/retry)
 │   │   ├── Non-unique test data collision → TEST BUG (use unique name generator)
 │   │   └── Race condition in handler → CODE BUG
-│   └── Wrong count/order?
-│       ├── Test data leak from other tests → TEST BUG (isolation)
+│   └── Wrong/empty count when path under test is provably innocent?
+│       ├── Test data leak from other tests → TEST BUG (isolation: own fresh per-test data, not a shared mutable entity)
+│       ├── Shared parent wiped by cross-cutting consumer (bulk re-sync, recompute, cascade) → TEST BUG (isolation) — suspect FIRST, grep other tests + consumers before blaming code
 │       └── Logic error in query → CODE BUG
 ├── Validation error (expected success)?
 │   ├── Test sends invalid data → TEST BUG
@@ -560,7 +579,7 @@ MUST ATTENTION verify ALL of the following:
 - Every TC in Section 8 has matching test method (or marked `Status: Untested`)
 - TC descriptions in docs match what test actually validates
 - Evidence file paths in TCs point to current (not stale) code locations
-- Test annotations match TC IDs (no typos, no orphaned IDs)
+- Business `TestSpec` annotations match TC IDs (no typos, no orphaned IDs); technical-only tests use `TechnicalSpec` and do not create §8 obligations
 - Priority levels in docs match test categorization
 - `docs/specs/` dashboard is in sync with feature doc Section 8
 
@@ -633,7 +652,7 @@ MUST ATTENTION verify ALL of the following:
 
 > **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** NOT in workflow? `AskUserQuestion` — do NOT decide complexity yourself. User decides:
 >
-> 1. **`workflow-write-integration-test` workflow** (Recommended) — scout → investigate → spec [mode=tests] → why-review → review-artifact --type=spec-tests → integration-test → integration-test-review → integration-test-verify → spec [mode=sync] → docs-update → workflow-end → watzup
+> 1. **`workflow-write-integration-test` workflow** (Recommended) — scout → investigate → spec [mode=tests] → why-review → artifact-review --type=spec-tests → integration-test → integration-test-review → integration-test-verify → spec [mode=sync] → docs-update → workflow-end → watzup
 > 2. **`/integration-test` directly** — standalone
 
 ---
@@ -660,8 +679,8 @@ MUST ATTENTION verify ALL of the following:
 | Skill                                | Relationship                                                                                        | When to Call                                                                                                        |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `/spec [mode=tests]`                 | **Producer** — TCs in feature doc Section 8 are the source for test generation                      | Must run spec [mode=tests] before integration-test (CREATE or UPDATE mode). TCs must exist before generating tests. |
-| `/review-artifact --type=spec-tests` | **Upstream reviewer** — validates TC quality before test generation                                 | Run before integration-test to ensure TCs have real assertion value                                                 |
-| `/spec [mode=sync]`                  | **Sync** — reconciles §8 TCs ↔ integration test code after tests are linked                         | Run after integration-test to update the §8 `IntegrationTest:` fields with the covering test links                  |
+| `/artifact-review --type=spec-tests` | **Upstream reviewer** — validates TC quality before test generation                                 | Run before integration-test to ensure TCs have real assertion value                                                 |
+| `/spec [mode=sync]`                  | **Sync** — reconciles §8 TCs ↔ executing test code after tests are linked                           | Run after integration-test to update the §8 `CoveredBy:` fields with the covering test links                        |
 | `/spec`                              | **TC host** — Section 8 of feature doc is where TCs live                                            | If feature doc is missing or Section 8 is empty → run /spec first                                                   |
 | `/spec-index`                        | **Derived index** — regenerable navigation catalog over the Feature Specs (never a source of truth) | After §8 changes, to refresh the bucket `INDEX.md` TC counts                                                        |
 | `/integration-test-review`           | **Reviewer** — 7-gate quality audit of generated tests + change coverage                            | Always call after generating integration tests                                                                      |
@@ -688,12 +707,12 @@ integration-test (you are here)
   │     Runs tests and reports pass/fail counts. Never mark complete without real runner output.
   │
   ├─ [REQUIRED] → /spec [mode=sync]
-  │     Updates the §8 TCs' IntegrationTest: file::method traceability links.
+  │     Updates the §8 TCs' CoveredBy: file::method traceability links.
   │
   ├─ [RECOMMENDED] → /docs-update
   │     Updates feature doc evidence fields and version history if test coverage changed materially.
   │
-  └─ [RECOMMENDED] → /review-artifact --type=spec-tests
+  └─ [RECOMMENDED] → /artifact-review --type=spec-tests
         Re-run if integration-test-review (Gate 6) flagged TC issues requiring TC edits.
 
 ### Mode-Specific Chains
@@ -715,6 +734,54 @@ integration-test (you are here)
 
 <!-- /SYNC:source-test-drift-check -->
 
+<!-- SYNC:test-failure-fault-adjudication -->
+
+> **Test-Failure Fault Adjudication** — When a test fails (or you are debugging or fixing a failure), the job is to determine _who is at fault — the source code or the test code_. Getting that verdict right matters more than turning the suite green. Binds every debug / fix / test skill identically.
+>
+> 1. **Root-cause first — never guess, never patch the symptom.** `/debug-investigate` and trace the failure end-to-start to its actual cause before touching either side. A green-again suite is NOT the goal; a correct verdict on what was actually wrong is.
+> 2. **Triangulate against the spec AND the source.** If a governing Feature Spec covers the behavior (e.g. `docs/specs/**` — §3 ACs / §4 BRs / §5 invariants / §8 TCs), it is the tiebreaker for _intended_ behavior — compare BOTH the production source and the failing test against it. With no spec, the documented intent / acceptance criteria / caller contract is the reference. Decide from this evidence whether the SOURCE is wrong or the TEST is wrong.
+> 3. **Classify who is at fault, then fix the wrong side at its root:**
+>     - **SOURCE-WRONG** — production code violates the spec's intended behavior or a clear invariant → fix the source at the owning layer; keep or strengthen the test that caught it.
+>     - **TEST-WRONG** — the test encodes a stale or incorrect assertion, setup, or expectation that contradicts intended behavior → fix the test at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green.
+>     - NEVER change a test to match broken source, and NEVER change source to satisfy a broken test. (Migration code excluded — schema/data migrations are one-time execution paths, not core application logic.)
+> 4. **Ask the user when intended behavior is unclear.** If no spec covers the behavior, the spec is silent, or the spec is ambiguous about which side is correct, STOP and `AskUserQuestion` (or consult the canonical spec owner) before editing either side — never silently pick source or test just to make the suite pass.
+>
+> Reconcile to intended behavior, never to whichever side currently passes — green can encode the very bug.
+
+<!-- /SYNC:test-failure-fault-adjudication -->
+
+<!-- SYNC:spec-tests-code-triangulation -->
+
+> **Spec ↔ Tests ↔ Code Triangulation** — The unit of review is the WHOLE PACKAGE (spec + tests + code), not the diff alone. Load all three faces together and reason mutual-consistency FIRST, before any isolated per-file check.
+>
+> 1. **Locate all three faces** for the changed behavior: the governing Feature Spec section(s) (§3 ACs / §4 BRs / §8 TCs), the tests that guard it, and the production code. A missing face is a finding (SPEC-GAP / TEST-GAP / DEAD-SPEC).
+> 2. **Triangulate pairwise** — classify which face is wrong on every disagreement:
+>     - code vs spec → CODE-EXTRA / SPEC-STALE / CODE-WRONG (a [HARD] §4 rule or §5 invariant with no enforcing path is CODE-WRONG).
+>     - tests vs spec → TEST-GAP / SPEC-SILENT.
+>     - tests vs code → TEST-GAP / WEAK-TEST (a test that survives a deliberately broken invariant).
+> 3. **Capture hidden rules** — an invariant the code enforces but the spec never states (SPEC-SILENT) is surfaced as a finding, added into §3/§4/§8, and guarded with a test: the enrichment loop, never a silent pass.
+> 4. **Re-review after enrichment** — when triangulation adds spec content or a test, re-review the package against the enriched spec; converge only when a full pass surfaces no new disagreement.
+>
+> NEVER mark PASS while any face disagrees without a logged finding. The diff is the entry point; the package is the unit of judgment.
+
+<!-- /SYNC:spec-tests-code-triangulation -->
+
+<!-- SYNC:spec-drift-adjudication -->
+
+> **Spec drift adjudication (code-wrong vs spec-stale).** Whenever changed behavior diverges from a canonical Feature Spec (business rule, acceptance criterion, flow, state transition, or §8 TC under `docs/specs/`), you MUST NOT silently pick a side. Adjudicate per `shared/sdd-artifact-contract.md` → **Drift Gates**:
+>
+> 1. **Detect** — compare the change against the spec's documented intent. No divergence → record `Spec in sync` and move on.
+> 2. **Classify** the divergence:
+>     - **CODE-WRONG** — the spec correctly states intended behavior and the change violates it → BLOCKING finding; fix the code/test against intended behavior (write/adjust a regression TC first).
+>     - **SPEC-STALE** — the change is the new intended behavior and the spec now documents the old/wrong behavior → update the spec FIRST via `/spec [mode=update]`, then sync `/spec [mode=tests]` + `/spec [mode=sync]`.
+>     - **AMBIGUOUS** — intended behavior is unclear → `AskUserQuestion` (or the canonical spec owner) before editing either side.
+>     - **SPEC-SILENT** — the code correctly enforces an invariant/behavior that NO canonical spec artifact (§3 AC, §4 BR, §5 invariant, §8 TC) states → not drift but an UNWRITTEN rule discovered by review. ENRICH the spec via the **Invariant Harvest** pass (`/spec [mode=sync] direction=harvest` → `spec/references/sync.md`): prove it is always-true (≥2 enforcement points or a rejecting guard), express it as a universally-quantified property, then add the rule to §4 (or §3/§5) AND a §8 TC via `/spec [update]` + `/spec [mode=tests]` and add the guarding test. A discovered invariant left only in code (or only in tests) is INCOMPLETE — this is the highest-value capture (the rule nobody wrote down).
+> 3. **Never normalize drift just because code/tests are green** — green can encode the drift itself. Reconcile to canonical intent, never to whichever side currently passes.
+>
+> A behavior-changing review/implementation that leaves a spec divergence unadjudicated is INCOMPLETE; an unwritten-but-enforced invariant left uncaptured (no §4/§8 entry) is equally INCOMPLETE.
+
+<!-- /SYNC:spec-drift-adjudication -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -724,8 +791,9 @@ integration-test (you are here)
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -761,7 +829,7 @@ integration-test (you are here)
 
 <!-- SYNC:repeatable-test-principle -->
 
-> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data. Verification is only PASS after the relevant suite/project passes 3 consecutive runs without database reset.
+> **Infinitely Repeatable Tests** — Tests MUST run N times without failure. Like manual QC — run the suite 100 times, each run just adds more data. Verification is only PASS after the relevant suite/project passes 2 consecutive runs without database reset.
 >
 > 1. **Unique data per run:** Use the project's unique ID generator for ALL entity IDs created in tests. NEVER hardcode IDs.
 > 2. **Additive only:** Tests create data, never delete/reset. Prior test runs MUST NOT interfere with current run.
@@ -772,6 +840,46 @@ integration-test (you are here)
 > 7. **Migration code excluded:** Do not write tests for migration code. Schema/data migrations are one-time execution paths, not core application logic.
 
 <!-- /SYNC:repeatable-test-principle -->
+
+<!-- SYNC:test-data-isolation -->
+
+> **Parallel-Safe Test Isolation** — Tests MUST run in parallel and still pass; no test's data may be affected by any other test. `repeatable-test-principle` guards a test against its OWN prior runs; THIS guards it against OTHER concurrent tests, including indirect corruption through a shared parent + a cross-cutting consumer.
+>
+> 1. **Own fresh data per test:** Each test creates its own entities with unique IDs, down to the root it asserts on. NEVER assert against a shared mutable entity another test can change; only immutable reference/lookup data may be shared — why: shared mutable state is the single point another test corrupts.
+> 2. **Isolate at the highest mutated entity:** Own a private instance of the highest-level entity (aggregate root/parent) any test mutates. Sharing is safe only for data no test ever writes — why: a writable shared parent is contended ground two tests fight over.
+> 3. **Account for cross-cutting consumers:** A bulk re-sync, recompute, projection rebuild, or cascade any test triggers over a shared parent can rewrite or wipe every entity beneath it — so sharing that parent is unsafe EVEN WHEN your test never mutates it directly — why: the corruption arrives through a consumer, not the path under test.
+> 4. **Suspect contamination FIRST on contradiction:** When a test fails intermittently, or its result contradicts the traced behavior of the path under test (the path is provably innocent yet state is wrong), rule out cross-test interference BEFORE blaming the code under test — why: the innocent path takes the blame for another test's writes.
+> 5. **Prove isolation by search, not assumption:** Grep every OTHER test touching the same shared data AND every consumer that fans out over it; cite `file:line` evidence. Absence of a sharer is a finding to prove, not assume — why: isolation claimed without a search is unverified.
+
+<!-- /SYNC:test-data-isolation -->
+
+<!-- SYNC:real-world-fidelity-testing -->
+
+> **Real-World Fidelity Gate** — MANDATORY when authoring, reviewing, or repairing any integration / E2E / system test.
+>
+> A test earns trust by reproducing a situation the system can actually meet in production. A scenario that could never occur in real life proves nothing when it passes, and wastes hours when it fails.
+>
+> 1. **Ask the fidelity question BEFORE writing the setup:** _"Can this sequence, timing, and data actually occur in production?"_ If no, the test is mis-specified — fix the SCENARIO, never the assertion.
+> 2. **Model real pacing between actor steps.** Two distinct actor actions that production separates by seconds, minutes, or hours MUST NOT be fired back-to-back in the same millisecond. Compressed pacing manufactures races the system was never designed to survive, then reports them as product defects.
+> 3. **Wait on a real signal, never a blind sleep.** Find an observable proving the prior step finished — a persisted state change, an audit/version stamp, a queue/worker idle marker, a completion event — and poll until it settles (unchanged across a short stability window). Use a fixed delay ONLY when no observable exists, and say so in a comment.
+> 4. **Barriers belong in ARRANGE, never in ASSERT.** Waiting for a precondition is fidelity. Widening an assertion's timeout, loosening a comparison, adding a retry around a failing assertion, or skipping the test is masking. NEVER do the latter to force green.
+> 5. **Distinguish harness-amplified from real.** Test topologies (shared infra, fan-out consumers, parallel suites, cold starts) can make a rare production race routine locally. Before filing a product defect, state whether the trigger exists in production and at what likelihood.
+> 6. **Keep the protected invariant intact.** Improving fidelity must NEVER reduce what the test protects. If a realistic scenario no longer exercises the rule, the rule needs a DIFFERENT realistic scenario — not a weaker assertion.
+> 7. **Deliberate impossible-state tests are allowed, but MUST be labelled.** Corruption-repair, migration, and fail-safe tests intentionally construct states production should never reach; comment WHY the state is reachable (upstream bug, partial write, legacy data), so they are never confused with unrealistic setups.
+
+<!-- /SYNC:real-world-fidelity-testing -->
+
+<!-- SYNC:integration-test-execution-discipline -->
+
+> **Integration Test Execution Discipline** — How the integration-test family (write · review · verify) runs, diagnoses, and clears a suite. Binds `/integration-test`, `/integration-test-review`, and `/integration-test-verify` identically.
+>
+> 1. **Verify the WHOLE system passes — not a hand-picked subset.** `/integration-test-verify` must prove the full relevant suite is green (every test in the system the change can touch), not one cherry-picked test. "All pass" is only true with actual runner output (Passed/Failed/Skipped counts + names) and only after 2 consecutive green runs without a DB reset.
+> 2. **Drive state through real use-case paths — NEVER hack seed data.** Set up every precondition exactly as a real user would: real commands, queries, production consumers/messages, or valid idempotent seeders. NEVER create or mutate domain data by direct repository writes — that fabricates states a user could never reach and hides the real workflow bug. Hacking seed data to force a green run is forbidden.
+> 3. **On ANY failure → `/debug-investigate` the root cause BEFORE any fix.** Do not guess, do not patch the symptom site. Trace the failure end-to-start and classify whose fault it is: test code (wrong assertion/setup), source/production code (real defect), or environment/infrastructure/data. Then route: test-code fault → `/integration-test-review` to fix the test at the root (never weaken assertions or add skips); source-code fault → fix the production defect at the owning layer and report it; environment fault → mark BLOCKED and point at the startup script. NEVER change a test to match broken code.
+> 4. **60-second runtime cap — a slow test is a RED FLAG, not a tuning knob.** Local integration tests run fast. If any single test (or a stalled suite) exceeds ~60s, STOP and treat the slowness itself as a defect signal — deadlock, missing `await`, infinite poll/retry, a real network/external call, or an unbounded query. `/debug-investigate` the cause; NEVER paper over it by raising the timeout or extending the wait.
+> 5. **Loop until the whole suite is green.** After fixing the validated root cause, restart the full 2-run verification from run 1. Done means the entire relevant suite passes repeatably — never green-once, never a subset.
+
+<!-- /SYNC:integration-test-execution-discipline -->
 
 <!-- SYNC:red-flag-stop-conditions -->
 
@@ -879,11 +987,11 @@ integration-test (you are here)
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `/project-init` or the narrow route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `/sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -947,8 +1055,8 @@ integration-test (you are here)
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -978,11 +1086,15 @@ integration-test (you are here)
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries) — MUST ATTENTION each canonical body below is in force; this digest is the signpost, NEVER the substitute:**
 
 - **Source/Test Drift Check:** on source change, adjudicate whether tests or source is wrong.
+- **Spec↔Tests↔Code Triangulation:** the unit of judgment is the WHOLE PACKAGE (spec §3/§4/§8 + tests + code) — load all three, reason mutual-consistency first; a disagreeing or missing face is a logged finding, NEVER a silent pass.
+- **Spec Drift Adjudication:** on behavior divergence from a canonical spec, classify CODE-WRONG / SPEC-STALE / AMBIGUOUS / SPEC-SILENT and harvest unwritten invariants into §4/§8 + a guarding test — NEVER normalize drift to whichever side is green.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Critical Thinking:** every claim needs traced proof; never present a guess as fact.
 - **Understand Code First:** read existing code and grep 3+ patterns before writing.
 - **Graph Impact Analysis:** run blast-radius when graph.db exists; flag stale impacted files.
-- **Repeatable Test Principle:** unique data, additive-only, no reset — pass 3 consecutive runs.
+- **Repeatable Test Principle:** unique data, additive-only, no reset — pass 2 consecutive runs.
+- **Parallel-Safe Test Isolation:** own fresh per-test data; never a shared mutable entity; account for cross-cutting consumers that wipe a shared parent; suspect contamination FIRST on contradiction; prove isolation by grep.
+- **Real-World Fidelity Gate:** only test sequences, pacing, and data production can actually reach; barriers wait on a real settle signal in ARRANGE — never a widened assertion.
 - **Red Flag Stop Conditions:** escalate on low confidence, large blast radius, breaking change.
 - **Rationalization Prevention:** reject step-skipping evasions; show grep evidence, plan anyway.
 - **Incremental Persistence:** persist findings to `plans/reports/` after each file, never in memory.
@@ -998,30 +1110,36 @@ integration-test (you are here)
 - **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing tests in the SAME service and READ `references/integration-test-patterns.md` BEFORE writing — match collection, base class, helpers, unique-name generators — why: local conventions override generic templates
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence (confidence >80% to act, <60% do NOT recommend) for every claim about field changes, entities, or handler behavior — why: AI hallucinates APIs/signatures; grep to confirm before asserting
 - **MANDATORY IMPORTANT MUST ATTENTION** `TaskCreate` — break ALL work into small tasks BEFORE starting; transition one task at a time, add a final review task — why: tracking survives context loss/compaction
-- **MANDATORY IMPORTANT MUST ATTENTION** every test method carries a `TC-{FEATURE}-{NNN}` test-spec annotation — auto-create in Section 8 ONLY for genuinely uncovered business behavior — why: the annotation is the join key for traceability
+- **MANDATORY IMPORTANT MUST ATTENTION** execute the main task ordering IN ORDER — (1) FIRST verify/upsert TCs in feature-doc §8 for business-visible behavior, or record `TECHNICAL-ONLY` for non-business behavior, (2) MIDDLE implement tests with the correct annotation, (3) FINAL verify traceability across integration + unit suites — and run the per-mode loop Detect mode → Find targets → Gather context → Execute → Report — why: implementing before traceability exists produces orphans and skipping FINAL leaves drift undetected
+- **MANDATORY IMPORTANT MUST ATTENTION** every test method carries a traceability annotation: `TestSpec=TC-{FEATURE}-{NNN}` for business §8 coverage, or `TechnicalSpec=...` for technical-only regression coverage. Auto-create in Section 8 ONLY for genuinely uncovered business behavior — why: the annotation is the join key for traceability
 - **MANDATORY IMPORTANT MUST ATTENTION** one business TC maps to MANY tests (1:N, integration + unit) — NEVER split or technicalize a TC to force 1:1 — why: 1:1 splitting breaks the spec's business/user-story orientation (M1/M5)
 - **MANDATORY IMPORTANT MUST ATTENTION** for any handler enforcing a `[HARD]` §4 rule or §5 invariant, generate a Pattern 9 property/metamorphic test + boundary counter-case tied to a §8 Invariant/Property TC — why: example tests guard fixed points; the rule must fail across its whole input domain (mutation-kill, not line-coverage)
 - **MANDATORY IMPORTANT MUST ATTENTION** NEVER create `Queries/` or `Commands/` folders — instead organize by domain feature — why: CQRS-type folders fragment a domain across directories
-- **MANDATORY IMPORTANT MUST ATTENTION** NEVER mark done after one green run — verification requires 3 consecutive `/integration-test-verify` passes WITHOUT a DB reset — why: one run proves only the current run, not repeatability
+- **MANDATORY IMPORTANT MUST ATTENTION** NEVER mark done after one green run — verification requires 2 consecutive `/integration-test-verify` passes WITHOUT a DB reset — why: one run proves only the current run, not repeatability
+- **MANDATORY IMPORTANT MUST ATTENTION** make every test parallel-safe — own fresh per-test data down to the root it asserts on, NEVER a shared mutable entity; account for cross-cutting consumers (bulk re-sync/recompute/rebuild/cascade) that wipe a shared parent; on a contradiction between a provably-innocent path and wrong state, suspect cross-test interference FIRST and prove isolation by grepping other tests + consumers — why: shared mutable state lets another test silently corrupt your data and the innocent path takes the blame
+- **MANDATORY IMPORTANT MUST ATTENTION** apply the Real-World Fidelity Gate BEFORE writing any setup — ask "can this sequence, timing, and data actually occur in production?", model real pacing between distinct actor actions instead of firing them in the same millisecond, and wait on an observable settle signal in ARRANGE; NEVER widen an assertion timeout, loosen a comparison, or wrap a failing assertion in a retry to compensate — why: a scenario production can never reach proves nothing when it passes and manufactures phantom "product defects" when it fails
 - **MANDATORY IMPORTANT MUST ATTENTION** `review`/`verify` are lightweight in-skill MODES — invoke the standalone `/integration-test-review` and `/integration-test-verify` skills for the heavier workflow gates — why: name-collision; modes are not the sibling skills
 - **MANDATORY IMPORTANT MUST ATTENTION** `AskUserQuestion` — validate workflow/route decisions with the user. NEVER auto-decide complexity.
 - **MANDATORY IMPORTANT MUST ATTENTION** passing code/tests NEVER outrank canonical spec intent — instead reach adjudication-required with evidence before changing spec/test/code on a behavior mismatch — why: a green test can encode a regression
 
 **Anti-Rationalization:**
 
-| Evasion                            | Rebuttal                                                                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| "Test is simple, skip TC lookup"   | TC traceability = test value. Skip = untraceable test.                                                                                           |
-| "Async polling not needed here"    | ALL DB assertions need polling. Handler type irrelevant.                                                                                         |
-| "Already searched patterns"        | Show `file:line` evidence. No proof = no search.                                                                                                 |
-| "Smoke test is fine for now"       | Smoke-only FORBIDDEN. Assert specific field values.                                                                                              |
-| "Repo setup is faster"             | Direct repository data hacks create invalid state. Use real use-case paths or valid seeded fixtures.                                             |
-| "One green run is enough"          | Verification requires 3 consecutive passing runs without DB reset.                                                                               |
-| "REVIEW: one pass is enough"       | Low confidence → spawn fresh sub-agent. Never declare PASS after Round 1.                                                                        |
-| "Skip task creation, it's obvious" | TaskCreate is non-negotiable. Tracking prevents context loss.                                                                                    |
-| "Split this TC so tests map 1:1"   | One business TC → MANY tests is the expected shape. Splitting breaks spec business orientation (M1/M5).                                          |
-| "Example tests cover the rule"     | A `[HARD]` §4 rule / §5 invariant needs a Pattern 9 property test — examples guard fixed points only.                                            |
-| "Run `review` mode, it's the gate" | `review`/`verify` modes are inline passes; the workflow gates are the standalone `/integration-test-review` + `/integration-test-verify` skills. |
+| Evasion                                                | Rebuttal                                                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Test is simple, skip TC lookup"                       | TC traceability = test value. Skip = untraceable test.                                                                                            |
+| "Async polling not needed here"                        | ALL DB assertions need polling. Handler type irrelevant.                                                                                          |
+| "Already searched patterns"                            | Show `file:line` evidence. No proof = no search.                                                                                                  |
+| "Smoke test is fine for now"                           | Smoke-only FORBIDDEN. Assert specific field values.                                                                                               |
+| "Repo setup is faster"                                 | Direct repository data hacks create invalid state. Use real use-case paths or valid seeded fixtures.                                              |
+| "One green run is enough"                              | Verification requires 2 consecutive passing runs without DB reset.                                                                                |
+| "It shares an existing entity, that's fine"            | Shared mutable state is the single point another test corrupts. Own fresh per-test data; only immutable lookup data may be shared.                |
+| "My path doesn't mutate that parent"                   | A cross-cutting consumer can wipe the shared parent without you touching it. Sharing it is unsafe even without direct mutation.                   |
+| "The path under test is correct, so the test is right" | Provably-innocent path + wrong state = suspect cross-test interference FIRST. Grep other tests + cross-cutting consumers before blaming the code. |
+| "REVIEW: one pass is enough"                           | Low confidence → spawn fresh sub-agent. Never declare PASS after Round 1.                                                                         |
+| "Skip task creation, it's obvious"                     | TaskCreate is non-negotiable. Tracking prevents context loss.                                                                                     |
+| "Split this TC so tests map 1:1"                       | One business TC → MANY tests is the expected shape. Splitting breaks spec business orientation (M1/M5).                                           |
+| "Example tests cover the rule"                         | A `[HARD]` §4 rule / §5 invariant needs a Pattern 9 property test — examples guard fixed points only.                                             |
+| "Run `review` mode, it's the gate"                     | `review`/`verify` modes are inline passes; the workflow gates are the standalone `/integration-test-review` + `/integration-test-verify` skills.  |
 
 ---
 

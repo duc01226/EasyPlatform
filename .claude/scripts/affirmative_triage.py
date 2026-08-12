@@ -14,7 +14,7 @@ Usage:
     py .claude/scripts/affirmative_triage.py --stats
     py .claude/scripts/affirmative_triage.py --scope all --out plans/<dir>/reports/triage-worksheet.md --stats
     py .claude/scripts/affirmative_triage.py --scope skills --fingerprints-out plans/<dir>/reports/fingerprints-pre.json
-    py .claude/scripts/affirmative_triage.py --self-test fix code-review review-changes
+    py .claude/scripts/affirmative_triage.py --self-test fix code-review changes-review
 
 Enumerates files via `git ls-files` (the Windows FS is case-insensitive; `find`/`ls`
 conflate SKILL.md / skill.md — git ls-files preserves true case so the 2 lowercase
@@ -487,7 +487,7 @@ def main(argv):
         return run_density_check(args.scope)
 
     if args.self_test is not None:
-        names = args.self_test or ["fix", "code-review", "review-changes"]
+        names = args.self_test or ["fix", "code-review", "changes-review"]
         print(f"=== SELF-TEST on {names} ===")
         return run_self_test(names)
 

@@ -19,11 +19,12 @@ description: '[Implementation] Use when you need to start coding & testing an ex
 
 **Summary:**
 
-- Consumes an EXISTING plan (Step 0 detects `plans/*.md`, selects the next incomplete phase, one phase per run) — use `/feature-implement` instead when no plan exists yet.
-- Drives the 7-step spine with three BLOCKING gates that cannot be faked-green: Step 3 tests 100% pass (loop `tester`→`debugger`), Step 4 zero critical issues (`code-reviewer`), Step 5 explicit user approval before Step 6 Finalize/auto-commit.
-- The Pre-Implementation Granularity Gate and bugfix Trace Gate STOP the run before coding — refuse phases with planning verbs / unnamed files / unresolved decisions, and require the End→Start debugger trace for bug/regression plans.
-- Mode flags only add/remove a single step, never relax a running gate: `--approval=off` (auto/trust, skip Step 5, optional `$ALL_PHASES` loop), `--tests=off` (skip Step 3), `--parallel` (dispatch `fullstack-developer` subagents per file-owned phase).
-- Standalone (no parent workflow via `TaskList`) → wrap in the plan → plan-review → proceed → `/review-changes` → `/why-review` quality loop.
+- **Purpose:** consume an EXISTING plan, one phase per run — Step 0 detects `plans/*.md` + selects the next incomplete phase (prefer IN_PROGRESS, else earliest Planned). Use `/feature-implement` instead when no plan exists yet — it creates plans, this consumes them.
+- **Full step spine (run in declared order, emit `✓ Step N:` each):** Step 1 Analysis & Task Extraction (read plan fully, Goal-Contract read, Trace Gate, seed `TaskCreate` 0–6) → Step 2 Implementation (code step-by-step, type-check + compile; UI → `ui-ux-designer`) → Step 3 Testing (`tester`, loop `debugger` until 100%) → Step 4 Code Review (`code-reviewer` until 0 critical) → Step 5 User Approval (BLOCKING — stop and wait) → Step 6 Finalize (`project-manager` + `docs-manager` status/docs, `git-manager` auto-commit).
+- **Three BLOCKING gates cannot be faked-green:** Step 3 tests 100% pass, Step 4 zero critical issues, Step 5 explicit user approval before Finalize/commit. — why: a partial-green gate ships the regression the test exists to catch.
+- **Two STOP-before-coding gates:** Pre-Implementation Granularity Gate (refuse planning verbs / unnamed files / unresolved decisions → sub-plan with `/plan`) + bugfix Trace Gate (require the End→Start debugger trace for any bug/regression/behavior-changing plan). Also the Spec-Loop Gate (property TC + mutation-killed test + Dual-Feedback) closes any behavior change.
+- **Mode flags** add/remove ONE step, never relax a running gate: `--approval=off` (auto/trust, skip Step 5, optional `$ALL_PHASES` loop over every incomplete phase), `--tests=off` (skip Step 3), `--parallel` (Step 2 dispatch `fullstack-developer` subagents per file-owned phase). No flags = full 7-step spine.
+- **Standalone** (no parent `[Workflow]` row via `TaskList`) → wrap the spine in plan → plan-review → proceed → `/changes-review` → `/why-review`, the two reviews as the LAST todos.
 
 > **Slash-command routing:** `/code`, `/code-auto`, `/code-no-test`, `/code-parallel` no longer resolve — use `/plan-execute` with the matching flag: `/code-auto` → `--approval=off`, `/code-no-test` → `--tests=off`, `/code-parallel` → `--parallel`.
 
@@ -64,7 +65,7 @@ description: '[Implementation] Use when you need to start coding & testing an ex
 > 1. **`/plan`** — if Step 0 finds no plan for the request, author one first. If a plan already exists, record that and skip to step 2.
 > 2. **`/plan-review`** — recursively review/validate the plan; fix validated findings before proceeding.
 > 3. **Proceed** — run the core spine (Steps 0-6) against the approved plan.
-> 4. **`/review-changes`** — review the diff before commit (the post-gate; see _Standalone Review Gate_ below).
+> 4. **`/changes-review`** — review the diff before commit (the post-gate; see _Standalone Review Gate_ below).
 > 5. **`/why-review`** — review rationale and change quality of the implementation.
 >
 > This is the single pre+post quality loop for standalone runs.
@@ -265,11 +266,11 @@ Execute every step in declared order; proceed only when validation passes and th
 
 ## Standalone Review Gate (Non-Workflow Only)
 
-> **Post-gate of the [Standalone Mode Pipeline](#standalone-mode-pipeline-skip-entirely-if-invoked-inside-a-workflow).** Full standalone loop: plan → plan-review → proceed → `/review-changes` → `/why-review`; the two review steps below are its tail.
+> **Post-gate of the [Standalone Mode Pipeline](#standalone-mode-pipeline-skip-entirely-if-invoked-inside-a-workflow).** Full standalone loop: plan → plan-review → proceed → `/changes-review` → `/why-review`; the two review steps below are its tail.
 >
-> **MANDATORY IMPORTANT MUST ATTENTION:** If this skill is called **outside a workflow** (standalone `/plan-execute`), you MUST ATTENTION create `TaskCreate` todo tasks for `/review-changes` then `/why-review` as the **last tasks** in your task list. This ensures all changes are reviewed before commit even without a workflow enforcing it.
+> **MANDATORY IMPORTANT MUST ATTENTION:** If this skill is called **outside a workflow** (standalone `/plan-execute`), you MUST ATTENTION create `TaskCreate` todo tasks for `/changes-review` then `/why-review` as the **last tasks** in your task list. This ensures all changes are reviewed before commit even without a workflow enforcing it.
 >
-> If already running inside a workflow (e.g., `workflow-feature`, `workflow-refactor`), skip this — the workflow sequence handles `/review-changes` at the appropriate step.
+> If already running inside a workflow (e.g., `workflow-feature`, `workflow-refactor`), skip this — the workflow sequence handles `/changes-review` at the appropriate step.
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
 
@@ -336,11 +337,11 @@ Execute every step in declared order; proceed only when validation passes and th
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `/project-init` or the narrow route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `/sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -382,8 +383,9 @@ Execute every step in declared order; proceed only when validation passes and th
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -419,8 +421,8 @@ Execute every step in declared order; proceed only when validation passes and th
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -471,6 +473,7 @@ Execute every step in declared order; proceed only when validation passes and th
 - **Source/Test Drift Check:** When behavior changes, reconcile affected tests from evidence.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
+**IMPORTANT MUST ATTENTION** run the full step spine in declared order, emit `✓ Step N:` each: Step 0 detect plan + select next incomplete phase → Step 1 Analysis & Task Extraction (read plan, Goal-Contract read, Trace Gate, seed `TaskCreate`) → Step 2 Implementation (code + type-check/compile; UI → `ui-ux-designer`) → Step 3 Testing (`tester`→`debugger` until 100%) → Step 4 Code Review (`code-reviewer` until 0 critical) → Step 5 User Approval (BLOCKING, wait) → Step 6 Finalize (`project-manager` + `docs-manager` + `git-manager`).
 **IMPORTANT MUST ATTENTION** execute Steps 0-6 in declared order; the three BLOCKING gates — tests 100% (Step 3), critical issues 0 (Step 4), explicit user approval (Step 5) — cannot be faked-green: NEVER skip a step, proceed on failed validation, or assume approval — why: a faked-green gate ships the regression the test exists to catch.
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim, finding, and recommendation with confidence % — >80% to act, <80% verify first, <60% do NOT recommend — why: speculation passed as fact is the root of every hallucinated fix.
 **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` todos BEFORE the first read/edit, keep exactly one `in_progress`, mark `completed` immediately after each step's evidence, add a final review todo — on context loss call `TaskList` first, never duplicate — why: long files exhaust context and silently lose findings.
@@ -481,7 +484,7 @@ Execute every step in declared order; proceed only when validation passes and th
 **IMPORTANT MUST ATTENTION** a behavior change is NOT done until the Spec-Loop closes — universally-quantified property TC + boundary counter-case for every [HARD] rule touched, a mutation-killed test on each changed core-logic line, and a Dual-Feedback Ledger entry into BOTH spec AND tests — re-verify the whole package (spec + tests + code), not just the diff.
 **IMPORTANT MUST ATTENTION** keep existing tests real and genuinely passing — NEVER comment out tests, weaken assertions, change assertions to pass, or use fake data; apply the source/test drift check when behavior changes — why: faked green hides the regression the test exists to catch.
 **IMPORTANT MUST ATTENTION** mode flags add/remove ONE step, never relax a running gate — `--approval=off` skips Step 5, `--tests=off` skips Step 3, `--parallel` dispatches `fullstack-developer` subagents with strict file-ownership; debugger-trace + granularity + quality bars + all SYNC blocks apply in EVERY mode.
-**IMPORTANT MUST ATTENTION** standalone (no parent `[Workflow]` row via `TaskList`) → wrap Steps 0-6 in plan → plan-review → proceed → `/review-changes` → `/why-review`, with `/review-changes` + `/why-review` as the LAST todos; validate decisions with the user via `AskUserQuestion` — never auto-decide — why: standalone runs have no workflow enforcing review before commit.
+**IMPORTANT MUST ATTENTION** standalone (no parent `[Workflow]` row via `TaskList`) → wrap Steps 0-6 in plan → plan-review → proceed → `/changes-review` → `/why-review`, with `/changes-review` + `/why-review` as the LAST todos; validate decisions with the user via `AskUserQuestion` — never auto-decide — why: standalone runs have no workflow enforcing review before commit.
 **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` and the path-matched project-reference docs (frontend/scss/design-system for UI, domain-entities for models) before starting.
 **IMPORTANT MUST ATTENTION** Easy to Change is the success metric — every finding, test, refactor, abstraction must make the NEXT change cheaper; name the real enemies (coupling, hidden state, duplicated knowledge, unclear intent) and reject anything that raises change cost.
 
@@ -495,7 +498,7 @@ Execute every step in declared order; proceed only when validation passes and th
 | "Phase is clear enough to start"          | Run the Granularity Gate — planning verbs / unnamed files / open decisions → sub-plan, don't code.       |
 | "It's a quick fix, skip the trace"        | Bug/regression plan needs the End→Start trace + hypothesis matrix BEFORE the fix.                        |
 | "Code change is enough, spec/tests later" | Behavior change → property TC + mutation-killed test + Dual-Feedback into spec AND tests, or INCOMPLETE. |
-| "Standalone, so skip review"              | No workflow = YOU add `/review-changes` + `/why-review` as the last todos.                               |
+| "Standalone, so skip review"              | No workflow = YOU add `/changes-review` + `/why-review` as the last todos.                               |
 
 ---
 

@@ -67,6 +67,12 @@
  *                    ui-ux-designer keep graph-assisted-investigation. Guards the
  *                    four surgical trims from silently regressing on a future
  *                    matrix/agent edit.
+ *   O (TC-UAR-017) — agent-adoption triage gate: any canonical SYNC block that
+ *                    reaches >= AGENT_ADOPTION_MIN_SKILL_REACH skills must be
+ *                    carried by at least one agent OR be declared orchestration
+ *                    in AGENT_ADOPTION_EXEMPT. Catches the drift class where a
+ *                    new protocol propagates to every skill but no agent, so
+ *                    agents silently run weaker protocols than their twin skills.
  */
 
 const fs = require('fs');
@@ -112,6 +118,26 @@ const READONLY_CODE_AGENTS = new Set([
 const CORE_ONLY_AGENTS = new Set([
     'business-analyst', 'docs-manager', 'git-manager', 'journal-writer',
     'knowledge-worker', 'product-owner', 'project-manager', 'quality-gate-review',
+]);
+
+// ── TC-UAR-017 agent-adoption triage gate ────────────────────────────────────
+// The drift this catches: a new canonical SYNC block gets propagated across the
+// SKILLS but never triaged for AGENTS, so every agent silently runs a weaker
+// protocol than its similar-purpose skill. That is invisible to the matrix
+// validator (which only checks blocks already DECLARED) and to
+// verify-sync-adoption-parity (which only checks declared carriers match
+// canonical) -- nothing owned the "declared nowhere" case until this gate.
+// A block reaching this many skills is real, propagated policy -- not a
+// one-off -- so it must be either adopted by some agent or explicitly exempt.
+const AGENT_ADOPTION_MIN_SKILL_REACH = 3;
+// Orchestration blocks a headless leaf sub-agent structurally CANNOT act on.
+// Mirrors agent_protocol_matrix.py EXCLUDED_ORCHESTRATION -- keep the two in step.
+const AGENT_ADOPTION_EXEMPT = new Set([
+    'nested-task-creation',        // expands a workflow step's child phase tasks
+    'subagent-return-contract',    // instructs ITS sub-agents how to return (inverted for a leaf)
+    'parallel-phase-advancement',  // all-return barrier across a parallel phase group
+    'sub-agent-selection',         // a dispatcher choosing which sub-agents to spawn
+    'goal-contract-satisfaction-loop', // session goal file + convergence loop + user escalation
 ]);
 // agent-code-standards audience — SEPARATE axis (mirror sync-hooks-to-skills.py
 // CODE_STANDARDS_AGENTS verbatim). NOT the same set as CODE_AGENTS.
@@ -485,6 +511,42 @@ module.exports = {
                     problems.length,
                     0,
                     `off-role-trim regression:\n  ${problems.join('\n  ')}`,
+                );
+            },
+        },
+        {
+            name: '[agent-universal-rules] TC-UAR-017 every canonical block with real skill reach is triaged for agents (no silent skill-only drift)',
+            fn: () => {
+                const source = fs.readFileSync(SYNC_INLINE_PATH, 'utf8');
+                const canonTags = [
+                    ...new Set(
+                        [...source.matchAll(/^## SYNC:([a-z0-9-]+)\s*$/gm)].map(m => m[1]),
+                    ),
+                ];
+
+                const skillBodies = skillNames.map(readSkill);
+                const agentBodies = diskAgents.map(read);
+
+                const unclassified = [];
+                for (const tag of canonTags) {
+                    const skillCount = skillBodies.filter(b => hasBlock(b, tag)).length;
+                    if (skillCount < AGENT_ADOPTION_MIN_SKILL_REACH) continue;
+                    const agentCount = agentBodies.filter(b => hasBlock(b, tag)).length;
+                    if (agentCount > 0) continue;
+                    if (AGENT_ADOPTION_EXEMPT.has(tag)) continue;
+                    unclassified.push(`SYNC:${tag} reaches ${skillCount} skill(s) but 0 agents`);
+                }
+
+                assertEqual(
+                    unclassified.length,
+                    0,
+                    'skill-only protocol drift — a canonical block propagated to skills but no agent.\n  '
+                        + unclassified.join('\n  ')
+                        + '\n  Resolve by EITHER adding the tag to the relevant agent row(s) in'
+                        + ' .claude/scripts/agent_protocol_matrix.py AGENT_QUALITY_BLOCKS (then run'
+                        + ' inject_agent_protocol_blocks.py), OR — if it is orchestration a headless'
+                        + ' leaf sub-agent structurally cannot act on — adding it to that file\'s'
+                        + ' EXCLUDED_ORCHESTRATION and to AGENT_ADOPTION_EXEMPT here, with a reason.',
                 );
             },
         },

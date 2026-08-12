@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -61,7 +62,9 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - No emojis as UI icons (use SVG: Heroicons, Lucide, Simple Icons)
 - All clickable elements need `cursor-pointer` and hover feedback
 - Light mode text must have 4.5:1 minimum contrast ratio
-- Test both light/dark modes and responsive breakpoints before delivery
+- **Every async surface MUST handle all its states** — show a loading indicator while in-flight, a user-visible error (with retry) on failure, and a meaningful empty state when there's no data. Never a frozen blank, a silent failure, or a blank list.
+- **Responsive by default** — layouts MUST stay usable on small devices. Preferred: reflow (rows `flex-wrap` or `row → column`, grids collapse to one column). Acceptable fallback when a layout genuinely can't reflow (tables, canvases, wide grids): fixed `min-width`/`min-height` + `overflow: auto` scroll — scrolling is OK. Hard minimum: nothing broken — no clipped, cut-off, or unreachable content. If small-screen support needs a refactor too big for the task, confirm scope with the user first.
+- Test both light/dark modes, all UI states (loading/error/empty), and responsive breakpoints (320/768/1024/1440) before delivery
 
 **Pre-read (project design system):** When the project has a design system, load `designSystem.canonicalDoc` + `tokenFiles` from `docs/project-config.json` and prefer project tokens/components over the generic style intelligence database.
 
@@ -258,6 +261,28 @@ These are frequently overlooked issues that make UI look unprofessional:
 | **Content padding**      | Account for fixed navbar height     | Let content hide behind fixed elements |
 | **Consistent max-width** | Use same `max-w-6xl` or `max-w-7xl` | Mix different container widths         |
 
+### Async UI States & Feedback (the most-missed fundamentals)
+
+> **Every screen or component that fetches, submits, or mutates data MUST render all of its states — not just the happy path.** A UI that looks perfect when populated but shows a frozen blank while loading, fails silently on error, or shows nothing when empty is broken UX. Canonical state vocabulary (shared with `design-spec`): **Default / Loading / Disabled / Error / Empty / Success**.
+
+| State                    | Do                                                                        | Don't                                                              |
+| ------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Loading**              | Show a spinner / skeleton / progress while any request is in-flight       | Leave a frozen or blank screen; block the whole page silently      |
+| **Error**                | Show a human-readable message with a retry / recovery action              | Fail silently, swallow the error, or dump a raw stack trace / JSON |
+| **Empty**                | Show a meaningful empty state (illustration/message + optional CTA)       | Render a blank area when a list/table has zero items               |
+| **In-flight / disabled** | Disable the submit/action button (or show it busy) while its request runs | Allow double-submit by leaving the trigger active                  |
+| **Success**              | Confirm completion (toast / inline / visibly updated data)                | Complete a mutation with no acknowledgment to the user             |
+
+### Responsive & Multi-Device (usable on small screens)
+
+| Rule                       | Do                                                                                                           | Don't                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| **Rows reflow**            | `flex-wrap: wrap` or switch `flex-direction: row → column` at small widths                                   | Fixed `flex-direction: row` that overflows on a phone                             |
+| **Grids collapse**         | Multi-column grids collapse to one column on small screens                                                   | Fixed column counts / track widths that never collapse                            |
+| **Scroll fallback OK**     | Can't reflow (table/canvas/wide grid)? Fixed `min-width`/`min-height` + `overflow: auto` — scrolling is fine | Content clipped, cut off, or a control unreachable off-screen with no scroll path |
+| **Fluid over fixed**       | `min/max-width`, `flex-grow`, `%`/`rem` sizing                                                               | Large fixed px widths on containers/cards/dialogs                                 |
+| **Big refactor → confirm** | Small-screen support needs a large layout rewrite → flag it, confirm scope with the user                     | Silently rewriting a big layout, or shipping it broken on small screens           |
+
 ---
 
 ## Pre-Delivery Checklist
@@ -278,6 +303,14 @@ Before delivering UI code, verify these items:
 - [ ] Transitions are smooth (150-300ms)
 - [ ] Focus states visible for keyboard navigation
 
+### States & Feedback (async surfaces — verify every one)
+
+- [ ] **Loading** — every data fetch / submit / mutation shows a spinner or skeleton while in-flight (never a frozen blank screen)
+- [ ] **Error** — every operation that can fail shows a human-readable error with a retry / recovery path (no silent failure, no raw stack trace)
+- [ ] **Empty** — every list / table / collection view has a meaningful empty state (message + optional CTA), not a blank area
+- [ ] **In-flight disable** — submit/action buttons are disabled or busy while their request runs (no double-submit)
+- [ ] **Success** — completed mutations give confirmation feedback (toast / inline / updated data)
+
 ### Light/Dark Mode
 
 - [ ] Light mode text has sufficient contrast (4.5:1 minimum)
@@ -285,12 +318,14 @@ Before delivering UI code, verify these items:
 - [ ] Borders visible in both modes
 - [ ] Test both modes before delivery
 
-### Layout
+### Layout & Responsiveness
 
 - [ ] Floating elements have proper spacing from edges
 - [ ] No content hidden behind fixed navbars
 - [ ] Responsive at 320px, 768px, 1024px, 1440px
-- [ ] No horizontal scroll on mobile
+- [ ] Rows `flex-wrap` or switch `row → column` on small screens; multi-column grids collapse to one column
+- [ ] Usable down to 320px — **nothing broken** (no clipped, cut-off, or unreachable content); where a layout genuinely can't reflow, a `min-width`/`min-height` + `overflow: auto` scroll is acceptable
+- [ ] Any small-screen fix that needs a large layout refactor was flagged and confirmed with the user (not silently rewritten)
 
 ### Accessibility
 
@@ -301,8 +336,8 @@ Before delivering UI code, verify these items:
 
 ## Related
 
-- `frontend-design`
-- `interface-design` — Product UIs (dashboards, admin panels, SaaS apps)
+- `design --lane=marketing` — Marketing/creative UI (landing pages, campaigns)
+- `design --lane=product` — Product UIs (dashboards, admin panels, SaaS apps)
 - `shadcn-tailwind`
 - `design-spec`
 
@@ -319,8 +354,9 @@ Before delivering UI code, verify these items:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -440,8 +476,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -452,6 +489,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

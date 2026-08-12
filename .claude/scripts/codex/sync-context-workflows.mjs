@@ -435,8 +435,9 @@ function buildWorkflowSection(workflowEntries) {
 // TWIN: keep byte-identical with the inline twin renderExpectedBarrierToken in
 // .claude/scripts/codex/verify-workflow-cycle-compliance.mjs — the rendered `[parallel ⇉ all-return barrier: ...]`
 // token MUST match what that verifier asserts against the Codex mirror (cross-mirror parity is the portability proof).
-// Renders `sequence` collapsing every declared parallelGroup's members into one barrier token at the
-// position of the group's first-encountered member; other members are skipped. Non-grouped steps render
+// Renders `sequence` by consuming the first occurrence of every declared parallelGroup member into one
+// barrier token at the group's first-encountered member. Later occurrences of the same step render normally;
+// group membership identifies one occurrence, not every equal string in the workflow. Non-grouped steps render
 // via renderStep unchanged, so workflows without parallelGroups are byte-identical to the old flat join.
 function renderBarrierToken(group) {
   const members = Array.isArray(group?.members) ? group.members : [];
@@ -452,18 +453,23 @@ function renderSequenceWithBarriers(sequence, parallelGroups, separator, renderS
     return steps.map(renderStep).join(separator);
   }
   const memberToGroup = new Map();
+  const pendingGroupedMembers = new Set();
   for (const group of groups) {
     const members = Array.isArray(group?.members) ? group.members : [];
-    for (const member of members) memberToGroup.set(member, group);
+    for (const member of members) {
+      memberToGroup.set(member, group);
+      pendingGroupedMembers.add(member);
+    }
   }
   const emittedGroupIds = new Set();
   const parts = [];
   for (const step of steps) {
     const group = memberToGroup.get(step);
-    if (!group) {
+    if (!group || !pendingGroupedMembers.has(step)) {
       parts.push(renderStep(step));
       continue;
     }
+    pendingGroupedMembers.delete(step);
     if (emittedGroupIds.has(group.id)) continue;
     emittedGroupIds.add(group.id);
     parts.push(renderBarrierToken(group));

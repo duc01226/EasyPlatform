@@ -21,10 +21,11 @@ context-budget: medium
 
 **Summary:**
 
+- **Main step pipeline (run in order, never merge):** Phase 0 classify scope → Step 1 analyze request (extract entities/keywords/file-types) → Step 2 spawn parallel `scout` subagents (grep/glob) → Step 3 graph-expand 2-3 key files (YOU, main agent) → Step 4 low-result check (<5 files → broader re-pass) → Step 5 synthesize numbered prioritized list → `AskUserQuestion` for next step.
 - Classify scope FIRST (Phase 0: backend/frontend/full-stack) so you spawn only the agents you need — never the default 3 when the prompt names one layer.
 - Sub-agents do the parallel grep/glob; only YOU (main agent) run the graph commands afterward — graph expansion on 2-3 key files is MANDATORY when `.code-graph/graph.db` exists and is the step that finds what grep can't.
 - This is discovery, not analysis: return prioritized file paths fast (3-5 min), no content deep-dives — that's `investigate`'s job.
-- If <5 files surface, re-examine keywords and run a second pass with broader synonyms before synthesizing.
+- If <5 files surface, re-examine keywords and run a second pass with broader synonyms before synthesizing; close by asking the user (`AskUserQuestion`) which next step to take.
 
 **Workflow:**
 
@@ -374,11 +375,11 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `/project-init` or the narrow route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `/sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -463,8 +464,9 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -508,8 +510,8 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -551,6 +553,8 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 
 **MUST ATTENTION** every protocol above is in force for this scout — honor its canonical body, not just the digest line.
+
+**IMPORTANT MUST ATTENTION** execute the FULL step pipeline in declared order — Phase 0 classify scope → Step 1 analyze request (entities/keywords/file-types) → Step 2 spawn parallel `scout` subagents → Step 3 graph-expand 2-3 key files (YOU) → Step 4 low-result check → Step 5 synthesize numbered prioritized list → `AskUserQuestion` next step; NEVER skip or merge a step — why: AI forgets the skill's own steps and ships a partial, under-searched map.
 
 **IMPORTANT MUST ATTENTION** run Phase 0 classification BEFORE spawning agents — scope (backend/frontend/full-stack) determines agent count; never spawn the default 3 when the prompt names one layer — why: extra agents waste budget and dilute focus
 **IMPORTANT MUST ATTENTION** graph expand is the MANDATORY step that finds what grep cannot — run at least ONE graph command (`connections`/`callers_of`/`trace --direction both`) on 2-3 key files when `.code-graph/graph.db` exists; NEVER skip it — why: structural relationships > text matches, and sub-agents cannot run graph — only you can

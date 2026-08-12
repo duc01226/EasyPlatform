@@ -9,6 +9,7 @@ using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Common.Cqrs.Events;
 using Easy.Platform.Common.Exceptions;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations.Exceptions;
 using Easy.Platform.Common.Validations.Extensions;
@@ -412,11 +413,25 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult>
     /// - Integration with event-driven architecture
     /// 
     /// Error Handling:
-    /// - Comprehensive logging with full request context
+    /// - Payload-free REQUEST diagnostics — the request's type name only; its contents are never serialized
+    /// - Detailed EXCEPTION diagnostics — type, message, demystified stack trace, inner exception TYPE chain
     /// - Differentiated logging levels based on exception type
-    /// - Stack trace beautification for debugging
     /// - Audit trail preservation for troubleshooting
-    /// 
+    ///
+    /// <para>
+    /// <b>What the failure log deliberately omits, and how to still diagnose with it.</b> The log carries the command
+    /// TYPE, the exception TYPE, and the audit track id — not the command contents, the exception detail, or the
+    /// request context. Commands are the system's primary carrier of user-submitted data, and the whole request
+    /// context was previously destructured into every failure record, taking identity and authorization values with
+    /// it; a failing command therefore wrote both the submitted data and who submitted it into log aggregation on
+    /// every occurrence.
+    /// </para>
+    /// <para>
+    /// The <c>AuditTrackId</c> is what replaces them: it correlates this record to the audit trail, where that
+    /// context lives under access control. Handlers needing more in the log should add specific, non-sensitive
+    /// fields explicitly rather than restoring whole-object or whole-context logging.
+    /// </para>
+    ///
     /// Memory Management:
     /// - Automatic garbage collection optimization
     /// - Resource cleanup after command processing
@@ -442,19 +457,17 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult>
                         {
                             if (AutoLogOnException)
                             {
-                                // Log errors with appropriate level and full context
+                                // Log errors with a protected request representation and no full request context.
                                 LoggerFactory
                                     .CreateLogger(typeof(PlatformCqrsCommandApplicationHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
                                     .Log(
                                         !ex.IsPlatformLogicException() ? LogLevel.Error : LogLevel.Warning,
-                                        ex.BeautifyStackTrace(),
-                                        "[{Tag1}] Command:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{@Request}. RequestContext:{@RequestContext}",
+                                        "[{Tag1}] Command:{RequestName} failed. ExceptionDiagnostics:{ExceptionDiagnostics}. AuditTrackId:{AuditTrackId}. RequestDiagnostics:{RequestDiagnostics}",
                                         "UnknownError",
                                         request.GetType().Name,
-                                        ex.Message,
+                                        PlatformJsonSerializer.SerializeExceptionForDiagnostics(ex),
                                         request.AuditInfo?.AuditTrackId,
-                                        request,
-                                        RequestContext.GetAllKeyValues()
+                                        PlatformJsonSerializer.SerializeForDiagnostics(request, forceUseRuntimeType: true)
                                     );
                             }
                         }
@@ -529,7 +542,7 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult>
             {
                 // Add request metadata to tracing span
                 activity?.SetTag("RequestType", request.GetType().Name);
-                activity?.SetTag("Request", request.ToFormattedJson());
+                activity?.SetTag("Request", PlatformJsonSerializer.SerializeForDiagnostics(request, forceUseRuntimeType: true, writeIndented: true));
 
                 return await handleFunc();
             }

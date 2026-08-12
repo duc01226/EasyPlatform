@@ -1,8 +1,11 @@
 """Refresh existing SYNC:project-reference-docs-guide block content in skills
-that already had the (older descriptive) version, so they pick up the strengthened
-imperative HARD-GATE canonical body.
+AND agents that already carry the block, so they pick up the current canonical
+body (sourced from .claude/skills/shared/sync-inline-versions.md).
 
-Also adds the :reminder bottom block before `## Closing Reminders` if missing.
+Refreshes BOTH variants:
+  - the TOP block content, and
+  - the :reminder bottom block content (replaced in place when present,
+    or inserted before `## Closing Reminders` when missing).
 
 Idempotent — only writes when content actually changes.
 """
@@ -16,6 +19,7 @@ from sync_blocks import load_wrapped_sync_block
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = PROJECT_ROOT / ".claude" / "skills"
+AGENTS_DIR = PROJECT_ROOT / ".claude" / "agents"
 
 TAG = "SYNC:project-reference-docs-guide"
 REMINDER_TAG = "SYNC:project-reference-docs-guide:reminder"
@@ -23,16 +27,23 @@ REMINDER_TAG = "SYNC:project-reference-docs-guide:reminder"
 NEW_TOP_BODY = load_wrapped_sync_block(TAG).rstrip()
 NEW_BOTTOM_BLOCK = load_wrapped_sync_block(REMINDER_TAG)
 
-# Match the full TOP block including delimiters but NOT the :reminder variant
+# Match the full TOP block including delimiters but NOT the :reminder variant.
+# The open/close literals end in ` -->`, so they never match the `:reminder` tags
+# (whose tokens read `...guide:reminder -->`); the lazy `.*?` stops at the TOP close.
 TOP_BLOCK_RE = re.compile(
     r"<!-- SYNC:project-reference-docs-guide -->.*?<!-- /SYNC:project-reference-docs-guide -->",
+    re.DOTALL,
+)
+# Match the full :reminder block including delimiters.
+REMINDER_BLOCK_RE = re.compile(
+    r"<!-- SYNC:project-reference-docs-guide:reminder -->.*?<!-- /SYNC:project-reference-docs-guide:reminder -->",
     re.DOTALL,
 )
 CLOSING_RE = re.compile(r"^## Closing Reminders\b.*$", re.MULTILINE)
 
 
 def refresh(text: str) -> tuple[str, dict]:
-    status = {"top_refreshed": False, "bottom_added": False}
+    status = {"top_refreshed": False, "bottom_refreshed": False, "bottom_added": False}
 
     # Refresh TOP block content
     m = TOP_BLOCK_RE.search(text)
@@ -40,8 +51,17 @@ def refresh(text: str) -> tuple[str, dict]:
         text = text[: m.start()] + NEW_TOP_BODY + text[m.end():]
         status["top_refreshed"] = True
 
-    # Add :reminder block before `## Closing Reminders` if not present
-    if REMINDER_TAG not in text:
+    # Refresh the :reminder block in place when present, else insert it before
+    # `## Closing Reminders` (EOF fallback). NEW_BOTTOM_BLOCK is the wrapped block
+    # (trailing newline); strip it for the in-place replacement so surrounding
+    # blank lines are preserved exactly.
+    rm = REMINDER_BLOCK_RE.search(text)
+    if rm:
+        new_reminder = NEW_BOTTOM_BLOCK.strip()
+        if rm.group(0).strip() != new_reminder:
+            text = text[: rm.start()] + new_reminder + text[rm.end():]
+            status["bottom_refreshed"] = True
+    else:
         m = CLOSING_RE.search(text)
         if m:
             insert_at = m.start()
@@ -63,26 +83,30 @@ def main() -> int:
         print(f"Unknown argument(s): {', '.join(unknown_args)}", file=sys.stderr)
         return 2
 
-    # Find every skill file currently carrying the TAG
+    # Find every skill AND agent file currently carrying the TAG
     targets: list[Path] = []
     seen: set[str] = set()  # case-insensitive dedupe (Windows)
-    for p in SKILLS_DIR.glob("**/SKILL.md"):
-        key = str(p).lower()
-        if key in seen:
-            continue
-        if TAG in p.read_text(encoding="utf-8"):
-            targets.append(p)
-            seen.add(key)
-    for p in SKILLS_DIR.glob("**/skill.md"):
-        key = str(p).lower()
-        if key in seen:
-            continue
-        if TAG in p.read_text(encoding="utf-8"):
-            targets.append(p)
-            seen.add(key)
+    globs = [
+        SKILLS_DIR.glob("**/SKILL.md"),
+        SKILLS_DIR.glob("**/skill.md"),
+        AGENTS_DIR.glob("*.md"),
+    ]
+    for it in globs:
+        for p in it:
+            key = str(p).lower()
+            if key in seen:
+                continue
+            if TAG in p.read_text(encoding="utf-8"):
+                targets.append(p)
+                seen.add(key)
 
-    print(f"{'SKILL':<35} {'TOP':<12} {'BOTTOM':<12}")
-    print("-" * 60)
+    def label(path: Path) -> str:
+        # Agents live directly under .claude/agents (basename is meaningful);
+        # skills live in <name>/SKILL.md (parent dir name is meaningful).
+        return f"agent:{path.stem}" if path.parent == AGENTS_DIR else path.parent.name
+
+    print(f"{'TARGET':<38} {'TOP':<12} {'BOTTOM':<12}")
+    print("-" * 64)
     refreshed = 0
     for path in sorted(targets):
         original = path.read_text(encoding="utf-8")
@@ -91,10 +115,14 @@ def main() -> int:
             if not (dry_run or check):
                 path.write_text(new_text, encoding="utf-8")
             refreshed += 1
-        skill_name = path.parent.name
         top = "REFRESHED" if status["top_refreshed"] else "ok"
-        bot = "ADDED" if status["bottom_added"] else "ok"
-        print(f"{skill_name:<35} {top:<12} {bot:<12}")
+        if status["bottom_added"]:
+            bot = "ADDED"
+        elif status["bottom_refreshed"]:
+            bot = "REFRESHED"
+        else:
+            bot = "ok"
+        print(f"{label(path):<38} {top:<12} {bot:<12}")
 
     print(f"\nTotal scanned: {len(targets)} | Files modified: {refreshed}")
     return 1 if check and refreshed else 0

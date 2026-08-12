@@ -19,10 +19,11 @@ description: '[Planning] Use when you need to validate a plan with critical ques
 
 **Summary:**
 
-- Classify the plan first (Phase 0: bugfix/feature/migration/refactor/other) — the type weights which question categories fire, and any fix/bug/regression/broken/defect keyword makes the Preservation question BLOCKING (never skip it).
-- The output is a real `AskUserQuestion` interview, not a self-answer: honor the `questions` MIN-MAX range from `## Plan Context`, give 2-4 concrete options per question, and treat the Preservation "Unsure" answer as BLOCKED → route to `/plan`.
-- If the plan introduces new tech/packages, you MUST probe whether alternatives were evaluated before accepting the choice.
-- Persist results by adding only a `## Validation Summary` (confirmed decisions + action items) to `plan.md` — NEVER edit phase files; close by offering implement/refine/skip via `AskUserQuestion`.
+- **Purpose:** validate a finished plan via a critical-questions interview so every assumption-laden decision and every preservation-critical behavior is user-confirmed BEFORE implementation — no unstated assumption silently reaches code.
+- **Main steps (run in order):** Phase 0 Detect Plan Type → resolve plan path (`$ARGUMENTS` / `## Plan Context` / ask) → load `mode` + `questions` range as hard constraints → Step 1 Read `plan.md` + all `phase-*.md`, flag decisions/assumptions/risks/tradeoffs → Step 2 Extract topics across 8 categories (Architecture, Assumptions, Tradeoffs, Risks, Scope, New Tech/Lib, Test Specs, Preservation) → Step 3 Generate questions (2-4 concrete options each, surface implicit decisions) → Step 4 Interview via `AskUserQuestion` (≤4 per call) → Step 5 Document answers → offer implement/refine/skip.
+- **Phase 0 weights everything:** plan type (bugfix/feature/migration/refactor/other) decides which question categories fire; any fix/bug/regression/broken/defect keyword makes the Preservation question BLOCKING — never skip it.
+- **The output is a REAL interview, not a self-answer:** honor the `questions` MIN-MAX range from `## Plan Context`, give 2-4 concrete options per question, treat the Preservation "Unsure" answer as BLOCKED → route to `/plan`; if the plan adds new tech/packages, probe whether alternatives were evaluated before accepting the choice.
+- **Persist results narrowly:** add ONLY a `## Validation Summary` (confirmed decisions + action items) to `plan.md` — NEVER edit phase files; close by offering implement/refine/skip via `AskUserQuestion`.
 
 **Workflow:**
 
@@ -35,10 +36,10 @@ description: '[Planning] Use when you need to validate a plan with critical ques
 
 **Key Rules:**
 
-- MUST ATTENTION use `AskUserQuestion` — NEVER auto-decide on behalf of user
-- NEVER ask about non-decision points — only genuine choices affecting implementation
-- Bugfix plans ALWAYS trigger Preservation question (keywords: fix, bug, regression, broken, defect)
-- NEVER modify phase files — only document what needs updating
+- MUST ATTENTION use `AskUserQuestion` — NEVER auto-decide on behalf of user — why: the user owns every assumption-laden choice, not the agent
+- Ask ONLY about genuine choices affecting implementation — NEVER about non-decision points — why: noise questions burn the interview budget and erode trust
+- Bugfix plans ALWAYS trigger the Preservation question (keywords: fix, bug, regression, broken, defect) — why: an unverified preserved-correctness invariant is a silent regression
+- Persist via a `## Validation Summary` on `plan.md` — NEVER modify phase files — why: phase files are the plan's source of truth; validation is a read-then-annotate pass
 
 ## First Principle — Easy to Change
 
@@ -282,11 +283,11 @@ After validation:
 > **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
 >
 > 1. Identify scope: file types, domain area, and operation.
-> 2. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 3. Read every required doc. If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `/sync-codex`; do not auto-run it.
-> 4. Before target work, state: `Reference docs read: ... | Not applicable: ...`.
+> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `/project-init` or the narrow route (`/project-config`, `/docs-init`, `/scan-all`, `/scan --target=<key>`, `/claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `/sync-codex` (never auto-run it).
+> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
+> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
 >
-> **Ready when:** scope evaluated, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
+> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->
 
@@ -349,8 +350,9 @@ After validation:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -405,8 +407,8 @@ After validation:
 
 <!-- SYNC:project-reference-docs-guide:reminder -->
 
-- **MANDATORY** After task-tracking bootstrap and before target/source work, read required project-reference docs and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project conventions override generic defaults.
+- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
+- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
 
 <!-- /SYNC:project-reference-docs-guide:reminder -->
@@ -444,6 +446,8 @@ After validation:
 - **Plan Quality:** include `## Test Specifications` with TC-{FEATURE}-{NNN} IDs per phase.
 - **Cross-Service Check:** scan producers, consumers, sagas, contracts; flag breaking-change risk.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+
+**IMPORTANT MUST ATTENTION** run the main steps IN ORDER — Phase 0 Detect Plan Type → resolve plan path → load `mode` + `questions` range → Step 1 Read `plan.md` + all `phase-*.md` (flag decisions/assumptions/risks/tradeoffs) → Step 2 Extract topics (8 categories) → Step 3 Generate questions (2-4 options each) → Step 4 Interview via `AskUserQuestion` (≤4 per call) → Step 5 Document answers → offer implement/refine/skip — why: the pipeline IS the work; never collapse or skip a step from memory
 
 **IMPORTANT MUST ATTENTION** validate decisions with the user via `AskUserQuestion` — NEVER auto-decide or self-answer; completing without ≥1 question is a protocol violation — why: the user owns every assumption-laden choice, not the agent
 **IMPORTANT MUST ATTENTION** detect plan type FIRST (Phase 0) BEFORE generating questions — bugfix keywords (fix, bug, regression, broken, defect) make the Preservation question BLOCKING, never skipped — why: detection drives which categories fire and the Preservation gate

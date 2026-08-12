@@ -33,7 +33,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -54,8 +55,11 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Primary outputs:**
 
-- `team-artifacts/pbis/{date}-pbi-{slug}.md` for each generated PBI.
+- `team-artifacts/pbis/{date}-pbi-{slug}.md` for each generated PBI — each carries its rank/priority in frontmatter (written back by `$prioritize`).
 - `team-artifacts/backlog/spec-to-pbi-{date}-backlog.md` with priority order and dependency graph.
+- `team-artifacts/pbis/{slug}-mockup.html` for each UI PBI (header surfaces the PBI priority/rank).
+- `team-artifacts/design-specs/{date}-designspec-{slug}.md` for each UI PBI.
+- One standalone HTML stakeholder deck from `$feature-presentation` whose Scope & backlog slide surfaces each PBI's priority/rank.
 - `plans/reports/spec-to-pbi-{date}-{bucket}.md` with coverage matrix and unresolved questions.
 
 **Universal Rules:**
@@ -63,7 +67,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - MUST ATTENTION define success criteria before execution and loop until observable verification passes.
 - MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
 - **[BLOCKING] Tech-agnostic output:** PBI / backlog / report prose stays tech-agnostic per `docs/project-reference/spec-principles.md` §3 — no framework/product/language/design-pattern names; source paths and class names appear ONLY in evidence fields (`**Evidence**`, `[Source:]`), frontmatter, and Mermaid.
-- **[BLOCKING] Inherit M1-M5 + logical-ID carry:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M6)" for BLOCKING criteria. Every generated PBI MUST satisfy M1-M5. Carry each requirement's logical ID (`FR-`/`BR-`) from the spec's requirement/rule statements into the PBI as the PRIMARY citation spine, keeping the spec's `[Source: namespace/service/id]` abstract-anchor evidence as the SECONDARY carrier (KEEP it). Generated acceptance criteria stay tech-agnostic and observable — one valid interpretation, named failure modes, no implementation details.
+- **[BLOCKING] Inherit M1-M5/M7 + logical-ID carry:** See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. Every generated PBI MUST satisfy M1-M5 and M7. **M7 — business-visibility:** a PBI is a business-tree artifact, so apply the demo test to each acceptance criterion's BODY — _"what would a stakeholder SEE change?"_; no answer → FAIL as TECHNICAL-ONLY. Every `Given` = a state a user could arrange; every `When` = an action a user could take; every `Then` = an outcome a user could see. FAIL a `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count, and NEVER derive a PBI's AC count from an architecture inventory. Judge the BODY, never the title or ID. **M1 governs vocabulary; M7 governs subject matter — a technical AC in impeccably tech-free prose satisfies M1 while violating M7**, and that gap is the most common way business specs rot. Carry each requirement's logical ID (`FR-`/`BR-`) from the spec's requirement/rule statements into the PBI as the PRIMARY citation spine, keeping the spec's `[Source: namespace/service/id]` abstract-anchor evidence as the SECONDARY carrier (KEEP it). Generated acceptance criteria stay tech-agnostic and observable — one valid interpretation, named failure modes, no implementation details.
 
 ## When to Use
 
@@ -151,12 +155,15 @@ Record domain findings in each affected PBI under `## Domain Impact`.
 For each matrix row that needs a new PBI:
 
 1. Run `$refine` to create the PBI artifact.
-2. Run `$review-artifact --type=pbi`.
+2. Run `$artifact-review --type=pbi`.
 3. Run `$story` to create vertical-slice stories.
-4. Run `$review-artifact --type=story`.
+4. Run `$artifact-review --type=story`.
 5. Run `$pbi-challenge`.
 6. Run `$dor-gate`.
-7. Run `$pbi-mockup` only when UI is involved.
+7. Run `$pbi-mockup` only when UI is involved. The generated mockup file MUST surface the PBI's priority/rank (header badge) so the prototype carries the same priority info as the backlog.
+8. Run `$design-spec` only when UI is involved (after `$pbi-mockup`) — mirrors `workflow-idea-to-pbi` so the spec→pbi half is step-for-step IDENTICAL.
+
+> **Spec-hub coupling (§6 interaction surface ↔ UI artifacts):** for UI PBIs the `$pbi-mockup` and `$design-spec` produced here are NOT standalone artifacts — they are the deep companions of the existing canonical Feature Spec's **§6 interaction surface** (View Inventory / Navigation Map / Key UI States / per-story click-path) you decomposed in step 2. Both couple to §6: the §6 thin intent seeds them, and `design-spec` records its path in the spec's `design_spec:` frontmatter (the mockup in `mockup:`) so the spec stays the navigable hub: a reader goes spec → §6 thin intent → mockup + `design-spec` deep companions, and the three never drift. Keep deep visual fidelity (layout, tokens, pixel detail) in the mockup/`design-spec`, never in §6. See the `SYNC:ui-intent-layer` block below for the full rule — do not restate it here. Backend-only PBIs (no UI) → skip `$pbi-mockup` + `$design-spec` and state that reason.
 
 Each PBI MUST include:
 
@@ -171,7 +178,7 @@ Each PBI MUST include:
 
 ### 8. Cross-PBI Prioritization
 
-After all PBI loops finish, run `$prioritize` once across the full generated set.
+After all PBI loops finish, run `$prioritize` once across the full generated set. `$prioritize` is NON-OPTIONAL whenever PBIs were generated — a backlog without priority is incomplete.
 
 The backlog artifact MUST include:
 
@@ -181,6 +188,8 @@ The backlog artifact MUST include:
 - RICE or MoSCoW rationale.
 - DoR status per PBI.
 - Remaining open questions.
+
+**PRIORITY PROPAGATION (MANDATORY):** `$prioritize` MUST write the resulting rank/priority back into EACH PBI's frontmatter (`priority:` + numeric rank), not only into the standalone backlog file. Every generated PBI carries its own priority so downstream consumers (`$pbi-mockup`, `$feature-presentation`) can surface it without re-deriving the ranking.
 
 ### 8.5 Near-Final Documentation Synchronization
 
@@ -193,18 +202,29 @@ Purpose:
 - Verify Feature Specs, derived bucket `INDEX.md`, and TDD/spec docs do not drift after PBI generation.
 - Record skipped sub-phases explicitly when no impacted docs exist.
 
+### 8.6 Stakeholder Presentation
+
+Run `$feature-presentation` after `$docs-update` and before `$workflow-end` — mirrors `workflow-idea-to-pbi` so the spec→pbi half is step-for-step IDENTICAL.
+
+The standalone HTML deck MUST:
+
+- Synthesize the generated PBIs, stories, mockups, and design-specs into one stakeholder presentation.
+- Surface each PBI's **priority/rank** in the Scope & backlog slide (ranked order + priority label per PBI card), reusing the priority written back into PBI frontmatter by `$prioritize` and the ranked backlog artifact.
+
 ### 9. Completion Criteria
 
 Workflow can close only when:
 
 - Every spec source item is represented in the coverage matrix.
 - Every generated PBI has dependency and priority fields.
+- `$prioritize` has run and written rank/priority back into EACH PBI's frontmatter (priority propagation), not just the standalone backlog.
 - Shared/foundation PBIs are explicit and ordered before dependents.
 - Domain-analysis findings are attached where domain changes are implied.
 - The final backlog artifact ranks all PBIs and explains what to do first.
 - `$docs-update` has run as the near-final sync gate, with Feature Specs (§8) and derived bucket indexes either updated or explicitly marked unchanged.
+- `$feature-presentation` has run, producing one standalone HTML deck whose Scope & backlog slide surfaces each PBI's priority/rank.
 
-**IMPORTANT MANDATORY Steps:** $scout -> $spec-index -> $domain-analysis -> $why-review -> $spec-clarify -> $plan -> $plan-review -> $plan-validate -> $why-review -> $refine -> $why-review -> $review-artifact --type=pbi -> $story -> $why-review -> $review-artifact --type=story -> $pbi-challenge -> $dor-gate -> $pbi-mockup -> $prioritize -> $docs-update -> $workflow-end -> $watzup
+**IMPORTANT MANDATORY Steps:** $scout -> $spec-index -> $domain-analysis -> $why-review -> $spec-clarify -> $plan -> $plan-review -> $plan-validate -> $why-review -> $refine -> $why-review -> $artifact-review --type=pbi -> $story -> $why-review -> $artifact-review --type=story -> $pbi-challenge -> $dor-gate -> $pbi-mockup -> $design-spec -> $prioritize -> $docs-update -> $feature-presentation -> $workflow-end -> $watzup
 
 > **[BLOCKING]** Each step MUST invoke its skill invocation. Marking a workflow step completed without skill invocation is a workflow violation.
 
@@ -239,8 +259,9 @@ Workflow can close only when:
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -292,12 +313,34 @@ Workflow can close only when:
 
 <!-- /SYNC:subagent-return-contract -->
 
+<!-- SYNC:ui-intent-layer -->
+
+> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
+>
+> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
+> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
+> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
+> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
+> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
+>
+> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
+
+<!-- /SYNC:ui-intent-layer -->
+
 <!-- SYNC:nested-task-creation:reminder -->
 
 - **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
 - **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
 <!-- /SYNC:nested-task-creation:reminder -->
+
+<!-- SYNC:ui-intent-layer:reminder -->
+
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+
+<!-- /SYNC:ui-intent-layer:reminder -->
 
 ## Closing Reminders
 
@@ -313,8 +356,11 @@ Workflow can close only when:
 - **MUST** decompose big Feature Specs into small PBIs before story generation.
 - **MUST** include dependency, priority, domain impact, and shared-task details.
 - **MUST** write artifacts incrementally after each capability/feature.
-- **MUST** run `$prioritize` once at the end across all generated PBIs.
+- **MUST** run `$prioritize` once at the end across all generated PBIs, and write the resulting rank/priority back into EACH PBI's frontmatter (priority propagation) — not only the standalone backlog.
+- **MUST**, for UI PBIs, run `$pbi-mockup` then `$design-spec` (both UI-conditional) — mirrors `workflow-idea-to-pbi` so the spec→pbi half is step-for-step IDENTICAL.
+- **MUST** surface each PBI's priority/rank in the `$pbi-mockup` generated files (header badge) and in the `$feature-presentation` deck (Scope & backlog slide).
 - **MUST** run `$docs-update` after `$prioritize` and before `$workflow-end` to keep specs, feature docs, and TDD/spec docs synchronized.
+- **MUST** run `$feature-presentation` after `$docs-update` and before `$workflow-end` to synthesize a single standalone stakeholder deck.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
 
@@ -396,8 +442,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -408,6 +455,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

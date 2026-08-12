@@ -360,7 +360,7 @@ Task({
 
 ## Quality-Parity with Skills
 
-Every agent carries the **same role-specific quality protocol** as its twin skill(s). Skills are heavily enhanced (severity rubrics, evidence gates, adversarial review, incremental persistence); agents that do equivalent work inherit those same SYNC blocks so a `code-reviewer` _agent_ reviews with the rigor of the `review-changes` _skill_. Agents do NOT inherit main-loop **orchestration** blocks (`nested-task-creation`, `sub-agent-selection`, `subagent-return-contract`, `parallel-phase-advancement`) — those govern the orchestrator, not a spawned worker.
+Every agent carries the **same role-specific quality protocol** as its twin skill(s). Skills are heavily enhanced (severity rubrics, evidence gates, adversarial review, incremental persistence); agents that do equivalent work inherit those same SYNC blocks so a `code-reviewer` _agent_ reviews with the rigor of the `changes-review` _skill_. Agents do NOT inherit main-loop **orchestration** blocks (`nested-task-creation`, `sub-agent-selection`, `subagent-return-contract`, `parallel-phase-advancement`) — those govern the orchestrator, not a spawned worker.
 
 **Source of truth (do not re-describe per-agent block lists here — they drift):**
 

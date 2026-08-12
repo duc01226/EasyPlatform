@@ -1037,7 +1037,7 @@ async function testMapSkillToStepId() {
 
     logResult('[TC-IDENTITY-001] bare name maps to itself', mapSkillToStepId('plan') === 'plan');
     logResult('[TC-IDENTITY-002] leading slash stripped', mapSkillToStepId('/plan') === 'plan');
-    logResult('[TC-IDENTITY-003] uppercase normalized', mapSkillToStepId('Review-Changes') === 'review-changes');
+    logResult('[TC-IDENTITY-003] uppercase normalized', mapSkillToStepId('Changes-Review') === 'changes-review');
     logResult('[TC-IDENTITY-004] trailing whitespace trimmed', mapSkillToStepId('plan-review ') === 'plan-review');
     logResult('[TC-IDENTITY-004b] leading space before slash is NOT stripped (replace runs before trim)', mapSkillToStepId('  /plan ') === '/plan');
     logResult('[TC-IDENTITY-005] multi-segment id preserved', mapSkillToStepId('/workflow-review-changes') === 'workflow-review-changes');

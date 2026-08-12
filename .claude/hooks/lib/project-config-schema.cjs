@@ -97,6 +97,64 @@ const SCHEMA = {
             tokenFiles: { type: 'array', required: false }
         }
     },
+    // Spec-system roots. Optional at the top level so existing project configs stay
+    // valid, but every declared sub-object requires its `path` — a partially-declared
+    // specRoots is a configuration error, not a permissive default.
+    specRoots: {
+        type: 'object',
+        required: false,
+        describe: 'Spec-system roots. Each declared sub-object requires its `path`; a\npartially-declared specRoots is a configuration error, not a default.',
+        properties: {
+            // `authorship` and `m1Policy` declare each tree's SEMANTICS, not just its
+            // location: whether its content is hand-authored or generated, and whether
+            // its prose may name technology (M1). The tech-spec skill cites both as the
+            // basis for its M1 exemption, so they are declared here rather than left as
+            // an unbacked claim in prose.
+            business: {
+                type: 'object',
+                required: false,
+                describe: 'Hand-authored business/feature spec tree (where /spec writes).',
+                properties: {
+                    path: { type: 'string', required: true, describe: 'Feature-spec dir, relative to repo root (e.g. "docs/specs").' },
+                    authorship: { type: 'string', required: false, describe: 'Origin: "hand" (human-authored) for the business tree.' },
+                    m1Policy: { type: 'string', required: false, describe: 'M1 prose policy: "strict" (no technology names in §1-7 prose).' }
+                }
+            },
+            technical: {
+                type: 'object',
+                required: false,
+                describe: 'Generated technical spec tree (projected from code/tests by /tech-spec; never hand-edited).',
+                properties: {
+                    path: { type: 'string', required: true, describe: 'Derived-view dir, relative to repo root (e.g. "docs/tech-specs").' },
+                    authorship: { type: 'string', required: false, describe: 'Origin: "derived" (generated) for the technical tree.' },
+                    m1Policy: { type: 'string', required: false, describe: 'M1 policy: "exempt" — naming code in a generated projection is the point, not a leak.' }
+                }
+            }
+        }
+    },
+    // Free-text rationale for a DELIBERATE `techSpecScan` omission, so the absence
+    // reads as a decision rather than an oversight to the next maintainer.
+    _techSpecScanNote: { type: 'string', required: false, describe: 'Free-text rationale for a DELIBERATE techSpecScan omission, so the absence\nreads as a decision, not an oversight. Set this INSTEAD of techSpecScan when\nthe project has no spec-annotation convention.' },
+    // How the tech-spec generator discovers annotated tests. Optional: a project whose
+    // stack has no such annotation convention simply omits this, and the generator exits
+    // non-zero naming the missing key rather than silently reporting zero annotations.
+    //
+    // CONTRACT — `annotationPattern` MUST expose exactly two capture groups, in order:
+    //   group 1 = trait name, which MUST be `TestSpec` or `TechnicalSpec`
+    //   group 2 = the spec id, which MUST be non-empty
+    // The generator validates both at parse time and refuses to run on a mismatch. This
+    // is enforced BEFORE any derived output is deleted — a pattern whose captures don't
+    // match would otherwise fail only after the old output was already removed.
+    techSpecScan: {
+        type: 'object',
+        required: false,
+        describe: 'Enables /tech-spec generation — how it discovers annotated tests. Populate\nthis for any project that wants derived technical specs; omit it (and set\n_techSpecScanNote) ONLY if the stack has no spec-annotation convention.',
+        properties: {
+            sourceRoot: { type: 'string', required: true, describe: 'Primary source dir the generator scans, relative to repo root (e.g. "src").' },
+            fileExtensions: { type: 'array', required: true, describe: 'Source-language extensions to scan (e.g. [".cs"] | [".ts"] | [".java"]).' },
+            annotationPattern: { type: 'string', required: true, isRegex: true, describe: 'Regex matching THIS project\'s spec annotation. CONTRACT: exactly two capture\ngroups — group 1 = trait name (MUST be TestSpec or TechnicalSpec), group 2 =\nthe non-empty spec id. Validated at parse time; generator refuses on mismatch.' }
+        }
+    },
     scss: {
         type: 'object',
         required: false,
@@ -266,6 +324,16 @@ const SCHEMA = {
                 required: false,
                 properties: {
                     tool: { type: 'string', required: false },
+                    provider: { type: 'string', required: false },
+                    configPath: { type: 'string', required: false },
+                    environments: { type: 'array', required: false }
+                }
+            },
+            iac: {
+                type: 'object',
+                required: false,
+                properties: {
+                    tool: { type: 'string', required: false },
                     configPath: { type: 'string', required: false }
                 }
             }
@@ -420,7 +488,15 @@ const SCHEMA = {
         properties: {
             // false = keep a project-only CLAUDE.md/AGENTS.md; the agent-files bootstrap
             // gate then checks only existence, not universal-guides completeness. Default true.
-            requireUniversalGuides: { type: 'boolean', required: false }
+            requireUniversalGuides: { type: 'boolean', required: false },
+            // The root package.json `name` that marks this repo as carrying the framework's own
+            // npm surface. Read by .claude/scripts/codex/tests/framework-repo.helper.mjs to decide
+            // whether the framework-repo self-checks apply here; defaults to the upstream
+            // 'easy-claude-tooling'. A project that VENDORS this framework and wires the standalone
+            // runner into its own npm scripts MUST declare its package name here — otherwise the
+            // guard resolves false and every self-check it gates skips silently while the suite
+            // still reports green.
+            toolingPackageName: { type: 'string', required: false }
         }
     },
     // Per-project skill frontmatter conventions consumed by
@@ -691,6 +767,23 @@ function generateExampleItem(itemSchema) {
  * @param {number} depth - Indentation depth
  * @param {string[]} lines - Output lines array
  */
+/**
+ * Emit a field's optional `describe` note as indented `#` comment lines, so
+ * `--describe` teaches the authoring AI what a field is FOR and how to derive
+ * its value — not just its name/type. Kept out of validation: `describe` is
+ * emitter-only metadata on the schema field def, never validated against config.
+ * @param {object} schema - Field schema definition (may carry `describe`)
+ * @param {number} depth - Indentation depth for the comment lines
+ * @param {string[]} lines - Output lines array
+ */
+function emitDescribe(schema, depth, lines) {
+    if (!schema.describe) return;
+    const indent = '  '.repeat(depth);
+    for (const line of String(schema.describe).split('\n')) {
+        lines.push(`${indent}# ${line}`);
+    }
+}
+
 function describeField(name, schema, depth, lines) {
     const indent = '  '.repeat(depth);
     const depr = schema.deprecated ? ' [DEPRECATED]' : '';
@@ -699,14 +792,18 @@ function describeField(name, schema, depth, lines) {
     if (schema.type === 'string' || schema.type === 'number' || schema.type === 'boolean') {
         const extra = schema.isRegex ? ', regex' : '';
         lines.push(`${indent}${name} (${schema.type}, ${req}${extra})${depr}`);
+        emitDescribe(schema, depth + 1, lines);
     } else if (schema.type === 'array') {
         const extra = schema.itemsAreRegex ? ' of regexes' : schema.itemType ? ` of ${schema.itemType}s` : '';
         lines.push(`${indent}${name} (array${extra}, ${req})${depr}`);
+        emitDescribe(schema, depth + 1, lines);
     } else if (schema.type === 'map') {
         const extra = schema.valuesAreRegex ? ', values are regexes' : '';
         lines.push(`${indent}${name} (map${extra}, ${req})${depr}`);
+        emitDescribe(schema, depth + 1, lines);
     } else if (schema.type === 'object') {
         lines.push(`${indent}${name} (object, ${req})${depr}`);
+        emitDescribe(schema, depth + 1, lines);
         if (!schema.freeform && schema.properties) {
             for (const [prop, propSchema] of Object.entries(schema.properties)) {
                 describeField(prop, propSchema, depth + 1, lines);
@@ -714,6 +811,7 @@ function describeField(name, schema, depth, lines) {
         }
     } else if (schema.type === 'arrayOf') {
         lines.push(`${indent}${name} (array of objects, ${req})${depr} — each item:`);
+        emitDescribe(schema, depth + 1, lines);
         if (schema.itemSchema) {
             const example = generateExampleItem(schema.itemSchema);
             const json = JSON.stringify(example, null, 2);

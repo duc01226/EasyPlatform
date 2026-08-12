@@ -39,11 +39,13 @@ disable-model-invocation: false
 
 > **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /debug-investigate -> /spec [mode=amend] -> /plan -> /plan-review -> /plan-validate -> /why-review -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /integration-test -> /fix -> /prove-fix -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /debug-investigate -> /spec [mode=amend] -> /plan -> /plan-review -> /plan-validate -> /why-review -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /integration-test -> /fix -> /prove-fix -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /demo-guide -> /workflow-end -> /watzup
 
 ---
 
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /debug-investigate -> /spec [mode=amend] -> /plan -> /plan-review -> /plan-validate -> /why-review -> /spec [mode=tests] -> /why-review -> /review-artifact --type=spec-tests -> /integration-test -> /fix -> /prove-fix -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /workflow-end -> /watzup
+**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /debug-investigate -> /spec [mode=amend] -> /plan -> /plan-review -> /plan-validate -> /why-review -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /integration-test -> /fix -> /prove-fix -> /integration-test -> /integration-test-review -> /integration-test-verify -> /spec [mode=sync] -> /workflow-review-changes -> /changelog -> /test -> /docs-update -> /demo-guide -> /workflow-end -> /watzup
+
+> **Single-pass steps are self-loop-backed (convergence lives in the skill, not the sequence):** the `/artifact-review --type=spec-tests` step appears once in the flat sequence with no repeat wired — intentionally. It carries the full `SYNC:double-round-trip-review` self-loop (review → validate findings → fix validated findings → full re-review until a clean pass), so a single occurrence still converges to zero findings on its own; the workflow relies on that per-skill loop rather than re-listing the step. Code-change convergence is delegated to `/workflow-review-changes` (whose specialist scoped-re-run note lives in that skill).
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
@@ -65,7 +67,7 @@ Activate the `workflow-bugfix` workflow. Run `/start-workflow workflow-bugfix` w
 
 > **Goal Contract propagation (workflow-owned):** At workflow start, resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the bug report). Map root cause, regression-test evidence (RED fail + GREEN pass), and `/prove-fix` proof to the saved success criteria — each criterion gets `file:line`/command/report evidence in the Iteration Log. Pass the same goal file reference to every child step. Before `/workflow-end`, emit the final Goal Satisfaction matrix (PASS/FAIL/BLOCKED); workflow completion requires every required criterion PASS or BLOCKED with a user-facing escalation.
 
-**Steps:** /scout → /investigate → /debug-investigate → /spec [mode=amend] → /plan → /plan-review → /plan-validate → /why-review → /spec [mode=tests] → /why-review → /review-artifact --type=spec-tests → /integration-test → /fix → /prove-fix → /integration-test → /integration-test-review → /integration-test-verify → /spec [mode=sync] → /workflow-review-changes → /changelog → /test → /docs-update → /workflow-end → /watzup
+**Steps:** /scout → /investigate → /debug-investigate → /spec [mode=amend] → /plan → /plan-review → /plan-validate → /why-review → /spec [mode=tests] → /why-review → /artifact-review --type=spec-tests → /integration-test → /fix → /prove-fix → /integration-test → /integration-test-review → /integration-test-verify → /spec [mode=sync] → /workflow-review-changes → /changelog → /test → /docs-update → /demo-guide → /workflow-end → /watzup
 
 > **[PERFORMANCE-SDD ROUTE]** If this bug fix is performance-related (latency, throughput, memory, query speed, load behavior), run `/performance-review` and require SLA/benchmark evidence: target metric, baseline, measurement command, and acceptable regression budget. Do not use performance scope to bypass functional no-regression checks: run `/test` and any relevant functional checks when behavior can change. Update docs/specs for changed SLA, performance constraints, or behavior boundaries.
 
@@ -74,6 +76,8 @@ Activate the `workflow-bugfix` workflow. Run `/start-workflow workflow-bugfix` w
 > **First `/integration-test` (RED phase):** Write a regression test that REPRODUCES the bug. Run it — it MUST FAIL. If it passes, the test does not catch the bug. Proceed to fix only after the test fails — never start the fix while the test still passes.
 > **Second `/integration-test` (GREEN phase):** Re-run integration tests after the fix — expect all to PASS. Confirms the fix works AND the regression guard is in place.
 > **`/integration-test-review`:** Verify tests have real assertion value (not smoke/existence-only checks).
+
+> **UI-intent maintenance (conditional)** — runs alongside the `/spec [mode=sync]` step, **only when the change carries user-facing behavior** (else state the skip reason — backend-only change, no §6 change). When the fix changes user-facing behavior, run `/spec` (ui-intent intent) to refresh the affected Feature Spec **§6** interaction surface — View Inventory, Key UI States, and the per-story (`US-`/`OP-`/`BR-`) click-path the bug touched — and link the governing `/design-spec`/mockup in the spec frontmatter so §6 and the design artifact stay coupled to what was actually fixed. The rules live in the shared block below (`SYNC:ui-intent-layer`) — follow it; do not restate it here.
 
 <!-- SYNC:end-to-start-debugger-trace -->
 
@@ -114,6 +118,22 @@ Activate the `workflow-bugfix` workflow. Run `/start-workflow workflow-bugfix` w
 
 <!-- /SYNC:critical-thinking-mindset -->
 
+<!-- SYNC:test-failure-fault-adjudication -->
+
+> **Test-Failure Fault Adjudication** — When a test fails (or you are debugging or fixing a failure), the job is to determine _who is at fault — the source code or the test code_. Getting that verdict right matters more than turning the suite green. Binds every debug / fix / test skill identically.
+>
+> 1. **Root-cause first — never guess, never patch the symptom.** `/debug-investigate` and trace the failure end-to-start to its actual cause before touching either side. A green-again suite is NOT the goal; a correct verdict on what was actually wrong is.
+> 2. **Triangulate against the spec AND the source.** If a governing Feature Spec covers the behavior (e.g. `docs/specs/**` — §3 ACs / §4 BRs / §5 invariants / §8 TCs), it is the tiebreaker for _intended_ behavior — compare BOTH the production source and the failing test against it. With no spec, the documented intent / acceptance criteria / caller contract is the reference. Decide from this evidence whether the SOURCE is wrong or the TEST is wrong.
+> 3. **Classify who is at fault, then fix the wrong side at its root:**
+>     - **SOURCE-WRONG** — production code violates the spec's intended behavior or a clear invariant → fix the source at the owning layer; keep or strengthen the test that caught it.
+>     - **TEST-WRONG** — the test encodes a stale or incorrect assertion, setup, or expectation that contradicts intended behavior → fix the test at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green.
+>     - NEVER change a test to match broken source, and NEVER change source to satisfy a broken test. (Migration code excluded — schema/data migrations are one-time execution paths, not core application logic.)
+> 4. **Ask the user when intended behavior is unclear.** If no spec covers the behavior, the spec is silent, or the spec is ambiguous about which side is correct, STOP and `AskUserQuestion` (or consult the canonical spec owner) before editing either side — never silently pick source or test just to make the suite pass.
+>
+> Reconcile to intended behavior, never to whichever side currently passes — green can encode the very bug.
+
+<!-- /SYNC:test-failure-fault-adjudication -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -123,8 +143,9 @@ Activate the `workflow-bugfix` workflow. Run `/start-workflow workflow-bugfix` w
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -176,6 +197,22 @@ Activate the `workflow-bugfix` workflow. Run `/start-workflow workflow-bugfix` w
 
 <!-- /SYNC:subagent-return-contract -->
 
+<!-- SYNC:ui-intent-layer -->
+
+> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
+>
+> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
+> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
+> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
+> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
+> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
+>
+> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
+>
+> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
+
+<!-- /SYNC:ui-intent-layer -->
+
 <!-- SYNC:end-to-start-debugger-trace:reminder -->
 
 **IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
@@ -195,6 +232,12 @@ Activate the `workflow-bugfix` workflow. Run `/start-workflow workflow-bugfix` w
 - **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
 
 <!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
+
+<!-- SYNC:ui-intent-layer:reminder -->
+
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+
+<!-- /SYNC:ui-intent-layer:reminder -->
 
 ## Closing Reminders
 

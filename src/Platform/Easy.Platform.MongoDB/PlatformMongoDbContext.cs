@@ -10,6 +10,7 @@ using Easy.Platform.Application.Persistence;
 using Easy.Platform.Application.Persistence.BulkUpdate;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
+using Easy.Platform.Common.Timing;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.Exceptions;
@@ -20,6 +21,7 @@ using Easy.Platform.Persistence;
 using Easy.Platform.Persistence.DataMigration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
@@ -631,6 +633,41 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         return queryBuilder(GetQuery<TEntity>()).ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Runs <paramref name="writeAction" /> and translates a MongoDB duplicate-key error into the PROVIDER-NEUTRAL
+    /// <see cref="PlatformDomainUniqueConstraintViolationException" />, mirroring what
+    /// <c>PlatformEfCoreDbContext.SaveChangesAsync</c> does for EF/PostgreSQL SQLSTATE 23505.
+    /// <para>
+    /// Recognising the native error is THIS layer's responsibility, so Domain/Application callers can react to
+    /// "this row already exists" without naming a MongoDB type — and without the fragile
+    /// <c>ex.GetType().Name is "..."</c> workaround, which keeps compiling but silently stops matching after a rename
+    /// or a provider swap. Both single (<see cref="MongoWriteException" />) and bulk
+    /// (<see cref="MongoBulkWriteException" />) writes are covered; the native exception is preserved as InnerException.
+    /// </para>
+    /// <para>
+    /// <b>The message must stay generic.</b> A <c>PlatformDomainException</c> reaching the global handler has its
+    /// <c>Message</c> copied verbatim into the HTTP error body, and MongoDB's native text embeds the collection, the
+    /// index name, and the conflicting FIELD VALUE (<c>E11000 … dup key: { email: "…" }</c>) — often PII. The native
+    /// text stays reachable to operators through <see cref="Exception.InnerException" />, which logs and destructurers
+    /// already walk, so nothing diagnostic is lost by keeping it out of the client-facing message.
+    /// </para>
+    /// </summary>
+    protected static async Task TranslateDuplicateKeyAsync(Func<Task> writeAction)
+    {
+        try
+        {
+            await writeAction();
+        }
+        catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
+        {
+            throw new PlatformDomainUniqueConstraintViolationException("Write violated a unique index.", ex);
+        }
+        catch (MongoBulkWriteException ex) when (ex.WriteErrors?.Any(p => p.Category == ServerErrorCategory.DuplicateKey) == true)
+        {
+            throw new PlatformDomainUniqueConstraintViolationException("Bulk write violated a unique index.", ex);
+        }
+    }
+
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         // Not support real transaction tracking. No need to do anything
@@ -683,7 +720,8 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
         var bulkCreateOps = toBeCreatedEntities.Select(toBeCreatedEntity => new InsertOneModel<TEntity>(toBeCreatedEntity)).ToList();
 
-        await GetTable<TEntity>().BulkWriteAsync(bulkCreateOps, new BulkWriteOptions { IsOrdered = false }, cancellationToken);
+        await TranslateDuplicateKeyAsync(() =>
+            GetTable<TEntity>().BulkWriteAsync(bulkCreateOps, new BulkWriteOptions { IsOrdered = false }, cancellationToken));
 
         if (!dismissSendEvent && PlatformCqrsEntityEvent.IsAnyEntityEventHandlerRegisteredForEntity<TEntity>(RootServiceProvider))
         {
@@ -930,12 +968,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                 changedFields?.Upsert(nameof(IRowVersionEntity.ConcurrencyUpdateToken), toBeUpdatedRowVersionEntity.ConcurrencyUpdateToken);
             }
 
-            var updateDefinition =
-                changedFields?.Any() == true
-                    ? changedFields
-                        .Select(field => Builders<TEntity>.Update.Set(field.Key, field.Value))
-                        .Pipe(updateDefinitions => Builders<TEntity>.Update.Combine(updateDefinitions))
-                    : null;
+            var updateDefinition = BuildChangedFieldsUpdateDefinition(toBeUpdatedEntity, changedFields);
             Expression<Func<TEntity, bool>> toBeUpdatedEntityFilter =
                 toBeUpdatedEntity is IRowVersionEntity
                     ? p =>
@@ -1648,6 +1681,66 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         return loggerFactory.CreateLogger(typeof(PlatformMongoDbContext<>).GetNameOrGenericTypeName() + $"-{GetType().Name}");
     }
 
+    /// <summary>
+    /// Builds a partial MongoDB update from changed entity fields while preserving each mapped member's BSON serializer.
+    /// </summary>
+    /// <remarks>
+    /// Changed fields are represented as <see cref="Dictionary{TKey,TValue}"/> values, which erase the property's
+    /// declared CLR type. For mapped members, this method resolves the entity's BSON serialization metadata and
+    /// serializes through that member's configured serializer before constructing the <c>$set</c> document. Keys
+    /// without member metadata retain the generic driver update behavior.
+    /// </remarks>
+    /// <typeparam name="TEntity">The MongoDB entity type being updated.</typeparam>
+    /// <param name="entity">The updated entity whose runtime BSON mapping supplies member serialization metadata.</param>
+    /// <param name="changedFields">The changed CLR property names and their updated values.</param>
+    /// <returns>A combined update definition, or <see langword="null"/> when there are no changed fields.</returns>
+    private static UpdateDefinition<TEntity>? BuildChangedFieldsUpdateDefinition<TEntity>(
+        TEntity entity,
+        Dictionary<string, object>? changedFields)
+        where TEntity : class
+    {
+        if (changedFields?.Any() != true) return null;
+
+        var runtimeDocumentSerializer = BsonSerializer.LookupSerializer(entity.GetType()) as IBsonDocumentSerializer;
+        var typedSetValues = new BsonDocument();
+        var fallbackUpdateDefinitions = new List<UpdateDefinition<TEntity>>();
+
+        foreach (var changedField in changedFields)
+        {
+            if (runtimeDocumentSerializer?.TryGetMemberSerializationInfo(changedField.Key, out var memberSerializationInfo) == true)
+            {
+                typedSetValues[memberSerializationInfo.ElementName] = changedField.Value == null
+                    ? BsonNull.Value
+                    : memberSerializationInfo.SerializeValue(changedField.Value);
+            }
+            else
+            {
+                fallbackUpdateDefinitions.Add(Builders<TEntity>.Update.Set(changedField.Key, changedField.Value));
+            }
+        }
+
+        if (typedSetValues.ElementCount > 0)
+            fallbackUpdateDefinitions.Add(new BsonDocumentUpdateDefinition<TEntity>(new BsonDocument("$set", typedSetValues)));
+
+        return fallbackUpdateDefinitions.Count > 0
+            ? Builders<TEntity>.Update.Combine(fallbackUpdateDefinitions)
+            : null;
+    }
+
+    /// <summary>
+    /// Lets a concrete database context append storage-only operations to a normal field-level update without
+    /// bypassing this method's optimistic-concurrency and entity-event pipeline. The supplied definition already
+    /// contains every detected entity-field change and audit update.
+    /// </summary>
+    protected virtual UpdateDefinition<TEntity> CustomizeUpdateDefinition<TEntity>(
+        TEntity entity,
+        Dictionary<string, object>? changedFields,
+        UpdateDefinition<TEntity> updateDefinition)
+        where TEntity : class
+    {
+        return updateDefinition;
+    }
+
     public Task<TEntity> UpdateAsync<TEntity, TPrimaryKey>(
         TEntity entity,
         TEntity? existingEntity,
@@ -1886,12 +1979,10 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                 existingEntity,
                 entity =>
                 {
-                    var updateDefinition =
-                        changedFields?.Any() == true
-                            ? changedFields
-                                .Select(field => Builders<TEntity>.Update.Set(field.Key, field.Value))
-                                .Pipe(updateDefinitions => Builders<TEntity>.Update.Combine(updateDefinitions))
-                            : null;
+                    var updateDefinition = BuildChangedFieldsUpdateDefinition(toBeUpdatedEntity, changedFields);
+
+                    if (updateDefinition != null)
+                        updateDefinition = CustomizeUpdateDefinition(toBeUpdatedEntity, changedFields, updateDefinition);
 
                     return updateDefinition != null
                         ? GetTable<TEntity>()
@@ -1950,12 +2041,10 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                 existingEntity ?? MappedUnitOfWork?.GetCachedExistingOriginalEntity<TEntity>(entity.Id.ToString()),
                 _ =>
                 {
-                    var updateDefinition =
-                        changedFields?.Any() == true
-                            ? changedFields
-                                .Select(field => Builders<TEntity>.Update.Set(field.Key, field.Value))
-                                .Pipe(updateDefinitions => Builders<TEntity>.Update.Combine(updateDefinitions))
-                            : null;
+                    var updateDefinition = BuildChangedFieldsUpdateDefinition(toBeUpdatedEntity, changedFields);
+
+                    if (updateDefinition != null)
+                        updateDefinition = CustomizeUpdateDefinition(toBeUpdatedEntity, changedFields, updateDefinition);
 
                     return updateDefinition != null
                         ? GetTable<TEntity>()
@@ -2003,7 +2092,19 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
             InternalEnsureIndexesAsync(recreate)
         );
 
-        if (!await IsEnsureIndexesMigrationExecuted()) await MigrationHistoryCollection.InsertOneAsync(new PlatformMongoMigrationHistory(EnsureIndexesMigrationName));
+        // Status must be set explicitly: PlatformMongoMigrationHistory defaults to Statuses.New, and this sentinel row records
+        // work that has ALREADY completed above. Left at New it would show as pending to an operator reading the collection.
+        // Mirrors InsertDbInitializedApplicationDataMigrationHistory (:573-575), which sets Processed for the same reason.
+        if (!await IsEnsureIndexesMigrationExecuted())
+        {
+            await MigrationHistoryCollection.InsertOneAsync(
+                new PlatformMongoMigrationHistory(EnsureIndexesMigrationName)
+                {
+                    Status = PlatformMongoMigrationHistory.Statuses.Processed,
+                    RowKind = PlatformMongoMigrationHistory.MongoMigrationRowKind
+                }
+            );
+        }
 
         Logger.LogInformation("[{TargetName}] EnsureIndexesAsync FINISHED.", GetType().Name);
     }
@@ -2013,32 +2114,524 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         return new BsonObjectId(ObjectId.GenerateNewId()).ToString();
     }
 
+    /// <summary>
+    /// Order matters: <see cref="EnsureIndexesAsync" /> runs FIRST, so on a fresh db every index the current build
+    /// declares exists before any migration executor is considered. That is why an executor may declare
+    /// <see cref="PlatformMongoMigrationExecutor{TDbContext}.OnlyForDbInitBeforeDate" /> to skip itself on dbs
+    /// initialised on/after its ship date — the fresh db already has the state, so running it would only repeat work.
+    /// See that property's docs before treating the skip (or the <c>?? DateTime.UtcNow</c> fallback below) as a hole.
+    /// </summary>
     public async Task Migrate()
     {
         await EnsureIndexesAsync();
 
+        // Runs OUTSIDE the one-shot gate above, so already-initialised databases get the Status index too — EnsureIndexesAsync
+        // no-ops on them, and NotExecutedMigrationExecutors below filters by Status on every startup. Create-only and idempotent.
+        await EnsureMigrationHistoryStatusIndexAsync();
+
         EnsureAllMigrationExecutorsHasUniqueName();
 
+        // No DbInitialized marker yet => this db is being initialised right now (the marker is written after Migrate
+        // returns, in Initialize), so "now" is the correct init date: EnsureIndexesAsync above just built its indexes.
         var dbInitializedDate =
             await DataMigrationHistoryQuery().FirstOrDefaultAsync(p => p.Name == DbInitializedMigrationHistoryName).Then(p => p?.CreatedDate) ?? DateTime.UtcNow;
 
-        await NotExecutedMigrationExecutors()
-            .ParallelAsync(
-                async migrationExecutor =>
-                {
-                    if (migrationExecutor.OnlyForDbInitBeforeDate == null || dbInitializedDate < migrationExecutor.OnlyForDbInitBeforeDate)
-                    {
-                        Logger.LogInformation("Migration {MigrationExecutorName} STARTED.", migrationExecutor.Name);
+        // Sequential foreach with an early exit, NOT ParallelAsync(maxConcurrent: 1): when a peer holds a migration's lease, every
+        // LATER migration must stay unexecuted for the rest of this run (see ExecuteMigrationExecutorWithLeaseAsync), and a fan-out
+        // helper cannot stop its remaining items. maxConcurrent was already 1, so this adds the early exit without changing concurrency.
+        foreach (var migrationExecutor in NotExecutedMigrationExecutors())
+        {
+            // A skipped migration records nothing: the ledger means "migrations that applied to THIS database".
+            if (migrationExecutor.OnlyForDbInitBeforeDate != null && dbInitializedDate >= migrationExecutor.OnlyForDbInitBeforeDate)
+                continue;
 
-                        await migrationExecutor.Execute((TDbContext)this);
-                        await MigrationHistoryCollection.InsertOneAsync(new PlatformMongoMigrationHistory(migrationExecutor.Name));
-                        await SaveChangesAsync();
+            if (!await ExecuteMigrationExecutorWithLeaseAsync(migrationExecutor)) break;
+        }
+    }
 
-                        Logger.LogInformation("Migration {MigrationExecutorName} FINISHED.", migrationExecutor.Name);
-                    }
-                },
-                maxConcurrent: 1
+    /// <summary>
+    /// Runs ONE migration under a ledger lease: claim it, keep the claim alive while the body runs, then record the outcome.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Why a lease and not just a status write.</b> <see cref="NotExecutedMigrationExecutors" /> is evaluated once at startup, so two
+    /// containers booting together can BOTH read a migration as pending before either writes anything. A plain "set Processing" upsert
+    /// does not resolve that — both writes succeed and both bodies run, concurrently, against one database. The claim below is a single
+    /// conditional update, so the database itself picks exactly one winner; the loser gets <c>null</c> and skips the migration instead of
+    /// duplicating it. This is the only mutual exclusion in the migration path — there is no distributed lock around
+    /// <see cref="Migrate" />.
+    /// </para>
+    /// <para>
+    /// <b>Why the losing container skips rather than waits.</b> The winner already covers the work, and the loser's own
+    /// <see cref="NotExecutedMigrationExecutors" /> snapshot is stale by definition. Blocking startup on a peer's migration would couple
+    /// every replica's readiness to the slowest one; a skipped migration is simply re-evaluated on the next start, by which point it is
+    /// <see cref="PlatformMongoMigrationHistory.Statuses.Processed" />.
+    /// </para>
+    /// <para>
+    /// <b>Why losing to a LIVE peer also stops the whole run (the return value).</b> Skipping the contended migration is safe; advancing
+    /// past it is not. Migrations are ordered by <see cref="PlatformMongoMigrationExecutor{TDbContext}.GetOrderByValue" /> and a later one
+    /// may assume an earlier one already applied, so running N+1 while a peer is still running N would execute them OUT OF ORDER — a
+    /// failure mode the pre-lease code could not produce, because it excluded nothing by status and every container walked the full ordered
+    /// sequence. Returning <c>false</c> ends this run's migration phase instead, which preserves ordering WITHOUT reintroducing the
+    /// readiness coupling described above: the container still boots immediately, and the remaining migrations are picked up on the next
+    /// start. The SQL/EF sibling makes the opposite trade — it blocks (<c>IPlatformDbContext.MigrateDataAsync</c> waits until no row is
+    /// Processing, then gates each executor on its predecessor) — so it buys the same ordering guarantee with startup latency.
+    /// </para>
+    /// <para>
+    /// <b>Why only a LIVE peer stops the run.</b> A claim also fails when the migration simply became
+    /// <see cref="PlatformMongoMigrationHistory.Statuses.Processed" /> between listing and claiming; nothing is running, nothing is out of
+    /// order, so the loop continues. A row owned by ANOTHER ledger likewise continues — stopping there would strand every following
+    /// migration on a dormant name collision forever.
+    /// </para>
+    /// <para>
+    /// <b>Why the ping stops in a <c>finally</c> rather than before each outcome write.</b> The ping only touches rows that are still
+    /// <see cref="PlatformMongoMigrationHistory.Statuses.Processing" /> AND still carry this lease token, so it is already a no-op once
+    /// the outcome is recorded. Cancelling in <c>finally</c> keeps the lease alive for the whole window that actually needs it —
+    /// including a slow outcome write — without a duplicated cancel on each path.
+    /// </para>
+    /// </remarks>
+    /// <returns>
+    /// <c>true</c> to keep running the remaining migrations; <c>false</c> when a live peer holds this migration and every LATER migration
+    /// must therefore be left for the next start, so ordering is preserved.
+    /// </returns>
+    protected virtual async Task<bool> ExecuteMigrationExecutorWithLeaseAsync(PlatformMongoMigrationExecutor<TDbContext> migrationExecutor)
+    {
+        var leaseToken = await TryClaimMigrationProcessingAsync(migrationExecutor.Name);
+
+        if (leaseToken == null)
+        {
+            if (await ResolveLostClaimAsync(migrationExecutor.Name) == PlatformMongoMigrationClaimLostReason.HeldByLivePeer)
+            {
+                Logger.LogInformation(
+                    "[{TargetName}] Migration {MigrationName} SKIPPED: a live peer process holds the ledger lease. STOPPING this run's "
+                        + "migration phase so no later migration runs ahead of it; the remaining migrations are applied on the next start.",
+                    GetType().Name,
+                    migrationExecutor.Name);
+
+                return false;
+            }
+
+            Logger.LogInformation(
+                "[{TargetName}] Migration {MigrationName} SKIPPED: it completed between listing pending migrations and claiming this one, "
+                    + "or its ledger row belongs to another ledger. Nothing is running, so the remaining migrations continue.",
+                GetType().Name,
+                migrationExecutor.Name);
+
+            return true;
+        }
+
+        using (var pingCts = new CancellationTokenSource())
+        {
+            StartIntervalPingProcessingMigration(migrationExecutor.Name, leaseToken, pingCts.Token);
+
+            try
+            {
+                // STARTED/FINISHED logging is owned by PlatformMongoMigrationExecutor.Execute so it covers EVERY
+                // caller of a migration, not just this orchestrator. Do not re-log it here.
+                await migrationExecutor.Execute((TDbContext)this);
+
+                // Ordering, NOT durability: SaveChangesAsync is a no-op on this context (mongo writes are already immediate), so it
+                // cannot fail and cannot flush anything. It stays because it is the platform-wide convention at the end of a migration
+                // body and a future context may make it meaningful. Recovery does NOT depend on it: a crash anywhere before the
+                // Processed write leaves the lease to expire, after which the migration is claimable again.
+                await SaveChangesAsync();
+
+                await MarkMigrationProcessedAsync(migrationExecutor.Name, leaseToken);
+            }
+            catch (Exception e)
+            {
+                await MarkMigrationFailedAsync(migrationExecutor.Name, e, leaseToken);
+                throw;
+            }
+            finally
+            {
+                await pingCts.CancelAsync();
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Atomically CLAIMS a migration for this process, returning the lease token on success or <c>null</c> when another live process
+    /// already holds it (or it is already applied).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Why two steps instead of one upsert.</b> A conditional update cannot also be an upsert here: when the condition legitimately
+    /// fails because a peer holds the lease, an upsert would try to INSERT a second row for the same migration and hit the unique
+    /// <c>Name</c> index, turning normal contention into an exception. So step 1 ensures the row exists (insert-only, no-op when it does)
+    /// and step 2 does the conditional claim with <c>IsUpsert = false</c>. Losing the claim is an ordinary outcome, not an error.
+    /// </para>
+    /// <para>
+    /// <b>Why the claim also requires <see cref="PlatformMongoMigrationHistory.RowKind" />.</b> On a database that maps this ledger and the
+    /// data-migration ledger onto ONE collection, a name collision would otherwise let this update land on a FOREIGN row — flipping its
+    /// status and wiping its error. Requiring our own stamp makes the claim address a row we provably own. Nothing real is excluded by the
+    /// strict test: <see cref="PlatformMongoMigrationHistory.Status" /> shipped in the same change as the stamp, so a row that reaches this
+    /// filter with a non-null status and no stamp cannot be a mongo row.
+    /// </para>
+    /// <para>
+    /// <b>Why the negation is written out instead of <c>Filter.Not(ProcessedOrLiveProcessingExpr())</c>.</b> The filter must translate to
+    /// server-side BSON; spelling the negation explicitly keeps every operand a plain comparison the driver definitely supports, and makes
+    /// the "missing field" semantics visible: <c>Status != null</c> does NOT match documents where <c>Status</c> is absent, which is
+    /// exactly right — a legacy row without a status counts as applied and must never be claimed.
+    /// </para>
+    /// <para>
+    /// <b>Why a fresh token every claim.</b> It identifies THIS attempt, so the ping and the outcome writes can be conditioned on still
+    /// owning the lease. It also guarantees the update genuinely modifies the document, which is what makes <c>ModifiedCount</c> a
+    /// trustworthy "did I win?" signal.
+    /// </para>
+    /// </remarks>
+    /// <returns>The lease token to pass to the ping and outcome writes, or <c>null</c> if the claim was lost.</returns>
+    public virtual async Task<string?> TryClaimMigrationProcessingAsync(string migrationName)
+    {
+        await EnsureMigrationHistoryRowExistsAsync(migrationName);
+
+        var stalePingThreshold = Clock.UtcNow.AddSeconds(-PlatformMongoMigrationHistory.MaxProcessingWaitPingSeconds);
+        var leaseToken = Ulid.NewUlid().ToString();
+
+        var claimResult = await MigrationHistoryCollection.UpdateOneAsync(
+            p => p.Name == migrationName &&
+                 p.RowKind == PlatformMongoMigrationHistory.MongoMigrationRowKind &&
+                 p.Status != null &&
+                 p.Status != PlatformMongoMigrationHistory.Statuses.Processed &&
+                 (p.Status != PlatformMongoMigrationHistory.Statuses.Processing ||
+                  p.LastProcessingPingTime == null ||
+                  p.LastProcessingPingTime < stalePingThreshold),
+            Builders<PlatformMongoMigrationHistory>
+                .Update.Set(p => p.Status, PlatformMongoMigrationHistory.Statuses.Processing)
+                .Set(p => p.LastProcessingPingTime, Clock.UtcNow)
+                .Set(p => p.ConcurrencyUpdateToken, leaseToken)
+                .Set(p => p.LastProcessError, null),
+            new UpdateOptions { IsUpsert = false }
+        );
+
+        // A lost claim is diagnosed by the caller via ResolveLostClaimAsync, which needs the row anyway to decide whether the run may
+        // continue — so the reason is read ONCE there rather than a second time here.
+        return claimResult.ModifiedCount > 0 ? leaseToken : null;
+    }
+
+    /// <summary>
+    /// Determines WHY a claim on <paramref name="migrationName" /> was lost — a live peer, an already-applied migration, or a ledger row
+    /// this ledger does not own (a migration-name collision with another ledger sharing the same physical collection, which is also
+    /// logged here).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Why the collision is invisible without this.</b> The mongo and data-migration name-spaces are validated independently
+    /// (<c>EnsureAllMigrationExecutorsHasUniqueName</c> never sees the data-migration names), so nothing in either project can detect a
+    /// duplicate across them. From the update result alone, "a peer holds the lease" and "someone else's row wears our name" are identical.
+    /// </para>
+    /// <para>
+    /// <b>Why warn-and-skip rather than throw.</b> Skipping is what the row-existence filter did BEFORE this change, so this is not a
+    /// regression — it is the same outcome, finally visible. Crashing every replica's startup on a name collision would turn a dormant
+    /// misconfiguration into an outage, and the alternative that used to happen implicitly — running anyway and upserting onto the foreign
+    /// row — is the actual data loss this guard exists to prevent. The row is left exactly as its owner wrote it.
+    /// </para>
+    /// <para>
+    /// <b>Why it runs only after a LOST claim.</b> A won claim already proves ownership, so the happy path pays nothing extra. A lost claim
+    /// happens at most once per pending migration per startup.
+    /// </para>
+    /// </remarks>
+    /// <returns>Why the claim was lost, so the caller can decide whether the remaining migrations may still run.</returns>
+    protected virtual async Task<PlatformMongoMigrationClaimLostReason> ResolveLostClaimAsync(string migrationName)
+    {
+        // ONE read, both answers. Reading RowKind and the live-lease state in two queries could observe two different points in time and
+        // report a combination that never existed.
+        var existingRow = await MigrationHistoryCollection.AsQueryable().FirstOrDefaultAsync(p => p.Name == migrationName);
+
+        if (existingRow?.RowKind == PlatformMongoMigrationHistory.MongoMigrationRowKind)
+        {
+            // Re-read, so inherently a later instant than the failed claim: a peer may have finished in between, in which case this reports
+            // AlreadyApplied and the loop continues — correct, because nothing is running to be out of order with. The reverse race (a peer
+            // claims it only AFTER this read) leaves the run advancing exactly as it did before this guard existed, and the next start
+            // re-evaluates. The guard removes the common case; it is not, and cannot be, a distributed transaction.
+            return existingRow.Is(PlatformMongoMigrationHistory.LiveProcessingExpr())
+                ? PlatformMongoMigrationClaimLostReason.HeldByLivePeer
+                : PlatformMongoMigrationClaimLostReason.AlreadyApplied;
+        }
+
+        Logger.LogWarning(
+            "[{TargetName}] Migration {MigrationName} was NOT executed and its ledger row was left untouched: the row in collection "
+                + "{CollectionName} is not owned by the mongo migration ledger (RowKind={RowKind}). This database maps more than one "
+                + "migration ledger onto the same collection and this name exists in another one — most likely a "
+                + "PlatformDataMigrationExecutor with the same Name. Rename one of them; the two name-spaces are validated independently, "
+                + "so nothing else catches this.",
+            GetType().Name,
+            migrationName,
+            MigrationHistoryCollectionName,
+            existingRow?.RowKind ?? "null");
+
+        return PlatformMongoMigrationClaimLostReason.NotOwned;
+    }
+
+    /// <summary>
+    /// Ensures a ledger row exists for <paramref name="migrationName" /> without disturbing an existing one. Every field is
+    /// <c>SetOnInsert</c>, so this is a no-op when the row is already there.
+    /// </summary>
+    /// <remarks>
+    /// A duplicate-key error here means a concurrent process inserted the same row first — which is precisely the post-condition this
+    /// method exists to establish, so it is swallowed rather than propagated. The subsequent conditional claim is what decides ownership.
+    /// </remarks>
+    protected virtual async Task EnsureMigrationHistoryRowExistsAsync(string migrationName)
+    {
+        try
+        {
+            await MigrationHistoryCollection.UpdateOneAsync(
+                p => p.Name == migrationName,
+                WithNewRowDefaults(
+                    Builders<PlatformMongoMigrationHistory>.Update.SetOnInsert(p => p.Status, PlatformMongoMigrationHistory.Statuses.New),
+                    migrationName),
+                new UpdateOptions { IsUpsert = true }
             );
+        }
+        catch (MongoWriteException e) when (e.WriteError?.Category == ServerErrorCategory.DuplicateKey)
+        {
+            // A peer created the row first — the desired post-condition either way.
+        }
+    }
+
+    /// <summary>
+    /// Keeps this process's lease on <paramref name="migrationName" /> alive for as long as its body runs, by refreshing
+    /// <see cref="PlatformMongoMigrationHistory.LastProcessingPingTime" /> every
+    /// <see cref="PlatformMongoMigrationHistory.ProcessingPingIntervalSeconds" /> seconds until cancelled.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The ping write is itself conditional on still owning the lease</b> (<c>ConcurrencyUpdateToken</c> matches AND the row is still
+    /// <c>Processing</c>). A superseded owner therefore cannot resurrect a lease that has already been handed to someone else, and the
+    /// loop needs no separate stop signal once the outcome has been recorded — the write simply stops matching.
+    /// </para>
+    /// <para>
+    /// <b>A failed ping is logged, never thrown.</b> It runs on a background task where nothing can catch it, and a transient write
+    /// failure is not a reason to fail a migration that is otherwise succeeding. The cost of losing several consecutive pings is bounded
+    /// and understood: the lease goes stale and another container may reclaim the migration — which is why
+    /// <see cref="PlatformMongoMigrationHistory.MaxAllowedProcessingPingMisses" /> tolerates a dozen misses rather than one.
+    /// </para>
+    /// </remarks>
+    protected virtual void StartIntervalPingProcessingMigration(string migrationName, string leaseToken, CancellationToken cancellationToken)
+    {
+        Util.TaskRunner.QueueActionInBackground(
+            async () =>
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await Task.Delay(PlatformMongoMigrationHistory.ProcessingPingIntervalSeconds.Seconds(), cancellationToken);
+
+                        if (cancellationToken.IsCancellationRequested) break;
+
+                        await MigrationHistoryCollection.UpdateOneAsync(
+                            p => p.Name == migrationName &&
+                                 p.ConcurrencyUpdateToken == leaseToken &&
+                                 p.Status == PlatformMongoMigrationHistory.Statuses.Processing,
+                            Builders<PlatformMongoMigrationHistory>.Update.Set(p => p.LastProcessingPingTime, Clock.UtcNow)
+                        );
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(
+                            e.BeautifyStackTrace(),
+                            "[{TargetName}] Failed to refresh the processing lease ping for migration {MigrationName}. The migration "
+                                + "continues; if enough consecutive pings fail the lease goes stale and another process may reclaim it.",
+                            GetType().Name,
+                            migrationName
+                        );
+                    }
+                }
+            },
+            loggerFactory: () => Logger,
+            cancellationToken: CancellationToken.None
+        );
+    }
+
+    /// <summary>
+    /// Marks a migration as started UNCONDITIONALLY, creating the ledger row if it does not exist yet.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is not the lease claim.</b> <see cref="Migrate" /> uses <see cref="TryClaimMigrationProcessingAsync" />, which only
+    /// succeeds when no live process holds the migration. This method overwrites the status regardless of who owns it, and exists for
+    /// direct/operator-driven use and for tests that need to place a row in a known state. Prefer the claim on any concurrent path.
+    /// </remarks>
+    /// <remarks>
+    /// <b>Why upsert.</b> This feature explicitly invites an operator to hand-edit rows in the migration history collection while the
+    /// system runs — setting a row back to <c>New</c> to force a re-run is the whole point of the status column — so a row genuinely
+    /// can be deleted or altered between two ledger writes. Every ledger write must therefore be upsert-safe.
+    /// <br />
+    /// <b>Why field-level <c>$set</c> rather than a document replace.</b> A re-run must preserve <c>CreatedDate</c> (when the migration
+    /// FIRST ran) while changing only the status fields. <c>SetOnInsert</c> supplies <c>Name</c>/<c>CreatedDate</c> only when the row is
+    /// genuinely new; a replace would clobber the original timestamp.
+    /// <br />
+    /// <b>Why <c>LastProcessError</c> is cleared.</b> A stale error from a previous attempt sitting next to a <c>Processing</c> status
+    /// would actively mislead the operator this feature exists for.
+    /// </remarks>
+    public virtual Task MarkMigrationProcessingAsync(string migrationName)
+    {
+        var update = Builders<PlatformMongoMigrationHistory>
+            .Update.Set(p => p.Status, PlatformMongoMigrationHistory.Statuses.Processing)
+            .Set(p => p.LastProcessError, null)
+            // Stamped so the row does not read as an ALREADY-STALE lease the instant it is written. Without it, a row set to
+            // Processing here would be immediately claimable by any other process, which is the opposite of what the status says.
+            .Set(p => p.LastProcessingPingTime, Clock.UtcNow);
+
+        return MigrationHistoryCollection.UpdateOneAsync(
+            p => p.Name == migrationName,
+            WithNewRowDefaults(update, migrationName),
+            new UpdateOptions { IsUpsert = true }
+        );
+    }
+
+    /// <summary>
+    /// Adds the fields an upserted ledger row needs when the upsert actually INSERTS — identity, first-run timestamp, and the ownership
+    /// stamp — leaving an existing row's values untouched.
+    /// </summary>
+    /// <remarks>
+    /// Extracted because every upsert-safe ledger write needs exactly this tail and forgetting one field is silent: a row missing
+    /// <see cref="PlatformMongoMigrationHistory.RowKind" /> can never be claimed, and a row missing <c>CreatedDate</c> loses when the
+    /// migration first ran. Four call sites, one definition — adding a fifth required-on-insert field is now a one-line change.
+    /// </remarks>
+    protected static UpdateDefinition<PlatformMongoMigrationHistory> WithNewRowDefaults(
+        UpdateDefinition<PlatformMongoMigrationHistory> update,
+        string migrationName)
+    {
+        return update
+            .SetOnInsert(p => p.Name, migrationName)
+            .SetOnInsert(p => p.CreatedDate, Clock.UtcNow)
+            .SetOnInsert(p => p.RowKind, PlatformMongoMigrationHistory.MongoMigrationRowKind);
+    }
+
+    /// <summary>
+    /// Marks a migration as completed and releases the lease. Only this status stops it being executed again — see
+    /// <see cref="PlatformMongoMigrationHistory.ProcessedExpr" />.
+    /// </summary>
+    /// <param name="migrationName">Ledger row to update.</param>
+    /// <param name="leaseToken">
+    /// When supplied, the write only lands if this process still owns the lease, so a superseded owner cannot report success over a
+    /// migration another process has taken over. When <c>null</c> the write is unconditional and upsert-safe (direct/operator use).
+    /// </param>
+    /// <remarks>
+    /// <b>Why the conditional form must NOT upsert.</b> If the lease was lost, the filter deliberately matches nothing — an upsert would
+    /// then insert a duplicate row for the same migration and hit the unique <c>Name</c> index. Losing the lease has to be a silent no-op,
+    /// not an exception on the success path.
+    /// </remarks>
+    public virtual async Task MarkMigrationProcessedAsync(string migrationName, string? leaseToken = null)
+    {
+        var update = Builders<PlatformMongoMigrationHistory>
+            .Update.Set(p => p.Status, PlatformMongoMigrationHistory.Statuses.Processed)
+            .Set(p => p.LastProcessingPingTime, null)
+            .Set(p => p.ConcurrencyUpdateToken, null);
+
+        if (leaseToken != null)
+        {
+            var result = await MigrationHistoryCollection.UpdateOneAsync(
+                p => p.Name == migrationName && p.ConcurrencyUpdateToken == leaseToken,
+                update,
+                new UpdateOptions { IsUpsert = false }
+            );
+
+            WarnIfLeaseWasLost(result, migrationName, PlatformMongoMigrationHistory.Statuses.Processed);
+
+            return;
+        }
+
+        await MigrationHistoryCollection.UpdateOneAsync(
+            p => p.Name == migrationName,
+            WithNewRowDefaults(update, migrationName),
+            new UpdateOptions { IsUpsert = true }
+        );
+    }
+
+    /// <summary>
+    /// Logs when a lease-scoped outcome write matched NOTHING, which means this process no longer owned the lease it was writing under.
+    /// </summary>
+    /// <remarks>
+    /// The write itself is correctly a no-op — see the "must NOT upsert" note on the callers — but it must not be a SILENT one. A zero-match
+    /// here is the only evidence that this process and a peer both executed the same migration: the peer reclaimed the lease after this
+    /// process missed <see cref="PlatformMongoMigrationHistory.MaxAllowedProcessingPingMisses" /> consecutive pings (a mongo primary
+    /// election, a network partition, or thread-pool starvation during a long migration will do it). The ledger still converges — the
+    /// reclaiming peer records the outcome — so nothing re-runs; what is lost without this line is any way to explain duplicated effects
+    /// afterwards.
+    /// </remarks>
+    protected virtual void WarnIfLeaseWasLost(UpdateResult result, string migrationName, PlatformMongoMigrationHistory.Statuses attemptedStatus)
+    {
+        if (result.MatchedCount > 0) return;
+
+        Logger.LogWarning(
+            "[{TargetName}] Migration {MigrationName} ended its attempt but the {AttemptedStatus} write matched no row: this process lost the ledger "
+                + "lease while the migration body was still running, so a peer reclaimed it as stale and ran the SAME migration "
+                + "concurrently. The ledger outcome is recorded by that peer, so nothing re-runs — but any duplicated effect of this "
+                + "migration originates here. Investigate why {PingMisses} consecutive pings were missed.",
+            GetType().Name,
+            migrationName,
+            attemptedStatus,
+            PlatformMongoMigrationHistory.MaxAllowedProcessingPingMisses);
+    }
+
+    /// <summary>
+    /// Records a failed migration in the ledger on a BEST-EFFORT basis.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This method must never throw.</b> The most likely cause of a migration failure is an infrastructure fault, and that same fault
+    /// makes this bookkeeping write fail too. An unguarded helper would replace the migration's real exception with a write error and
+    /// erase the very diagnosis this feature exists to produce. The invariant: <b>the exception leaving <see cref="Migrate" /> is always
+    /// the migration's, never the ledger write's.</b> A ledger write that fails is logged and swallowed — the row then stays at
+    /// <c>Processing</c>, which still re-runs the migration on the next startup, and the logs still carry the failure.
+    /// </para>
+    /// <para>
+    /// <b>The full serialized exception is stored</b> (stack trace and inner exceptions), matching what the data-migration side records
+    /// in <c>PlatformDataMigrationHistory.LastProcessError</c>: an operator diagnosing a failed migration after the pod restarted and its
+    /// logs rotated needs the trace in the ledger. This collection has no TTL and no redaction, so migration authors MUST NOT embed
+    /// record data (names, emails, tenant identifiers, tokens) in exceptions thrown from <c>InternalExecute</c>.
+    /// </para>
+    /// </remarks>
+    public virtual async Task MarkMigrationFailedAsync(string migrationName, Exception e, string? leaseToken = null)
+    {
+        try
+        {
+            var update = Builders<PlatformMongoMigrationHistory>
+                .Update.Set(p => p.Status, PlatformMongoMigrationHistory.Statuses.Failed)
+                .Set(p => p.LastProcessError, e.Serialize())
+                // The lease is released on failure so the migration is retryable IMMEDIATELY on the next start, rather than waiting out
+                // the staleness window. A recorded failure is a finished attempt — there is no owner left to protect.
+                .Set(p => p.LastProcessingPingTime, null)
+                .Set(p => p.ConcurrencyUpdateToken, null);
+
+            if (leaseToken != null)
+            {
+                var result = await MigrationHistoryCollection.UpdateOneAsync(
+                    p => p.Name == migrationName && p.ConcurrencyUpdateToken == leaseToken,
+                    update,
+                    new UpdateOptions { IsUpsert = false }
+                );
+
+                WarnIfLeaseWasLost(result, migrationName, PlatformMongoMigrationHistory.Statuses.Failed);
+
+                return;
+            }
+
+            await MigrationHistoryCollection.UpdateOneAsync(
+                p => p.Name == migrationName,
+                WithNewRowDefaults(update, migrationName),
+                new UpdateOptions { IsUpsert = true }
+            );
+        }
+        catch (Exception ledgerWriteEx)
+        {
+            Logger.LogError(
+                ledgerWriteEx,
+                "[{TargetName}] Failed to record Failed status for migration {MigrationName} in the migration history collection. "
+                    + "The migration's own failure is rethrown and remains the reported error; the row is left at Processing with its lease "
+                    + "no longer refreshed, so the lease expires and the migration becomes claimable again on a later start.",
+                GetType().Name,
+                migrationName
+            );
+        }
     }
 
     public string GetCollectionName<TEntity>()
@@ -2065,6 +2658,40 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         return GetCollection<TEntity>();
     }
 
+    /// <summary>
+    /// The single declaration of the migration-history <c>Status</c> index, used by both the fresh-database path
+    /// (<see cref="EnsureMigrationHistoryCollectionIndexesAsync" />) and the every-startup path
+    /// (<see cref="EnsureMigrationHistoryStatusIndexAsync" />), so the two can never drift into an index-options conflict.
+    /// </summary>
+    protected static CreateIndexModel<PlatformMongoMigrationHistory> MigrationHistoryStatusIndexModel()
+    {
+        return new CreateIndexModel<PlatformMongoMigrationHistory>(Builders<PlatformMongoMigrationHistory>.IndexKeys.Ascending(p => p.Status));
+    }
+
+    /// <summary>
+    /// Ensures the migration-history <c>Status</c> index exists on THIS database, whether it is fresh or was initialised years ago.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Why this exists separately from <see cref="EnsureMigrationHistoryCollectionIndexesAsync" />.</b> That method sits behind the
+    /// one-shot <c>!IsEnsureIndexesMigrationExecuted()</c> gate, so it never runs again on a database that has already been
+    /// initialised — every deployed database would have kept scanning the collection without the index that
+    /// <c>NotExecutedMigrationExecutors</c>' <c>ProcessedExpr()</c> filter needs.
+    /// </para>
+    /// <para>
+    /// <b>Why calling it on every startup is safe and cheap.</b> It CREATES and never drops: <c>createIndexes</c> against an
+    /// already-existing index with the same keys and options is a server-side no-op that returns success, so this costs one cheap
+    /// command per service start. Only <c>DropAllAsync</c> is expensive and destructive, which is why the gate guards that method and
+    /// not this one. Sharing <see cref="MigrationHistoryStatusIndexModel" /> with the fresh-database path is what keeps the two specs
+    /// byte-identical, so no <c>IndexOptionsConflict</c> can arise between them — including on bravoINSIGHTS, where this collection and
+    /// the data-migration collection are physically the same and both declare an ascending <c>Status</c> index.
+    /// </para>
+    /// </remarks>
+    public virtual Task EnsureMigrationHistoryStatusIndexAsync()
+    {
+        return MigrationHistoryCollection.Indexes.CreateOneAsync(MigrationHistoryStatusIndexModel());
+    }
+
     public virtual async Task EnsureMigrationHistoryCollectionIndexesAsync(bool recreate = false)
     {
         if (recreate || !await IsEnsureIndexesMigrationExecuted())
@@ -2077,7 +2704,16 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                     new CreateIndexModel<PlatformMongoMigrationHistory>(
                         Builders<PlatformMongoMigrationHistory>.IndexKeys.Ascending(p => p.Name),
                         new CreateIndexOptions { Unique = true }
-                    )
+                    ),
+                    // Supports NotExecutedMigrationExecutors' ProcessedOrLiveProcessingExpr() filter. Mirrors the equivalent Status
+                    // index built for PlatformDataMigrationHistory in EnsureMigrationHistoryIndexesAsync below — both are a bare
+                    // Ascending(p => p.Status) with no options, so both generate the identical server-side index name Status_1, which
+                    // is what lets bravoINSIGHTS point BOTH ledgers at one physical collection without an IndexOptionsConflict.
+                    // (Named by symbol, not by line: this file's line numbers move under every edit.)
+                    // This branch only reaches FRESH databases (it is behind the one-shot !IsEnsureIndexesMigrationExecuted() gate);
+                    // EnsureMigrationHistoryStatusIndexAsync, called from Migrate(), is what gets the same index onto
+                    // ALREADY-INITIALISED databases.
+                    MigrationHistoryStatusIndexModel()
                 ]
             );
         }
@@ -2232,7 +2868,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                 RootServiceProvider,
                 MappedUnitOfWork,
                 toBeCreatedEntity,
-                entity => GetTable<TEntity>().InsertOneAsync(entity, null, cancellationToken).Then(() => entity),
+                entity => TranslateDuplicateKeyAsync(() => GetTable<TEntity>().InsertOneAsync(entity, null, cancellationToken)).Then(() => entity),
                 dismissSendEvent,
                 eventCustomConfig,
                 () => RequestContextAccessor.Current.GetAllKeyValues(),
@@ -2301,9 +2937,22 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
     protected List<PlatformMongoMigrationExecutor<TDbContext>> NotExecutedMigrationExecutors()
     {
-        var executedMigrationNames = MigrationHistoryCollection.AsQueryable().Select(p => p.Name).ToHashSet();
+        // Pending is decided by STATUS AND LIVENESS, not by row existence. A row now exists for the whole duration of a migration, so
+        // row-existence would treat a still-running or crashed migration as done. Two things stop a re-run: Processed (plus null —
+        // legacy rows written before status tracking existed), and Processing whose lease ping is still fresh, meaning another container
+        // is working on it RIGHT NOW. Everything else — New, Failed, and Processing abandoned by a dead owner — is claimable. That is
+        // what makes a crashed migration recover by itself (once its lease expires) while keeping two live containers off the same
+        // migration, and it still lets an operator force a re-run by setting a row back to New instead of deleting it.
+        //
+        // This list is a SNAPSHOT and is deliberately not authoritative: a peer can claim a migration between this read and our own
+        // claim attempt. TryClaimMigrationProcessingAsync is what actually resolves that race — this filter only avoids the pointless
+        // work of attempting migrations already known to be taken.
+        var notClaimableMigrationNames = MigrationHistoryCollection.AsQueryable()
+            .Where(PlatformMongoMigrationHistory.ProcessedOrLiveProcessingExpr())
+            .Select(p => p.Name)
+            .ToHashSet();
 
-        return ScanAllMigrationExecutors().Where(p => !p.IsExpired()).OrderBy(x => x.GetOrderByValue()).ToList().FindAll(me => !executedMigrationNames.Contains(me.Name));
+        return ScanAllMigrationExecutors().Where(p => !p.IsExpired()).OrderBy(x => x.GetOrderByValue()).ToList().FindAll(me => !notClaimableMigrationNames.Contains(me.Name));
     }
 
     protected Dictionary<Type, string> BuildEntityTypeToCollectionNameDictionary()

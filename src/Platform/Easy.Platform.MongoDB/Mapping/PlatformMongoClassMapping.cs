@@ -85,9 +85,26 @@ public abstract class PlatformMongoClassMapping : IPlatformMongoClassMapping
                 .Execute();
     }
 
+    /// <summary>
+    /// Registers <typeparamref name="TEntity" />'s class map exactly once, even when several threads race here.
+    /// <para />
+    /// The lock is what makes the name honest. <see cref="BsonClassMap.IsClassMapRegistered" /> and
+    /// <see cref="BsonClassMap.RegisterClassMap{TClass}(Action{BsonClassMap{TClass}})" /> are two separate operations against
+    /// a process-global registry that REJECTS duplicates rather than ignoring them, so an unlocked check-then-act lets two
+    /// callers both see "not registered" and the loser throws
+    /// <c>ArgumentException: An item with the same key has already been added</c>. Holding the lock across both makes the
+    /// pair atomic.
+    /// <para />
+    /// Shares <see cref="PlatformMongoDbPersistenceModuleCache.RegistrationLock" /> with the module-level registration
+    /// helpers because they nest into this method; C# <c>lock</c> is re-entrant per thread, so the nesting is safe and a
+    /// single lock avoids any lock-ordering deadlock.
+    /// </summary>
     public static void RegisterClassMapIfNotRegistered<TEntity>(Action<BsonClassMap<TEntity>> classMapInitializer)
     {
-        if (!BsonClassMap.IsClassMapRegistered(typeof(TEntity))) BsonClassMap.RegisterClassMap(classMapInitializer);
+        lock (PlatformMongoDbPersistenceModuleCache.RegistrationLock)
+        {
+            if (!BsonClassMap.IsClassMapRegistered(typeof(TEntity))) BsonClassMap.RegisterClassMap(classMapInitializer);
+        }
     }
 
     public static void DefaultClassMapInitializer<T>(

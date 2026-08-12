@@ -1,10 +1,15 @@
 #region
 
+// Required: Exception.BeautifyStackTrace() is an extension method declared in namespace System.Diagnostics
+// (Common/Exceptions/StackTraceBeautifier/ExceptionExtensions.cs), not a Stopwatch/Activity usage. Do not "clean up" as unused.
+using System.Diagnostics;
 using System.Reflection;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 #endregion
 
@@ -88,7 +93,64 @@ public abstract class PlatformDataMigrationExecutor<TDbContext> : IPlatformDataM
 
     public virtual bool Ignored => false;
 
-    public abstract Task Execute(TDbContext dbContext);
+    /// <summary>
+    /// Runs the migration, wrapping <see cref="InternalExecute" /> with STARTED / FINISHED / FAILED logging so EVERY
+    /// data migration reports its own lifecycle no matter which caller drives it.
+    ///
+    /// <para><strong>Why the wrapper lives here and not at the call site.</strong> This mirrors the platform's existing
+    /// template-method convention (<c>PlatformBackgroundJobExecutor.Execute</c> → <c>InternalExecuteAsync</c> →
+    /// <c>ProcessAsync</c>, <c>PlatformApplicationDataSeeder.SeedData</c> → <c>InternalSeedData</c>): the cross-cutting
+    /// concern is implemented ONCE in the base and subclasses only supply the migration body. Logging placed in the
+    /// orchestrators instead would have to be repeated in every current and future caller, and a migration invoked from
+    /// anywhere else would silently produce no lifecycle log at all.</para>
+    ///
+    /// <para>Failures log FAILED and rethrow — the caller owns the migration-history status transition (Failed vs
+    /// SkipFailed); this only guarantees a STARTED line is always terminated by an outcome line.</para>
+    ///
+    /// <para><strong>What FINISHED asserts, and what it does NOT.</strong> This wrapper spans the migration BODY only.
+    /// FINISHED means "<see cref="InternalExecute" /> returned without throwing" — it does NOT mean the migration history
+    /// recorded <c>Processed</c>, because that upsert runs in the caller after this method returns and is itself retried.
+    /// So FINISHED necessarily precedes the row transition, and a caller that dies in between leaves FINISHED in the log
+    /// with the row still at <c>Processing</c>. When diagnosing, the row is the record; the log is the narrative. The
+    /// message text is deliberately NOT reworded to say so, because operational searches are keyed on the literal
+    /// <c>"DataMigration … FINISHED"</c> prefix.</para>
+    /// </summary>
+    public Task Execute(TDbContext dbContext)
+    {
+        return Util.TaskRunner.ProfileExecutionAsync(
+            asyncTask: async () =>
+            {
+                try
+                {
+                    await InternalExecute(dbContext);
+                }
+                catch (Exception e)
+                {
+                    dbContext.Logger.LogError(
+                        e.BeautifyStackTrace(),
+                        "DataMigration {MigrationName} FAILED. ExecutorType:{ExecutorType}",
+                        Name,
+                        GetType().FullName);
+
+                    throw;
+                }
+            },
+            beforeExecution: () => dbContext.Logger.LogInformation(
+                "DataMigration {MigrationName} STARTED. ExecutorType:{ExecutorType}",
+                Name,
+                GetType().FullName),
+            afterExecution: elapsedMilliseconds => dbContext.Logger.LogInformation(
+                "DataMigration {MigrationName} FINISHED. ElapsedMilliseconds:{ElapsedMilliseconds}. ExecutorType:{ExecutorType}",
+                Name,
+                elapsedMilliseconds,
+                GetType().FullName));
+    }
+
+    /// <summary>
+    /// Implement the actual migration body here. <see cref="Execute" /> adds the STARTED/FINISHED/FAILED logging around
+    /// this method, so never log the migration start/end again inside an override.
+    /// </summary>
+    protected abstract Task InternalExecute(TDbContext dbContext);
 
     public virtual bool AllowRunInBackgroundThread => false;
 

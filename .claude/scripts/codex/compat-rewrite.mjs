@@ -74,7 +74,9 @@ export function rewriteClaudeToolTermsForCodex(text) {
     )
     .replaceAll("`TaskCreate`", "task tracking")
     .replaceAll("`TaskList`", "the current task list")
-    .replaceAll("`AskUserQuestion`", "a direct user question")
+    .replaceAll("via `AskUserQuestion`", "by asking the user directly")
+    .replaceAll("`AskUserQuestion` decision", "user decision")
+    .replaceAll("`AskUserQuestion`", "ask the user directly")
     .replaceAll("`EnterPlanMode`", "manual plan-mode switching")
     .replaceAll("`Skill` tool", "skill invocation")
     .replaceAll("`Skill`", "skill invocation")
@@ -89,6 +91,7 @@ export function rewriteClaudeToolTermsForCodex(text) {
     .replace(/\bTaskCreate:/g, "Task tracking:")
     .replace(/\bTaskCreate\b/g, "task tracking")
     .replace(/\bTaskList\b/g, "the current task list")
+    .replace(/\bvia AskUserQuestion\b/g, "by asking the user directly")
     .replace(/\bAskUserQuestion\b/g, "ask the user directly")
     .replace(/\bEnterPlanMode\b/g, "manual plan-mode switching");
 }

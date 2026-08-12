@@ -7,7 +7,6 @@ using Easy.Platform.Common;
 using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
-using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.Exceptions;
@@ -445,13 +444,11 @@ public static class PlatformInboxMessageBusConsumerHelper
                 {
                     loggerFactory()
                         .LogError(
-                            ex.BeautifyStackTrace(),
-                            "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                            "[{Type}]: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                             nameof(PlatformInboxMessageBusConsumerHelper),
-                            ex.Message,
+                            PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                             message.GetType().GetNameOrGenericTypeName(),
-                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                            message.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                            PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(message));
                 }
             });
     }
@@ -659,7 +656,9 @@ public static class PlatformInboxMessageBusConsumerHelper
                 }
                 catch (Exception e)
                 {
-                    loggerFactory().LogError(e.BeautifyStackTrace(), "Cancel StartIntervalPingProcessing failed");
+                    loggerFactory().LogError(
+                        "Cancel StartIntervalPingProcessing failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]",
+                        PlatformMessageBusDiagnosticFormatter.FormatException(e));
                 }
             }
         }
@@ -736,7 +735,9 @@ public static class PlatformInboxMessageBusConsumerHelper
                         {
                             // Log only after 75% of retry budget consumed; with Inbox/Outbox budget=43200 first error fires at retry 32400. See Util.TaskRunner.LogErrorRetryThreshold.
                             if (retryAttempt > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
-                                loggerFactory().LogError(ex.BeautifyStackTrace(), "Update PlatformInboxBusMessage LastProcessingPingTime failed");
+                                loggerFactory().LogError(
+                                    "Update PlatformInboxBusMessage LastProcessingPingTime failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]",
+                                    PlatformMessageBusDiagnosticFormatter.FormatException(ex));
                         });
                 }
             },
@@ -779,13 +780,11 @@ public static class PlatformInboxMessageBusConsumerHelper
                 {
                     loggerFactory()
                         .LogError(
-                            ex.BeautifyStackTrace(),
-                            "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                            "[{Type}]: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                             nameof(PlatformInboxMessageBusConsumerHelper),
-                            ex.Message,
+                            PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                             existingInboxMessage.MessageTypeFullName,
-                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                            existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                            PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingInboxMessage.MessageTypeFullName));
                 }
             });
     }
@@ -887,9 +886,8 @@ public static class PlatformInboxMessageBusConsumerHelper
     {
         loggerFactory()
             .LogError(
-                ex.BeautifyStackTrace(),
-                "UpdateExistingInboxProcessedMessageAsync failed. [[Error:{Error}]], [ExistingInboxMessageId:{ExistingInboxMessageId}].",
-                ex.Message,
+                "UpdateExistingInboxProcessedMessageAsync failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]], [ExistingInboxMessageId:{ExistingInboxMessageId}].",
+                PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                 existingInboxMessageId);
     }
 
@@ -951,13 +949,11 @@ public static class PlatformInboxMessageBusConsumerHelper
                     {
                         loggerFactory()
                             .LogError(
-                                ex.BeautifyStackTrace(),
-                                "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                                "[{Type}]: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                                 nameof(PlatformInboxMessageBusConsumerHelper),
-                                ex.Message,
+                                PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                                 existingInboxMessage.MessageTypeFullName,
-                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                                existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                                PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingInboxMessage.MessageTypeFullName));
                     }
                 });
         }
@@ -1001,19 +997,19 @@ public static class PlatformInboxMessageBusConsumerHelper
                     {
                         loggerFactory()
                             .LogError(
-                                ex.BeautifyStackTrace(),
-                                "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                                "[{Type}]: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                                 nameof(PlatformInboxMessageBusConsumerHelper),
-                                ex.Message,
+                                PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                                 existingInboxMessage.MessageTypeFullName,
-                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                                existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                                PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingInboxMessage.MessageTypeFullName));
                     }
                 });
         }
         catch (Exception e)
         {
-            loggerFactory().LogError(e.BeautifyStackTrace(), "Try DeleteExistingInboxProcessedMessageAsync failed");
+            loggerFactory().LogError(
+                "Try DeleteExistingInboxProcessedMessageAsync failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]",
+                PlatformMessageBusDiagnosticFormatter.FormatException(e));
         }
     }
 
@@ -1046,33 +1042,14 @@ public static class PlatformInboxMessageBusConsumerHelper
 
         try
         {
-            var cqrsEventJsonMessage =
-                PlatformJsonSerializer.TryDeserializeOrDefault<PlatformBusMessage<PlatformCqrsEventBusMessagePayload>>(existingInboxMessage.JsonMessage);
-
-            if (cqrsEventJsonMessage?.Payload == null)
-            {
-                loggerFactory()
-                    .LogError(
-                        exception.BeautifyStackTrace(),
-                        "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]];",
-                        exception.Message,
-                        message.GetType().GetNameOrGenericTypeName(),
-                        consumerName,
-                        PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                        existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
-            }
-            else
-            {
-                loggerFactory()
-                    .LogError(
-                        exception.BeautifyStackTrace(),
-                        "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[EventHandlerTypeFullName: {EventHandlerTypeFullName}]]; [[InboxJsonMessagePayload: {@InboxJsonMessagePayload}]];",
-                        exception.Message,
-                        message.GetType().GetNameOrGenericTypeName(),
-                        consumerName,
-                        cqrsEventJsonMessage.Payload.EventHandlerTypeFullName,
-                        cqrsEventJsonMessage.Payload);
-            }
+            loggerFactory()
+                .LogError(
+                    "UpdateExistingInboxFailedMessageAsync. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxMessageId:{InboxMessageId}]]; [[MessageDiagnostics:{MessageDiagnostics}]];",
+                    PlatformMessageBusDiagnosticFormatter.FormatException(exception),
+                    message.GetType().GetNameOrGenericTypeName(),
+                    consumerName,
+                    existingInboxMessage.Id,
+                    PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(message));
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 () => serviceProvider.ExecuteInjectScopedAsync(async (IPlatformInboxBusMessageRepository inboxBusMessageRepo) =>
@@ -1106,13 +1083,11 @@ public static class PlatformInboxMessageBusConsumerHelper
                     {
                         loggerFactory()
                             .LogError(
-                                ex.BeautifyStackTrace(),
-                                "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                                "[{Type}]: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
                                 nameof(PlatformInboxMessageBusConsumerHelper),
-                                ex.Message,
+                                PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                                 existingInboxMessage.MessageTypeFullName,
-                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                                existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                                PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingInboxMessage.MessageTypeFullName));
                     }
                 });
         }
@@ -1120,17 +1095,49 @@ public static class PlatformInboxMessageBusConsumerHelper
         {
             loggerFactory()
                 .LogError(
-                    ex.BeautifyStackTrace(),
-                    "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]];",
-                    ex.Message,
+                    "UpdateExistingInboxFailedMessageAsync. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxMessageId:{InboxMessageId}]]; [[MessageDiagnostics:{MessageDiagnostics}]];",
+                    PlatformMessageBusDiagnosticFormatter.FormatException(ex),
                     message.GetType().GetNameOrGenericTypeName(),
                     consumerName,
-                    PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                    existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                    existingInboxMessage.Id,
+                    PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingInboxMessage.MessageTypeFullName));
         }
     }
 
-    private static async Task UpdateExistingInboxFailedMessageAsync(
+    /// <summary>
+    /// Marks an inbox row as Failed (or Ignored when the consumer must never retry) and schedules its next attempt.
+    /// </summary>
+    /// <param name="exception">The consume failure; its type, message and stack trace are persisted — see the remarks.</param>
+    /// <param name="retryProcessFailedMessageInSecondsUnit">Base unit for the backoff schedule.</param>
+    /// <param name="consumerHasErrorAndShouldNeverRetry">When true the row is Ignored instead of Failed.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="existingInboxMessage">The row to update.</param>
+    /// <param name="inboxBusMessageRepo">Inbox repository.</param>
+    /// <remarks>
+    /// <para>
+    /// <b><c>LastConsumeError</c> is a debuggable exception diagnostic, but never a message dump.</b> It carries the
+    /// exception type, message, demystified stack trace and inner TYPE chain. It does NOT carry the bus message
+    /// body, inner exception messages, or <see cref="Exception.Data" />.
+    /// </para>
+    /// <para>
+    /// This column briefly stored the exception TYPE alone, on the reasoning that it is a long-lived database row
+    /// readable by anyone with database access. That was reversed, because the reasoning did not survive one
+    /// observation: <b>this consume path catches the exception and never rethrows it</b>, so this column is the ONLY
+    /// record that the failure happened — and <see cref="PlatformInboxBusMessage.JsonMessage" /> already persists
+    /// the entire message body in the SAME ROW, with the same retention and the same readers. Stripping the adjacent
+    /// error column was therefore never a net confidentiality gain; it only made stuck messages undiagnosable.
+    /// </para>
+    /// <para>
+    /// What genuinely still holds is the boundary between the EXCEPTION and the PAYLOAD: the message body is not
+    /// re-serialized into this column. The accepted disclosure — exception messages are not credential-scrubbed —
+    /// is documented as a decision on <c>PlatformDiagnosticJsonSerializer.SerializeException</c>.
+    /// </para>
+    /// <para>
+    /// <b>Visibility:</b> <c>internal</c> rather than <c>private</c> so the unit tests can assert what actually lands
+    /// in the persisted column. The behaviour under test is what gets STORED, which no log-capturing test can see.
+    /// </para>
+    /// </remarks>
+    internal static async Task UpdateExistingInboxFailedMessageAsync(
         Exception exception,
         double retryProcessFailedMessageInSecondsUnit,
         bool consumerHasErrorAndShouldNeverRetry,
@@ -1142,7 +1149,7 @@ public static class PlatformInboxMessageBusConsumerHelper
             consumerHasErrorAndShouldNeverRetry ? PlatformInboxBusMessage.ConsumeStatuses.Ignored : PlatformInboxBusMessage.ConsumeStatuses.Failed;
         existingInboxMessage.LastConsumeDate = Clock.UtcNow;
         existingInboxMessage.LastProcessingPingDate = Clock.UtcNow;
-        existingInboxMessage.LastConsumeError = exception.BeautifyStackTrace().Serialize();
+        existingInboxMessage.LastConsumeError = PlatformMessageBusDiagnosticFormatter.FormatException(exception);
         existingInboxMessage.RetriedProcessCount = (existingInboxMessage.RetriedProcessCount ?? 0) + 1;
         existingInboxMessage.NextRetryProcessAfter = PlatformInboxBusMessage.CalculateNextRetryProcessAfter(
             existingInboxMessage.RetriedProcessCount,

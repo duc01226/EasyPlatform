@@ -34,9 +34,11 @@ public static class PlatformAssertDatabaseState
     /// <summary>
     /// Default timeout for database state assertions.
     /// Commands may trigger async event handlers and message bus consumers
-    /// that update data asynchronously. 5s covers the vast majority of processing chains.
+    /// that update data asynchronously. 120s is the canonical project max wait
+    /// (see <see cref="PlatformIntegrationTestHelper.DefaultMaxWait"/>) — covers the vast
+    /// majority of processing chains while still failing fast on a genuinely hung path.
     /// </summary>
-    public static readonly TimeSpan DefaultAssertTimeout = TimeSpan.FromSeconds(5);
+    public static readonly TimeSpan DefaultAssertTimeout = PlatformIntegrationTestHelper.DefaultMaxWait;
 
     /// <summary>
     /// Verifies that an entity with the given ID exists in the database.

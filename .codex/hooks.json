@@ -38,6 +38,10 @@
                     },
                     {
                         "type": "command",
+                        "command": "node ./.claude/hooks/bash-shell-guard.cjs"
+                    },
+                    {
+                        "type": "command",
                         "command": "node ./.claude/hooks/git-commit-block.cjs"
                     },
                     {

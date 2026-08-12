@@ -1,4 +1,4 @@
-<!-- Last scanned: 2026-06-12 -->
+<!-- Last scanned: 2026-08-12 -->
 
 # Code Review Rules
 
@@ -192,6 +192,41 @@ logger.LogWarning(e, "...");
 
 // DON'T — interpolated message loses structured fields
 logger.LogInformation($"User {userId} published {snippetId}"); // WRONG
+```
+
+### Diagnostic Sinks — Payload-Free Boundary
+
+Anything written to an observability sink (log, trace tag, persisted diagnostic column) MUST go through the diagnostic serialization boundary. Sinks fan out far wider than the data itself, so the boundary emits ONLY a type-name envelope and never walks the object graph — that is stronger than property allow/deny-listing, which fails open for every newly added member and for untyped containers.
+
+```csharp
+// DO — payload-free envelope for a CQRS/persistence/job value
+PlatformJsonSerializer.SerializeForDiagnostics(command);                    // PlatformJsonSerializer.cs:186
+PlatformJsonSerializer.SerializeExceptionForDiagnostics(ex);                // PlatformJsonSerializer.cs:214
+PlatformMessageBusDiagnosticFormatter.FormatRuntimeMessage(msg);            // PlatformMessageBusDiagnosticFormatter.cs:43
+PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(typeFullName); // :59
+PlatformMessageBusDiagnosticFormatter.FormatException(ex);                  // :86
+
+// DON'T — every one of these serializes caller-owned payload into a wide-audience sink
+logger.LogError("Failed {@Request}", command);        // destructuring walks the graph
+logger.LogError(command.ToFormattedJson());           // full payload
+logger.LogError(ex.Message + ex.BeautifyStackTrace());// bypasses the exception envelope
+```
+
+`[PlatformSensitiveData]` (`PlatformSensitiveDataAttribute.cs:9`) is the opt-in marker for the few TYPED diagnostic projections that do render real content (HTTP request-body capture, `PlatformHttpRequestBodyDiagnosticSerializer.cs:239`); that path fails closed on any model it cannot classify ahead of time. Reviewer note: this rule is machine-enforced — `PlatformDiagnosticSinkSourceShapeTests.cs` asserts the source shape of every known sink, so a bypass breaks the build rather than shipping silently.
+
+### Persistence Failure Exceptions — Provider-Neutral Only
+
+Application/domain code MUST catch the platform exception, never a provider-native one, and NEVER match on `ex.GetType().Name`.
+
+```csharp
+// DO
+catch (PlatformDomainUniqueConstraintViolationException ex) { /* ... */ }
+// thrown by PlatformEfCoreDbContext.cs:910 (SQLSTATE 23505) and PlatformMongoDbContext.cs:662,666 (DuplicateKey 11000)
+
+// DON'T — couples the layer to one storage technology
+catch (DbUpdateException ex) { /* ... */ }
+// DON'T — keeps compiling after a rename/provider swap; degrades to a silent no-op with no failing test
+if (ex.GetType().Name is "PostgresException") { /* ... */ }
 ```
 
 ### Background Jobs — `[PlatformRecurringJob]` Executor

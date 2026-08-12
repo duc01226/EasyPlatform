@@ -9,6 +9,7 @@ using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Cqrs.Queries;
 using Easy.Platform.Common.Exceptions;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations.Exceptions;
 using Easy.Platform.Common.Validations.Extensions;
@@ -360,16 +361,30 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
     /// 7. Automatic garbage collection optimization
     ///
     /// Error handling includes:
-    /// - Detailed logging with request context and audit tracking
+    /// - Audit-track correlation instead of request-context destructuring
     /// - Differentiated logging levels (Error vs Warning) based on exception type
-    /// - Stack trace beautification for better debugging
-    /// - Request and context serialization for troubleshooting
+    /// - Exception type metadata without raw exception detail
+    /// - Query and exception TYPE diagnostics for troubleshooting
     ///
     /// The method ensures:
-    /// - All exceptions are logged with full context
+    /// - Exceptions are logged with payload-free REQUEST diagnostics (type name only) and detailed EXCEPTION
+    ///   diagnostics (type, message, stack trace, inner type chain)
     /// - Memory is managed efficiently after processing
     /// - Debug information is available when needed
     /// - Request audit trails are maintained
+    ///
+    /// <para>
+    /// <b>What the failure log deliberately omits, and how to still diagnose with it.</b> The log carries the query
+    /// TYPE, the exception TYPE, and the audit track id — not the query contents, the exception detail, or the
+    /// request context. Query parameters name exactly whose or which records were being read (identifiers, filters,
+    /// search terms), and the whole request context was previously destructured into every failure record alongside
+    /// them, taking identity and authorization values with it.
+    /// </para>
+    /// <para>
+    /// The <c>AuditTrackId</c> is what replaces them: it correlates this record to the audit trail, where that
+    /// context lives under access control. Handlers needing more in the log should add specific, non-sensitive
+    /// fields explicitly rather than restoring whole-object or whole-context logging.
+    /// </para>
     ///
     /// Automatic garbage collection is triggered to optimize memory usage
     /// after query processing, especially important for high-throughput scenarios.
@@ -396,19 +411,20 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
                         {
                             if (AutoLogOnException)
                             {
-                                // Log errors with appropriate level and full context
+                                // Log errors with a protected request representation and no full request context.
                                 LoggerFactory
                                     .CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
                                     .Log(
                                         !ex.IsPlatformLogicException() ? LogLevel.Error : LogLevel.Warning,
-                                        ex.BeautifyStackTrace(),
-                                        "[{Tag1}] Query:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{@Request}. RequestContext:{@RequestContext}",
+                                        "[{Tag1}] Query:{RequestName} failed. ExceptionDiagnostics:{ExceptionDiagnostics}. AuditTrackId:{AuditTrackId}. RequestDiagnostics:{RequestDiagnostics}",
                                         "UnknownError",
                                         request.GetType().Name,
-                                        ex.Message,
+                                        PlatformJsonSerializer.SerializeExceptionForDiagnostics(ex),
                                         request.AuditInfo?.AuditTrackId,
-                                        request,
-                                        RequestContext.GetAllKeyValues()
+                                        PlatformJsonSerializer.SerializeForDiagnostics(
+                                            request,
+                                            forceUseRuntimeType: true,
+                                            writeIndented: true)
                                     );
                             }
                         }
@@ -472,7 +488,12 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
             {
                 // Add request metadata to tracing span
                 activity?.SetTag("RequestType", request.GetType().Name);
-                activity?.SetTag("Request", request.ToFormattedJson());
+                activity?.SetTag(
+                    "Request",
+                    PlatformJsonSerializer.SerializeForDiagnostics(
+                        request,
+                        forceUseRuntimeType: true,
+                        writeIndented: true));
 
                 return await handleFunc();
             }

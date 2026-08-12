@@ -32,7 +32,8 @@ When coding, planning, debugging, testing, or reviewing, open project docs expli
 
 **Situation-based docs:**
 
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`, `project-structure-reference.md`
+- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
+- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
 - Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
 - Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
 - Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
@@ -62,9 +63,10 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Summary:**
 
-- This skill is a DERIVED-aid assembler only: it reads §1 Overview, §5 Domain Model Mermaid, and §8 TCs from existing Feature Specs to build `INDEX.md` (default), an optional cross-capability `{Bucket}.erd.md`, and an optional `{Bucket}.reimplementation-guide.md` — it NEVER authors business content.
-- Hard prohibition is the load-bearing rule: never emit the retired A-E engineering tree, `M##` dirs, `00-module-registry.md`, `01-domain-erd.md`, `06-reimplementation-guide.md`, or `docs/specs/README.md`/`PRIORITY-INDEX.md`. Use the `{Bucket}.*` filenames instead.
-- Step 0 Scope Gate via a direct user question (bucket + mode + artifacts) is BLOCKING and runs before any read; if the target bucket has no `README.*.md` specs, STOP and route to `$spec` — never fabricate a spec to index.
+- **Purpose:** a DERIVED-aid assembler ONLY — reads §1 Overview, §5 Domain Model Mermaid, §8 TCs from existing Feature Specs to build `INDEX.md` (default) + optional cross-capability `{Bucket}.erd.md` + optional `{Bucket}.reimplementation-guide.md`; it NEVER authors business content. The Feature Spec stays the source of truth.
+- **Main steps (run in order):** **Step 0** Scope Gate — ask the user directly (bucket + mode + artifacts), BLOCKING before any read; no `README.*.md` specs → STOP, route to `$spec`. **Step 1** Read source specs — extract capability name+link, §1 summary, §8 feature code/TC count/status, §5 Mermaid entities+relationships. **Step 2** Assemble aids — 2a `INDEX.md` catalog, 2b cross-capability ERD, 2c reimplementation guide. **Step 3** Stamp & Write — DERIVED banner + date, write each artifact immediately (never accumulate in context). **Step 4** Verify — no retired artifacts, every link resolves, banner present, prose tech-free, no canonical claims.
+- **Modes:** `index` (default — regenerate derived aids) · `audit` (report which derived aids are stale vs their source specs).
+- Hard prohibition is the load-bearing rule: never emit the retired A-E engineering tree, `M##` dirs, `00-module-registry.md`, `01-domain-erd.md`, `06-reimplementation-guide.md`, or `docs/specs/README.md`/`PRIORITY-INDEX.md`. Use the `{Bucket}.*` filenames instead — why: an A-E bundle becomes a second source of truth competing with the Feature Spec.
 - Every generated file carries the `> DERIVED — regenerate via $spec-index; do NOT hand-edit` banner, links each row/entity back to its source spec, and keeps INDEX/ERD prose tech-free — only the reimplementation guide may name a target stack.
 
 > **Renamed:** repurposes the former `$spec-discovery` skill (v4.0.0 derived-aid rewrite) — `$spec-discovery` no longer resolves as a slash command; use `$spec-index`.
@@ -80,7 +82,7 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 | `index` | default — refresh derived aids     | Feature Specs in the target bucket(s)           | `INDEX.md` catalog (+ optional ERD / reimplementation guide), all DERIVED |
 | `audit` | explicit request — staleness check | Feature Spec mtimes/git vs derived-artifact age | Stale-list report (which derived aids lag their source specs)             |
 
-**Workflow:** `$scout` (locate specs) → `$spec-index` (assemble derived aids) → `$review-changes` → `$watzup`
+**Workflow:** `$scout` (locate specs) → `$spec-index` (assemble derived aids) → `$changes-review` → `$watzup`
 
 **Key Rules:**
 
@@ -100,7 +102,7 @@ Derived aids are organized by **App Bucket** (matches the single-home spec tree)
 
 ## Step 0 — Scope Gate (MANDATORY FIRST)
 
-Before reading anything, use a direct user question. Confirm:
+Before reading anything, use ask the user directly. Confirm:
 
 | Dimension      | Question                                                                                                  | Auto-Default    |
 | -------------- | --------------------------------------------------------------------------------------------------------- | --------------- |
@@ -210,7 +212,7 @@ If a user explicitly asks for an A-E bundle, explain it is retired and offer the
 
 ## Next Steps
 
-**[BLOCKING]** After completing, use a direct user question — DO NOT skip:
+**[BLOCKING]** After completing, use ask the user directly — DO NOT skip:
 
 - **"$docs-update (Recommended)"** — sync the Feature Specs + Section 8 if any source content was found stale during indexing
 - **"$watzup"** — wrap up if index generation is the final step
@@ -225,7 +227,7 @@ If a user explicitly asks for an A-E bundle, explain it is retired and offer the
 | `$spec`              | **Source owner** — authors the canonical 8-section Feature Spec and flags when derived refresh may be required | Before spec-index — the specs must exist to index          |
 | `$spec [mode=tests]` | **Source owner** — owns Section 8 TCs that this skill counts in the catalog                                    | When TCs change and the index TC counts must refresh       |
 | `$docs-update`       | **Orchestrator** — may call spec-index to refresh derived aids after a doc sync                                | After code/spec changes need a full doc sync               |
-| `$review-changes`    | **Trigger** — detects spec changes and surfaces stale derived aids                                             | After spec changes; it will suggest regenerating the index |
+| `$changes-review`    | **Trigger** — detects spec changes and surfaces stale derived aids                                             | After spec changes; it will suggest regenerating the index |
 
 ## What Is Spec Discovery? (v4.0.0)
 
@@ -261,8 +263,9 @@ A **derived-index generator** over the single-home spec tree. The canonical know
 > **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
 > **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
 > **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing.** Before changing a constant, limit, flag, wording, or pattern, read nearby context and history.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
 > **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
 > **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->
@@ -300,6 +303,7 @@ A **derived-index generator** over the single-home spec tree. The canonical know
 ## Closing Reminders
 
 - **IMPORTANT MUST ATTENTION Goal:** Give readers a regenerable, single-writer navigation layer (catalog + cross-capability ERD + rebuild guide) assembled FROM the canonical Feature Specs — so a bucket can be browsed or replatformed without ever forking a second, hand-maintained source of truth
+- **IMPORTANT MUST ATTENTION Main steps (in order):** Step 0 Scope Gate (ask the user directly bucket+mode+artifacts, BLOCKING) → Step 1 Read source specs (§1 summary, §8 code/TC count/status, §5 Mermaid) → Step 2 Assemble (2a `INDEX.md`, 2b ERD, 2c reimplementation guide) → Step 3 Stamp & Write (DERIVED banner + date, write each immediately) → Step 4 Verify (no retired artifacts, links resolve, banner present, prose tech-free) — why: AI keeps forgetting the skill owns this fixed sequence; NEVER skip or reorder without user approval
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries — MUST ATTENTION each canonical body above):**
 
@@ -309,7 +313,7 @@ A **derived-index generator** over the single-home spec tree. The canonical know
 
 - **IMPORTANT MUST ATTENTION [BLOCKING]** Output is DERIVED — never emit `M##`/A-E/`00-module-registry`/`01-domain-erd`/`06-reimplementation-guide`/QA-dashboard files (see Hard Prohibitions); use `{Bucket}.*` filenames instead — why: an A-E bundle becomes a second source of truth competing with the Feature Spec
 - **IMPORTANT MUST ATTENTION [BLOCKING]** The Feature Spec (`docs/specs/{Bucket}/README.{Feature}.md`) is the source of truth — this skill assembles, never authors, business content — why: a derived aid that asserts canonical authority corrupts the single-writer contract
-- **IMPORTANT MUST ATTENTION [BLOCKING]** Confirm bucket + mode + artifacts via a direct user question BEFORE Step 1 — NEVER auto-start; if the bucket has no `README.*.md` specs, STOP and route to `$spec` instead of fabricating a spec to index
+- **IMPORTANT MUST ATTENTION [BLOCKING]** Confirm bucket + mode + artifacts by asking the user directly BEFORE Step 1 — NEVER auto-start; if the bucket has no `README.*.md` specs, STOP and route to `$spec` instead of fabricating a spec to index
 - **IMPORTANT MUST ATTENTION [BLOCKING]** Context compaction/session resume → the current task list FIRST; resume existing tasks, never re-run a completed generation pass — why: summaries describe intent, not filesystem state
 - **IMPORTANT MUST ATTENTION [BLOCKING]** Stamp the DERIVED banner + regenerate date on every generated file; write after each artifact, never accumulate large outputs in context
 - **IMPORTANT MUST ATTENTION [REQUIRED]** INDEX/ERD prose tech-agnostic (read `spec-principles.md` §3 banned-token list FIRST); only a reimplementation guide may name a target stack (rebuild-guide exception)
@@ -336,7 +340,7 @@ A **derived-index generator** over the single-home spec tree. The canonical know
 > **[IMPORTANT]** Break into many small todo tasks systematically before starting — this is critical.
 
 **IMPORTANT MUST ATTENTION** Output is DERIVED + regenerable — never a second source of truth; the Feature Spec is canonical.
-**IMPORTANT MUST ATTENTION** Confirm bucket + mode + artifacts via a direct user question BEFORE any read; no specs → STOP, route to `$spec`.
+**IMPORTANT MUST ATTENTION** Confirm bucket + mode + artifacts by asking the user directly BEFORE any read; no specs → STOP, route to `$spec`.
 **IMPORTANT MUST ATTENTION** Cite `file:line` for every extracted field; mark `[UNVERIFIED]` rather than guessing; never emit retired A-E/`M##`/QA-dashboard files.
 
 ---
@@ -421,8 +425,9 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
+- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing.** Pattern-matching as "wrong" skips context. Before changing any constant/limit/flag: read comments, git blame, surrounding code.
+- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
 - **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
 - **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
@@ -433,6 +438,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
 - **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
 - **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
+- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
 - **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->

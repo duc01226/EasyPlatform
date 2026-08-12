@@ -30,9 +30,9 @@ SKILL_NAMES = [
     "plan-review", "plan-validate",
     # Review family
     "security-review", "code-review", "integration-test-review",
-    "knowledge-review", "review-architecture",
-    "review-artifact", "review-changes", "review-domain-entities",
-    "production-readiness-review",
+    "knowledge-review", "architecture-review",
+    "artifact-review", "changes-review", "domain-entities-review",
+    "production-readiness-review", "architecture-review-full",
     "why-review",
     # Cook family
     "feature-implement",
@@ -63,6 +63,7 @@ SKILL_NAMES = [
     "workflow-idea-to-spec",
     "workflow-refactor", "workflow-research",
     "workflow-review-changes",
+    "workflow-architecture-audit",
     "workflow-seed-test-data", "workflow-code-to-spec", "workflow-spec-to-pbi",
     "workflow-spec-sync",
     "workflow-visualize",

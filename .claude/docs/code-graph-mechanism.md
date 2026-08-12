@@ -245,7 +245,7 @@ The skills/gates below pull graph context on demand. Only the two graph hooks (`
 | -------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------- |
 | Session start                          | `graph-session-init.cjs` (hook)            | Status: "Graph active. 94 files, 875 nodes" or install instructions |
 | `/code-review` running                 | skill runs `code_graph graph-blast-radius` | Blast radius summary, risk level, impacted files                    |
-| `/review-changes` running              | skill runs `code_graph graph-blast-radius` | Same as above                                                       |
+| `/changes-review` running              | skill runs `code_graph graph-blast-radius` | Same as above                                                       |
 | `/scout` running                       | skill runs `code_graph` trace/connections  | Structural overview for exploration                                 |
 | `/debug-investigate` running           | skill runs `code_graph` trace/query        | Dependency context for tracing                                      |
 | `/production-readiness-review` running | skill runs `code_graph graph-blast-radius` | Impact assessment for prod readiness                                |
@@ -464,7 +464,7 @@ The BFS trace algorithm (`tools.py:trace_connections`) follows both structural e
 | `graph-export`       | Export graph to JSON (`--format=json`) or single-file Mermaid diagram (`--format=mermaid`)                                                                                                         |
 
 **Skills with graph integration** (RECOMMENDED if graph.db exists):
-scout, debug, code-review, review-changes, production-readiness-review, investigate
+scout, debug, code-review, changes-review, production-readiness-review, investigate
 
 ## Example Workflow: Bug Fix with Graph
 
@@ -583,10 +583,10 @@ sequenceDiagram
 
 | Workflow          | Steps Where Graph Activates                                                                           | What Graph Provides                                                |
 | ----------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| **feature**       | /scout, /feature-implement (auto-update), /code-review, /review-changes, /production-readiness-review | Structural overview, incremental tracking, blast radius for review |
+| **feature**       | /scout, /feature-implement (auto-update), /code-review, /changes-review, /production-readiness-review | Structural overview, incremental tracking, blast radius for review |
 | **bugfix**        | /scout, /debug-investigate, /fix (auto-update), /code-review                                          | Dependency tracing for root cause, impact assessment of fix        |
 | **refactor**      | /scout, /plan-execute (auto-update), /code-review, /production-readiness-review                       | Ensures refactoring doesn't break callers/dependents               |
-| **hotfix**        | /scout, /fix (auto-update), /review-changes, /production-readiness-review                             | Fast blast radius to verify minimal production impact              |
+| **hotfix**        | /scout, /fix (auto-update), /changes-review, /production-readiness-review                             | Fast blast radius to verify minimal production impact              |
 | **investigation** | /scout, /investigate                                                                                  | Structural map for understanding code relationships                |
 
 ### Graph-Powered Skills
