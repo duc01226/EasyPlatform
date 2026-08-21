@@ -1,11 +1,11 @@
 using System.Threading;
 
-namespace Easy.Platform.Application.BackgroundLock;
+namespace Easy.Platform.Common.BackgroundLock;
 
 /// <summary>
 /// Runtime configuration for the per-domain background permit pools that replace the
 /// single global <c>Util.TaskRunner.BackgroundActionQueueLimitLock</c> semaphore.
-/// Registered as Singleton on <see cref="PlatformApplicationModule"/> via the virtual
+/// Registered as Singleton by the application module via its virtual
 /// <c>BackgroundLockConfigProvider</c> hook (mirrors the <c>PlatformOutboxConfig</c> /
 /// <c>PlatformInboxConfig</c> convention).
 /// </summary>

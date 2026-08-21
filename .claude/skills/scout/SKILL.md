@@ -106,6 +106,22 @@ Flag only switches **which subagent runs**. Orchestration identical for both eng
 
 Per agent: 3-minute timeout. Return file paths only — no content analysis. Use Glob (patterns), Grep (content), Bash (graph CLI).
 
+#### Search-Axis Fan-Out (ONE wave — each axis is blind to the others)
+
+Partitioning by path still searches ONE way. Each axis below finds files the others structurally CANNOT see — that blindness is exactly why a single search angle misses files. Select the axes the prompt warrants (they compose with the path split above: an agent gets one path scope + one axis) and spawn the whole set TOGETHER in one message:
+
+| Axis                      | The agent searches by                                                                                     | Finds what the other axes miss                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Filename / glob**       | Glob on entity + feature names and the project's path conventions                                         | files NAMED for the feature that never mention the keyword inside        |
+| **Symbol / content grep** | Grep for class, command, query, handler, endpoint, message names                                          | files that USE the concept without carrying it in their path             |
+| **Convention / naming**   | the project's suffix/prefix conventions (`*Handler`, `*Consumer`, `*-store`, per the structure reference) | siblings that convention says must change together                       |
+| **Test coverage**         | test directories for the same keywords, plus fixtures/builders/mocks                                      | the tests pinning the behavior — usually the fastest statement of intent |
+| **Config / registration** | DI wiring, routes, feature flags, config keys, resource/i18n files                                        | registrations and string-literal references a symbol grep skips          |
+
+**Graph is the sixth axis and it stays with YOU** — Step 3, after the barrier; sub-agents do not run it here.
+
+Wave rules: precompute the full path × triggered-axis assignment set, then dispatch it in consecutive **capacity-bounded waves** with one unique exact artifact path per assignment. Never drop an axis to fit host capacity; queue overflow assignments into the next wave. Each wave is read-only with zero write overlap, launches in one message, and reaches its barrier before Step 3. An axis the prompt gives no trigger for is not an assignment and counts as returned. Both engines take identical axis briefs — `--ext` only swaps `scout` for `scout-external`.
+
 ### Step 3: Graph Expand (MANDATORY — DO NOT SKIP)
 
 **YOU (main agent) MUST ATTENTION run graph commands YOURSELF after sub-agents return.** NOT optional — without graph, results are incomplete. Sub-agents cannot use graph — only main agent can.
@@ -160,7 +176,9 @@ If total files found <5 after Steps 2-3:
 
 ### Step 5: Synthesize Results
 
-Combine grep + graph into numbered, prioritized file list (see Results Format).
+**De-duplicate the union FIRST.** The axes overlap by design, so the same file legitimately arrives from several agents. Normalize each path (separators, casing) and merge to exactly ONE entry, recording which axes surfaced it — multi-axis hits rank higher (independent confirmation), while a HIGH-priority file surfaced by a single axis is the coverage risk worth one verifying grep before it ships in the list.
+
+Then combine grep + graph into a numbered, prioritized file list (see Results Format).
 
 ---
 
@@ -534,6 +552,45 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+<!-- SYNC:parallel-subagent-dispatch -->
+
+> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
+>
+> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
+> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
+> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
+> 4. **Spawn each wave in ONE message** — every `Agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
+> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
+> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
+> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
+>
+> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a skill or workflow explicitly fixes · gates awaiting user approval.
+>
+> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
+
+<!-- /SYNC:parallel-subagent-dispatch -->
+
+<!-- SYNC:parallel-subagent-dispatch:reminder -->
+
+- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
+- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
+
+<!-- /SYNC:parallel-subagent-dispatch:reminder -->
+
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Deliver a complete, prioritized map of every file relevant to the task — grep + graph combined — so downstream work starts with full coverage and zero blind spots.
@@ -551,6 +608,7 @@ Combine grep + graph into numbered, prioritized file list (see Results Format).
 - **Cross-Service Check:** Scan producers, consumers, sagas, contracts for silent regressions.
 - **Rationalization Prevention:** Reject step-skipping evasions; show grep evidence.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Parallel Sub-Agent Dispatch:** Tag tasks PAR/SEQ, group PAR into disjoint-write-set waves, spawn each wave in ONE message, barrier before advancing.
 
 **MUST ATTENTION** every protocol above is in force for this scout — honor its canonical body, not just the digest line.
 

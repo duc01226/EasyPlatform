@@ -4,6 +4,7 @@ using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Cqrs.Events;
 using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.Tests.Unit.TestInfrastructure;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -20,24 +21,24 @@ public class PlatformCqrsEventApplicationHandlerDiagnosticTests
     [Fact]
     public void RequestContextTransferFailureLog_OmitsPayloadAndRetainsCorrelationMetadata()
     {
-        var (handler, capturedLogs) = CreateHandler();
+        var (handler, logger) = CreateHandler();
         var @event = CreateEvent();
 
         handler.LogRequestContextTransferFailureForTest(@event, new InvalidOperationException("context-copy-failed"));
 
-        AssertPayloadFreeCorrelatedDiagnostic(capturedLogs, @event);
+        AssertPayloadFreeCorrelatedDiagnostic(logger, @event);
     }
 
     /// <summary>TC-DIAG-CQRS-002 / TC-DIAG-CQRS-003 — inbox retry logs retain type/correlation only.</summary>
     [Fact]
     public void InboxConsumerRetryLog_OmitsPayloadAndRetainsCorrelationMetadata()
     {
-        var (handler, capturedLogs) = CreateHandler();
+        var (handler, logger) = CreateHandler();
         var @event = CreateEvent();
 
         handler.LogInboxConsumerRetryForTest(@event, new InvalidOperationException("inbox-retry-failed"));
 
-        AssertPayloadFreeCorrelatedDiagnostic(capturedLogs, @event);
+        AssertPayloadFreeCorrelatedDiagnostic(logger, @event);
     }
 
     private static DiagnosticTestEvent CreateEvent()
@@ -45,19 +46,19 @@ public class PlatformCqrsEventApplicationHandlerDiagnosticTests
         return new DiagnosticTestEvent { PayloadSentinel = $"sensitive-{Guid.NewGuid():N}" };
     }
 
-    private static void AssertPayloadFreeCorrelatedDiagnostic(List<string> capturedLogs, DiagnosticTestEvent @event)
+    private static void AssertPayloadFreeCorrelatedDiagnostic(RecordingLogger logger, DiagnosticTestEvent @event)
     {
-        capturedLogs.Should().ContainSingle();
-        capturedLogs[0].Should().Contain(nameof(DiagnosticTestEvent));
-        capturedLogs[0].Should().Contain(nameof(DiagnosticTestEventHandler));
-        capturedLogs[0].Should().Contain(@event.Id);
-        capturedLogs[0].Should().NotContain(@event.PayloadSentinel);
+        var formatted = logger.Entries.Should().ContainSingle().Subject.Formatted;
+
+        formatted.Should().Contain(nameof(DiagnosticTestEvent));
+        formatted.Should().Contain(nameof(DiagnosticTestEventHandler));
+        formatted.Should().Contain(@event.Id);
+        formatted.Should().NotContain(@event.PayloadSentinel);
     }
 
-    private static (DiagnosticTestEventHandler Handler, List<string> CapturedLogs) CreateHandler()
+    private static (DiagnosticTestEventHandler Handler, RecordingLogger Logger) CreateHandler()
     {
-        var capturedLogs = new List<string>();
-        var loggerFactory = new CaptureLoggerFactory(capturedLogs);
+        var loggerFactory = new RecordingLoggerFactory();
         var requestContextAccessor = new Mock<IPlatformApplicationRequestContextAccessor>();
         requestContextAccessor.SetupGet(accessor => accessor.Current)
             .Returns(new Mock<IPlatformApplicationRequestContext>().Object);
@@ -75,7 +76,7 @@ public class PlatformCqrsEventApplicationHandlerDiagnosticTests
             serviceProvider.Object,
             new Mock<IPlatformRootServiceProvider>().Object);
 
-        return (handler, capturedLogs);
+        return (handler, loggerFactory.Logger);
     }
 
     private sealed class DiagnosticTestEvent : PlatformCqrsEvent
@@ -118,46 +119,6 @@ public class PlatformCqrsEventApplicationHandlerDiagnosticTests
         protected override Task HandleAsync(DiagnosticTestEvent @event, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
-        }
-    }
-
-    private sealed class CaptureLoggerFactory(List<string> capturedLogs) : ILoggerFactory
-    {
-        public ILogger CreateLogger(string categoryName)
-        {
-            return new CaptureLogger(capturedLogs);
-        }
-
-        public void AddProvider(ILoggerProvider provider)
-        {
-        }
-
-        public void Dispose()
-        {
-        }
-    }
-
-    private sealed class CaptureLogger(List<string> capturedLogs) : ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull
-        {
-            return null;
-        }
-
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return true;
-        }
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
-        {
-            capturedLogs.Add(formatter(state, exception));
         }
     }
 }

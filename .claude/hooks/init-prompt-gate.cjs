@@ -29,6 +29,9 @@ const {
     buildOfferMessage
 } = require('./lib/agent-files-state.cjs');
 
+// Plane 3 accelerator — NON-LOAD-BEARING. See the deletability contract in the lib header.
+const { buildOverlayContext } = require('./lib/skill-protocol-overlay.cjs');
+
 const {
     INIT_DISMISSED_PATH: DISMISS_FLAG,
     SCAN_STALE_DISMISSED_PATH: SCAN_DISMISS_FLAG,
@@ -413,6 +416,29 @@ function handleGraphGate(userPrompt) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// PROJECT PROTOCOL OVERLAY GATE (Plane 3 accelerator — DELETABLE)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Inject the project's protocol overlays for a user-typed `/skill-name`.
+ *
+ * NON-LOAD-BEARING: Planes 1 (CLAUDE.md CK:PROJECT-PROTOCOLS) and 2 (the SYNC block in every
+ * SKILL.md) deliver the same rules on both hosts without any hook. Deleting this function, its
+ * single call site, and lib/skill-protocol-overlay.cjs removes the whole plane cleanly.
+ *
+ * Emits nothing and NEVER throws: no leading `/name`, no registry, no match, or any error at all
+ * resolves to a silent no-op, so a broken accelerator can never trap a developer's prompt.
+ */
+function handleProtocolOverlayGate(userPrompt) {
+    try {
+        const text = buildOverlayContext(userPrompt, PROJECT_DIR);
+        if (text) emitPromptContext(text);
+    } catch {
+        // Accelerator only — never block.
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // MAIN
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -435,6 +461,11 @@ function main() {
 
         // Guard: empty project (no content directories) → skip gate entirely
         if (!hasProjectContent()) process.exit(0);
+
+        // Plane 3 accelerator: a user-typed /skill-name gets its project protocol overlays
+        // injected. Deliberately placed BEFORE the isConfigPopulated() branch — both branches
+        // exit(0), and overlay delivery has nothing to do with setup state.
+        handleProtocolOverlayGate(userPrompt);
 
         // Fast path: config already populated → check agent-files, staleness, graph gates.
         // Agent-files first: CLAUDE.md/AGENTS.md are the most foundational artifacts and
@@ -506,7 +537,9 @@ module.exports = {
     isGraphDismissRequest,
     GRAPH_DISMISS_TTL_MS,
     // Agent-files gate
-    handleAgentFilesGate
+    handleAgentFilesGate,
+    // Project protocol overlay gate (Plane 3 accelerator — deletable)
+    handleProtocolOverlayGate
 };
 
 if (require.main === module) {

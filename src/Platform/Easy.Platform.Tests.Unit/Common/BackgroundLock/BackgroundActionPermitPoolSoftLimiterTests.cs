@@ -1,5 +1,4 @@
 using Easy.Platform.Common.BackgroundLock;
-using Easy.Platform.Application.BackgroundLock;
 using Easy.Platform.Common.Diagnostics;
 using Easy.Platform.Common.Utils;
 using FluentAssertions;

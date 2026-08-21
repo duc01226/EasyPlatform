@@ -73,9 +73,15 @@ Report:
 
 ---
 
-### Operation B: Add a New Block to All Files
+### Operation B: Add a New Tiered Block
 
-Use when a NEW SYNC: block needs to be inserted into all 183 skill/agent files that don't have it yet. This is a bulk-insert operation — not a content-update.
+Use when a NEW SYNC: block needs tiered propagation. Derive the on-disk target inventory at runtime; never copy a fixed skill or agent count into this contract.
+
+- `SKILL_BLOCK_ORDER` is the base tier for every skill.
+- `ORCHESTRATOR_SKILL_BLOCK_ORDER` extends that base only for skills in `ORCHESTRATOR_SKILLS`.
+- Agent tiers remain independently governed by the injector's explicit agent sets.
+
+This is a bulk-insert operation, not a content update. Verify the computed target set before writing so orchestration-only rules never leak into every skill.
 
 **When to use:** A new protocol rule is added to `.claude/skills/shared/sync-inline-versions.md` and should appear in static carriers (`CLAUDE.md`, `AGENTS.md`, Codex, skills, and agents).
 
@@ -127,8 +133,15 @@ REMINDERS = {
 3. Add the block name to the relevant tier list(s) (controls which targets receive it + insertion order):
 
 ```python
-# Skills keep the original 2-block set — do NOT add agent-only rules here.
-SKILL_BLOCK_ORDER = ["critical-thinking-mindset", "ai-mistake-prevention"]
+# Skills-3: the two universal blocks + the orchestration block. Do NOT add
+# agent-only rules here. `parallel-subagent-dispatch` is deliberately SKILL-ONLY
+# — not because an agent cannot spawn, but because an agent receives ONE brief an
+# orchestrator has ALREADY partitioned, so re-running the partitioning protocol in
+# the leaf re-decides an upstream decision. It is ALSO declared in
+# agent_protocol_matrix.py EXCLUDED_ORCHESTRATION and in the TC-UAR-017
+# AGENT_ADOPTION_EXEMPT set (see "Skill-only blocks" below).
+SKILL_BLOCK_ORDER = ["critical-thinking-mindset", "ai-mistake-prevention",
+                     "parallel-subagent-dispatch"]
 
 # Core-6: every agent (skills/SKILL.md is unaffected).
 CORE_BLOCK_ORDER = ["critical-thinking-mindset", "ai-mistake-prevention",
@@ -157,6 +170,15 @@ An agent in **none of the three sets (or in more than one)** raises `SystemExit`
 >
 > **Note — the inserter is insert-only.** Moving an agent from CODE to READONLY_CODE (or otherwise dropping a block from its tier) does NOT remove the now-excess SYNC block from its `.md` on disk — `process_file` only inserts missing blocks. Strip the excess block(s) from the agent `.md` source by hand (or a scoped one-off) so the regression suite's tier assertions pass.
 
+**Skill-only blocks (orchestration).** A block in `SKILL_BLOCK_ORDER` but in NO agent tier reaches every skill and zero agents. TC-UAR-017 treats that shape as drift by default — a protocol that reached ≥3 skills but no agent is usually an oversight — so declare a genuinely skill-only block in BOTH lists:
+
+- `.claude/hooks/tests/suites/agent-universal-rules.test.cjs` → `AGENT_ADOPTION_EXEMPT` — the ONLY list TC-UAR-017 reads. Omit the block here and the suite fails.
+- `.claude/scripts/agent_protocol_matrix.py` → `EXCLUDED_ORCHESTRATION` — read only by that file's own `--validate` check (b) (`agent_protocol_matrix.py:481`), which rejects a per-agent manifest that assigns an excluded block without an `ORCHESTRATION_WHITELIST` entry. Omit it here and no test fails; the manifest is simply free to assign the block to an agent.
+
+> **No cross-check exists.** The two lists are enforced by two SEPARATE mechanisms and nothing verifies they agree — TC-UAR-017 never reads `EXCLUDED_ORCHESTRATION` (it appears in that test file only in a comment and a failure-message string). Keeping them in step is a **convention**, not an enforced invariant: update both by hand in the same change.
+
+The bar for that exemption is caller-side ownership: the block must drive orchestration the leaf either **cannot perform** (it has no access to the parent conversation, workflow state, or the user) or **has no basis to perform** (the decision was already made upstream before its brief was issued). Current members — `nested-task-creation`, `subagent-return-contract`, `sub-agent-selection`, `parallel-phase-advancement`, `parallel-subagent-dispatch`, `goal-contract-satisfaction-loop` — expand workflow steps, choose/brief sub-agents, partition a task list into parallel waves, or drive a user-facing convergence loop. `parallel-subagent-dispatch` is the second kind: an agent CAN spawn (agent files generally carry no `tools:` restriction), but it receives one already-partitioned brief, so re-running PAR/SEQ tagging inside it re-decides upstream's call. An agent that legitimately fans out carries that instruction in its own `.claude/agents/*.md` definition instead.
+
 #### Step B3: Run the script (dry-run first)
 
 ```bash
@@ -164,21 +186,26 @@ python .claude/scripts/sync-hooks-to-skills.py --dry-run --verbose
 # Verify: expected N updated, 0 errors
 
 python .claude/scripts/sync-hooks-to-skills.py --verbose
-# Verify: 183 updated (or close — some may already have it → skip)
+# Verify: the computed on-disk tier inventory was processed; already-current targets skip
 ```
 
 #### Step B4: Verify
 
 ```bash
-# Confirm target files now contain the new block. Expected count is TIER-AWARE:
-#   - block in SKILL_BLOCK_ORDER          → all skills + all agents
-#   - block in CORE_BLOCK_ORDER           → all 29 agents (skills excluded)
+# Confirm target files now contain the new block. Expected count is TIER-AWARE.
+# The skill tier and the agent tiers are INDEPENDENT lists — a block reaches
+# agents only if it is ALSO in an agent tier, so union the rows that apply:
+#   - block in SKILL_BLOCK_ORDER ONLY     → every discovered skill, 0 agents
+#                                           (skill-only ⇒ must be declared in BOTH
+#                                            exemption lists — see "Skill-only blocks")
+#   - block in SKILL_BLOCK_ORDER + CORE   → every discovered skill + every discovered agent
+#   - block in CORE_BLOCK_ORDER           → every discovered agent (skills excluded)
 #   - block in READONLY_CODE_BLOCK_ORDER  → 21 agents (17 code + 4 readonly-code)
 #   - block in CODE_BLOCK_ORDER           → 17 code agents only
 grep -rl "SYNC:new-block-name" .claude/skills/*/SKILL.md .claude/agents/*.md | wc -l
 
 # Then run the agent-coverage regression suite — it asserts tier membership,
-# disjointness, and SYNC tag balance across all 29 agents.
+# disjointness, and SYNC tag balance across the discovered agent inventory.
 node .claude/hooks/tests/run-all-tests.cjs --filter=agent-universal
 ```
 
@@ -253,6 +280,20 @@ Check a representative file of each affected tier manually to confirm placement 
 **MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
+
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
 
 ## Closing Reminders
 

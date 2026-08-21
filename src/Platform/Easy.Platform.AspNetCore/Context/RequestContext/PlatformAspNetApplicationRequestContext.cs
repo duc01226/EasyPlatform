@@ -4,12 +4,15 @@
 
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Diagnostics.Metrics;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
 using Easy.Platform.Application;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.AspNetCore.Context.RequestContext.RequestContextKeyToClaimTypeMapper.Abstract;
+using Easy.Platform.Common.Diagnostics;
+using Easy.Platform.Common.Execution;
 using Easy.Platform.Common.RequestContext;
 using Microsoft.AspNetCore.Http;
 
@@ -882,16 +885,19 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     /// </summary>
     protected void InitAllKeyValuesForCachedRequestContextData()
     {
-        if (cachedRequestContextDataInitiated || httpContextAccessor.HttpContext == null)
+        // MUST go through CurrentHttpContext(), never httpContextAccessor.HttpContext directly, so a
+        // request-detached background flow is honored here too. Reading the accessor directly bypassed that
+        // gate and gave this method its own independent path into the recycled-HttpContext race.
+        if (cachedRequestContextDataInitiated || CurrentHttpContext() == null)
             return;
 
         lock (initCachedRequestContextDataLock)
         {
-            if (cachedRequestContextDataInitiated || httpContextAccessor.HttpContext == null)
+            if (cachedRequestContextDataInitiated || CurrentHttpContext() == null)
                 return;
 
             // GetAllKeyValues already auto cache item in http context into CachedRequestContextData
-            GetAllKeyValues(httpContextAccessor.HttpContext, true);
+            GetAllKeyValues(CurrentHttpContext(), true);
             cachedRequestContextDataInitiated = true;
         }
     }
@@ -905,8 +911,20 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     /// More details at: https://github.com/aspnet/AspNetCore/blob/master/src/Http/Http/src/HttpContextAccessor.cs#L16.
     /// </summary>
     /// <returns>The current HttpContext with thread safe.</returns>
+    /// <remarks>
+    /// Returns null when the current flow is detached (see <see cref="PlatformDetachedExecutionFlow" />).
+    /// A fire-and-forget background scope inherits this AsyncLocal HttpContext from the thread that scheduled
+    /// it, but Kestrel recycles and resets that pooled HttpContext as soon as the response completes. Reading
+    /// it from the background flow is a use-after-recycle race that surfaces as a NullReferenceException deep
+    /// inside Microsoft.Extensions.Features, so background flows MUST resolve request context from the values
+    /// captured at dispatch time instead.
+    /// </remarks>
     public HttpContext? CurrentHttpContext()
     {
+        // This layer supplies the request-specific reading of the generic "flow is detached" fact: a detached
+        // flow has no owning request, so it gets no HttpContext.
+        if (PlatformDetachedExecutionFlow.IsDetached) return null;
+
         return httpContextAccessor.HttpContext;
     }
 
@@ -936,10 +954,13 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     {
         try
         {
-            // This property will be 'true' if the request has been aborted
-            // or has completed normally.
+            // NOTE: do NOT add a `useHttpContext.Features is null` guard here. DefaultHttpContext.Features is
+            // `_features.Collection ?? ContextDisposed()`, and ContextDisposed() THROWS ObjectDisposedException
+            // rather than returning null — so such a check is dead code that can only ever throw. It was added
+            // once before (commit b157ae7263e) against this very crash and did not prevent it.
+            //
+            // RequestAborted is 'true' if the request has been aborted or has completed normally.
             if (useHttpContext == null ||
-                useHttpContext.Features is null ||
                 useHttpContext.Request?.Headers is null ||
                 useHttpContext.RequestAborted.IsCancellationRequested)
             {
@@ -969,12 +990,73 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
 
             return false;
         }
-        catch (ObjectDisposedException)
+        catch (Exception e) when (RecordDeadHttpContextRead(e))
         {
-            // Fix System.ObjectDisposedException: IFeatureCollection has been disposed error may happen when accessing HttpContext.TraceIdentifier
+            // Reading a recycled/reset pooled HttpContext is inherently racy: the guard above and the reads
+            // below it cannot be atomic with respect to Kestrel tearing the context down once the response
+            // completed. That race surfaces non-deterministically as any of these three:
+            //   - ObjectDisposedException  — IFeatureCollection has been disposed (e.g. via TraceIdentifier)
+            //   - NullReferenceException   — FeatureReferences<T>.UpdateCached dereferencing a nulled Collection
+            //   - InvalidOperationException — feature collection mutated mid-read
+            // This read is best-effort by contract (the adjacent GetAllKeys already swallows every exception
+            // from its HttpContext reads), so a failed read means "no value", never a crash.
+            //
+            // PlatformDetachedExecutionFlow should make this unreachable for background flows: if this filter
+            // ever fires in practice, there is a detached path that is not being marked. That expectation is
+            // MEASURED, not merely asserted — see RecordDeadHttpContextRead below and the counter it feeds.
             foundValue = default;
             return false;
         }
+    }
+
+    /// <summary>
+    /// Counter of HttpContext reads that failed because the context was already being torn down.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>This instrument exists to make a claim falsifiable.</b> <see cref="PlatformDetachedExecutionFlow" />
+    /// is supposed to make the dead-context read path unreachable: a background flow is marked detached, so
+    /// <see cref="CurrentHttpContext" /> hands it <c>null</c> and it never touches the recycled object. If that
+    /// holds, this counter stays at zero forever. <b>Any non-zero value means a root-derived dispatch path
+    /// exists that is not marking its flow detached</b> — go find it. Without this counter the swallow is
+    /// silent and that regression is invisible, which is exactly how the original defect survived four fixes.
+    /// </para>
+    /// <para>
+    /// Declared here rather than on <see cref="PlatformMeter" /> itself so the generic meter stays free of
+    /// request-context vocabulary: the owning layer names its own instrument and reuses the shared
+    /// <see cref="PlatformMeter.Instance" /> so it still exports through the platform's OpenTelemetry meter.
+    /// </para>
+    /// </remarks>
+    private static readonly Counter<long> DeadHttpContextReadTotal =
+        PlatformMeter.Instance.CreateCounter<long>("easyplatform.requestcontext.dead_context_read_total");
+
+    /// <summary>
+    /// Exception filter for <see cref="TryGetValueFromHttpContext{T}" />: records the occurrence, then reports
+    /// whether the exception is one of the three the teardown race can produce.
+    /// </summary>
+    /// <remarks>
+    /// Runs as a <c>when</c> filter purely so the counter is incremented for the exceptions actually handled,
+    /// with no behavioural change: it returns the identical predicate the inline filter used, and increments
+    /// only when that predicate is true. Returning <c>false</c> leaves any other exception propagating exactly
+    /// as before. The filter is deliberately allocation-free and never throws — a throwing exception filter
+    /// would be swallowed by the runtime and silently change which handler runs.
+    /// </remarks>
+    private static bool RecordDeadHttpContextRead(Exception e)
+    {
+        if (e is not (ObjectDisposedException or NullReferenceException or InvalidOperationException))
+            return false;
+
+        try
+        {
+            DeadHttpContextReadTotal.Add(1, new KeyValuePair<string, object?>("exception", e.GetType().Name));
+        }
+        catch
+        {
+            // Telemetry must never change control flow: if the meter pipeline is disposed during host
+            // shutdown, the read still degrades to "no value" exactly as it did before this counter existed.
+        }
+
+        return true;
     }
 
     private static bool TryGetValueFromRequestHeaders<T>(

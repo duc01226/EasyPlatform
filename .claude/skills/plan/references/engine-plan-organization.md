@@ -91,11 +91,15 @@ Brief description of what this plan accomplishes.
 
 ## Phases
 
-| #   | Phase          | Status  | Effort | SP  | Link                            |
-| --- | -------------- | ------- | ------ | --- | ------------------------------- |
-| 1   | Setup          | Pending | 2h     | 3   | [phase-01](./phase-01-setup.md) |
-| 2   | Implementation | Pending | 4h     | 5   | [phase-02](./phase-02-impl.md)  |
-| 3   | Testing        | Pending | 2h     | 3   | [phase-03](./phase-03-test.md)  |
+| #   | Phase          | Status  | Mode | Effort | SP  | Link                            |
+| --- | -------------- | ------- | ---- | ------ | --- | ------------------------------- |
+| 1   | Setup          | Pending | PAR  | 2h     | 3   | [phase-01](./phase-01-setup.md) |
+| 2   | Implementation | Pending | SEQ  | 4h     | 5   | [phase-02](./phase-02-impl.md)  |
+| 3   | Testing        | Pending | PAR  | 2h     | 3   | [phase-03](./phase-03-test.md)  |
+
+## Execution Waves
+
+Execution waves: wave 1 = [phase-01, phase-03] · wave 2 = [] · SEQ = [phase-02 (needs phase-01's generated schema)]
 
 ## Dependencies
 
@@ -106,6 +110,8 @@ Brief description of what this plan accomplishes.
 
 - Keep generic and under 80 lines
 - List each phase with status/progress
+- `Mode` column is MANDATORY — `PAR` when the phase's inputs contain no pending phase's output AND its write set is disjoint from every other `PAR` phase; otherwise `SEQ`
+- `## Execution Waves` is MANDATORY — it is the line `/plan-execute` reads to fan out; every `SEQ` entry names the phase + exact artifact that forces the ordering
 - Link to detailed phase files
 - Key dependencies
 
@@ -145,6 +151,21 @@ Each phase file should contain:
 - List of files to modify
 - List of files to create
 - List of files to delete
+
+###### Parallel Execution
+
+Mandatory block — `/plan-execute` derives its write set from here:
+
+```markdown
+## Parallel Execution
+
+- Mode: PAR | SEQ
+- Write set: `src/a/x.ts`, `src/a/x.spec.ts` # exact create/modify/delete paths; globs only when members are enumerable
+- Wave: 1
+- SEQ dependency: {phase + exact artifact it waits on — omit when Mode: PAR}
+```
+
+Rules: review every phase's **Mode, Wave, write set, and SEQ dependency** as one coherent metadata contract. Two `PAR` phases MUST have disjoint write sets (overlap → merge the phases or demote the later one to `SEQ`); a `SEQ` phase without a named artifact dependency is mistagged — retag it `PAR`; approval, review, and migration phases are always `SEQ` boundaries.
 
 ###### Implementation Steps
 

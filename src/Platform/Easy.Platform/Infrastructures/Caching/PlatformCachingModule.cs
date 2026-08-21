@@ -89,9 +89,17 @@ public class PlatformCachingModule : PlatformInfrastructureModule
                 ConfigCacheSettings(serviceCollection.BuildServiceProvider(), settings)
             );
 
+            // NeverExpire must be honoured HERE too, not only in PlatformCacheRepository.MapToHybridCacheEntryOptions.
+            // Both read the SAME PlatformCacheEntryOptions object, so a settings default of NeverExpireOptions() that
+            // this line ignored would mean "never expire" on the per-entry path and the ordinary DefaultExpiration on
+            // the global default - the silently-divergent behavior the flag exists to prevent. AbsoluteExpirationRelativeToNow()
+            // cannot express the intent on its own: it falls back to the configured default whenever the per-field
+            // value is null, which is indistinguishable from "explicitly no expiration".
             options.DefaultEntryOptions = new HybridCacheEntryOptions()
             {
-                Expiration = platformSettings.DefaultCacheEntryOptions.AbsoluteExpirationRelativeToNow(),
+                Expiration = platformSettings.DefaultCacheEntryOptions.NeverExpire
+                    ? PlatformCacheRepository.NeverExpireHybridCacheDuration
+                    : platformSettings.DefaultCacheEntryOptions.AbsoluteExpirationRelativeToNow(),
             };
         });
 #pragma warning restore EXTEXP0018

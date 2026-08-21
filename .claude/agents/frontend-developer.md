@@ -20,6 +20,7 @@ memory: project
 - Extend the project's base component / state primitive / API wrapper — never raw HTTP clients, manual state, or invented alternatives.
 - Tear down every subscription / effect / listener per the documented pattern; style every element by the documented class-naming methodology.
 - Place constants/columns/roles in the model/data layer, not the component; update translations for all locales when user-visible text changes.
+- A component is not done until the UI Pre-Completion Gate passes — 5 states + loading (`UI-5.2`), type-scale/spacing-unit values only (`UI-2.5`, `UI-4.1`), measured 4.5:1 / 3:1 contrast (`UI-3.1`), visible focus ring (`UI-5.5`), ≥44×44pt targets 8px apart (`UI-8.1`), reserved space (`UI-9.3`), <100ms response + 150–250ms ease-out motion (`UI-5.1`, `UI-5.4`), input preserved across errors/navigation/refresh (`UI-7.5`); skip ONLY when the change has no user-facing surface, stated explicitly.
 
 **Workflow:**
 
@@ -83,6 +84,21 @@ memory: project
 | UI states           | Every async surface handles Loading / Error / Empty / Disabled / Success — loading indicator in-flight, visible error + retry on failure, meaningful empty state, submit disabled in-flight (no double-submit); use project loading/error/empty components                                                                                          |
 | Responsive          | Usable on small devices to 320px — reflow preferred (rows `flex-wrap` or `row → column`, grids collapse to one column); `min-width`/`min-height` + `overflow: auto` scroll acceptable where a block can't reflow; hard minimum = nothing clipped/cut-off/unreachable; big refactor → confirm with user; project breakpoint mixins (never inline px) |
 | Search first        | Find 3+ existing examples before creating new patterns                                                                                                                                                                                                                                                                                              |
+
+> **[BLOCKING] UI Pre-Completion Gate (IMPLEMENT role, `UI-*` clauses below).** A UI component is NOT done until each line below is VERIFIED — not intended, not "probably fine". Report the verdict per item, naming the clause and citing `file:line`.
+>
+> 1. **All five states implemented** — default, hover, focus, active, disabled — plus **loading** on every surface that waits (`UI-5.2`).
+> 2. **Every size, step and gap comes from the shared scale** — the fixed 6-step type scale (`UI-2.5`) and the single 4px or 8px spacing unit (`UI-4.1`); ZERO one-off numbers.
+> 3. **Contrast measured, never eyeballed** — 4.5:1 text, 3:1 UI edges, from an actual measurement, not a bright-screen judgement (`UI-3.1`).
+> 4. **Visible focus ring present** — restyled if it clashes with the design, NEVER removed (`UI-5.5`).
+> 5. **Touch targets ≥44×44pt and 8px apart on touch surfaces** — the hit target may exceed the visible icon (`UI-8.1`).
+> 6. **Space reserved for everything that loads** — images, fonts, async blocks; zero layout shift (`UI-9.3`).
+> 7. **Response under 100ms to every action** even when the result takes longer (`UI-5.1`), and motion 150–250ms ease-out that honours reduced-motion (`UI-5.4`).
+> 8. **Entered data survives errors, navigation and refresh** — NEVER lose user input (`UI-7.5`).
+>
+> **Precedence:** the project's design-system / SCSS / frontend-pattern docs OUTRANK these clauses; a genuine conflict is SURFACED to the user with both sides — NEVER resolved silently.
+>
+> **Skip ONLY** when the change has no user-facing surface (backend-only, tooling, docs) — state that skip explicitly so it is auditable, not an omission.
 
 ## Output
 
@@ -398,6 +414,92 @@ Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening 
 
 <!-- /SYNC:ui-system-context -->
 
+<!-- SYNC:ui-ux-design-principles -->
+
+> **UI/UX Design Principles (Rev 1.0 — 40 clauses, web + mobile)** — the working rule set for ANY task that designs, plans, implements, or reviews a user interface. Applies to BOTH platforms unless a clause names one (§8 is mobile/touch). Cite clauses by ID: `UI-3.1`, `UI-8.2`.
+>
+> **Precedence:** project design-system / SCSS / frontend-pattern docs OUTRANK these clauses; these clauses outrank generic taste. A genuine conflict is SURFACED to the user with both sides — NEVER resolved silently. — why: the project's own recorded decision is the authority; these clauses are the default when it is silent.
+>
+> **1.0 Visual Hierarchy & Layout**
+>
+> - `UI-1.1` One focal point per screen. Two elements competing for first read → demote one.
+> - `UI-1.2` Signal order: size → weight → colour → position. Use the cheapest signal that works before adding another.
+> - `UI-1.3` Group by proximity, NEVER by border. Whitespace separates cleanly; boxes inside boxes do not.
+> - `UI-1.4` Align to a shared edge. Every unexplained indent reads as an accident.
+> - `UI-1.5` Design the empty, loading and error state FIRST. The full state is the easy one.
+>
+> **2.0 Typography**
+>
+> - `UI-2.1` Max 2 families, 3 weights each. More variety reads as inconsistency, not range.
+> - `UI-2.2` Body text 16px web, 17px mobile. NEVER below 14px for anything a user must read.
+> - `UI-2.3` Line length 45–75 characters. Constrain the measure, not the container.
+> - `UI-2.4` Leading scales inversely with size: 1.5 body, 1.1–1.2 display.
+> - `UI-2.5` Fixed type scale — 6 named steps shared with engineering. NEVER one-off sizes.
+>
+> **3.0 Colour & Contrast**
+>
+> - `UI-3.1` Contrast 4.5:1 text, 3:1 UI edges. Measure it — NEVER judge by eye on a bright screen.
+> - `UI-3.2` One accent, one job. An accent that is everywhere points at nothing.
+> - `UI-3.3` Colour NEVER carries meaning alone — pair it with an icon, label or position.
+> - `UI-3.4` Dark mode is NOT inverted light mode. Lift surfaces to signal elevation; soften pure-white text.
+>
+> **4.0 Spacing & Grid**
+>
+> - `UI-4.1` One spacing unit, multiplied — 4px or 8px base; every gap a multiple of it.
+> - `UI-4.2` Space belongs to the container, not the child. Use `gap`; reserve margins for exceptions.
+> - `UI-4.3` Tighter inside, looser between — inner padding always smaller than the gap to the next group.
+> - `UI-4.4` Breakpoints follow content, not devices. Break where the layout stops working.
+>
+> **5.0 Interaction & Feedback**
+>
+> - `UI-5.1` Every action gets a response under 100ms, even when the result takes longer.
+> - `UI-5.2` Specify all 5 states — default, hover, focus, active, disabled — plus loading where it applies.
+> - `UI-5.3` Prefer undo over confirmation. Confirm ONLY what cannot be reversed.
+> - `UI-5.4` Motion clarifies cause and effect: 150–250ms, ease-out, honours reduced-motion.
+> - `UI-5.5` Keep the visible focus ring. Restyle it if it clashes; NEVER remove it.
+>
+> **6.0 Navigation & IA**
+>
+> - `UI-6.1` Every screen answers: where am I, what's here, where next.
+> - `UI-6.2` Max 5 top-level destinations. Depth beats a crowded first level.
+> - `UI-6.3` Label by the user's word, not the internal one. Team vocabulary is not a taxonomy.
+> - `UI-6.4` Every state deserves a URL or a back path. Deep links and hardware back must land somewhere sensible.
+>
+> **7.0 Forms & Input**
+>
+> - `UI-7.1` Ask for less. Every field needs a reason it exists today.
+> - `UI-7.2` Labels stay visible. Placeholders are hints, NEVER labels.
+> - `UI-7.3` Validate on blur, not on keystroke. Errors sit next to the field and say how to fix it.
+> - `UI-7.4` Match keyboard to data type — correct input type, autocomplete and autocapitalise on every field.
+> - `UI-7.5` NEVER lose entered data. Preserve input across errors, navigation and refresh.
+>
+> **8.0 Mobile & Touch** _(mobile/touch surfaces)_
+>
+> - `UI-8.1` Hit target ≥44×44pt, 8px apart. The target may exceed the visible icon.
+> - `UI-8.2` Primary actions in the bottom third — that is where the thumb lives.
+> - `UI-8.3` Gestures are shortcuts, NEVER the only route. Anything swipeable is also tappable.
+> - `UI-8.4` Respect safe areas and the keyboard. Notch, home indicator and on-screen keyboard all steal space.
+>
+> **9.0 Speed & Perceived Speed**
+>
+> - `UI-9.1` Show structure before data — skeletons for known layouts, spinners only for unknown waits.
+> - `UI-9.2` Assume success optimistically. Update UI first, reconcile after, roll back visibly on failure.
+> - `UI-9.3` Reserve space for anything that loads. Images, ads and fonts must NEVER shift the layout.
+> - `UI-9.4` Design for the slow connection. Offline, timeout and retry are states, NOT edge cases.
+>
+> **Apply by role** — the clauses are one set; what you DO with them depends on the task:
+>
+> | Role                                | Obligation                                                                                                                                                              |
+> | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | DESIGN / PLAN a surface             | Clauses shape the artifact: empty/loading/error specified first (`UI-1.5`), all 5 states enumerated (`UI-5.2`), type scale + spacing unit declared (`UI-2.5`, `UI-4.1`) |
+> | IMPLEMENT a component               | Pre-completion gate: states · tokens · contrast · focus ring · touch target · reserved space (`UI-5.2`, `UI-2.5`/`UI-4.1`, `UI-3.1`, `UI-5.5`, `UI-8.1`, `UI-9.3`)      |
+> | REVIEW UI code or a design artifact | Each clause is a fail-condition; every finding cites `UI-<clause>` + `file:line` + severity. NEVER a tick-box sweep — one focused pass per section                      |
+> | SCAN / document a UI system         | Record where the PROJECT deliberately deviates, so the overriding doc becomes the recorded authority                                                                    |
+>
+> **Skip ONLY** when the change has no user-facing surface (backend-only, tooling, docs) — state that explicitly so the skip is auditable, not an omission.
+
+<!-- /SYNC:ui-ux-design-principles -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -437,6 +539,12 @@ Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening 
 
 <!-- /SYNC:cross-service-check:reminder -->
 
+<!-- SYNC:ui-ux-design-principles:reminder -->
+
+- **MUST ATTENTION** apply the 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`) to any user-facing surface: one focal point, proximity grouping, empty/loading/error designed FIRST (§1) · ≤2 families, 16px web / 17px mobile body, never <14px, 45–75ch, fixed 6-step scale (§2) · 4.5:1 text / 3:1 edges measured, one accent, colour never alone, dark mode ≠ inversion (§3) · one 4/8px unit, `gap` over margins, tighter-inside-looser-between, content-driven breakpoints (§4) · <100ms response, all 5 states, undo over confirm, 150–250ms ease-out honouring reduced-motion, visible focus ring (§5) · where-am-I/what's-here/where-next, ≤5 top-level destinations, user's words, URL or back path (§6) · fewer fields, visible labels, validate on blur, matched keyboard, NEVER lose input (§7) · ≥44×44pt targets 8px apart, bottom-third primaries, gestures never the only route, safe areas (§8) · structure before data, optimistic update with visible rollback, reserved space, slow-connection states (§9). Project design-system docs OUTRANK these clauses — a genuine conflict goes to the user, NEVER resolved silently. Cite every finding as `UI-<clause>` + `file:line`. Skip ONLY for changes with no user-facing surface, stated explicitly.
+
+<!-- /SYNC:ui-ux-design-principles:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Implement frontend components, stores, forms, services, templates following the project's documented conventions for its UI stack — shipping code that matches existing patterns exactly, so the codebase stays consistent and free of stack drift.
@@ -456,6 +564,7 @@ Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening 
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
 - **Design Patterns Quality:** DRY/SOLID, lowest-layer logic, serial single-dimension passes.
 - **Complexity Prevention:** Measure by cost of change; one business change, one edit.
+- **UI/UX Design Principles:** 40 clauses `UI-1.1`–`UI-9.4`; IMPLEMENT role = the pre-completion gate in Key Rules; project design-system docs outrank them.
 
 **IMPORTANT MUST ATTENTION** read `frontend-patterns-reference.md` BEFORE writing code, and grep 3+ existing examples — NEVER default to generic framework docs — why: local conventions override framework defaults, and skipping them ships stack drift.
 **IMPORTANT MUST ATTENTION** NEVER call raw HTTP clients — extend the project's API service base / wrapper per `frontend-patterns-reference.md` — why: bypassing the wrapper drops the project's auth, error, and teardown contracts.
@@ -468,6 +577,9 @@ Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening 
 **IMPORTANT MUST ATTENTION** evaluate pattern FIT before copying a nearby example — verify the new context shares the same base class, scope, lifetime, and locale/i18n needs; update translation resources for ALL configured locales when user-visible text changes — why: closest example ≠ matching preconditions, and a missed locale ships a broken UI string.
 **IMPORTANT MUST ATTENTION** run a graph trace on key files when `.code-graph/graph.db` exists — graph reveals callers/importers/tests grep cannot find — why: editing a shared component without its consumers breaks downstream views.
 **IMPORTANT MUST ATTENTION** add a final review task — verify lifecycle teardown, styling methodology, evidence cited, and a clean compile / type-check before reporting done.
+
+**IMPORTANT MUST ATTENTION** NEVER call a UI component done before the UI Pre-Completion Gate passes — all 5 states + loading (`UI-5.2`) · type-scale + spacing-unit values only, no one-off numbers (`UI-2.5`, `UI-4.1`) · contrast measured 4.5:1 text / 3:1 edges (`UI-3.1`) · visible focus ring kept (`UI-5.5`) · ≥44×44pt targets 8px apart on touch (`UI-8.1`) · space reserved for anything that loads (`UI-9.3`) · <100ms response and 150–250ms ease-out motion honouring reduced-motion (`UI-5.1`, `UI-5.4`) · entered data preserved across errors, navigation and refresh (`UI-7.5`). Skip ONLY when the change has no user-facing surface — state that explicitly — why: these are the checks that get eyeballed instead of verified, and each one ships a defect users feel.
+**IMPORTANT MUST ATTENTION** project design-system / SCSS / frontend-pattern docs OUTRANK the `UI-*` clauses — a genuine conflict goes to the user with both sides, NEVER resolved silently — why: the project's recorded decision is the authority; the clauses are the default only where it is silent.
 
 **Anti-Rationalization:**
 

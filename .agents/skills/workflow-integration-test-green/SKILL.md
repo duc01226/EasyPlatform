@@ -76,7 +76,36 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 - NEVER force green by weakening or removing assertions, adding skip annotations, widening assertion timeouts, wrapping a retry around a failing assertion, or narrowing the scope.
 - NEVER skip mandatory workflow or skill gates.
 
-**IMPORTANT MANDATORY Steps:** $scout -> $integration-test-verify-loop -> $spec [mode=sync] -> $scan --target=integration-tests -> $docs-update -> $workflow-end -> $watzup
+**IMPORTANT MANDATORY Steps:** $scout -> $integration-test-verify-loop -> $debug-investigate [on-failure] -> $fix [on-failure] -> $spec [mode=sync] -> $scan --target=integration-tests -> $docs-update -> $workflow-end -> $watzup
+
+> **[BLOCKING] Step 0 — CREATE THE FULL TASK LIST BEFORE ANY VERIFICATION WORK.** Call the current task list first (resume, never duplicate), then task tracking EVERY task below in one pass — before `$scout`, before the first test run. A workflow that starts verifying with an empty task list has already lost the ability to show where it is, and an interrupted run cannot be resumed. — why: this loop can span many rounds and a context compaction mid-round; the task list is the only state that survives it.
+>
+> **Fixed tasks — created 1:1 from the canonical `sequence` in `.claude/workflows.json`, in order:**
+>
+> 1. `[1] scout — resolve verification scope to a concrete project/suite list`
+> 2. `[2] integration-test-verify-loop — drive the suite to green (parent of the per-round tasks)`
+> 3. `[3] debug-investigate [on-failure] — traced root cause behind every Fault Verdict` _(CONDITIONAL)_
+> 4. `[4] fix [on-failure] — resolve every verdict at the owning layer` _(CONDITIONAL)_
+> 5. `[5] spec [mode=sync] — reconcile §8 TCs with the executing tests`
+> 6. `[6] scan --target=integration-tests — regenerate the integration-test reference doc`
+> 7. `[7] docs-update — update every other impacted doc`
+> 8. `[8] workflow-end — close workflow state`
+> 9. `[9] watzup — summarize the convergence trail`
+> 10. `[10] final review — verify work quality + extract lessons` _(not a sequence step — the standing close-out task)_
+>
+> **`[3]` and `[4]` are ROLL-UPS, not separate invocations.** They appear in the canonical sequence so the conditional fix half is visible in the task list from the start, but `$integration-test-verify-loop` is their single executing owner: each firing happens INSIDE a round as `[2.N.2]` / `[2.N.5]` below. Complete `[3]`/`[4]` once the loop converges, summarizing which rounds fired them — or, if no round ever failed, complete them with the reason recorded (`no failure in any round`). NEVER run them a second time at workflow level after the loop returns — that would be a parallel fix loop the Inline Execution Gate forbids.
+>
+> **Per-round tasks (created when EACH round opens — round N is not planned until round N-1 reported):**
+>
+> - `[2.N.1] verify — full run over {scope}, capture real counts` _(always)_
+> - `[2.N.2] debug-investigate — trace root cause of each failure` _(CONDITIONAL: only if round N reported failures — the round-N instance of `[3]`)_
+> - `[2.N.3] integration-test-review — report-only fault gates` _(CONDITIONAL: same trigger)_
+> - `[2.N.4] fault verdict — one written verdict per failure` _(CONDITIONAL: same trigger)_
+> - `[2.N.5] fix — resolve at the owning layer` _(CONDITIONAL: same trigger — the round-N instance of `[4]`)_
+> - `[2.N.6] changes-review — review this round's fix diff` _(CONDITIONAL: only if a fix landed)_
+> - `[2.N.7] round integrity check — counts not shrunk, scope not narrowed` _(always)_
+>
+> A conditional task whose trigger never fires is marked **completed with the reason recorded** (`no failures this round`), NEVER silently dropped — why: a skipped-and-unrecorded gate is indistinguishable from a forgotten one when someone audits the run later.
 
 > **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
@@ -88,16 +117,24 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 > **[CRITICAL] Documentation Sync Is Part Of Done:** the loop deliberately defers ALL doc work while it churns, so steps 3–5 are not an optional tail. `$spec [mode=sync]` reconciles §8 TCs ↔ the executing test code, `$scan --target=integration-tests` regenerates the integration-test reference doc from the suite as it now stands, and `$docs-update` catches every other impacted doc. A converged-but-undocumented suite leaves the next agent reading a reference doc describing tests that no longer exist.
 
-> **Goal Contract propagation (workflow-owned):** At workflow start — BEFORE round 1 — resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the request). Its single required Success Criterion: _a fresh full `$integration-test-verify` over the resolved scope reports ZERO failed tests across 2 consecutive runs without a DB reset, with no test deleted, skipped, or weakened to get there._ Record the scope string, the round cap (default 5), and the baseline executed/skipped counts in **Constraints**. After every round, append the per-project counts, Fault Verdicts, and fixes to the Iteration Log; emit the Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before `$workflow-end`.
+> **Goal Contract propagation (workflow-owned):** At workflow start — BEFORE round 1 — resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the request). Its single required Success Criterion: _a fresh full `$integration-test-verify` over the resolved scope reports ZERO failed tests across 2 consecutive runs without a DB reset, with no test deleted, skipped, or weakened to get there._ Record the scope string, the round cap (default 3), and the baseline executed/skipped counts in **Constraints**. After every round, append the per-project counts, Fault Verdicts, and fixes to the Iteration Log; emit the Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before `$workflow-end`.
 
 Activate the `workflow-integration-test-green` workflow. Run `$start-workflow workflow-integration-test-green` with the user's prompt as context.
 
-**Steps:** $scout → $integration-test-verify-loop → $spec [mode=sync] → $scan --target=integration-tests → $docs-update → $workflow-end → $watzup
+**Steps:** $scout → $integration-test-verify-loop → $debug-investigate [on-failure] → $fix [on-failure] → $spec [mode=sync] → $scan --target=integration-tests → $docs-update → $workflow-end → $watzup
+
+> **[CRITICAL] Recursive Until Green — the loop is the workflow, not a step inside it.** Step 2 does NOT run once. It RECURSES: run the full suite → if ANY test fails, adjudicate and fix that failure → run the FULL suite again from scratch → repeat. The workflow is finished only when a fresh full run reports **zero failures twice consecutively** with no test deleted, skipped, or weakened. Reporting failures and stopping is NOT an outcome this workflow permits — either it converges, or it **bounded-escalates** by asking the user directly (round cap 3 · failures not shrinking across 2 rounds · failures increasing · coverage lost · an open validated review finding · `ENVIRONMENT-BLOCKED`). — why: "the tests fail" is a status, not a deliverable; the caller asked for a green suite, and a workflow that hands back a red one has done the diagnosis and skipped the job.
+>
+> **`$debug-investigate` and `$fix` are CONDITIONAL steps of the loop, executed INSIDE `$integration-test-verify-loop`.** They fire on every round that reports a failure and are skipped (with a recorded reason) on a round that is already green. They are tracked as their own tasks per round (Step 0) so they are visible in the task list, but `$integration-test-verify-loop` remains their single executing owner — NEVER invoke them as a second, parallel fix loop at workflow level. — why: the fix half was previously triple-owned across three skills, which let two loops double-fix one failure or each assume the other owned it; one owner with visible sub-tasks keeps both the accountability and the visibility.
+>
+> **Step 2 RECURSES:** `$integration-test-verify` → _(on failure)_ `$debug-investigate` → `$integration-test-review` → Fault Verdict → `$fix` → `$changes-review` → fresh full re-verify — repeating until the suite is green twice consecutively. Steps 3 and 4 of the sequence are the workflow-level roll-ups of that conditional half; `$integration-test-verify-loop` executes them inside each round, never again after it returns.
 
 > **[STEP PURPOSES]** Every step has a distinct purpose — NEVER deduplicate or batch:
 >
 > **`$scout`** — Resolve the verification scope to a concrete test-project list. No target in the prompt → the WHOLE system (every project via `testProjectPattern` > `testProjects` from `docs/project-config.json` → `integrationTestVerify`). A named suite/module/feature/diff narrows it — state how the target maps to projects. Output: the fixed scope string the loop will reuse every round.
-> **`$integration-test-verify-loop`** — The convergence engine, and the only step that changes code. Sets the Goal Contract first, then loops: `$integration-test-verify` INLINE over the fixed scope (2 consecutive green runs, no DB reset, real counts) → on ANY failure run `$debug-investigate` + `$integration-test-review` (report-only) → ONE Fault Verdict per failure → `$fix` at the owning layer → **conditional `$changes-review`** (INLINE, report-only, over the round's fix diff — runs in EVERY round that landed a fix; validated findings fold back into that same round's fix set) → **Round Integrity Check** (executed count must not shrink, skipped count must not grow, scope must not narrow) → fresh full re-verify. Round cap 5; not shrinking across 2 rounds, increasing failures, cap hit with failures open, lost coverage, an open validated review finding, or `ENVIRONMENT-BLOCKED` → STOP and escalate by asking the user directly. Output: zero-failure runner evidence for both runs + the per-round verdict/fix/review trail.
+> **`$integration-test-verify-loop`** — The convergence engine, and the only step that changes code. Sets the Goal Contract first, then loops: `$integration-test-verify` INLINE over the fixed scope (2 consecutive green runs, no DB reset, real counts) → on ANY failure run `$debug-investigate` + `$integration-test-review` (report-only) → ONE Fault Verdict per failure → `$fix` at the owning layer → **conditional `$changes-review`** (INLINE, report-only, over the round's fix diff — runs in EVERY round that landed a fix; validated findings fold back into that same round's fix set) → **Round Integrity Check** (executed count must not shrink, skipped count must not grow, scope must not narrow) → fresh full re-verify. Round cap 3; not shrinking across 2 rounds, increasing failures, cap hit with failures open, lost coverage, an open validated review finding, or `ENVIRONMENT-BLOCKED` → STOP and escalate by asking the user directly. Output: zero-failure runner evidence for both runs + the per-round verdict/fix/review trail.
+> **`$debug-investigate`** _(CONDITIONAL — only on a round with failures)_ — Trace each failure end-to-start to its root cause BEFORE any edit; produces the traced cause that the Fault Verdict rests on. Skipped on a green round, with the skip recorded.
+> **`$fix`** _(CONDITIONAL — only on a round with an adjudicated failure)_ — Resolve the verdict at the lowest invariant-owning layer (Entity > Service > Handler), never the crash site. A `SOURCE-WRONG` fix KEEPS or STRENGTHENS the test that caught it. NEVER runs before a written Fault Verdict exists for that failure.
 > **`$spec [mode=sync]`** — Reconcile §8 `TC-{FEATURE}-{NNN}` specs ↔ the executing test code under `docs/specs/`. Update each TC's `CoveredBy` field with **all** covering `{File}::{MethodName}` links (one TC → many tests, 1:N; a test-filter expression when the set is large). Coverage = ≥1 annotation-tagged test; never force one test per TC. Runs AFTER convergence so it syncs the final tests, not intermediate ones.
 > **`$scan --target=integration-tests`** — Regenerate the integration-test project-reference doc from the suite as it now stands: patterns, base fixtures, async-wait and unique-data helper conventions, suite/project inventory, and lessons. This is the doc every future agent reads before touching a test — a loop that changed test structure without regenerating it leaves the next agent following stale conventions.
 > **`$docs-update`** — Update every OTHER impacted doc: feature-doc evidence fields, version history, and any doc embedding test counts or coverage claims the loop changed. Covers what `$spec [mode=sync]` (spec TCs) and `$scan --target=integration-tests` (the reference doc) do not.
@@ -105,7 +142,7 @@ Activate the `workflow-integration-test-green` workflow. Run `$start-workflow wo
 
 ---
 
-**IMPORTANT MANDATORY Steps:** $scout -> $integration-test-verify-loop -> $spec [mode=sync] -> $scan --target=integration-tests -> $docs-update -> $workflow-end -> $watzup
+**IMPORTANT MANDATORY Steps:** $scout -> $integration-test-verify-loop -> $debug-investigate [on-failure] -> $fix [on-failure] -> $spec [mode=sync] -> $scan --target=integration-tests -> $docs-update -> $workflow-end -> $watzup
 
 <!-- SYNC:integration-test-execution-discipline -->
 
@@ -123,11 +160,14 @@ Activate the `workflow-integration-test-green` workflow. Run `$start-workflow wo
 
 > **Test-Failure Fault Adjudication** — When a test fails (or you are debugging or fixing a failure), the job is to determine _who is at fault — the source code or the test code_. Getting that verdict right matters more than turning the suite green. Binds every debug / fix / test skill identically.
 >
-> 1. **Root-cause first — never guess, never patch the symptom.** `$debug-investigate` and trace the failure end-to-start to its actual cause before touching either side. A green-again suite is NOT the goal; a correct verdict on what was actually wrong is.
+> 1. **Provisional verdict before touching either side.** Classify the observed evidence as SOURCE-WRONG, TEST-WRONG, TEST-NOT-OPTIMAL, ENVIRONMENT-BLOCKED, or AMBIGUOUS; then `$debug-investigate` and trace end-to-start before editing. A green-again suite is NOT the goal.
 > 2. **Triangulate against the spec AND the source.** If a governing Feature Spec covers the behavior (e.g. `docs/specs/**` — §3 ACs / §4 BRs / §5 invariants / §8 TCs), it is the tiebreaker for _intended_ behavior — compare BOTH the production source and the failing test against it. With no spec, the documented intent / acceptance criteria / caller contract is the reference. Decide from this evidence whether the SOURCE is wrong or the TEST is wrong.
 > 3. **Classify who is at fault, then fix the wrong side at its root:**
 >     - **SOURCE-WRONG** — production code violates the spec's intended behavior or a clear invariant → fix the source at the owning layer; keep or strengthen the test that caught it.
 >     - **TEST-WRONG** — the test encodes a stale or incorrect assertion, setup, or expectation that contradicts intended behavior → fix the test at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green.
+>     - **TEST-NOT-OPTIMAL** — intended behavior is valid but the test seam, timing, or assertion signal is fragile → improve the test without weakening the invariant.
+>     - **ENVIRONMENT-BLOCKED** — infrastructure or external state prevents a source/test verdict → preserve diagnostics and stop mutation until the environment is healthy.
+>     - **AMBIGUOUS** — evidence or intended behavior does not safely select an owner → ask the user or canonical owner before editing.
 >     - NEVER change a test to match broken source, and NEVER change source to satisfy a broken test. (Migration code excluded — schema/data migrations are one-time execution paths, not core application logic.)
 > 4. **Ask the user when intended behavior is unclear.** If no spec covers the behavior, the spec is silent, or the spec is ambiguous about which side is correct, STOP and ask the user directly (or consult the canonical spec owner) before editing either side — never silently pick source or test just to make the suite pass.
 >
@@ -304,6 +344,20 @@ Activate the `workflow-integration-test-green` workflow. Run `$start-workflow wo
 
 <!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
+
 ## Closing Reminders
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):** MUST ATTENTION honor every protocol below — each is a signpost to its canonical body above.
@@ -351,7 +405,8 @@ Source: `.claude/.ck.json` + `.claude/skills/shared/sync-inline-versions.md` (`:
 3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
 4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
 5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
-6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
+6. **PARALLELIZE:** Before executing the task list, tag each task `PAR` (independent inputs + write set disjoint from every other `PAR` task) or `SEQ` (name the blocking dependency), group `PAR` tasks into waves, declare the wave plan, and spawn each wave's sub-agents in ONE message — all-return barrier per wave, fan-out one level deep unless a sub-agent's own definition authorizes further fan-out. Sequential-by-default is a defect when tasks are independent; do not parallelize shared write targets, output-consuming tasks, trivial single-file work, ordering a skill or workflow explicitly fixes, or user-approval gates.
+7. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
 
 ## Shared AI-SDD Protocol Markers
 
@@ -416,7 +471,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
-- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
+- **Test failure → record a provisional verdict before trace/edit, then investigate.** Use the full five-way taxonomy: SOURCE-WRONG (production violates intent), TEST-WRONG (assertion/setup is stale), TEST-NOT-OPTIMAL (valid but fragile or low-signal test), ENVIRONMENT-BLOCKED (external state prevents a verdict), or AMBIGUOUS (intent/evidence cannot choose safely). Then trace root cause and triangulate against the governing spec (`docs/specs/**` if one exists) AND source. NEVER weaken an assertion, add a skip, relax a timeout, or change source merely to force green.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
 - **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.

@@ -1,6 +1,7 @@
 #region
 
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Reflection;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
@@ -173,7 +174,15 @@ public static class PlatformRequestContextHelper
         // If T is number type - using original logic with optimized lookup
         if (NumericTypes.Contains(typeof(T)))
         {
-            var parsedSuccess = double.TryParse(stringValues.LastOrDefault(), out var parsedValue);
+            // Request-context values commonly originate from query strings and headers. Their numeric contract must
+            // not change with the service host's CurrentCulture: a dot-decimal sent by a client must remain the same
+            // number on en-US, de-DE, vi-VN, and every other deployment. Float deliberately excludes thousands
+            // separators so a locale-shaped value such as "1,5" is rejected rather than guessed as 15.
+            var parsedSuccess = double.TryParse(
+                stringValues.LastOrDefault(),
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out var parsedValue);
             if (parsedSuccess)
             {
                 // WHY: Serialize then Deserialize to ensure could parse from double to int, long, float, etc.. any of number type T

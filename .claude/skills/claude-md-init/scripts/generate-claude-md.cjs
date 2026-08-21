@@ -25,7 +25,11 @@ const GATE_BLOCK_RE = /<!-- CK:WORKFLOW-GATE -->[\s\S]*?<!-- \/CK:WORKFLOW-GATE 
 // Concise workflows-index + composable step-skills reference, derived from workflows.json.
 // Stamped right after the gate so CLAUDE.md carries the same workflow/skill catalog the
 // hookless Codex mirrors get. The block is idempotently strip-and-restamped.
-const SKILLS_BLOCK_RE = /<!-- CK:WORKFLOW-SKILLS -->[\s\S]*?<!-- \/CK:WORKFLOW-SKILLS -->/g;
+// The catalog's table rows are far longer than any other line in CLAUDE.md, so the block is
+// emitted inside prettier-ignore fences (the repo pre-commit runs `prettier --write` on *.md and
+// would otherwise pad every cell to the longest row on each edit). The fences are PART of the
+// managed block: strip them together with it, or a restamp orphans a stray empty fence pair.
+const SKILLS_BLOCK_RE = /(?:<!-- prettier-ignore-start -->\s*)?<!-- CK:WORKFLOW-SKILLS -->[\s\S]*?<!-- \/CK:WORKFLOW-SKILLS -->(?:\s*<!-- prettier-ignore-end -->)?/g;
 // Full always-on protocol blocks (critical-thinking + ai-mistake-prevention) baked into CLAUDE.md
 // at BOTH top (after the catalog — strong primacy) and bottom (recency anchor) so a hookless
 // read of CLAUDE.md reaches the same protocol the hookless mirrors render. Build-source is the
@@ -103,7 +107,7 @@ function loadWorkflowSkillsCatalog() {
     try {
         const { buildWorkflowSkillsCatalog, CK_SKILLS_START, CK_SKILLS_END } = require('../../../scripts/lib/workflow-skills-catalog.cjs');
         const body = buildWorkflowSkillsCatalog({ rootDir: PROJECT_DIR, sections: ['workflows', 'skills'] });
-        return `${CK_SKILLS_START}\n${body}\n${CK_SKILLS_END}`;
+        return `<!-- prettier-ignore-start -->\n\n${CK_SKILLS_START}\n${body}\n${CK_SKILLS_END}\n\n<!-- prettier-ignore-end -->`;
     } catch {
         return '';
     }

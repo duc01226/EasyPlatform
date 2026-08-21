@@ -1,4 +1,5 @@
 <!-- Last scanned: 2026-06-12 -->
+<!-- Last verified: 2026-08-21 (docs-update, impact-scoped) -->
 <!-- CRITICAL: BEM on ALL elements; platform-core $variables for ALL values; @use not @import; flex-layout-media() for responsive; component-scoped SCSS -->
 
 # SCSS Styling Guide
@@ -43,6 +44,8 @@ Convention: `block__element--modifier`. Block = component name in kebab-case (`a
 
 **BAD:** `<div class="container">` or bare `<div>` with no class.
 **GOOD:** `<div class="task-list__statistics">` — BEM class on every element.
+
+BEM is the project rule, but adoption is partial in observed templates: Material and legacy utility classes remain beside BEM classes (`app.component.html:77` uses `platform-mat-mdc-spinner -with-backdrop`; `task-list.component.html:217-218` uses `mat-row no-data-row`). Treat these as migration/anti-pattern evidence, not new naming guidance.
 
 ## SCSS Architecture
 
@@ -178,6 +181,8 @@ Hybrid mobile-first/desktop-first via `flex-layout-media($type)`. Breakpoints (`
 
 **MUST** use `flex-layout-media()` for all responsive rules, NEVER raw `@media` (sole exception: `prefers-color-scheme` in theme).
 
+Observed boundary: tokenized layout breakpoints are wrapped by `flex-layout-media()`, while the platform loading indicator still has a raw `@media (max-width: 768px)` block (`platform-loading-error-indicator.component.scss:392-416`). Preference-mode media blocks (`:419-445`, `:447-466`, `:468-501`) and the Material theme's `prefers-color-scheme` block (`default-theme.scss:23-37`) are mode/accessibility rules, not layout-breakpoint examples.
+
 ## Theming
 
 Angular **Material Design 3** via `mat.theme()` (NOT legacy `define-theme`). `mat.core` emitted once at `_material-core.scss:1-2`.
@@ -218,14 +223,28 @@ Declared in `styles.scss:82-124`: `.text-muted`, `.text-primary`, `.text-success
 
 ## Anti-Patterns
 
-| Anti-pattern                                   | Evidence                                                                                      | Fix                                                        |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Raw z-index numbers instead of scale tokens    | `platform-loading-error-indicator.component.scss:52` (`z-index: 1000`), `:220` (`z-index: 1`) | Use `$platform-z-index-level-*`                            |
-| Hardcoded hex / px / font-size in components   | (rule — use tokens)                                                                           | Use `$color-*`, `$space-*`, `$font-size-*`                 |
-| Raw `@media` queries                           | (rule)                                                                                        | Use `flex-layout-media($type)`                             |
-| `@import` for token/mixin loading              | `_functions.scss:1`, `_placeholders.scss:1` (legacy `@import` of empty stubs)                 | Use `@use`/`@forward`                                      |
-| Documenting empty stub files as having content | `_platform-functions.scss` & `_platform-placeholders.scss` are **0 bytes**                    | No functions/placeholders defined there — do not reference |
-| Bare element with no BEM class                 | (rule)                                                                                        | Every element gets `block__element` / `--modifier`         |
+| Anti-pattern                                   | Evidence                                                                                                                 | Fix                                                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Raw z-index numbers instead of scale tokens    | `platform-loading-error-indicator.component.scss:52` (`z-index: 1000`), `:220` (`z-index: 1`)                            | Use `$platform-z-index-level-*`                                                                      |
+| Hardcoded hex / px / font-size in components   | `platform-loading-error-indicator.component.scss:59,67,86,157-160,218` and `nav-loading-test.component.scss:18,40,54,87` | Use `$color-*`, `$space-*`, `$font-size-*`                                                           |
+| Raw layout `@media` query                      | `platform-loading-error-indicator.component.scss:392-416`                                                                | Use `flex-layout-media($type)`; retain preference/accessibility media only when the mode requires it |
+| `@import` for token/mixin loading              | `_functions.scss:1`, `_placeholders.scss:1` (legacy `@import` of empty stubs)                                            | Use `@use`/`@forward`                                                                                |
+| Documenting empty stub files as having content | `_platform-functions.scss` & `_platform-placeholders.scss` are **0 bytes**                                               | No functions/placeholders defined there — do not reference                                           |
+| Non-BEM utility/legacy class beside BEM        | `app.component.html:77` (`-with-backdrop`), `task-list.component.html:217-218` (`mat-row no-data-row`)                   | Keep new template classes in `block__element--modifier` form                                         |
+
+## UI/UX Clause Coverage
+
+This section records stylesheet conventions from declarations and observed selectors. `PROJECT AUTHORITY` records the repository convention; `GAP` means no project convention was found and the clause default remains applicable. This is documentation, not a compliance grade.
+
+| Clause | Project rule                                                                                       | Evidence                                                                                      | Verdict                                  |
+| ------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| UI-2.2 | Base type is 16px; named scale also contains 12px and 14px sizes                                   | `_platform-variables.scss:62-69`                                                              | PROJECT AUTHORITY — overrides the clause |
+| UI-2.3 | No character-based line-length/measure declaration found in configured style roots                 | `docs/project-config.json:319-348`; targeted declaration search returned no `ch`/measure rule | GAP — clause default applies             |
+| UI-2.5 | Fixed named type scale uses `$font-size-xs` through `$font-size-3xl` (8 steps)                     | `_platform-variables.scss:62-69`                                                              | PROJECT AUTHORITY — overrides the clause |
+| UI-4.1 | Spacing tokens use a 4px base with declared multiples 1, 2, 3, 4, 5, 6, 8, 10, 12                  | `_platform-variables.scss:12-20`                                                              | PROJECT AUTHORITY — overrides the clause |
+| UI-4.2 | Layout mixins carry spacing through container `gap`; app container centering uses `margin: 0 auto` | `_platform-mixins.scss:26-36`; `_mixins.scss:12-18`                                           | PROJECT AUTHORITY — overrides the clause |
+| UI-4.4 | Breakpoints use named size bands (`xs`/`sm`/`md`/`lg`/`xl`) rather than content-driven names       | `_platform-variables.scss:97-106`                                                             | PROJECT AUTHORITY — overrides the clause |
+| UI-5.5 | Focus treatment adds a 2px solid `:focus` outline; no `:focus-visible` selector is present         | `platform-loading-error-indicator.component.scss:263-265`                                     | PROJECT AUTHORITY — overrides the clause |
 
 ---
 

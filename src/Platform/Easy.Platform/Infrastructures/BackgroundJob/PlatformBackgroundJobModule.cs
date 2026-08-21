@@ -205,11 +205,16 @@ public class PlatformBackgroundJobUseDashboardUiOptions
 
     public void EnsureValid()
     {
+        // IsNotNullOrWhiteSpace, NOT IsNotNullOrEmpty: a whitespace-only credential ("   ") is neither null nor empty,
+        // so the previous check accepted it and wired it straight into the dashboard's basic-auth filter
+        // (PlatformHangfireBackgroundJobModule.cs:358-359). That is a credential a misconfigured or partially-populated
+        // config file produces by accident — a blank-looking value that still counts as "configured" and silently
+        // becomes the real username/password guarding the background-job dashboard.
         this.Validate(
                 p =>
                     p.BasicAuthentication == null
-                    || (p.BasicAuthentication.UserName.IsNotNullOrEmpty() && p.BasicAuthentication.Password.IsNotNullOrEmpty()),
-                "PlatformBackgroundJobUseDashboardUiOptions BasicAuthentication UserName and Password must be not null or empty"
+                    || (p.BasicAuthentication.UserName.IsNotNullOrWhiteSpace() && p.BasicAuthentication.Password.IsNotNullOrWhiteSpace()),
+                "PlatformBackgroundJobUseDashboardUiOptions BasicAuthentication UserName and Password must be not null, empty or whitespace"
             )
             .And(
                 p => !p.UseAuthentication || p.BasicAuthentication != null,

@@ -82,6 +82,20 @@ python $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "<mood>" --domain ty
 python $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "<industry>" --domain color
 ```
 
+## Design Principles Contract (all modes)
+
+The 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`) carried as the `SYNC:ui-ux-design-principles` block below bind EVERY mode of this skill. Project design-system docs OUTRANK them — surface a genuine conflict to the user with both sides, NEVER resolve it silently.
+
+**Generative modes (`fast`, `good`) — APPLY the clauses as an output contract on the design you produce:**
+
+1. **States first.** Design and build the empty, loading and error state BEFORE the populated state (`UI-1.5`), and reserve space for anything that loads so nothing shifts in (`UI-9.3`).
+2. **All 5 interaction states per interactive element** — default, hover, focus, active, disabled — plus loading where it applies (`UI-5.2`); keep a visible focus ring, restyled if it clashes but NEVER removed (`UI-5.5`).
+3. **Declare the scales, never improvise them.** State the type scale as 6 named steps with no one-off sizes (`UI-2.5`), body 16px web / 17px mobile and never below 14px (`UI-2.2`), measure 45–75 characters (`UI-2.3`); and declare ONE spacing unit — 4px or 8px base, every gap a multiple of it (`UI-4.1`). Both declarations belong in the summary you report back at stage 5; an undeclared scale is an incomplete design, not a style choice.
+4. **Contrast is measured, not eyeballed** — state the target AND the measured value: 4.5:1 text, 3:1 UI edges (`UI-3.1`); colour NEVER carries meaning alone — pair it with an icon, label or position (`UI-3.3`).
+5. **Touch surfaces.** When the design covers a mobile/touch surface, hit targets are ≥44×44pt and 8px apart (`UI-8.1`) and primary actions sit in the bottom third where the thumb lives (`UI-8.2`). When it does not, state that explicitly so the §8 skip is auditable.
+
+**Reporting modes (`describe`, and the analysis pass of `screenshot` / `video`) — REPORT against the clauses:** the super-detailed description MUST name which clauses the OBSERVED design SATISFIES and which it VIOLATES, cited by ID — e.g. type-scale drift (`UI-2.5`), contrast failure with the measured ratio (`UI-3.1`), undersized touch targets (`UI-8.1`), missing empty/loading/error states (`UI-1.5`), a removed focus ring (`UI-5.5`). A violation is RECORDED, never silently reproduced: `describe` carries it into the implementation plan as a correction; `screenshot` / `video` then apply the five generative obligations above so the recreation FIXES the violation rather than inheriting it — flag any correction that changes the visual match and confirm it with the user before shipping it.
+
 ## Mode Branches
 
 ### `--mode=fast` (default) — quick design
@@ -177,6 +191,92 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 
 <!-- /SYNC:existing-ui-research -->
 
+<!-- SYNC:ui-ux-design-principles -->
+
+> **UI/UX Design Principles (Rev 1.0 — 40 clauses, web + mobile)** — the working rule set for ANY task that designs, plans, implements, or reviews a user interface. Applies to BOTH platforms unless a clause names one (§8 is mobile/touch). Cite clauses by ID: `UI-3.1`, `UI-8.2`.
+>
+> **Precedence:** project design-system / SCSS / frontend-pattern docs OUTRANK these clauses; these clauses outrank generic taste. A genuine conflict is SURFACED to the user with both sides — NEVER resolved silently. — why: the project's own recorded decision is the authority; these clauses are the default when it is silent.
+>
+> **1.0 Visual Hierarchy & Layout**
+>
+> - `UI-1.1` One focal point per screen. Two elements competing for first read → demote one.
+> - `UI-1.2` Signal order: size → weight → colour → position. Use the cheapest signal that works before adding another.
+> - `UI-1.3` Group by proximity, NEVER by border. Whitespace separates cleanly; boxes inside boxes do not.
+> - `UI-1.4` Align to a shared edge. Every unexplained indent reads as an accident.
+> - `UI-1.5` Design the empty, loading and error state FIRST. The full state is the easy one.
+>
+> **2.0 Typography**
+>
+> - `UI-2.1` Max 2 families, 3 weights each. More variety reads as inconsistency, not range.
+> - `UI-2.2` Body text 16px web, 17px mobile. NEVER below 14px for anything a user must read.
+> - `UI-2.3` Line length 45–75 characters. Constrain the measure, not the container.
+> - `UI-2.4` Leading scales inversely with size: 1.5 body, 1.1–1.2 display.
+> - `UI-2.5` Fixed type scale — 6 named steps shared with engineering. NEVER one-off sizes.
+>
+> **3.0 Colour & Contrast**
+>
+> - `UI-3.1` Contrast 4.5:1 text, 3:1 UI edges. Measure it — NEVER judge by eye on a bright screen.
+> - `UI-3.2` One accent, one job. An accent that is everywhere points at nothing.
+> - `UI-3.3` Colour NEVER carries meaning alone — pair it with an icon, label or position.
+> - `UI-3.4` Dark mode is NOT inverted light mode. Lift surfaces to signal elevation; soften pure-white text.
+>
+> **4.0 Spacing & Grid**
+>
+> - `UI-4.1` One spacing unit, multiplied — 4px or 8px base; every gap a multiple of it.
+> - `UI-4.2` Space belongs to the container, not the child. Use `gap`; reserve margins for exceptions.
+> - `UI-4.3` Tighter inside, looser between — inner padding always smaller than the gap to the next group.
+> - `UI-4.4` Breakpoints follow content, not devices. Break where the layout stops working.
+>
+> **5.0 Interaction & Feedback**
+>
+> - `UI-5.1` Every action gets a response under 100ms, even when the result takes longer.
+> - `UI-5.2` Specify all 5 states — default, hover, focus, active, disabled — plus loading where it applies.
+> - `UI-5.3` Prefer undo over confirmation. Confirm ONLY what cannot be reversed.
+> - `UI-5.4` Motion clarifies cause and effect: 150–250ms, ease-out, honours reduced-motion.
+> - `UI-5.5` Keep the visible focus ring. Restyle it if it clashes; NEVER remove it.
+>
+> **6.0 Navigation & IA**
+>
+> - `UI-6.1` Every screen answers: where am I, what's here, where next.
+> - `UI-6.2` Max 5 top-level destinations. Depth beats a crowded first level.
+> - `UI-6.3` Label by the user's word, not the internal one. Team vocabulary is not a taxonomy.
+> - `UI-6.4` Every state deserves a URL or a back path. Deep links and hardware back must land somewhere sensible.
+>
+> **7.0 Forms & Input**
+>
+> - `UI-7.1` Ask for less. Every field needs a reason it exists today.
+> - `UI-7.2` Labels stay visible. Placeholders are hints, NEVER labels.
+> - `UI-7.3` Validate on blur, not on keystroke. Errors sit next to the field and say how to fix it.
+> - `UI-7.4` Match keyboard to data type — correct input type, autocomplete and autocapitalise on every field.
+> - `UI-7.5` NEVER lose entered data. Preserve input across errors, navigation and refresh.
+>
+> **8.0 Mobile & Touch** _(mobile/touch surfaces)_
+>
+> - `UI-8.1` Hit target ≥44×44pt, 8px apart. The target may exceed the visible icon.
+> - `UI-8.2` Primary actions in the bottom third — that is where the thumb lives.
+> - `UI-8.3` Gestures are shortcuts, NEVER the only route. Anything swipeable is also tappable.
+> - `UI-8.4` Respect safe areas and the keyboard. Notch, home indicator and on-screen keyboard all steal space.
+>
+> **9.0 Speed & Perceived Speed**
+>
+> - `UI-9.1` Show structure before data — skeletons for known layouts, spinners only for unknown waits.
+> - `UI-9.2` Assume success optimistically. Update UI first, reconcile after, roll back visibly on failure.
+> - `UI-9.3` Reserve space for anything that loads. Images, ads and fonts must NEVER shift the layout.
+> - `UI-9.4` Design for the slow connection. Offline, timeout and retry are states, NOT edge cases.
+>
+> **Apply by role** — the clauses are one set; what you DO with them depends on the task:
+>
+> | Role                                | Obligation                                                                                                                                                              |
+> | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | DESIGN / PLAN a surface             | Clauses shape the artifact: empty/loading/error specified first (`UI-1.5`), all 5 states enumerated (`UI-5.2`), type scale + spacing unit declared (`UI-2.5`, `UI-4.1`) |
+> | IMPLEMENT a component               | Pre-completion gate: states · tokens · contrast · focus ring · touch target · reserved space (`UI-5.2`, `UI-2.5`/`UI-4.1`, `UI-3.1`, `UI-5.5`, `UI-8.1`, `UI-9.3`)      |
+> | REVIEW UI code or a design artifact | Each clause is a fail-condition; every finding cites `UI-<clause>` + `file:line` + severity. NEVER a tick-box sweep — one focused pass per section                      |
+> | SCAN / document a UI system         | Record where the PROJECT deliberately deviates, so the overriding doc becomes the recorded authority                                                                    |
+>
+> **Skip ONLY** when the change has no user-facing surface (backend-only, tooling, docs) — state that explicitly so the skip is auditable, not an omission.
+
+<!-- /SYNC:ui-ux-design-principles -->
+
 <!-- SYNC:ai-mistake-prevention -->
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
@@ -212,6 +312,26 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
+<!-- SYNC:ui-ux-design-principles:reminder -->
+
+- **MUST ATTENTION** apply the 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`) to any user-facing surface: one focal point, proximity grouping, empty/loading/error designed FIRST (§1) · ≤2 families, 16px web / 17px mobile body, never <14px, 45–75ch, fixed 6-step scale (§2) · 4.5:1 text / 3:1 edges measured, one accent, colour never alone, dark mode ≠ inversion (§3) · one 4/8px unit, `gap` over margins, tighter-inside-looser-between, content-driven breakpoints (§4) · <100ms response, all 5 states, undo over confirm, 150–250ms ease-out honouring reduced-motion, visible focus ring (§5) · where-am-I/what's-here/where-next, ≤5 top-level destinations, user's words, URL or back path (§6) · fewer fields, visible labels, validate on blur, matched keyboard, NEVER lose input (§7) · ≥44×44pt targets 8px apart, bottom-third primaries, gestures never the only route, safe areas (§8) · structure before data, optimistic update with visible rollback, reserved space, slow-connection states (§9). Project design-system docs OUTRANK these clauses — a genuine conflict goes to the user, NEVER resolved silently. Cite every finding as `UI-<clause>` + `file:line`. Skip ONLY for changes with no user-facing surface, stated explicitly.
+
+<!-- /SYNC:ui-ux-design-principles:reminder -->
+
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
+
 ## Closing Reminders
 
 **MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
@@ -223,5 +343,6 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 - **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
 - **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- **MANDATORY IMPORTANT MUST ATTENTION** apply the 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`) to every design: empty/loading/error states designed FIRST (`UI-1.5`), all 5 interaction states per interactive element (`UI-5.2`), type scale (6 named steps, `UI-2.5`) and spacing unit (4/8px base, `UI-4.1`) DECLARED not improvised, contrast measured and stated (4.5:1 text / 3:1 edges, `UI-3.1`), ≥44×44pt touch targets + bottom-third primaries on mobile surfaces (`UI-8.1`, `UI-8.2`); `fast`/`good` APPLY them, `describe`/`screenshot`/`video` also REPORT by clause ID which the observed design satisfies or violates — project design-system docs outrank the clauses, conflicts go to the user
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.

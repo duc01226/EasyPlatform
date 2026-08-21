@@ -57,16 +57,17 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 ## Quick Summary
 
-**Goal:** Drive a review target to a **clean zero-findings pass** by pairing `$why-review` with `$fix` in a recursive loop — each round runs `$why-review` INLINE to surface validated findings, then `$fix` to resolve them, then loops again over the CHANGED target — stopping only when a complete `$why-review` pass produces **zero findings** (nothing left to fix).
+**Goal:** Drive a review target to a **clean pass** by pairing `$why-review` with `$fix` in a recursive loop — each round runs `$why-review` INLINE to surface validated findings, then `$fix` to resolve them, then loops again over the CHANGED target — stopping when a complete `$why-review` pass clears the round's exit bar: **zero findings** in rounds 1-2, and **zero CRITICAL/HIGH/MEDIUM** from round 3 (LOW-only ENDS the loop, deferred not fixed).
 
 **Summary:**
 
 - **Each round = `$why-review` + `$fix`** — `$why-review` is review-ONLY and never edits the target, so the loop MUST pair it with a fix half; one without the other never converges.
 - **Steps (in order):** (0) resolve target + Goal Contract → (0b) bind the convergence loop (protocol loop primary + optional `/goal` accelerator) → (1) round loop { run `$why-review` INLINE → clear the **Trade-Off Gate** on the fix set → run `$fix` on the VALIDATED findings at the owning layer → log iteration } → (2) converge on a zero-findings round OR escalate on non-progress → (3) recap.
-- **Convergence:** stop ONLY when a **fresh full** `$why-review` over the CURRENT (post-fix) target returns a PASS verdict with an **empty validated-finding set** — not a stale PASS predating the last fix.
+- **Convergence:** stop ONLY when a **fresh full** `$why-review` over the CURRENT (post-fix) target clears that round's exit bar — not a stale PASS predating the last fix.
+- **Severity floor — from round 3, LOW stops blocking.** Rounds 1-2 converge on an **empty validated-finding set** (any severity). **From round 3 the bar is zero validated CRITICAL/HIGH/MEDIUM — a round whose validated findings are ALL LOW ENDS the loop.** Never open another round to fix LOW alone; list every deferred LOW in the recap and Goal Contract instead, and NEVER re-tier a real CRITICAL/HIGH/MEDIUM down to LOW to reach the exit.
 - **Inline invariant:** run `$why-review` via the skill invocation, NEVER the `spawn_agent` tool — it self-binds its OWN review-loop obligation (and a session `/goal` gate WHEN available, `why-review/SKILL.md:57-76`), which a sub-agent cannot own or carry back to this loop.
 - **Apply ONLY validated findings:** `$why-review` already validates its findings to the ≥85% survival bar; the loop applies THOSE, at the lowest owning layer (Entity > Service > Handler), routed by target type — NEVER unvalidated findings.
-- **Bounded:** round cap default 5; findings not shrinking across 2 rounds, or cap hit with findings still open → **STOP & escalate** by asking the user directly. Increasing findings → STOP (fixes regressing).
+- **Bounded:** round cap default 3; findings not shrinking across 2 rounds, or cap hit with findings still open → **STOP & escalate** by asking the user directly. Increasing findings → STOP (fixes regressing).
 - **TRADE-OFF GATE before every fix (ALWAYS ASK):** (1) **is there any trade-off in this fix?** name what it sacrifices — "none" is an unfinished analysis; (2) **is it worth it?** gain vs cost, who pays, when → WORTH IT / NOT WORTH IT / UNCLEAR — NOT WORTH IT → do NOT apply, report it back instead; (3) **is the trade-off material enough to confirm with the user?** irreversible · cost shifted elsewhere · quality attribute traded · boundary crossed · high-consequence path · UNCLEAR → **STOP the loop and confirm by asking the user directly BEFORE applying**. NEVER auto-apply a material-trade-off fix just because the loop wants to converge.
 
 **Why this skill exists (READ FIRST — it is the whole justification):** `$why-review` is **review-only** — `why-review/SKILL.md:330` (_"Review only — do NOT modify target files or implement changes"_) and `:76` (_"why-review fixes its OWN findings set, not code… Code/spec/test fixes remain the caller's job"_). Its internal self-recursive `/goal` loop (`why-review/SKILL.md:57-76`) converges its own **findings REPORT** to CLEAN — every surviving finding proof-backed, validated, ≥85% confidence — but it **never touches the code and never re-reviews a fixed target**. So a finding that demands a code/spec/doc change is validated and handed off, yet **nothing loops back to confirm the FIX is correct or that it introduced no new defect**. This skill closes that outer loop: it applies the validated fixes and re-runs a **fresh full** `$why-review` over the changed target until zero findings remain — catching fix-induced regressions and proving each fix actually resolved its finding. Without it, "why-review passed, then I fixed the findings" ships those fixes unreviewed.
@@ -77,10 +78,11 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 - **Each round pairs `$why-review` (find) + `$fix` (resolve).** `$why-review` is review-only (`why-review/SKILL.md:76,330`) — it produces validated findings but never edits the target; `$fix` is the half that lands the change. A round is incomplete until BOTH have run (or the review returned zero findings).
 - **MUST run INLINE in the main session — NEVER dispatch `$why-review` as a sub-agent.** It self-binds its own review-loop obligation (and a session `/goal` gate when available, `why-review/SKILL.md:57-76`); as a sub-agent that in-session guarantee is silently lost. This loop skill therefore also runs inline.
-- **Convergence = a fresh full `$why-review` over the post-fix target returns PASS with an empty validated-finding set.** A PASS produced BEFORE the latest fix landed does NOT count — re-review the changed target.
+- **Convergence = a fresh full `$why-review` over the post-fix target clears the round's exit bar.** Rounds 1-2: PASS with an empty validated-finding set. **Round 3+: zero validated CRITICAL/HIGH/MEDIUM — LOW-only converges.** A PASS produced BEFORE the latest fix landed does NOT count — re-review the changed target.
+- **The severity floor bounds ITERATION, never the standard.** It ends the loop; it never authorizes shipping a known CRITICAL/HIGH/MEDIUM, never lowers `$why-review`'s ≥85% finding-survival bar, and never applies to a binary gate (a failing test is a failure, not a LOW finding).
 - **`$fix` applies ONLY validated findings**, at the lowest owning layer, routed by target type (code → `$fix` with its intelligent routing, or a direct edit at Entity/Service; plan/PBI → `$refine`; spec → `$spec [update]` + `$spec [mode=tests]`; docs → `$docs-update`; tests → `$integration-test`). NEVER apply an unvalidated or demoted finding.
 - **The target base is FIXED across rounds; its content changes as fixes land.** Re-review the SAME target (same plan/diff/artifact) each round so convergence is measured against a stable subject.
-- **Round cap (default 5)** and **findings-not-shrinking / increasing → STOP & escalate** by asking the user directly. NEVER loop open-ended.
+- **Round cap (default 3)** and **findings-not-shrinking / increasing → STOP & escalate** by asking the user directly. NEVER loop open-ended.
 - **ALWAYS ask the 3 trade-off questions before applying ANY fix** — is there a trade-off? is it worth it? is it material enough to confirm with the user? A MATERIAL trade-off (irreversible · cost shifted to another team/ops/maintainer/user · one quality attribute traded for another · tier/service/event/library boundary crossed · auth/money/data-integrity/breaking-change path · worth-it verdict UNCLEAR) **PAUSES the loop for an ask the user directly before the fix lands** — convergence pressure NEVER authorizes walking through a one-way door on the user's behalf. — why: an autonomous fix loop is exactly where an unpriced trade-off ships silently, because each round only asks "did findings shrink?".
 
 ---
@@ -88,7 +90,8 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 ## First Principle — Convergence, Not Motion
 
 > A round that changes the target is progress **only if** the next fresh review finds fewer things to fix.
-> The loop exists to reach a fixed point (zero findings), not to keep editing the target.
+> The loop exists to reach a fixed point (no blocking findings), not to keep editing the target.
+> The bar tightens by round: everything blocks in rounds 1-2; from round 3 only CRITICAL/HIGH/MEDIUM block, so a LOW-only round is the fixed point.
 > If findings stop shrinking, that is a signal to **escalate**, not to spin another round.
 
 ---
@@ -101,8 +104,8 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
     - **Docs / spec / report** — a target artifact path whose claims are checked against source evidence.
     - Record the target type, its evidence, and confidence. **NEVER silently convert target types** (`why-review/SKILL.md:160`).
 2. **Resolve/create the Goal Contract** per `SYNC:goal-contract-satisfaction-loop` (`plans/goals/{YYMMDD-HHmm}-{slug}/goal.md`, template `.claude/templates/goal-contract-template.md`). Its single **required** Success Criterion:
-    > _A fresh full `$why-review` over `{target}` returns a PASS verdict with **zero validated findings** (no finding, weakness, or missing item of any severity)._
-    > Record the round cap (default 5) and the target reference in **Constraints**.
+    > _A fresh full `$why-review` over `{target}` clears the round's exit bar: **rounds 1-2** → PASS with **zero validated findings** (no finding, weakness, or missing item of any severity); **round 3+** → **zero validated CRITICAL/HIGH/MEDIUM findings**, with any remaining LOW findings recorded as deferred rather than fixed._
+    > Record the round cap (default 3), the severity floor (LOW non-blocking from round 3), and the target reference in **Constraints**.
 
 ## Step 0b — Bind the Convergence Loop (protocol-first; `/goal` is an optional accelerator)
 
@@ -110,7 +113,7 @@ The convergence loop is bound by TWO layers. The **protocol loop (Steps 1–2) i
 
 **1. Protocol loop — ALWAYS binding (hook/command-independent).** You are personally responsible for not stopping until the loop converges or bounded-escalates. This binds Claude, Codex, and Copilot equally, whether or not `/goal` exists:
 
-> Repeatedly run `$why-review` INLINE over `{target}`. After each review, apply every VALIDATED finding's fix at its owning layer, then re-run a FRESH full `$why-review` over the CHANGED target. Do NOT stop while the last review still produced findings. Converge ONLY when a fresh full `$why-review` returns PASS with zero validated findings. Cap at `{N=5}` rounds; if findings do not shrink across 2 consecutive rounds, findings increase, or the cap is hit with findings still open → STOP and escalate by asking the user directly. Never loop open-ended.
+> Repeatedly run `$why-review` INLINE over `{target}`. After each review, apply every VALIDATED finding's fix at its owning layer, then re-run a FRESH full `$why-review` over the CHANGED target. Do NOT stop while the last review still produced findings that BLOCK at the current round's bar. Converge when a fresh full `$why-review` clears that bar: **rounds 1-2** → PASS with zero validated findings; **round 3+** → zero validated CRITICAL/HIGH/MEDIUM (LOW-only ENDS the loop, with the LOWs recorded as deferred). Cap at `{N=5}` rounds; if blocking findings do not shrink across 2 consecutive rounds, findings increase, or the cap is hit with CRITICAL/HIGH/MEDIUM still open → STOP and escalate by asking the user directly. Never loop open-ended.
 
 Treat this as a standing obligation you re-read at every Step 2 checkpoint — NOT a one-time note you can rationalize away after the first fix cycle. The Goal Contract's required Success Criterion (Step 0) is its durable, host-independent record.
 
@@ -140,19 +143,20 @@ Each round couples the two halves — **review to find, fix to resolve.** For ea
 
 Evaluate after every round:
 
-| Condition                                                                                                                                                               | Action                                                                                                                                                               |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Fresh full `$why-review` returned **PASS with zero validated findings**                                                                                                 | **CONVERGED** → mark the required criterion PASS in the Goal Satisfaction matrix → clear the `/goal` gate → go to Step 3.                                            |
-| Findings > 0 AND round `< N` AND findings shrank vs prior round                                                                                                         | Clear the Trade-Off Gate (Step 1.3), apply the validated fixes (Step 1.4), then run round `R+1` (fresh full re-review of the changed target).                        |
-| A fix carries a **MATERIAL** trade-off (irreversible · cost shifted elsewhere · quality attribute traded · boundary crossed · high-consequence path · worth-it UNCLEAR) | **PAUSE the loop → confirm by asking the user directly BEFORE applying that fix.** Convergence pressure NEVER authorizes deciding a material trade-off for the user. |
-| Findings did **not shrink** across 2 consecutive rounds (same/increasing count)                                                                                         | **STOP & escalate** by asking the user directly — a non-converging loop is a signal, not a reason to spin.                                                           |
-| Round cap `N` hit with findings still open                                                                                                                              | **STOP & escalate** by asking the user directly — report the still-open findings; do not silently continue.                                                          |
+| Condition                                                                                                                                                               | Action                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fresh full `$why-review` returned **PASS with zero validated findings**                                                                                                 | **CONVERGED** → mark the required criterion PASS in the Goal Satisfaction matrix → clear the `/goal` gate → go to Step 3.                                                                                                             |
+| Round `R ≥ 3` AND the fresh review's validated findings are **ALL LOW** (zero CRITICAL/HIGH/MEDIUM)                                                                     | **CONVERGED on the severity floor** → do NOT run another round for LOW alone → record every remaining LOW as a deferred finding in the recap + Goal Contract → mark the required criterion PASS → go to Step 3.                       |
+| Blocking findings > 0 AND round `< N` AND blocking findings shrank vs prior round                                                                                       | Clear the Trade-Off Gate (Step 1.3), apply the validated fixes (Step 1.4), then run round `R+1` (fresh full re-review of the changed target). Rounds 1-2 count every severity as blocking; round 3+ counts only CRITICAL/HIGH/MEDIUM. |
+| A fix carries a **MATERIAL** trade-off (irreversible · cost shifted elsewhere · quality attribute traded · boundary crossed · high-consequence path · worth-it UNCLEAR) | **PAUSE the loop → confirm by asking the user directly BEFORE applying that fix.** Convergence pressure NEVER authorizes deciding a material trade-off for the user.                                                                  |
+| Findings did **not shrink** across 2 consecutive rounds (same/increasing count)                                                                                         | **STOP & escalate** by asking the user directly — a non-converging loop is a signal, not a reason to spin.                                                                                                                            |
+| Round cap `N` hit with CRITICAL/HIGH/MEDIUM still open                                                                                                                  | **STOP & escalate** by asking the user directly — report the still-open findings; do not silently continue. (LOW-only at the cap converges via the severity-floor row above.)                                                         |
 
 > **Increasing findings = STOP.** If round `R` surfaces MORE findings than round `R-1`, the fixes are regressing the target — STOP and escalate immediately. Never trade one fix for two new findings across rounds.
 
 ## Step 3 — Recap
 
-Emit a concise convergence recap: rounds run, validated findings per round (the shrinking sequence), the fixes applied at each round, the final zero-findings PASS evidence, and the Goal Satisfaction matrix (required criterion PASS). Point to each round's `$why-review` report under `plans/reports/` and the Goal Contract Iteration Log. Do NOT commit or push unless the user explicitly asks.
+Emit a concise convergence recap: rounds run, validated findings per round (the shrinking sequence, split by severity), the fixes applied at each round, the final PASS evidence (zero findings, or zero CRITICAL/HIGH/MEDIUM when the loop ended on the round-3+ severity floor), a `## Deferred LOW Findings (severity floor, round ≥3)` list of every LOW left unfixed with `file:line`, and the Goal Satisfaction matrix (required criterion PASS). Point to each round's `$why-review` report under `plans/reports/` and the Goal Contract Iteration Log. Do NOT commit or push unless the user explicitly asks.
 
 ---
 
@@ -161,7 +165,7 @@ Emit a concise convergence recap: rounds run, validated findings per round (the 
 A round converges ONLY when a `$why-review` that ran over the **current, post-fix** target returns PASS with an empty validated-finding set. Both properties are required because:
 
 - **Fresh over the changed target** — a PASS verdict from a review that predates the last fix proves nothing about the fix. Every applied fix invalidates the prior verdict (`why-review/SKILL.md:565`); the loop MUST re-review after fixing, never reuse a stale clean verdict.
-- **Zero _validated_ findings** — `$why-review`'s own gate already dropped inflated/unproven findings below the ≥85% bar (`why-review/SKILL.md:361`); convergence rides on that validated set, so the loop never chases a nit the review itself would demote.
+- **Zero _blocking_ validated findings** — `$why-review`'s own gate already dropped inflated/unproven findings below the ≥85% bar (`why-review/SKILL.md:361`); convergence rides on that validated set, so the loop never chases a nit the review itself would demote. "Blocking" means every severity in rounds 1-2, and CRITICAL/HIGH/MEDIUM only from round 3 — by round 3 the surviving LOWs are polish whose fix cost exceeds the risk of deferring them, so continuing to spin on them buys nothing and burns the round cap that a real defect might need. — why: a loop that cannot exit on nits converges on exhaustion instead of on quality.
 
 When findings remain but cannot be fixed (owner/product input needed) → **escalate**, do not loop. When a fix lands but the next fresh review still finds issues → run another round. Convergence is a fixed point, not a single clean read.
 
@@ -259,6 +263,20 @@ When findings remain but cannot be fixed (owner/product input needed) → **esca
 
 <!-- /SYNC:trade-off-interrogation-gate:reminder -->
 
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Pair `$why-review` + `$fix` in a recursive loop over a fixed target — review to find validated findings → `$fix` to resolve them → fresh full re-review of the CHANGED target — until a complete `$why-review` pass produces **zero findings** (nothing left to fix).
@@ -274,7 +292,7 @@ When findings remain but cannot be fixed (owner/product input needed) → **esca
 **IMPORTANT MUST ATTENTION** run `$why-review` **INLINE via the skill invocation — NEVER as a sub-agent** (it self-binds its own review-loop obligation + a session `/goal` gate when available, `why-review/SKILL.md:57-76`).
 **IMPORTANT MUST ATTENTION** convergence = a **fresh full** `$why-review` over the **post-fix** target returns PASS with an **empty validated-finding set** — never a stale clean verdict predating the last fix.
 **IMPORTANT MUST ATTENTION** apply **ONLY validated findings** (≥85% survival bar) at the lowest owning layer (Entity > Service > Handler); NEVER apply an unvalidated or demoted finding.
-**IMPORTANT MUST ATTENTION** enforce the **round cap (default 5)**; findings not shrinking across 2 rounds, increasing, or cap hit with findings still open → **STOP & escalate** by asking the user directly. NEVER loop open-ended.
+**IMPORTANT MUST ATTENTION** enforce the **round cap (default 3)**; findings not shrinking across 2 rounds, increasing, or cap hit with findings still open → **STOP & escalate** by asking the user directly. NEVER loop open-ended.
 **IMPORTANT MUST ATTENTION** do NOT commit or push unless the user explicitly asks.
 
 <!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
@@ -292,7 +310,8 @@ Source: `.claude/.ck.json` + `.claude/skills/shared/sync-inline-versions.md` (`:
 3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
 4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
 5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
-6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
+6. **PARALLELIZE:** Before executing the task list, tag each task `PAR` (independent inputs + write set disjoint from every other `PAR` task) or `SEQ` (name the blocking dependency), group `PAR` tasks into waves, declare the wave plan, and spawn each wave's sub-agents in ONE message — all-return barrier per wave, fan-out one level deep unless a sub-agent's own definition authorizes further fan-out. Sequential-by-default is a defect when tasks are independent; do not parallelize shared write targets, output-consuming tasks, trivial single-file work, ordering a skill or workflow explicitly fixes, or user-approval gates.
+7. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
 
 ## Shared AI-SDD Protocol Markers
 
@@ -357,7 +376,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
-- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
+- **Test failure → record a provisional verdict before trace/edit, then investigate.** Use the full five-way taxonomy: SOURCE-WRONG (production violates intent), TEST-WRONG (assertion/setup is stale), TEST-NOT-OPTIMAL (valid but fragile or low-signal test), ENVIRONMENT-BLOCKED (external state prevents a verdict), or AMBIGUOUS (intent/evidence cannot choose safely). Then trace root cause and triangulate against the governing spec (`docs/specs/**` if one exists) AND source. NEVER weaken an assertion, add a skip, relax a timeout, or change source merely to force green.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
 - **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.

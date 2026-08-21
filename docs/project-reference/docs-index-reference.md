@@ -1,4 +1,5 @@
 <!-- Last scanned: 2026-06-12 -->
+<!-- Last verified: 2026-08-21 (docs-update, impact-scoped) -->
 
 # Documentation Index Reference
 
@@ -8,9 +9,9 @@
 
 ## Documentation System
 
-**14 markdown files under `docs/`** across 3 areas (project-reference, design-system, templates), plus 7 root-level `*.md` entry docs and `.claude/` framework docs (28 framework docs excl. vendored packages, 186 skills, 29 agents, 3 workflows). Last scanned: 2026-06-12.
+**20 markdown files under `docs/`** across 3 areas (project-reference, design-system, templates), plus 7 root-level `*.md` entry docs and `.claude/` framework docs (32 framework docs excl. vendored packages, 166 skills, 29 agents, 3 workflows). Last scanned: 2026-06-12.
 
-Organization type: **Structured hierarchy** — `docs/project-reference/` holds canonical AI-context reference docs (hook-injected); `docs/templates/` holds authoring templates. **No `docs/specs/`, `docs/architecture-decisions/`, `docs/release-notes/`, or operations docs exist yet.**
+Organization type: **Structured hierarchy** — `docs/project-reference/` holds canonical AI-context reference docs plus project-managed registries; `docs/templates/` holds authoring templates. **No `docs/specs/`, `docs/architecture-decisions/`, `docs/release-notes/`, or operations docs exist yet.**
 
 ## Documentation Graph
 
@@ -25,8 +26,8 @@ EasyPlatform/
 │   ├── CLEAN-CODE-RULES.md         clean-code conventions
 │   └── CHANGELOG.md                version history
 │
-├── docs/  (14 *.md)
-│   ├── project-reference/  (11 top-level reference docs — hook-injected AI context)
+├── docs/  (20 *.md)
+│   ├── project-reference/  (17 top-level reference docs and registries)
 │   │   ├── backend-patterns-reference.md      CQRS/validation/event patterns
 │   │   ├── frontend-patterns-reference.md     Angular AppBase*/store/BEM patterns
 │   │   ├── domain-entities-reference.md        RootEntity/DTO/value-object rules
@@ -38,6 +39,12 @@ EasyPlatform/
 │   │   ├── feature-spec-reference.md            feature-doc template + evidence rules
 │   │   ├── lessons.md                            learned lessons (auto-injected)
 │   │   ├── docs-index-reference.md               this navigation index
+│   │   ├── custom-prompts-reference.md           custom prompt registry
+│   │   ├── seed-test-data-reference.md           seed test data patterns
+│   │   ├── skill-protocols-reference.md          project skill protocol overlay registry
+│   │   ├── spec-principles.md                    feature-spec quality principles
+│   │   ├── spec-system-reference.md              feature-spec routing and ownership
+│   │   ├── workflow-spec-test-code-cycle-reference.md  spec/test/code workflow
 │   │   └── design-system/  (nested)
 │   │       └── README.md                         design-system overview (MD3, SCSS vars, BEM)
 │   │
@@ -45,8 +52,8 @@ EasyPlatform/
 │       └── detailed-feature-spec-template.md     feature-spec authoring template
 │
 └── .claude/
-    ├── docs/        28 framework docs (excl. vendored node packages)
-    ├── skills/      186 SKILL.md
+    ├── docs/        32 framework docs (excl. vendored node packages)
+    ├── skills/      166 SKILL.md
     ├── agents/      29 agent definitions
     └── workflows/   3 workflow docs
 ```
@@ -73,35 +80,41 @@ Reference-doc clusters (read together):
 Isolated / standalone: docs-index-reference (this file), changelog
 ```
 
-> Note: `CLAUDE.md:364` states "project-reference/ (11 files)" — matches the 11 top-level reference docs (excludes the nested `design-system/` subtree).
+> Note: `CLAUDE.md:364` states "project-reference/ (11 files)"; this index catalogs the 17 top-level reference docs present in the current tree (excluding the nested `design-system/` subtree).
 
 ## Doc Lookup Guide
 
-| If the prompt / task mentions...                                  | Read this doc                                                |
-| ----------------------------------------------------------------- | ------------------------------------------------------------ |
-| Backend, CQRS, command/query handler, validation, entity events   | `docs/project-reference/backend-patterns-reference.md`       |
-| Frontend, Angular component, store, `effectSimple`, `AppBase*`    | `docs/project-reference/frontend-patterns-reference.md`      |
-| Entity, `RootEntity`, DTO mapping, value object, domain model     | `docs/project-reference/domain-entities-reference.md`        |
-| Repo layout, where files live, layer hierarchy, project structure | `docs/project-reference/project-structure-reference.md`      |
-| Code review, review checklist, review rules                       | `docs/project-reference/code-review-rules.md`                |
-| SCSS, styling, BEM classes, platform-core variables, theming      | `docs/project-reference/scss-styling-guide.md`               |
-| Design system, Material Design 3, component styling               | `docs/project-reference/design-system/README.md`             |
-| Integration test, subcutaneous CQRS test, `IntegrationTestHelper` | `docs/project-reference/integration-test-reference.md`       |
-| E2E test, Playwright, page object, `BasePage`, test data          | `docs/project-reference/e2e-test-reference.md`               |
-| Feature docs, feature spec, evidence, doc template, section list  | `docs/project-reference/feature-spec-reference.md`           |
-| Authoring a new feature spec (fill-in template)                   | `docs/templates/detailed-feature-spec-template.md`           |
-| Learned lessons, past mistakes, project conventions               | `docs/project-reference/lessons.md`                          |
-| Which doc to read for a task, navigation, doc index               | `docs/project-reference/docs-index-reference.md` (this file) |
-| AI code instructions, golden rules, workflow detection (Claude)   | `CLAUDE.md`                                                  |
-| AI code instructions for Codex / agent mirrors                    | `AGENTS.md`                                                  |
-| Clean-code conventions, formatting rules                          | `CLEAN-CODE-RULES.md`                                        |
-| Version history, what changed                                     | `CHANGELOG.md`                                               |
-| Project overview, getting started (human)                         | `README.md` / `EasyPlatform.README.md`                       |
-| Claude harness kit setup                                          | `CLAUDE-KIT.md`                                              |
-| Framework internals (hooks, skills, agents, harness)              | `.claude/docs/**`                                            |
+| If the prompt / task mentions...                                  | Read this doc                                                       |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Backend, CQRS, command/query handler, validation, entity events   | `docs/project-reference/backend-patterns-reference.md`              |
+| Frontend, Angular component, store, `effectSimple`, `AppBase*`    | `docs/project-reference/frontend-patterns-reference.md`             |
+| Entity, `RootEntity`, DTO mapping, value object, domain model     | `docs/project-reference/domain-entities-reference.md`               |
+| Repo layout, where files live, layer hierarchy, project structure | `docs/project-reference/project-structure-reference.md`             |
+| Code review, review checklist, review rules                       | `docs/project-reference/code-review-rules.md`                       |
+| SCSS, styling, BEM classes, platform-core variables, theming      | `docs/project-reference/scss-styling-guide.md`                      |
+| Design system, Material Design 3, component styling               | `docs/project-reference/design-system/README.md`                    |
+| Integration test, subcutaneous CQRS test, `IntegrationTestHelper` | `docs/project-reference/integration-test-reference.md`              |
+| E2E test, Playwright, page object, `BasePage`, test data          | `docs/project-reference/e2e-test-reference.md`                      |
+| Feature docs, feature spec, evidence, doc template, section list  | `docs/project-reference/feature-spec-reference.md`                  |
+| Custom prompts, reusable project procedures                       | `docs/project-reference/custom-prompts-reference.md`                |
+| Seed test data, idempotent seeders                                | `docs/project-reference/seed-test-data-reference.md`                |
+| Skill protocol overlays, project skill rules                      | `docs/project-reference/skill-protocols-reference.md`               |
+| Spec system, canonical Feature Spec ownership                     | `docs/project-reference/spec-system-reference.md`                   |
+| Spec quality, AI-implementability, tech-agnostic prose            | `docs/project-reference/spec-principles.md`                         |
+| Spec/test/code workflow, artifact ownership and sync              | `docs/project-reference/workflow-spec-test-code-cycle-reference.md` |
+| Authoring a new feature spec (fill-in template)                   | `docs/templates/detailed-feature-spec-template.md`                  |
+| Learned lessons, past mistakes, project conventions               | `docs/project-reference/lessons.md`                                 |
+| Which doc to read for a task, navigation, doc index               | `docs/project-reference/docs-index-reference.md` (this file)        |
+| AI code instructions, golden rules, workflow detection (Claude)   | `CLAUDE.md`                                                         |
+| AI code instructions for Codex / agent mirrors                    | `AGENTS.md`                                                         |
+| Clean-code conventions, formatting rules                          | `CLEAN-CODE-RULES.md`                                               |
+| Version history, what changed                                     | `CHANGELOG.md`                                                      |
+| Project overview, getting started (human)                         | `README.md` / `EasyPlatform.README.md`                              |
+| Claude harness kit setup                                          | `CLAUDE-KIT.md`                                                     |
+| Framework internals (hooks, skills, agents, harness)              | `.claude/docs/**`                                                   |
 
 ## Uncategorized / Other
 
-- `docs/project-reference/design-system/docs/project-reference/design-system/README.md` — **anomalous nested duplicate** (20 lines) reproducing the design-system path one level deep inside `docs/project-reference/design-system/`. Not referenced by any entry doc; appears to be a stray artifact. Recommend deletion (verify no link references first). Counted in the `docs/**/*.md` total (14) but excluded from the canonical reference set.
+- `docs/project-reference/design-system/docs/project-reference/design-system/README.md` — **anomalous nested duplicate** (20 lines) reproducing the design-system path one level deep inside `docs/project-reference/design-system/`. Not referenced by any entry doc; appears to be a stray artifact. Recommend deletion (verify no link references first). Counted in the `docs/**/*.md` total (20) but excluded from the canonical reference set.
 
 > **Final Purpose:** Use this index to route any documentation task to the correct doc fast. Counts are glob-verified as of the Last-scanned date; re-run `/scan --target=docs-index` after adding/removing docs. The Doc Lookup Guide is the primary entry — match the prompt's keywords to a row, open that doc.

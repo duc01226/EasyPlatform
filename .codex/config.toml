@@ -1,7 +1,10 @@
 # Team-wide Codex defaults for this repository.
 # Applied when the project is trusted by Codex.
-model = "gpt-5.6-terra"
+model = "gpt-5.6-luna"
 model_reasoning_effort = "max"
+# Fast serving tier by default. Codex reads this globally from ~/.codex/config.toml;
+# kept here so a trusted checkout of this repo requests the same tier.
+service_tier = "fast"
 
 # Shared completion notifications. Codex passes a JSON payload to this command.
 notify = ["node", ".codex/scripts/codex/codex-notify.mjs"]
@@ -23,6 +26,8 @@ max_threads = 10
 max_depth = 2
 
 [features]
+# Fast mode (stable in codex-cli 0.147.0, on by default) — pinned explicitly.
+fast_mode = true
 # Prefer HTTPS streaming on this repo to avoid websocket fallback/reconnect instability.
 responses_websockets = false
 responses_websockets_v2 = false

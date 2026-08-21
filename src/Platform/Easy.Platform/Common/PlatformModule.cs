@@ -1001,7 +1001,11 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
 
         assemblies.ForEach(assembly =>
         {
-            var executedRegisterByAssemblyKey = $"Action:{perCollectionRegistry.ContainsKey(actionName)};Assembly:{assembly.FullName}";
+            // The key must identify the (action, assembly) PAIR. Interpolating a lookup of actionName instead of
+            // actionName itself always yielded "False" — actionName is never itself a key here — so every action
+            // collapsed onto one key per assembly and the second distinct action over that assembly was silently
+            // skipped. Latent while RegisterCqrs was the only caller; a silent no-op for the next one.
+            var executedRegisterByAssemblyKey = $"Action:{actionName};Assembly:{assembly.FullName}";
 
             if (!perCollectionRegistry.ContainsKey(executedRegisterByAssemblyKey))
             {

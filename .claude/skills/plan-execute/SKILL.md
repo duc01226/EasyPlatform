@@ -1,7 +1,7 @@
 ---
 name: plan-execute
 version: 1.1.0
-description: '[Implementation] Use when you need to start coding & testing an existing plan. Flags: --approval=off (auto/trust mode, no approval gate), --tests=off (skip the test step), --parallel (parallel phase execution via subagents).'
+description: '[Implementation] Use when you need to start coding & testing an existing plan. Flags: --approval=off (auto/trust mode, no approval gate), --tests=off (skip the test step), --parallel={auto|on|off} (default off — sequential; --parallel/=on opts in to parallel sub-agent waves; =auto fans out only when the plan declares PAR/SEQ tags and write sets).'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
@@ -23,7 +23,8 @@ description: '[Implementation] Use when you need to start coding & testing an ex
 - **Full step spine (run in declared order, emit `✓ Step N:` each):** Step 1 Analysis & Task Extraction (read plan fully, Goal-Contract read, Trace Gate, seed `TaskCreate` 0–6) → Step 2 Implementation (code step-by-step, type-check + compile; UI → `ui-ux-designer`) → Step 3 Testing (`tester`, loop `debugger` until 100%) → Step 4 Code Review (`code-reviewer` until 0 critical) → Step 5 User Approval (BLOCKING — stop and wait) → Step 6 Finalize (`project-manager` + `docs-manager` status/docs, `git-manager` auto-commit).
 - **Three BLOCKING gates cannot be faked-green:** Step 3 tests 100% pass, Step 4 zero critical issues, Step 5 explicit user approval before Finalize/commit. — why: a partial-green gate ships the regression the test exists to catch.
 - **Two STOP-before-coding gates:** Pre-Implementation Granularity Gate (refuse planning verbs / unnamed files / unresolved decisions → sub-plan with `/plan`) + bugfix Trace Gate (require the End→Start debugger trace for any bug/regression/behavior-changing plan). Also the Spec-Loop Gate (property TC + mutation-killed test + Dual-Feedback) closes any behavior change.
-- **Mode flags** add/remove ONE step, never relax a running gate: `--approval=off` (auto/trust, skip Step 5, optional `$ALL_PHASES` loop over every incomplete phase), `--tests=off` (skip Step 3), `--parallel` (Step 2 dispatch `fullstack-developer` subagents per file-owned phase). No flags = full 7-step spine.
+- **Step 2 is SEQUENTIAL by default; wave fan-out is OPT-IN.** `--parallel` / `--parallel=on` dispatches disjoint-write-set phases as one wave of `fullstack-developer` subagents in ONE message, barrier, then recomputes the next wave against the updated repo. `--parallel=auto` fans out ONLY when every in-scope phase carries the `## Parallel Execution` block (`PAR`/`SEQ` tag + declared write set) written by `/plan` — no block, no fan-out.
+- **Mode flags** add/remove ONE step, never relax a running gate: `--approval=off` (auto/trust, skip Step 5, optional `$ALL_PHASES` loop over every incomplete phase), `--tests=off` (skip Step 3), `--parallel={auto|on|off}` (`off` default = sequential; bare `--parallel`/`on` opts in to wave dispatch; `auto` fans out only on plan-declared `PAR`/`SEQ` metadata). No flags = full 7-step spine, run sequentially.
 - **Standalone** (no parent `[Workflow]` row via `TaskList`) → wrap the spine in plan → plan-review → proceed → `/changes-review` → `/why-review`, the two reviews as the LAST todos.
 
 > **Slash-command routing:** `/code`, `/code-auto`, `/code-no-test`, `/code-parallel` no longer resolve — use `/plan-execute` with the matching flag: `/code-auto` → `--approval=off`, `/code-no-test` → `--tests=off`, `/code-parallel` → `--parallel`.
@@ -43,8 +44,9 @@ description: '[Implementation] Use when you need to start coding & testing an ex
 - Tests must be 100% passing (Step 3 gate)
 - Critical issues must be 0 (Step 4 gate)
 - User must explicitly approve before finalize (Step 5 gate)
-- One plan phase per command run
-- **Mode flags** (see [Mode Flags](#mode-flags)): `--approval=off` (auto/trust, no approval gate + optional all-phases loop), `--tests=off` (skip the test step), `--parallel` (dispatch parallel phases to subagents). No flags = full 7-step spine below.
+- One plan phase per command run — a multi-phase run requires `--approval=off` with `$ALL_PHASES=Yes`
+- Phases run sequentially unless fan-out is explicitly opted in; even then, two phases writing the same file NEVER share a wave
+- **Mode flags** (see [Mode Flags](#mode-flags)): `--approval=off` (auto/trust, no approval gate + optional all-phases loop), `--tests=off` (skip the test step), `--parallel={auto|on|off}` (default `off` = sequential; `on` = opt in to wave dispatch; `auto` = fan out only when the plan declares `PAR`/`SEQ` tags + write sets). No flags = full 7-step spine below, run sequentially.
 
 **MUST ATTENTION READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan:
 
@@ -74,17 +76,19 @@ description: '[Implementation] Use when you need to start coding & testing an ex
 
 `/plan-execute` runs the full step spine below by default. Optional flags adapt the spine for the cases formerly served by dedicated skills — each flag only adds or removes a single step against the **host step numbering** (Step 3 Testing, Step 4 Code Review, Step 5 User Approval, Step 6 Finalize); the shared spine and every quality bar are otherwise unchanged.
 
-| Flag                   | Default | Effect                                                                                                                                                                    |
-| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--approval={on\|off}` | `on`    | `off` = **trust/auto mode**: skip the Step 5 user-approval blocking gate and finalize without waiting. Pair with `$ALL_PHASES` to run every incomplete phase in one pass. |
-| `--tests={on\|off}`    | `on`    | `off` = skip the Step 3 Testing gate entirely (Implementation → Code Review → Approval → Finalize only). Use ONLY when the plan explicitly defers tests.                  |
-| `--parallel`           | off     | In Step 2, dispatch `fullstack-developer` subagents per parallel phase with strict file-ownership boundaries instead of implementing sequentially in the main agent.      |
+| Flag                         | Default | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--approval={on\|off}`       | `on`    | `off` = **trust/auto mode**: skip the Step 5 user-approval blocking gate and finalize without waiting. Pair with `$ALL_PHASES` to run every incomplete phase in one pass.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `--tests={on\|off}`          | `on`    | `off` = skip the Step 3 Testing gate entirely (Implementation → Code Review → Approval → Finalize only). Use ONLY when the plan explicitly defers tests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `--parallel={auto\|on\|off}` | `off`   | `off` = **default**: implement every phase sequentially in the main agent. `on` (also bare `--parallel`) = **explicit opt-in**: Step 2 groups disjoint-write-set phases into waves of `fullstack-developer` subagents with strict file-ownership boundaries; the user has accepted the risk, and YOU must still name every phase's write set — including its cascade/generated writes — before grouping. `auto` = **metadata-gated**: fan out only when every in-scope phase carries a `## Parallel Execution` block (`PAR`/`SEQ` tag + declared write set) written by `/plan`; absent that block, fall back to sequential — NEVER derive write sets optimistically. |
 
-**`$ALL_PHASES` (only meaningful with `--approval=off`):** `Yes` (default in auto mode) processes ALL incomplete phases in one run, auto-looping to the next phase after each Finalize; `No` implements one phase then asks before continuing. With `--approval=on` (default), always one phase per run.
+**`$ALL_PHASES` (only meaningful with `--approval=off`):** `Yes` (default in auto mode) processes ALL incomplete phases in one run, auto-looping to the next phase after each Finalize; `No` implements one phase then asks before continuing. With `--approval=on` (default), always one phase per run — so cross-phase wave dispatch is only ever reachable in a multi-phase run (`--approval=off` + `$ALL_PHASES=Yes`) or on a phase whose sub-phases are independently implementable.
 
 ### Flag-modified step behavior
 
-- **`--parallel` → Step 2 (Implementation):** First read the plan for a Dependency graph / Execution strategy / Parallelization info / File-ownership matrix. **If** the plan declares parallel-executable phases → launch multiple `fullstack-developer` subagents simultaneously, passing each its phase-file path, environment info, and exact file-ownership boundaries (no cross-boundary edits); wait for the parallel group, verify no file conflicts, then run any dependent sequential phases one agent at a time. **Else** → fall back to normal sequential main-agent implementation. All later steps (Testing, Review, Approval, Finalize) run unchanged on the merged result.
+- **`--parallel=auto` → Step 2 (Implementation):** metadata-gated fan-out — dispatch waves ONLY when every in-scope phase carries a `## Parallel Execution` block written by `/plan`; the moment one phase lacks it, the whole run reverts to sequential. `auto` NEVER derives a write set from the plan's prose — see [Step 2 Wave Dispatch](#step-2-wave-dispatch-opt-in---parallelon).
+- **`--parallel` / `--parallel=on` → Step 2:** the explicit opt-in — dispatch waves even when the plan declares no `PAR`/`SEQ` tags or `## Execution Waves` line. You MUST first derive each phase's write set yourself from its `Related Code Files` / Implementation Steps **and** from the generated/mirrored artifacts those edits cascade into; a phase whose write set you cannot name stays out of the wave. Colliding phases still go in different waves — opting in never authorizes co-scheduling two writers of one file.
+- **`--parallel=off` (DEFAULT) → Step 2:** no wave dispatch; implement every phase sequentially in the main agent. This is the normal path and needs no justification — no flag is required to stay sequential. All gates and quality bars unchanged.
 - **`--tests=off` → Step 3 (Testing):** Skip entirely. Proceed Implementation → Code Review. The Source/test drift check still applies to any tests that already exist. Keep existing tests real and genuinely passing — NEVER comment out tests, weaken assertions, or use fake data to make them pass — why: faked green hides the regression the test exists to catch.
 - **`--approval=off` → Step 5 (User Approval):** Skip the blocking gate. Finalize (status, docs, auto-commit) runs once Steps 1-4 pass. When `$ALL_PHASES=Yes`, loop back to Step 0 for the next incomplete phase; on the last phase, generate the summary report and ask about `/preview`.
 
@@ -146,7 +150,26 @@ Read plan file completely. Map dependencies. List ambiguities. Identify required
 
 Implement selected plan phase step-by-step following extracted tasks. Mark tasks complete as done. UI work → call `ui-ux-designer` subagent. Run type check + compile to verify.
 
-**Output:** `✓ Step 2: Implemented [N] files - [X/Y] tasks complete, compilation passed`
+### Step 2 Wave Dispatch (opt-in — `--parallel=on`)
+
+Fan-out is OFF unless opted in. Run this section only when BOTH hold: (a) this run covers more than one phase (`$ALL_PHASES=Yes`, or a phase whose sub-phases are independently implementable), AND (b) the user passed `--parallel` / `--parallel=on`, or passed `--parallel=auto` and every in-scope phase carries a `## Parallel Execution` block. Either condition unmet → implement sequentially. Sequential is the safe default and needs no justification.
+
+1. **Take the write set of every in-scope phase from the plan's declaration** — its `## Parallel Execution` block (Mode · Write set · Wave · SEQ dependency) written by `/plan`. Under `--parallel=auto` that block is MANDATORY: a plan lacking it falls back to sequential, and you NEVER reconstruct a write set from `Related Code Files` / Implementation Steps — why: a derived write set structurally cannot see cascade or generated writes, so two phases editing different source files can both write the same generated/mirrored/catalog/lockfile artifact that neither phase would ever name, and the wave corrupts it. Under `--parallel=on` the user has accepted that risk: derive the set yourself, then explicitly enumerate the generated, mirrored, and regenerated artifacts each phase's edits trigger and add them to that phase's write set before grouping. A phase whose write set still cannot be named is INELIGIBLE for a wave — implement it inline or send it back to `/plan`.
+2. **Refuse to co-schedule two writers of the same file** — ANY path shared between two phases puts them in different waves. No "they only touch different functions" exception: the unit of ownership is the file. A phase tagged `SEQ`, or whose named dependency has not yet returned, never joins the current wave.
+3. **Declare, then spawn in ONE message** — emit `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`, then spawn EVERY member of the wave in a single response as `fullstack-developer` subagents (UI-only phase → `ui-ux-designer`; route other specialties per `.claude/skills/shared/sub-agent-selection-guide.md`). Brief each with: its phase-file path, environment info, its EXCLUSIVE file-ownership boundary (cross-boundary edits forbidden — report the conflict instead), and its return contract.
+4. **Barrier, then re-evaluate against the updated repo** — advance only after EVERY member returns. The barrier is YOUR accounting, not a signal you wait for: hold the wave's member list in the task tracker and mark each member by name as `returned` / `failed` / `timed-out` / `partial`. An unaccounted member is never dropped and never assumed successful. When every member is accounted for AND all returned cleanly, verify no file was written outside its owner's boundary, run type-check + compile on the merged result, THEN recompute the next wave against the repo as it now stands — never against the wave plan you computed before dispatch, because a returned phase can change what a later phase writes.
+5. **Wave failure branch — the barrier does NOT advance on an incomplete wave.** If any member fails, times out, or returns partial work:
+    - **Classify partial as FAILED.** A member reporting "mostly done", or whose evidence does not match its declared write set, counts as failed — not returned.
+    - **Never let the survivors stand in for the missing member,** and never proceed to Step 3 on a wave that is not fully accounted for.
+    - **Quarantine the failed member's work** — inspect exactly what it wrote, and revert its partial edits if they leave the tree uncompilable. Record the files it touched.
+    - **Fall back to sequential for that phase** — merge the clean returns, restore compile-green, then re-implement the failed phase INLINE in the main agent (never re-dispatch it into another wave). A phase that also fails sequentially → STOP and report; do not carry it into the next wave.
+    - **A cross-boundary write fails the whole wave** — revert the out-of-boundary edits, re-run that phase sequentially, and drop fan-out for the remainder of the run: the write-set model that authorized the wave is proven wrong.
+    - **Report the failure in the Step 2 output** — a wave that fell back is never reported as a clean fan-out.
+6. **Do not dispatch when the gain is not there** — a single-phase run, a one-file phase, or a wave of one implements inline (dispatch overhead > gain).
+
+**Gates are SEQ boundaries and are never parallelized away.** Step 3 Testing, Step 4 Code Review, and the Step 5 user-approval gate run AFTER the barrier on the merged result — never concurrently with the phases they gate, and a subagent's own self-check NEVER substitutes for the host gate.
+
+**Output:** `✓ Step 2: Implemented [N] files - [X/Y] tasks complete, compilation passed` — when waves ran, append `- waves: [w1 members] → [w2 members]`, and name any member that failed/timed-out plus the phase that fell back to sequential
 
 ---
 
@@ -180,7 +203,9 @@ Call `code-reviewer` subagent. Critical issues found → STOP, fix, re-run `test
 
 ## Step 5: User Approval ⏸ BLOCKING GATE
 
-Present summary (3-5 bullets): what implemented, tests passed, code review outcome.
+Present summary (3-5 bullets): what implemented (name the waves when Step 2 fanned out), tests passed, code review outcome.
+
+**This gate is a SEQ boundary** — it is never merged into a wave, never delegated to a subagent, and never satisfied by "the parallel phases all reported success". Only `--approval=off` removes it.
 
 **Ask user explicitly:** "Phase implementation complete. All tests pass, code reviewed. Approve changes?"
 
@@ -194,13 +219,11 @@ Present summary (3-5 bullets): what implemented, tests passed, code review outco
 
 **Prerequisites:** User approved in Step 5.
 
-1. **STATUS UPDATE (PARALLEL):**
-    - Call `project-manager` subagent to update plan status
-    - Call `docs-manager` subagent to update documentation
+1. **STATUS UPDATE (one wave — PAR):** spawn `project-manager` (plan status file) and `docs-manager` (documentation) together in ONE message — disjoint write sets — and barrier on both returns before continuing.
 
 2. **ONBOARDING CHECK:** Detect onboarding requirements + generate summary.
 
-3. **AUTO-COMMIT:** Call `git-manager` subagent. Run only if Steps 1-2 successful + User approved + Tests passed.
+3. **AUTO-COMMIT (SEQ — after the barrier):** Call `git-manager` subagent; it stages the merged result of BOTH updates, so it never shares the wave above. Run only if Steps 1-2 successful + User approved + Tests passed.
 
 **Output:** `✓ Step 6: Finalize - Status updated - Git committed`
 
@@ -458,6 +481,45 @@ Execute every step in declared order; proceed only when validation passes and th
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
+<!-- SYNC:parallel-subagent-dispatch -->
+
+> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
+>
+> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
+> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
+> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
+> 4. **Spawn each wave in ONE message** — every `Agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
+> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
+> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
+> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
+>
+> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a skill or workflow explicitly fixes · gates awaiting user approval.
+>
+> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
+
+<!-- /SYNC:parallel-subagent-dispatch -->
+
+<!-- SYNC:parallel-subagent-dispatch:reminder -->
+
+- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
+- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
+
+<!-- /SYNC:parallel-subagent-dispatch:reminder -->
+
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Land the selected plan phase as working, fully-tested, reviewed, user-approved code — executing it phase-by-phase through testing, code review, and approval gates — committed only after every quality gate (100% tests, 0 critical issues, explicit approval) passes — NEVER bypass a gate to declare done.
@@ -472,6 +534,7 @@ Execute every step in declared order; proceed only when validation passes and th
 - **Understand Code First:** Search 3+ patterns and read code before any modification.
 - **Source/Test Drift Check:** When behavior changes, reconcile affected tests from evidence.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Parallel Sub-Agent Dispatch:** Tag tasks PAR/SEQ, group PAR into disjoint-write-set waves, spawn each wave in ONE message, barrier before advancing.
 
 **IMPORTANT MUST ATTENTION** run the full step spine in declared order, emit `✓ Step N:` each: Step 0 detect plan + select next incomplete phase → Step 1 Analysis & Task Extraction (read plan, Goal-Contract read, Trace Gate, seed `TaskCreate`) → Step 2 Implementation (code + type-check/compile; UI → `ui-ux-designer`) → Step 3 Testing (`tester`→`debugger` until 100%) → Step 4 Code Review (`code-reviewer` until 0 critical) → Step 5 User Approval (BLOCKING, wait) → Step 6 Finalize (`project-manager` + `docs-manager` + `git-manager`).
 **IMPORTANT MUST ATTENTION** execute Steps 0-6 in declared order; the three BLOCKING gates — tests 100% (Step 3), critical issues 0 (Step 4), explicit user approval (Step 5) — cannot be faked-green: NEVER skip a step, proceed on failed validation, or assume approval — why: a faked-green gate ships the regression the test exists to catch.
@@ -483,22 +546,29 @@ Execute every step in declared order; proceed only when validation passes and th
 **IMPORTANT MUST ATTENTION** fix at the LOWEST owning layer (Entity/Model > Service > Component/Handler), never patch the symptom/crash site — trace "whose responsibility?" first — why: one fix at the invariant owner protects all downstream consumers.
 **IMPORTANT MUST ATTENTION** a behavior change is NOT done until the Spec-Loop closes — universally-quantified property TC + boundary counter-case for every [HARD] rule touched, a mutation-killed test on each changed core-logic line, and a Dual-Feedback Ledger entry into BOTH spec AND tests — re-verify the whole package (spec + tests + code), not just the diff.
 **IMPORTANT MUST ATTENTION** keep existing tests real and genuinely passing — NEVER comment out tests, weaken assertions, change assertions to pass, or use fake data; apply the source/test drift check when behavior changes — why: faked green hides the regression the test exists to catch.
-**IMPORTANT MUST ATTENTION** mode flags add/remove ONE step, never relax a running gate — `--approval=off` skips Step 5, `--tests=off` skips Step 3, `--parallel` dispatches `fullstack-developer` subagents with strict file-ownership; debugger-trace + granularity + quality bars + all SYNC blocks apply in EVERY mode.
+**IMPORTANT MUST ATTENTION** mode flags add/remove ONE step, never relax a running gate — `--approval=off` skips Step 5, `--tests=off` skips Step 3, `--parallel={auto|on|off}` controls Step 2 fan-out (`off` = default sequential, `on` = explicit opt-in, `auto` = fan out only on plan-declared `PAR`/`SEQ` metadata); debugger-trace + granularity + quality bars + all SYNC blocks apply in EVERY mode.
+**IMPORTANT MUST ATTENTION** Step 2 is SEQUENTIAL by default — fan out only on the explicit `--parallel`/`--parallel=on` opt-in, or under `--parallel=auto` when EVERY in-scope phase carries a plan-declared `## Parallel Execution` block; `auto` with no such block falls back to sequential and NEVER derives write sets optimistically — why: a derived write set cannot see cascade/generated writes, so two "disjoint" phases silently collide on the same generated artifact.
+**IMPORTANT MUST ATTENTION** when a wave does run — NEVER co-schedule two writers of the same file, declare the wave plan, spawn every member in ONE message, then hold the barrier until EVERY member is accounted for by name; a failed, timed-out, or partial member blocks the barrier, is never assumed successful, and its phase is re-implemented sequentially before the next wave — why: an advanced barrier on an incomplete wave ships half a phase as if it were whole.
+**IMPORTANT MUST ATTENTION** gates are SEQ boundaries — Step 3 Testing, Step 4 Code Review, and the Step 5 approval gate run after the barrier on the merged result; a subagent's self-report NEVER substitutes for a host gate — why: parallelism may shorten the run, never the gate.
 **IMPORTANT MUST ATTENTION** standalone (no parent `[Workflow]` row via `TaskList`) → wrap Steps 0-6 in plan → plan-review → proceed → `/changes-review` → `/why-review`, with `/changes-review` + `/why-review` as the LAST todos; validate decisions with the user via `AskUserQuestion` — never auto-decide — why: standalone runs have no workflow enforcing review before commit.
 **IMPORTANT MUST ATTENTION** READ `CLAUDE.md` and the path-matched project-reference docs (frontend/scss/design-system for UI, domain-entities for models) before starting.
 **IMPORTANT MUST ATTENTION** Easy to Change is the success metric — every finding, test, refactor, abstraction must make the NEXT change cheaper; name the real enemies (coupling, hidden state, duplicated knowledge, unclear intent) and reject anything that raises change cost.
 
 **Anti-Rationalization:**
 
-| Evasion                                   | Rebuttal                                                                                                 |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| "Tests are basically passing"             | 100% or Step 3 is INCOMPLETE — loop `tester`→`debugger` until X/X — partial green ships the bug.         |
-| "Code review found only minor issues"     | 0 critical or Step 4 is INCOMPLETE — fix, re-run `tester`, re-run `code-reviewer`.                       |
-| "Obviously approved / they'll approve"    | Step 5 is BLOCKING — stop and wait for an explicit user response, never assume approval.                 |
-| "Phase is clear enough to start"          | Run the Granularity Gate — planning verbs / unnamed files / open decisions → sub-plan, don't code.       |
-| "It's a quick fix, skip the trace"        | Bug/regression plan needs the End→Start trace + hypothesis matrix BEFORE the fix.                        |
-| "Code change is enough, spec/tests later" | Behavior change → property TC + mutation-killed test + Dual-Feedback into spec AND tests, or INCOMPLETE. |
-| "Standalone, so skip review"              | No workflow = YOU add `/changes-review` + `/why-review` as the last todos.                               |
+| Evasion                                            | Rebuttal                                                                                                                                                           |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| "Tests are basically passing"                      | 100% or Step 3 is INCOMPLETE — loop `tester`→`debugger` until X/X — partial green ships the bug.                                                                   |
+| "Code review found only minor issues"              | 0 critical or Step 4 is INCOMPLETE — fix, re-run `tester`, re-run `code-reviewer`.                                                                                 |
+| "Obviously approved / they'll approve"             | Step 5 is BLOCKING — stop and wait for an explicit user response, never assume approval.                                                                           |
+| "Phase is clear enough to start"                   | Run the Granularity Gate — planning verbs / unnamed files / open decisions → sub-plan, don't code.                                                                 |
+| "It's a quick fix, skip the trace"                 | Bug/regression plan needs the End→Start trace + hypothesis matrix BEFORE the fix.                                                                                  |
+| "Code change is enough, spec/tests later"          | Behavior change → property TC + mutation-killed test + Dual-Feedback into spec AND tests, or INCOMPLETE.                                                           |
+| "Standalone, so skip review"                       | No workflow = YOU add `/changes-review` + `/why-review` as the last todos.                                                                                         |
+| "The plan looks parallelizable — fan it out"       | Fan-out is OPT-IN: `--parallel`/`--parallel=on`, or `--parallel=auto` **plus** a plan-declared `## Parallel Execution` block. No opt-in, no metadata → sequential. |
+| "I can infer the write sets from the plan"         | Not under `auto` — a derived set misses cascade/generated writes and collides on files no phase names. Fall back to sequential.                                    |
+| "Both phases only touch different functions"       | The unit of ownership is the FILE — any shared path splits the phases into different waves.                                                                        |
+| "One wave member never came back, the rest passed" | The barrier does NOT advance — account for every member by name; failed/timed-out/partial → re-run that phase sequentially.                                        |
 
 ---
 

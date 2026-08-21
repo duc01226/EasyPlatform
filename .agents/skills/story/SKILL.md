@@ -86,30 +86,36 @@ Do not read all docs blindly. Start from `docs-index-reference.md`, then open on
 
 **Key Rules:**
 
+- Slice VERTICALLY (thin end-to-end); NEVER horizontally (backend/frontend split) — why: a horizontal slice ships no user-visible value on its own.
+- SP >8 MUST ATTENTION be split; >5 SHOULD be split — apply SPIDR until each story is INVEST-valid.
+- Every story MUST ATTENTION carry `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` — plus the `risk_*` / `blast_radius` / `estimate_reasoning` fields `$prioritize` and `$plan` read downstream.
+- SP is DERIVED from bottom-up phase-hours → days × productivity factor — NEVER the driver.
+- Min 3 GIVEN/WHEN/THEN scenarios (happy + edge + error) PLUS a mandatory authorization scenario; each criterion has exactly ONE observable interpretation.
+- Tech-agnostic prose ONLY — no framework/class/file names; anchor with `[Source: namespace/service/id]`, NEVER `file:line`.
+- Story Dependencies table is mandatory — NEVER leave an orphan story.
+- Run the ask the user directly validation interview before handoff — NEVER auto-decide slicing, scope, or effort.
+
 ### Frontend/UI Context (if applicable)
 
-> When this task involves frontend or UI changes,
+> When the task involves frontend or UI changes, read:
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
-- Stories with SP >8 MUST ATTENTION be split; >5 SHOULD be split (see estimation-framework.md)
-- All stories MUST ATTENTION include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai` fields
-
 ## Greenfield Mode
 
-> **Auto-detected:** If no existing codebase is found (no discovered source directories, no manifest files, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the repository must have actual code directories with content.
+> **Auto-detected:** no existing codebase (no discovered source directories, no manifest files, no populated `project-config.json`) → greenfield mode switches on automatically. Planning artifacts (`docs/`, `plans/`, `.claude/`) do NOT count — the repository needs actual code directories with content.
 
 **When greenfield is detected:**
 
 1. Generate **foundation PBIs** instead of feature stories: infrastructure setup, project scaffold, CI/CD pipeline, first feature vertical slice
-2. Add dependency ordering: infrastructure stories BEFORE feature stories
-3. Skip "MUST ATTENTION READ project-structure-reference.md" (won't exist)
+2. Dependency ordering: infrastructure stories BEFORE feature stories
+3. Skip the `project-structure-reference.md` read — it will not exist
 4. Include setup stories: dev environment, build tooling, deployment pipeline, monitoring
 5. Priority order: infra → scaffold → first feature → remaining features
-6. **[CRITICAL] Architecture Scaffolding Story:** FIRST story = "Architecture Scaffolding" — all OOP/SOLID base abstract classes, generic interfaces, infrastructure abstractions per chosen tech stack. AI self-investigates what base classes the project needs. All feature stories depend on this.
-7. Scaffolding acceptance criteria: all base classes compile/type-check, DI/IoC registrations resolve, smoke test passes
+6. **[CRITICAL] Architecture Scaffolding Story:** FIRST story = "Architecture Scaffolding" — every OOP/SOLID base abstract class, generic interface, and infrastructure abstraction the chosen stack needs. AI self-investigates which base classes the project requires; every feature story depends on it — why: features built on an unscaffolded foundation encode the wrong abstractions permanently.
+7. Scaffolding acceptance criteria: base classes compile/type-check, DI/IoC registrations resolve, smoke test passes
 8. **UI System Foundation Story:** If the project has a frontend, generate a "UI System Foundation" story (Sprint 0) with these sub-stories:
 
     | Sub-Story                                                                 | SP  | Priority  | Depends On               |
@@ -369,7 +375,6 @@ Given {context}
 When {action}
 Then {outcome}
 ```
-````
 
 #### Scenario 2: {Edge case title}
 
@@ -461,7 +466,6 @@ Then error "{message}"
 ### Action Items
 
 - [ ] {follow-up if any}
-
 ````
 
 ---
@@ -470,17 +474,18 @@ Then error "{message}"
 
 When the PBI includes a "Production Readiness Concerns" table with "Required" items, automatically generate Sprint 0 / foundation stories for each concern:
 
-| PBI Concern | Story Title | Story Points | Priority |
-|-------------|-------------|-------------|----------|
-| Code linting/analyzers = Required | "Set up code linting and formatting" | 1-2 SP | Must Have |
-| Error handling setup = Required | "Set up error handling foundation" | 2-3 SP | Must Have |
-| Loading indicators = Required | "Set up loading indicator infrastructure" | 1-2 SP | Must Have |
-| Docker integration = Required | "Set up Docker development environment" | 2-3 SP | Must Have |
-| CI/CD quality gates = Required | "Set up CI/CD quality gates" | 2-3 SP | Must Have |
-| Seed data = Required | "Set up seed data / data seeder" | 2-3 SP | Must Have |
-| Data migration = Required | "Create data migration for schema changes" | 1-3 SP | Must Have |
+| PBI Concern                       | Story Title                                | Story Points | Priority  |
+| --------------------------------- | ------------------------------------------ | ------------ | --------- |
+| Code linting/analyzers = Required | "Set up code linting and formatting"       | 1-2 SP       | Must Have |
+| Error handling setup = Required   | "Set up error handling foundation"         | 2-3 SP       | Must Have |
+| Loading indicators = Required     | "Set up loading indicator infrastructure"  | 1-2 SP       | Must Have |
+| Docker integration = Required     | "Set up Docker development environment"    | 2-3 SP       | Must Have |
+| CI/CD quality gates = Required    | "Set up CI/CD quality gates"               | 2-3 SP       | Must Have |
+| Seed data = Required              | "Set up seed data / data seeder"           | 2-3 SP       | Must Have |
+| Data migration = Required         | "Create data migration for schema changes" | 1-3 SP       | Must Have |
 
 ### Rules
+
 - Foundation stories MUST ATTENTION be completed before feature stories begin
 - Mark as `sprint: 0` or `sprint: foundation` in story metadata
 - Each foundation story references the specific protocol section for implementation guidance
@@ -558,11 +563,11 @@ After creating user stories, validate with user.
 
 ## Related
 
-| Type           | Reference                                   |
-| -------------- | ------------------------------------------- |
-| **Role Skill** | `business-analyst`                          |
-| **Command**    | `$story`                                    |
-| **Input**      | `$refine` output (PBI)                      |
+| Type           | Reference                                           |
+| -------------- | --------------------------------------------------- |
+| **Role Skill** | `business-analyst`                                  |
+| **Command**    | `$story`                                            |
+| **Input**      | `$refine` output (PBI)                              |
 | **Next Steps** | `$spec [mode=tests]`, `$design-spec`, `$prioritize` |
 
 ---
@@ -587,6 +592,7 @@ After creating user stories, validate with user.
 ```
 
 Example for a "Create Invoice" story:
+
 ```
 
 [Story US-001] Entity: Create Invoice entity with validation rules
@@ -608,6 +614,7 @@ Example for a "Create Invoice" story:
 ## Next Steps
 
 **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use ask the user directly to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+
 - **"$spec [mode=tests] (Recommended)"** — Generate test specifications from stories
 - **"$pbi-mockup"** — Generate HTML mockup report from PBI and stories
 - **"$plan-validate"** — If stories need validation against plan
@@ -851,8 +858,9 @@ Example for a "Create Invoice" story:
 <!-- /SYNC:ai-mistake-prevention -->
 
 <!-- SYNC:estimation-framework:reminder -->
+
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
-<!-- /SYNC:estimation-framework:reminder -->
+  <!-- /SYNC:estimation-framework:reminder -->
 
 <!-- SYNC:ui-system-context:reminder -->
 
@@ -879,6 +887,7 @@ Example for a "Create Invoice" story:
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
+
 ## Prompt-Enhance Closing Anchors
 
 **IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
@@ -887,6 +896,20 @@ Example for a "Create Invoice" story:
 **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
+
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
 
 ## Closing Reminders
 
@@ -918,19 +941,18 @@ Example for a "Create Invoice" story:
 
 **Anti-Rationalization:**
 
-| Evasion                                   | Rebuttal                                                                                      |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
-| "Story is small, skip SPIDR/estimate"     | SP >8 MUST split, >5 SHOULD — and SP is DERIVED from bottom-up hours, not eyeballed. Estimate. |
-| "Tech notes need the class name"          | Source identifiers belong only in evidence carriers as `[Source: namespace/service/id]` — never in prose (M1/M2). |
-| "Happy path is enough"                    | Min 3 scenarios + a mandatory authorization scenario per story. Edge + error + auth are NOT optional. |
-| "+tests covers the test cost"             | Compute `test_count` explicitly per driver (auth matrix, validation, states). Hand-wave is the #1 estimate failure. |
-| "Independent story, skip the dep table"   | No orphan stories — every story appears in the dependency table, even if `independent`.        |
-| "Slicing is obvious, skip validation"     | ask the user directly validation is MANDATORY, not optional. The user confirms slicing/scope/effort. |
+| Evasion                                 | Rebuttal                                                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| "Story is small, skip SPIDR/estimate"   | SP >8 MUST split, >5 SHOULD — and SP is DERIVED from bottom-up hours, not eyeballed. Estimate.                      |
+| "Tech notes need the class name"        | Source identifiers belong only in evidence carriers as `[Source: namespace/service/id]` — never in prose (M1/M2).   |
+| "Happy path is enough"                  | Min 3 scenarios + a mandatory authorization scenario per story. Edge + error + auth are NOT optional.               |
+| "+tests covers the test cost"           | Compute `test_count` explicitly per driver (auth matrix, validation, states). Hand-wave is the #1 estimate failure. |
+| "Independent story, skip the dep table" | No orphan stories — every story appears in the dependency table, even if `independent`.                             |
+| "Slicing is obvious, skip validation"   | ask the user directly validation is MANDATORY, not optional. The user confirms slicing/scope/effort.                |
 
 **IMPORTANT MUST ATTENTION** AI-SDD M1-M5/M7 (tech-agnostic + demoable) + dependency table + bottom-up estimate are the three rules this skill must never skip — re-anchored here (recency) and in the Quick Summary (primacy).
-````
 
-**MANDATORY IMPORTANT MUST ATTENTION** READ the following files before starting:
+**MANDATORY IMPORTANT MUST ATTENTION** READ the project-reference docs named in the Quick Summary blockquote BEFORE starting — `project-structure-reference.md`, `docs/project-reference/domain-entities-reference.md` (business entities/models), `docs/specs/` (existing TCs for related features) — plus the Frontend/UI Context docs when the PBI touches UI. File not found → search for the project's documentation, coding standards, and architecture docs instead — why: story scoping that guesses at entity names and module structure mis-slices the work.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
 
@@ -951,7 +973,8 @@ Source: `.claude/.ck.json` + `.claude/skills/shared/sync-inline-versions.md` (`:
 3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
 4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
 5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
-6. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
+6. **PARALLELIZE:** Before executing the task list, tag each task `PAR` (independent inputs + write set disjoint from every other `PAR` task) or `SEQ` (name the blocking dependency), group `PAR` tasks into waves, declare the wave plan, and spawn each wave's sub-agents in ONE message — all-return barrier per wave, fan-out one level deep unless a sub-agent's own definition authorizes further fan-out. Sequential-by-default is a defect when tasks are independent; do not parallelize shared write targets, output-consuming tasks, trivial single-file work, ordering a skill or workflow explicitly fixes, or user-approval gates.
+7. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
 
 ## Shared AI-SDD Protocol Markers
 
@@ -1016,7 +1039,7 @@ Break work into small tasks (task tracking) before starting. Add final task: "An
 - **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
 - **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
 - **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
-- **Test failure → adjudicate WHO is at fault (source vs test) before forcing green.** A green-again suite is not the goal; the correct verdict on what was actually wrong is. Root-cause first, then triangulate the failure against the governing spec (`docs/specs/**` if one exists) AND the source: SOURCE-WRONG → fix code at the owning layer and keep/strengthen the test; TEST-WRONG → fix the stale assertion/setup at its root. NEVER weaken an assertion, add a skip, or relax a timeout to force green, and never change source to satisfy a broken test. Spec silent or ambiguous about which side is correct → STOP and ask the user.
+- **Test failure → record a provisional verdict before trace/edit, then investigate.** Use the full five-way taxonomy: SOURCE-WRONG (production violates intent), TEST-WRONG (assertion/setup is stale), TEST-NOT-OPTIMAL (valid but fragile or low-signal test), ENVIRONMENT-BLOCKED (external state prevents a verdict), or AMBIGUOUS (intent/evidence cannot choose safely). Then trace root cause and triangulate against the governing spec (`docs/specs/**` if one exists) AND source. NEVER weaken an assertion, add a skip, relax a timeout, or change source merely to force green.
 - **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
 - **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
 - **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.

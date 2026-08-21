@@ -37,6 +37,35 @@ namespace Easy.Platform.Tests.Unit.Common.JsonSerialization;
 /// </remarks>
 public class PlatformMessageFailureDiagnosticPersistenceTests
 {
+    [Trait("TechnicalSpec", "PermanentInboxFailureIgnored")]
+    [Fact]
+    public async Task InboxPermanentFailure_WhenConsumerDisablesRetry_PersistsIgnoredStatus()
+    {
+        var message = new PlatformInboxBusMessage
+        {
+            ConsumeStatus = PlatformInboxBusMessage.ConsumeStatuses.Processing,
+            RetriedProcessCount = 0,
+            JsonMessage = "{}"
+        };
+        var repository = new Mock<IPlatformInboxBusMessageRepository>();
+        repository
+            .Setup(repo => repo.SetAsync(It.IsAny<PlatformInboxBusMessage>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((PlatformInboxBusMessage savedMessage, CancellationToken _) => savedMessage);
+
+        await PlatformInboxMessageBusConsumerHelper.UpdateExistingInboxFailedMessageAsync(
+            new InvalidOperationException("permanent failure sentinel"),
+            retryProcessFailedMessageInSecondsUnit: 1,
+            consumerHasErrorAndShouldNeverRetry: true,
+            CancellationToken.None,
+            message,
+            repository.Object);
+
+        message.ConsumeStatus.Should().Be(
+            PlatformInboxBusMessage.ConsumeStatuses.Ignored,
+            "a consumer-classified permanent failure must leave the retry queue instead of becoming Failed");
+        repository.Verify(repo => repo.SetAsync(message, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     [Fact]
     public async Task InboxFailure_WhenExceptionContainsSecret_PersistsDebuggableExceptionDiagnostic()
     {

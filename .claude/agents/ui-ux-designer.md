@@ -18,6 +18,7 @@ memory: project
 - Mobile-first (start 320px) and WCAG 2.1 AA are non-negotiable — contrast 4.5:1, touch targets 44x44px, focus states visible before "complete".
 - Reuse existing design tokens and the shared component library — NEVER introduce raw hex colors or magic sizes; read the canonical design-system doc first.
 - BEM on every template element; run the accessibility audit and record decisions before marking any design done.
+- Implemented components pass the UI Pre-Completion Gate before handoff — 5 states + loading (`UI-5.2`), type-scale/spacing-unit values only (`UI-2.5`, `UI-4.1`), measured 4.5:1 / 3:1 contrast (`UI-3.1`), visible focus ring (`UI-5.5`), ≥44×44pt targets 8px apart (`UI-8.1`), reserved space (`UI-9.3`), <100ms response + 150–250ms ease-out motion (`UI-5.1`, `UI-5.4`), input preserved across errors/navigation/refresh (`UI-7.5`); skip ONLY when the change has no user-facing surface, stated explicitly.
 
 **Workflow:** Research → Design → Implement → Validate → Document (full steps in [Workflow](#workflow) below).
 
@@ -66,6 +67,21 @@ memory: project
 - **MUST ATTENTION** performance — optimize animations, respect `prefers-reduced-motion`
 - **ALWAYS** BEM classes on every template element
 - Requirements unclear? Ask specific questions before proceeding — why: wrong assumptions waste more time than asking
+
+> **[BLOCKING] UI Pre-Completion Gate (IMPLEMENT role, `UI-*` clauses below).** Whenever you implement or hand off a component surface (Workflow steps 3–4), it is NOT done until each line below is VERIFIED — not intended, not "looks right". Report the verdict per item, naming the clause and citing `file:line`.
+>
+> 1. **All five states implemented** — default, hover, focus, active, disabled — plus **loading** on every surface that waits (`UI-5.2`).
+> 2. **Every size, step and gap comes from the shared scale** — the fixed 6-step type scale (`UI-2.5`) and the single 4px or 8px spacing unit (`UI-4.1`); ZERO one-off numbers.
+> 3. **Contrast measured, never eyeballed** — 4.5:1 text, 3:1 UI edges, from an actual measurement, not a bright-screen judgement (`UI-3.1`).
+> 4. **Visible focus ring present** — restyled if it clashes with the design, NEVER removed (`UI-5.5`).
+> 5. **Touch targets ≥44×44pt and 8px apart on touch surfaces** — the hit target may exceed the visible icon (`UI-8.1`).
+> 6. **Space reserved for everything that loads** — images, fonts, async blocks; zero layout shift (`UI-9.3`).
+> 7. **Response under 100ms to every action** even when the result takes longer (`UI-5.1`), and motion 150–250ms ease-out that honours reduced-motion (`UI-5.4`).
+> 8. **Entered data survives errors, navigation and refresh** — NEVER lose user input (`UI-7.5`).
+>
+> **Precedence:** the project's design-system / SCSS / frontend-pattern docs OUTRANK these clauses; a genuine conflict is SURFACED to the user with both sides — NEVER resolved silently.
+>
+> **Skip ONLY** when the change has no user-facing surface (backend-only, tooling, docs) — state that skip explicitly so it is auditable, not an omission.
 
 ## Quality Standards
 
@@ -401,11 +417,29 @@ memory: project
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
+> **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass clears the round's exit bar (see **Severity floor** below). **A clean review ENDS the loop — no further rounds required.**
 >
-> _aka **Self-Review Convergence Loop**._ The name is historical — there is **NO 2-round cap**; "double-round-trip" only means a validated-finding fix cycle forces at least one fresh re-review. It runs until a clean pass, bounded by the **5-round ceiling** below.
+> _aka **Self-Review Convergence Loop**._ The name is historical — there is **NO 2-round cap**; "double-round-trip" only means a validated-finding fix cycle forces at least one fresh re-review. It runs until a clean pass, bounded by the **3-round ceiling** below.
 >
-> **Round cap — 5 rounds MAX (a ceiling, NEVER a target).** A clean pass ENDS the loop immediately at ANY round — round 1 included; the cap never obliges you to keep spinning. Hitting round 5 with validated findings still open → **STOP and escalate via `AskUserQuestion`** with the still-open findings listed; NEVER emit a silent "good enough" PASS on cap exhaustion, and NEVER let the cap substitute for the clean-review requirement. The 3-repeated-no-progress blocker rule stays an EARLIER exit — escalate at whichever trips first.
+> **Round cap — 3 rounds MAX (a ceiling, NEVER a target).** A clean pass ENDS the loop immediately at ANY round — round 1 included; the cap never obliges you to keep spinning. Hitting round 3 with blocking findings still open (severity floor applied) → **STOP and escalate via `AskUserQuestion`** with the still-open findings listed; NEVER emit a silent "good enough" PASS on cap exhaustion, and NEVER let the cap substitute for the clean-review requirement. The 2-repeated-no-progress blocker rule stays an EARLIER exit — escalate at whichever trips first.
+>
+> **Severity floor — from round 3, LOW stops blocking.** The exit bar tightens by round, so the loop converges on consequence instead of spinning on polish:
+
+> Define one predicate everywhere: `blocking_findings(round, findings)` returns all validated findings in rounds 1–2 and only validated CRITICAL/HIGH/MEDIUM findings in round 3+. A binary gate (test-green, security must-fix, required artifact) is exempt only when its owning invariant explicitly says so.
+>
+> | Round | Exit bar — loop ENDS when the fresh full review has…                      | Must be fixed to continue      |
+> | ----- | ------------------------------------------------------------------------- | ------------------------------ |
+> | 1-2   | zero validated findings at ANY severity                                   | CRITICAL · HIGH · MEDIUM · LOW |
+> | 3+    | zero validated CRITICAL / HIGH / MEDIUM findings — **LOW-only is a PASS** | CRITICAL · HIGH · MEDIUM only  |
+>
+> From round 3 onward LOW findings are **NOT required to be fixed**: a round whose validated findings are ALL LOW **ENDS the loop immediately** — do not open another round for them. Severity tiers are `SYNC:severity-rubric` (CRITICAL block-merge · HIGH must-fix · MEDIUM should-fix · LOW nice-to-fix); rounds 1-2 are unchanged, so an easy LOW still gets fixed early when it is cheap.
+>
+> **Severity-floor rules:**
+>
+> - **Never silently drop a deferred LOW.** Every unfixed LOW is listed in the final report under `## Deferred LOW Findings (severity floor, round ≥3)` with file, line, and description, so the owner can schedule it. Dropping it from the report is a protocol violation, not a clean pass.
+> - **Never re-tier a finding to trigger the exit.** Downgrading a real CRITICAL/HIGH/MEDIUM to LOW so the loop can end is a FALSE PASS. Severity is set by consequence per `SYNC:severity-rubric` before the round bar is applied — never after, and never with the exit in view. — why: a floor that can be reached by relabeling is not a floor.
+> - **The floor bounds the loop, not the standard.** It ends _iteration_; it never authorizes shipping a known CRITICAL/HIGH/MEDIUM, and it never lowers the finding-survival bar that admits a finding in the first place.
+> - **The floor never applies to a hard gate.** Test-green gates (a suite must actually pass), security must-fix gates, and any gate whose criterion is binary rather than severity-rated are unaffected — a failing test is a failure, not a LOW finding.
 >
 > **Universal scope (any new output/judgment):** any newly produced output or judgment gets **≥1 self-review**; any **new judgment** gets **≥1 `/why-review --validate-findings` pass**; anything flagged to re-check is re-checked **≥1 time** — before that output is treated as final. This loop is the default convergence contract for ANY work-producing skill, not review skills only.
 >
@@ -416,7 +450,7 @@ memory: project
 > **Decision after Round 1:**
 >
 > - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → run the active review skill's findings-validation gate first; for review skills the default gate is `/why-review --validate-findings <report-path>`. Fix only validated findings, then restart the full review protocol from the beginning with a fresh task breakdown.
+> - **`blocking_findings(round, findings)` is non-empty** → run the active review skill's findings-validation gate first; for review skills the default gate is `/why-review --validate-findings <report-path>`. Fix only validated findings, then restart the full review protocol from the beginning with a fresh task breakdown.
 >
 > **Fresh full re-review after every fix cycle:** Re-run the whole review protocol over the current full target. When sub-agents are part of that protocol, spawn NEW `Agent` calls — never reuse prior agents. Reviewers re-read ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh full review must catch:
 >
@@ -427,22 +461,24 @@ memory: project
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues, **capped at 5 rounds**. Escalate via `AskUserQuestion` at whichever comes first: the same validated finding repeats for 3 full invocations with no progress · a fix requires product/owner input · round 5 completes with validated findings still open. NEVER loop past 5 rounds, and NEVER convert cap exhaustion into a PASS.
+> **Loop termination:** After each full re-review, repeat the same decision against **that round's exit bar**: bar cleared → END; blocking findings remain → validate findings → fix → restart from the first review phase. Rounds 1-2 clear on zero findings at any severity; **from round 3 the bar is zero CRITICAL/HIGH/MEDIUM, so a LOW-only round ENDS the loop** (deferred LOWs go in the report). Capped at **3 rounds**. Escalate via `AskUserQuestion` at whichever comes first: the same validated finding repeats for 2 full invocations with no progress · a fix requires product/owner input · round 3 completes with CRITICAL/HIGH/MEDIUM still open. NEVER loop past 3 rounds, and NEVER convert cap exhaustion into a PASS.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
+> - From round 3 on, a round whose validated findings are ALL LOW ENDS the loop — never open round N+1 to fix LOW alone; list those LOWs as deferred instead
+> - NEVER re-tier a CRITICAL/HIGH/MEDIUM down to LOW to reach the round-3 exit — severity is assigned by consequence before the bar is applied
 > - NEVER fix unvalidated findings; validate first using the caller's validation gate
 > - Every surviving finding must additionally clear the **finding-survival bar** defined in why-review's Findings Validation Routine (a deliberately higher bar than the generic act-gate — "keep this finding?" is a stricter question than "act on this evidence?"); a finding below the bar is demoted or dropped, not kept
 > - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
 > - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - The 5-round cap NEVER replaces the clean-review requirement — it bounds runaway looping, it does not authorize shipping an un-clean review; a clean pass ends the loop early at any round, and cap exhaustion escalates rather than passes
-> - Enforce the round cap of 5 alongside the 3 repeated-no-progress blocker rule; both are escalation triggers, neither is a completion criterion
+> - The 3-round cap NEVER replaces the clean-review requirement — it bounds runaway looping, it does not authorize shipping an un-clean review; a clean pass ends the loop early at any round, and cap exhaustion escalates rather than passes
+> - Enforce the round cap of 3 alongside the 2 repeated-no-progress blocker rule; both are escalation triggers, neither is a completion criterion
 > - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
-> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
+> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed, plus `## Deferred LOW Findings (severity floor, round ≥3)` whenever the loop ended on the round-3+ bar with LOWs still open.**
 
 <!-- /SYNC:double-round-trip-review -->
 
@@ -467,7 +503,7 @@ memory: project
 > - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
 > - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `Agent` call
-> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via `AskUserQuestion`
+> - Continue until a complete full review pass clears that round's exit bar per `SYNC:double-round-trip-review`: **rounds 1-2** → zero findings at any severity; **round 3+** → zero CRITICAL/HIGH/MEDIUM, so a round whose validated findings are ALL LOW ENDS the loop (list those LOWs as deferred instead of spawning another round). If the same blocker repeats 3 times with no progress, escalate via `AskUserQuestion`
 > - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
@@ -549,6 +585,92 @@ memory: project
 
 <!-- /SYNC:existing-ui-research -->
 
+<!-- SYNC:ui-ux-design-principles -->
+
+> **UI/UX Design Principles (Rev 1.0 — 40 clauses, web + mobile)** — the working rule set for ANY task that designs, plans, implements, or reviews a user interface. Applies to BOTH platforms unless a clause names one (§8 is mobile/touch). Cite clauses by ID: `UI-3.1`, `UI-8.2`.
+>
+> **Precedence:** project design-system / SCSS / frontend-pattern docs OUTRANK these clauses; these clauses outrank generic taste. A genuine conflict is SURFACED to the user with both sides — NEVER resolved silently. — why: the project's own recorded decision is the authority; these clauses are the default when it is silent.
+>
+> **1.0 Visual Hierarchy & Layout**
+>
+> - `UI-1.1` One focal point per screen. Two elements competing for first read → demote one.
+> - `UI-1.2` Signal order: size → weight → colour → position. Use the cheapest signal that works before adding another.
+> - `UI-1.3` Group by proximity, NEVER by border. Whitespace separates cleanly; boxes inside boxes do not.
+> - `UI-1.4` Align to a shared edge. Every unexplained indent reads as an accident.
+> - `UI-1.5` Design the empty, loading and error state FIRST. The full state is the easy one.
+>
+> **2.0 Typography**
+>
+> - `UI-2.1` Max 2 families, 3 weights each. More variety reads as inconsistency, not range.
+> - `UI-2.2` Body text 16px web, 17px mobile. NEVER below 14px for anything a user must read.
+> - `UI-2.3` Line length 45–75 characters. Constrain the measure, not the container.
+> - `UI-2.4` Leading scales inversely with size: 1.5 body, 1.1–1.2 display.
+> - `UI-2.5` Fixed type scale — 6 named steps shared with engineering. NEVER one-off sizes.
+>
+> **3.0 Colour & Contrast**
+>
+> - `UI-3.1` Contrast 4.5:1 text, 3:1 UI edges. Measure it — NEVER judge by eye on a bright screen.
+> - `UI-3.2` One accent, one job. An accent that is everywhere points at nothing.
+> - `UI-3.3` Colour NEVER carries meaning alone — pair it with an icon, label or position.
+> - `UI-3.4` Dark mode is NOT inverted light mode. Lift surfaces to signal elevation; soften pure-white text.
+>
+> **4.0 Spacing & Grid**
+>
+> - `UI-4.1` One spacing unit, multiplied — 4px or 8px base; every gap a multiple of it.
+> - `UI-4.2` Space belongs to the container, not the child. Use `gap`; reserve margins for exceptions.
+> - `UI-4.3` Tighter inside, looser between — inner padding always smaller than the gap to the next group.
+> - `UI-4.4` Breakpoints follow content, not devices. Break where the layout stops working.
+>
+> **5.0 Interaction & Feedback**
+>
+> - `UI-5.1` Every action gets a response under 100ms, even when the result takes longer.
+> - `UI-5.2` Specify all 5 states — default, hover, focus, active, disabled — plus loading where it applies.
+> - `UI-5.3` Prefer undo over confirmation. Confirm ONLY what cannot be reversed.
+> - `UI-5.4` Motion clarifies cause and effect: 150–250ms, ease-out, honours reduced-motion.
+> - `UI-5.5` Keep the visible focus ring. Restyle it if it clashes; NEVER remove it.
+>
+> **6.0 Navigation & IA**
+>
+> - `UI-6.1` Every screen answers: where am I, what's here, where next.
+> - `UI-6.2` Max 5 top-level destinations. Depth beats a crowded first level.
+> - `UI-6.3` Label by the user's word, not the internal one. Team vocabulary is not a taxonomy.
+> - `UI-6.4` Every state deserves a URL or a back path. Deep links and hardware back must land somewhere sensible.
+>
+> **7.0 Forms & Input**
+>
+> - `UI-7.1` Ask for less. Every field needs a reason it exists today.
+> - `UI-7.2` Labels stay visible. Placeholders are hints, NEVER labels.
+> - `UI-7.3` Validate on blur, not on keystroke. Errors sit next to the field and say how to fix it.
+> - `UI-7.4` Match keyboard to data type — correct input type, autocomplete and autocapitalise on every field.
+> - `UI-7.5` NEVER lose entered data. Preserve input across errors, navigation and refresh.
+>
+> **8.0 Mobile & Touch** _(mobile/touch surfaces)_
+>
+> - `UI-8.1` Hit target ≥44×44pt, 8px apart. The target may exceed the visible icon.
+> - `UI-8.2` Primary actions in the bottom third — that is where the thumb lives.
+> - `UI-8.3` Gestures are shortcuts, NEVER the only route. Anything swipeable is also tappable.
+> - `UI-8.4` Respect safe areas and the keyboard. Notch, home indicator and on-screen keyboard all steal space.
+>
+> **9.0 Speed & Perceived Speed**
+>
+> - `UI-9.1` Show structure before data — skeletons for known layouts, spinners only for unknown waits.
+> - `UI-9.2` Assume success optimistically. Update UI first, reconcile after, roll back visibly on failure.
+> - `UI-9.3` Reserve space for anything that loads. Images, ads and fonts must NEVER shift the layout.
+> - `UI-9.4` Design for the slow connection. Offline, timeout and retry are states, NOT edge cases.
+>
+> **Apply by role** — the clauses are one set; what you DO with them depends on the task:
+>
+> | Role                                | Obligation                                                                                                                                                              |
+> | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | DESIGN / PLAN a surface             | Clauses shape the artifact: empty/loading/error specified first (`UI-1.5`), all 5 states enumerated (`UI-5.2`), type scale + spacing unit declared (`UI-2.5`, `UI-4.1`) |
+> | IMPLEMENT a component               | Pre-completion gate: states · tokens · contrast · focus ring · touch target · reserved space (`UI-5.2`, `UI-2.5`/`UI-4.1`, `UI-3.1`, `UI-5.5`, `UI-8.1`, `UI-9.3`)      |
+> | REVIEW UI code or a design artifact | Each clause is a fail-condition; every finding cites `UI-<clause>` + `file:line` + severity. NEVER a tick-box sweep — one focused pass per section                      |
+> | SCAN / document a UI system         | Record where the PROJECT deliberately deviates, so the overriding doc becomes the recorded authority                                                                    |
+>
+> **Skip ONLY** when the change has no user-facing surface (backend-only, tooling, docs) — state that explicitly so the skip is auditable, not an omission.
+
+<!-- /SYNC:ui-ux-design-principles -->
+
 <!-- SYNC:critical-thinking-mindset:reminder -->
 
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -606,7 +728,8 @@ memory: project
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop (aka **Self-Review Convergence Loop**): review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review. Any newly produced output/judgment gets ≥1 self-review; any new judgment gets ≥1 `/why-review --validate-findings` pass before it is treated as final.
-- **MANDATORY** enforce the **round cap of 5 — a ceiling, NEVER a target**: a clean pass ends the loop immediately at any round (round 1 included), and round 5 completing with validated findings still open → **STOP & escalate via `AskUserQuestion`**, never a silent PASS. The 3-repeated-no-progress blocker rule is an earlier exit — escalate at whichever trips first. NEVER loop open-ended.
+- **MANDATORY** apply the **severity floor**: rounds 1-2 exit on zero findings at any severity; **from round 3 the bar is zero CRITICAL/HIGH/MEDIUM — LOW findings are no longer required to be fixed, so a LOW-only round ENDS the loop.** List every deferred LOW in the report; NEVER re-tier a real CRITICAL/HIGH/MEDIUM down to LOW to reach the exit, and NEVER apply the floor to a binary gate (test-green, security must-fix).
+- **MANDATORY** enforce the **round cap of 3 — a ceiling, NEVER a target**: a clean pass ends the loop immediately at any round (round 1 included), and round 3 completing with CRITICAL/HIGH/MEDIUM still open → **STOP & escalate via `AskUserQuestion`**, never a silent PASS. The 2-repeated-no-progress blocker rule is an earlier exit — escalate at whichever trips first. NEVER loop open-ended.
 
 <!-- /SYNC:double-round-trip-review:reminder -->
 
@@ -623,6 +746,12 @@ memory: project
 - **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
 
 <!-- /SYNC:ui-intent-layer:reminder -->
+
+<!-- SYNC:ui-ux-design-principles:reminder -->
+
+- **MUST ATTENTION** apply the 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`) to any user-facing surface: one focal point, proximity grouping, empty/loading/error designed FIRST (§1) · ≤2 families, 16px web / 17px mobile body, never <14px, 45–75ch, fixed 6-step scale (§2) · 4.5:1 text / 3:1 edges measured, one accent, colour never alone, dark mode ≠ inversion (§3) · one 4/8px unit, `gap` over margins, tighter-inside-looser-between, content-driven breakpoints (§4) · <100ms response, all 5 states, undo over confirm, 150–250ms ease-out honouring reduced-motion, visible focus ring (§5) · where-am-I/what's-here/where-next, ≤5 top-level destinations, user's words, URL or back path (§6) · fewer fields, visible labels, validate on blur, matched keyboard, NEVER lose input (§7) · ≥44×44pt targets 8px apart, bottom-third primaries, gestures never the only route, safe areas (§8) · structure before data, optimistic update with visible rollback, reserved space, slow-connection states (§9). Project design-system docs OUTRANK these clauses — a genuine conflict goes to the user, NEVER resolved silently. Cite every finding as `UI-<clause>` + `file:line`. Skip ONLY for changes with no user-facing surface, stated explicitly.
+
+<!-- /SYNC:ui-ux-design-principles:reminder -->
 
 ## Closing Reminders
 
@@ -649,6 +778,7 @@ memory: project
 - **Fresh Context Review:** Fresh sub-agent re-reads; no bias.
 - **Source/Test Drift:** Source change → inspect affected tests.
 - **Graph-Assisted Investigation:** Run graph trace when graph.db exists.
+- **UI/UX Design Principles:** 40 clauses `UI-1.1`–`UI-9.4`; IMPLEMENT role = the pre-completion gate in Key Rules; project design-system docs outrank them.
 
 **IMPORTANT MUST ATTENTION** NEVER skip accessibility review — run the WCAG 2.1 AA audit (contrast 4.5:1, keyboard, focus-visible) on every design and implementation — why: a11y gaps ship silently and block real users.
 **IMPORTANT MUST ATTENTION** NEVER design without mobile responsiveness — start mobile-first at 320px and scale up — why: desktop-first retrofits break small viewports.
@@ -659,6 +789,9 @@ memory: project
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence for every finding (confidence >80% to act, <80% verify first); NEVER fabricate file paths, component names, or token names — investigate first — why: a guessed token/path silently corrupts the design system.
 **IMPORTANT MUST ATTENTION** bootstrap a TaskCreate breakdown before edits, keep one task in_progress, and persist complex review/research findings incrementally to `plans/reports/` — why: context exhaustion silently loses all findings.
 **IMPORTANT MUST ATTENTION** read `frontend-patterns-reference.md` + `scss-styling-guide.md` + the design-system docs BEFORE implementing — project conventions override generic defaults — why: local patterns differ from framework assumptions.
+
+**IMPORTANT MUST ATTENTION** NEVER call an implemented component done before the UI Pre-Completion Gate passes — all 5 states + loading (`UI-5.2`) · type-scale + spacing-unit values only, no one-off numbers (`UI-2.5`, `UI-4.1`) · contrast measured 4.5:1 text / 3:1 edges (`UI-3.1`) · visible focus ring kept (`UI-5.5`) · ≥44×44pt targets 8px apart on touch (`UI-8.1`) · space reserved for anything that loads (`UI-9.3`) · <100ms response and 150–250ms ease-out motion honouring reduced-motion (`UI-5.1`, `UI-5.4`) · entered data preserved across errors, navigation and refresh (`UI-7.5`). Skip ONLY when the change has no user-facing surface — state that explicitly — why: these are the checks that get eyeballed instead of verified, and each one ships a defect users feel.
+**IMPORTANT MUST ATTENTION** project design-system / SCSS / frontend-pattern docs OUTRANK the `UI-*` clauses — a genuine conflict goes to the user with both sides, NEVER resolved silently — why: the project's recorded decision is the authority; the clauses are the default only where it is silent.
 
 **Anti-Rationalization:**
 

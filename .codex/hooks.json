@@ -5,7 +5,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/post-edit-prettier.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/post-edit-prettier.cjs\""
                     }
                 ],
                 "matcher": "Edit|Write|MultiEdit"
@@ -14,7 +14,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/graph-auto-update.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/graph-auto-update.cjs\""
                     }
                 ],
                 "matcher": "Edit|Write|MultiEdit"
@@ -25,7 +25,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/notifications/notify.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/notifications/notify.cjs\""
                     }
                 ],
                 "matcher": "AskUserQuestion"
@@ -34,19 +34,19 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/windows-command-detector.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/windows-command-detector.cjs\""
                     },
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/bash-shell-guard.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/bash-shell-guard.cjs\""
                     },
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/git-commit-block.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/git-commit-block.cjs\""
                     },
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/doc-sync-gate.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/doc-sync-gate.cjs\""
                     }
                 ],
                 "matcher": "Bash"
@@ -55,11 +55,11 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/scout-block.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/scout-block.cjs\""
                     },
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/privacy-block.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/privacy-block.cjs\""
                     }
                 ],
                 "matcher": "Bash|Glob|Grep|Read|Edit|Write|NotebookEdit"
@@ -68,7 +68,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/path-boundary-block.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/path-boundary-block.cjs\""
                     }
                 ],
                 "matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit"
@@ -77,7 +77,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/doc-sync-gate.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/doc-sync-gate.cjs\""
                     }
                 ],
                 "matcher": "Write|Edit|MultiEdit"
@@ -86,7 +86,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/path-boundary-block.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/path-boundary-block.cjs\""
                     }
                 ],
                 "matcher": "mcp__filesystem__*"
@@ -97,7 +97,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/notifications/notify.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/notifications/notify.cjs\""
                     }
                 ]
             }
@@ -107,7 +107,15 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node ./.claude/hooks/init-prompt-gate.cjs"
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/init-prompt-gate.cjs\""
+                    }
+                ]
+            },
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node -e \"const fs = require('node:fs'); const path = require('node:path'); const hookPath = process.argv[1]; let root = process.cwd(); for (let candidate = root; ; candidate = path.dirname(candidate)) { if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; } if (path.dirname(candidate) === candidate) break; } process.chdir(root); process.env.CLAUDE_PROJECT_DIR = root; require(path.join(root, hookPath));\" -- \".claude/hooks/graph-prompt-sync.cjs\""
                     }
                 ]
             }

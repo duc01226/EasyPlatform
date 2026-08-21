@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -7,6 +6,7 @@ using System.Text.Json.Serialization;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.AspNetCore.Middleware;
 using Easy.Platform.Common.JsonSerialization;
+using Easy.Platform.Tests.Unit.TestInfrastructure;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -35,7 +35,7 @@ public class PlatformSlowRequestWarningMiddlewareRedactionTests
         var requestJson = PlatformJsonSerializer.Serialize(request);
         var httpContext = BuildHttpContext(requestJson);
         httpContext.Request.QueryString = new QueryString($"?access_token={querySentinel}");
-        var capturedLogs = new ConcurrentQueue<string>();
+        var recordingLoggerProvider = new RecordingLoggerProvider();
         var requestContext = new Mock<IPlatformApplicationRequestContext>();
         var requestContextAccessor = new Mock<IPlatformApplicationRequestContextAccessor>();
         DiagnosticRequest? boundRequest = null;
@@ -48,7 +48,7 @@ public class PlatformSlowRequestWarningMiddlewareRedactionTests
         using var loggerFactory = LoggerFactory.Create(
             builder => builder
                 .SetMinimumLevel(LogLevel.Trace)
-                .AddProvider(new CaptureLoggerProvider(capturedLogs)));
+                .AddProvider(recordingLoggerProvider));
         using var serviceProvider = new ServiceCollection().BuildServiceProvider();
         var middleware = new PlatformSlowRequestWarningMiddleware(
             Options.Create(new PlatformSlowRequestWarningMiddlewareOptions
@@ -73,15 +73,17 @@ public class PlatformSlowRequestWarningMiddlewareRedactionTests
 
         (boundRequest?.SensitiveValue == sentinel).Should().BeTrue(
             "request buffering must preserve the body for normal MVC binding");
-        (capturedLogs.Count == 1).Should().BeTrue("one slow-request warning is expected");
-        capturedLogs.TryPeek(out var capturedLog).Should().BeTrue();
-        ContainsAnySentinelRepresentation(capturedLog!, sentinel).Should().BeFalse(
+        var capturedLog = recordingLoggerProvider.Logger.Entries
+            .Should().ContainSingle("one slow-request warning is expected")
+            .Subject.Formatted;
+
+        ContainsAnySentinelRepresentation(capturedLog, sentinel).Should().BeFalse(
             "the log must not disclose raw, partial, encoded, or reversible forms");
-        ContainsAnySentinelRepresentation(capturedLog!, querySentinel).Should().BeFalse(
+        ContainsAnySentinelRepresentation(capturedLog, querySentinel).Should().BeFalse(
             "raw query values must not be emitted by slow-request diagnostics");
-        ContainsAnySentinelRepresentation(capturedLog!, requestContextSentinel).Should().BeFalse(
+        ContainsAnySentinelRepresentation(capturedLog, requestContextSentinel).Should().BeFalse(
             "the complete request context must not be emitted by slow-request diagnostics");
-        capturedLog!.Contains("protectedValue", StringComparison.OrdinalIgnoreCase).Should().BeFalse(
+        capturedLog.Contains("protectedValue", StringComparison.OrdinalIgnoreCase).Should().BeFalse(
             "the marked property name must be omitted from diagnostics");
         capturedLog.Should().Contain("public-visible");
     }
@@ -313,42 +315,6 @@ public class PlatformSlowRequestWarningMiddlewareRedactionTests
             JsonSerializerOptions options)
         {
             throw new InvalidOperationException("hostile converter must not execute");
-        }
-    }
-
-    private sealed class CaptureLoggerProvider(ConcurrentQueue<string> capturedLogs) : ILoggerProvider
-    {
-        public ILogger CreateLogger(string categoryName)
-        {
-            return new CaptureLogger(capturedLogs);
-        }
-
-        public void Dispose()
-        {
-        }
-    }
-
-    private sealed class CaptureLogger(ConcurrentQueue<string> capturedLogs) : ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull
-        {
-            return null;
-        }
-
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return true;
-        }
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
-        {
-            capturedLogs.Enqueue(formatter(state, exception));
         }
     }
 }

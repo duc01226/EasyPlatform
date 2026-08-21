@@ -520,6 +520,30 @@ const unitTests = [
                 cleanupTempDir(tmpDir);
             }
         }
+    },
+    {
+        // A templatePath that points at a missing file degrades SILENTLY and unrecoverably:
+        // generatePlaceholderContent falls through to a contentless section stub, and a
+        // scan-excluded doc (lessons.md, custom-prompts-reference.md, skill-protocols-reference.md)
+        // has no /scan target to regenerate it from. Assert every declared template really ships.
+        name: '[init-reference-docs] every DEFAULT_REFERENCE_DOCS templatePath resolves to an existing file',
+        fn: async () => {
+            const helpersPath = path.resolve(__dirname, '../../lib/session-init-helpers.cjs');
+            delete require.cache[helpersPath];
+            const { DEFAULT_REFERENCE_DOCS } = require(helpersPath);
+            const repoRoot = path.resolve(__dirname, '../../../..');
+
+            const templated = DEFAULT_REFERENCE_DOCS.filter(d => typeof d.templatePath === 'string' && d.templatePath.trim() !== '');
+            assertTrue(templated.length > 0, 'At least one canonical doc declares a templatePath (non-vacuous)');
+
+            for (const doc of templated) {
+                const abs = path.isAbsolute(doc.templatePath) ? doc.templatePath : path.join(repoRoot, doc.templatePath);
+                assertTrue(fs.existsSync(abs), `templatePath exists for ${doc.filename}: ${doc.templatePath}`);
+                assertTrue(fs.statSync(abs).isFile(), `templatePath is a file for ${doc.filename}: ${doc.templatePath}`);
+            }
+
+            delete require.cache[helpersPath];
+        }
     }
 ];
 

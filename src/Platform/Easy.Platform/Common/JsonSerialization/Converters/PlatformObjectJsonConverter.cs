@@ -1,9 +1,11 @@
 #region
 
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Utils;
 
 #endregion
 
@@ -160,14 +162,35 @@ public sealed class PlatformObjectJsonConverter : JsonConverter<object>
             if (element.TryGetGuid(out var guid))
                 return guid;
 
-            // Enhanced: Support .NET 6+ DateOnly and TimeOnly
+            // Enhanced: Support .NET 6+ DateOnly and TimeOnly.
+            // CultureInfo.InvariantCulture is passed EXPLICITLY: the parameterless TryParse overloads bind to the
+            // ambient CultureInfo.CurrentCulture, so the SAME payload deserialized to a different value depending on
+            // the host/container locale of whichever service instance handled the request. For an ambiguous date such
+            // as "01/06/2026" that silently produced Jan 6 on a month-first host and Jun 1 on a day-first host, and
+            // the wrong value was then persisted with no error. Pinning the provider makes deserialization
+            // deterministic across every deployment, and the declared day-first format pass below makes it agree
+            // with Util.DateTimeParser.Parse rather than merely being deterministic on its own.
             var stringValue = element.GetString();
             if (stringValue is not null)
             {
-                if (DateOnly.TryParse(stringValue, out var dateOnly))
+                // The declared day-first format contract is consulted BEFORE the general DateOnly parse, exactly as
+                // Util.DateTimeParser.Parse does. Pinning to InvariantCulture alone is NOT sufficient and was the
+                // remaining half of the defect: Invariant is itself MONTH-first, so "01/06/2026" deserialized here
+                // as 6 January while Util.DateTimeParser.Parse read the identical text as 1 June. Deserialization
+                // and parsing are two readers of the same stored field, so the two must agree or the value depends
+                // on which transport shape it happened to arrive in.
+                if (DateTime.TryParseExact(
+                    stringValue,
+                    Util.DateTimeParser.DefaultSupportDateOnlyFormats,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out var dayFirstDate))
+                    return DateOnly.FromDateTime(dayFirstDate);
+
+                if (DateOnly.TryParse(stringValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateOnly))
                     return dateOnly;
 
-                if (TimeOnly.TryParse(stringValue, out var timeOnly))
+                if (TimeOnly.TryParse(stringValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out var timeOnly))
                     return timeOnly;
             }
 

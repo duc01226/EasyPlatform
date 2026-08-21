@@ -15,14 +15,15 @@ description: '[Workflow] Use when you need to run /workflow-review-changes repea
 
 ## Quick Summary
 
-**Goal:** Converge a review scope to a **clean no-op pass** by re-running the ENTIRE `/workflow-review-changes` workflow INLINE, round after round, over a fixed scope combined with the fixes accumulated so far — stopping only when a complete round applies **zero fixes**.
+**Goal:** Converge a review scope to a **clean no-op pass** by re-running the ENTIRE `/workflow-review-changes` workflow INLINE, round after round, over a fixed scope combined with the fixes accumulated so far — stopping when a complete round applies **zero fixes**. **From round 3 the severity floor applies: LOW findings are no longer fixed, so a round that surfaces only LOW findings is a zero-fix round and ENDS the loop.**
 
 **Summary:**
 
 - **Steps (in order):** (0) resolve scope + Goal Contract → (0b) bind the convergence loop (protocol loop primary + optional `/goal` accelerator) → (1) round loop { run `/workflow-review-changes` INLINE → detect fixes-applied → log iteration } → (2) converge on a zero-fix round OR escalate on non-progress → (3) recap.
 - **Convergence:** stop ONLY when a whole round applies **zero fixes** (its fix cycle skipped, working tree unchanged, reviews clean) — not merely one clean review.
 - **Inline invariant:** run `/workflow-review-changes` via the `Skill` tool, NEVER the `Agent` tool — it self-binds its own review-loop obligation (owning the session Stop hook for its `/goal` gate WHEN available), which a sub-agent cannot own or carry back to this loop.
-- **Bounded:** round cap default 5; findings not shrinking across 2 rounds, or cap hit with fixes still landing → **STOP & escalate** via `AskUserQuestion`.
+- **Severity floor — from round 3, LOW stops blocking.** Rounds 1-2 fix every validated severity. **From round 3 tell the inner `/workflow-review-changes` to fix only CRITICAL/HIGH/MEDIUM and to defer LOW findings** — a round whose validated findings are ALL LOW therefore applies zero fixes and CONVERGES. Carry every deferred LOW into the recap and Goal Contract; NEVER re-tier a real CRITICAL/HIGH/MEDIUM down to LOW to reach the exit. Severity tiers per `SYNC:severity-rubric`.
+- **Bounded:** round cap default 3; blocking findings not shrinking across 2 rounds, or cap hit with CRITICAL/HIGH/MEDIUM fixes still landing → **STOP & escalate** via `AskUserQuestion`.
 
 **Why this skill exists (READ FIRST — it is the whole justification):** `/workflow-review-changes` already converges _internally_ to a clean pass, BUT its inner loop does **NOT** re-run the 7 specialist reviewers from scratch. Per the `Conditional Inline Re-Review Protocol` in `.claude/skills/workflow-review-changes/SKILL.md`, the step-15 inline re-review re-runs only `/changes-review`'s own BE/FE/SCSS/UI dimensions plus _scoped_ re-runs of the specific specialist that raised a finding — `/architecture-review`, `/performance-review`, `/security-review`, `/integration-test-review`, `/production-readiness-review`, `/domain-entities-review`, and `/ui-review` fire ONCE (steps 4–10). Only a **fresh full re-invocation** re-runs ALL specialists over the now-fixed code — catching **second-order defects the fixes themselves introduced** and killing whole-workflow confirmation bias. Without this outer loop those regressions ship unreviewed.
 
@@ -33,7 +34,8 @@ description: '[Workflow] Use when you need to run /workflow-review-changes repea
 - **MUST run INLINE in the main session — NEVER dispatch `/workflow-review-changes` as a sub-agent.** It self-binds its own review-loop obligation (owning the session Stop hook for its `/goal` gate when available); as a sub-agent that in-session guarantee is silently lost (see the `[WORKFLOW-IN-WORKFLOW]` execution block in `workflow-review-changes/SKILL.md`). This loop skill therefore also runs inline.
 - **Convergence = a whole round applied ZERO fixes** (its fix cycle, steps 12–15, was skipped because reviews passed clean). That, not "one clean review", ends the loop.
 - **Scope base is FIXED across rounds; the working tree grows.** Recompute the scope each round as `branch-diff base` ∪ current uncommitted changes — the diff base never moves, so convergence is measured against a stable target.
-- **Round cap (default 5)** and **findings-increasing → STOP & escalate** via `AskUserQuestion`. NEVER loop open-ended.
+- **Round cap (default 3)** and **findings-increasing → STOP & escalate** via `AskUserQuestion`. NEVER loop open-ended. Cap exhaustion escalates only when CRITICAL/HIGH/MEDIUM fixes are still landing — a LOW-only round converges via the severity floor.
+- **The severity floor bounds ITERATION, never the standard.** It ends the loop; it never authorizes shipping a known CRITICAL/HIGH/MEDIUM, and it never applies to a binary gate inside the inner workflow (a failing test is a failure, not a LOW finding).
 
 ---
 
@@ -53,8 +55,8 @@ description: '[Workflow] Use when you need to run /workflow-review-changes repea
     - **Scope string (recompute each round):** `{branch-diff base} ∪ {current uncommitted changes}`. The base commit is fixed for the whole loop; the uncommitted set legitimately grows as fixes land.
     - If the prompt names no branch diff (pure "current changes" review), the scope is just the working-tree changes — the loop still applies.
 2. **Resolve/create the Goal Contract** per `SYNC:goal-contract-satisfaction-loop` (`plans/goals/{YYMMDD-HHmm}-{slug}/goal.md`, template `.claude/templates/goal-contract-template.md`). Its single **required** Success Criterion:
-    > _A complete `/workflow-review-changes` run over `{scope}` applies **zero fixes** (a clean no-op pass — no validated findings, no `/plan-execute` file changes)._
-    > Record the round cap (default 5) and the scope string in **Constraints**.
+    > _A complete `/workflow-review-changes` run over `{scope}` applies **zero fixes** (a clean no-op pass — no `/plan-execute` file changes; **rounds 1-2** no validated findings of any severity, **round 3+** no validated CRITICAL/HIGH/MEDIUM, with remaining LOW findings deferred rather than fixed)._
+    > Record the round cap (default 3), the severity floor (LOW non-blocking from round 3), and the scope string in **Constraints**.
 
 ## Step 0b — Bind the Convergence Loop (protocol-first; `/goal` is an optional accelerator)
 
@@ -62,14 +64,14 @@ The convergence loop is bound by TWO layers. The **protocol loop (Steps 1–2) i
 
 **1. Protocol loop — ALWAYS binding (hook/command-independent).** You are personally responsible for not stopping until the loop converges or bounded-escalates. This binds Claude, Codex, and Copilot equally, whether or not `/goal` exists:
 
-> Repeatedly run `/workflow-review-changes` INLINE over `{scope}` (branch-diff base ∪ current uncommitted changes, recomputed each round). After each round, detect whether it applied any fix. Do NOT stop while the last round still applied fixes. Converge ONLY when a full round applies ZERO fixes (reviews clean, `/plan-execute` changed no files). Cap at `{N=5}` rounds; if findings do not shrink across 2 consecutive rounds, or the cap is hit with fixes still landing → STOP and escalate via `AskUserQuestion`. Never loop open-ended.
+> Repeatedly run `/workflow-review-changes` INLINE over `{scope}` (branch-diff base ∪ current uncommitted changes, recomputed each round). After each round, detect whether it applied any fix. From round 3 on, instruct the inner workflow to fix only CRITICAL/HIGH/MEDIUM validated findings and to defer LOW ones. Do NOT stop while the last round still applied fixes. Converge when a full round applies ZERO fixes (reviews clean, `/plan-execute` changed no files) — which from round 3 includes a round whose only validated findings were LOW. Cap at `{N=5}` rounds; if blocking findings do not shrink across 2 consecutive rounds, or the cap is hit with CRITICAL/HIGH/MEDIUM fixes still landing → STOP and escalate via `AskUserQuestion`. Never loop open-ended.
 
 Treat this as a standing obligation you re-read at every Step 2 checkpoint — NOT a one-time note you can rationalize away after the first round. The Goal Contract's required Success Criterion (Step 0) is its durable, host-independent record.
 
 **2. `/goal` command — invoke as an accelerator WHEN AVAILABLE.** If a `/goal` command exists and you are permitted to run it in this environment, ALSO invoke it (a real tool/command call, NOT a paraphrase, NOT a Goal Contract file substituted for it) with the SAME condition, so a session Stop hook mechanically enforces the loop:
 
 ```
-/goal review-changes convergence loop: repeatedly run /workflow-review-changes INLINE over {scope} (branch-diff base ∪ current uncommitted changes, recomputed each round). After each round, detect whether it applied any fix; if fixes>0 → run another round; if a full round applied ZERO fixes (reviews clean, /plan-execute changed no files) → CONVERGED, clear the gate. Do NOT stop while the last round still applied fixes. Cap at {N=5} rounds; if findings do not shrink across 2 consecutive rounds, or the round cap is hit with fixes still landing → STOP and escalate via AskUserQuestion. Never loop open-ended.
+/goal review-changes convergence loop: repeatedly run /workflow-review-changes INLINE over {scope} (branch-diff base ∪ current uncommitted changes, recomputed each round). After each round, detect whether it applied any fix; if fixes>0 → run another round; if a full round applied ZERO fixes (reviews clean, /plan-execute changed no files) → CONVERGED, clear the gate. From round 3 on, the inner workflow fixes only CRITICAL/HIGH/MEDIUM and defers LOW, so a LOW-only round is a zero-fix round and CONVERGES. Do NOT stop while the last round still applied fixes. Cap at {N=5} rounds; if blocking findings do not shrink across 2 consecutive rounds, or the round cap is hit with CRITICAL/HIGH/MEDIUM fixes still landing → STOP and escalate via AskUserQuestion. Never loop open-ended.
 ```
 
 The `/goal` Stop hook blocks stopping until the condition holds and auto-clears when met — do not tell the user to clear it.
@@ -83,22 +85,24 @@ The `/goal` Stop hook blocks stopping until the condition holds and auto-clears 
 For each round `R` (starting at 1), do ALL of:
 
 1. **Snapshot before:** record the working-tree fingerprint — `git status --porcelain` + `git diff --stat` (or `git rev-parse` of `git stash create` for an exact hash). This is the fixes-applied baseline for the round.
-2. **Run the workflow INLINE:** invoke `/workflow-review-changes` via the `Skill` tool (NEVER the `Agent` tool) with the recomputed `{scope}` as its prompt. Let it run its full 19-step sequence including its own internal fix→re-review loop.
+2. **Run the workflow INLINE:** invoke `/workflow-review-changes` via the `Skill` tool (NEVER the `Agent` tool) with the recomputed `{scope}` as its prompt. Let it run its full 20-step sequence including its own internal fix→re-review loop.
 3. **Detect fixes-applied (objective):** compare the working tree after the round to the before-snapshot AND read the workflow's own result:
     - **Fixes applied (>0)** if the working tree changed during the round OR the workflow reported its fix cycle (steps 12–15) ran / `/plan-execute` modified files.
-    - **Zero fixes** if the working tree is byte-identical to the before-snapshot AND the workflow reported all reviews PASS with no validated findings (fix cycle skipped).
+    - **Zero fixes** if the working tree is byte-identical to the before-snapshot AND the workflow reported either no validated findings, or (round 3+) validated findings that are ALL LOW with the fix phase explicitly skipped.
+    - If a claimed LOW-only exit has a changed fingerprint, re-review; it is not a no-op convergence pass.
 4. **Append an Iteration Log entry** to the Goal Contract: round number, files changed this round (`file:line`), fixes-applied count, the review verdict, and remaining gaps.
 
 ## Step 2 — Convergence & Escalation Gate
 
 Evaluate after every round:
 
-| Condition                                                                       | Action                                                                                                                    |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Round applied **ZERO fixes** (clean no-op pass)                                 | **CONVERGED** → mark the required criterion PASS in the Goal Satisfaction matrix → clear the `/goal` gate → go to Step 3. |
-| Round applied fixes AND round `< N` AND findings shrank vs prior round          | Recompute `{scope}`, run round `R+1`.                                                                                     |
-| Findings did **not shrink** across 2 consecutive rounds (same/increasing count) | **STOP & escalate** via `AskUserQuestion` — a non-converging loop is a signal, not a reason to spin.                      |
-| Round cap `N` hit with fixes still landing                                      | **STOP & escalate** via `AskUserQuestion` — report the still-open findings; do not silently continue.                     |
+| Condition                                                                                                 | Action                                                                                                                                                                                                          |
+| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Round applied **ZERO fixes** (clean no-op pass)                                                           | **CONVERGED** → mark the required criterion PASS in the Goal Satisfaction matrix → clear the `/goal` gate → go to Step 3.                                                                                       |
+| Round applied fixes AND round `< N` AND findings shrank vs prior round                                    | Recompute `{scope}`, run round `R+1`.                                                                                                                                                                           |
+| Findings did **not shrink** across 2 consecutive rounds (same/increasing count)                           | **STOP & escalate** via `AskUserQuestion` — a non-converging loop is a signal, not a reason to spin.                                                                                                            |
+| Round `R ≥ 3` whose validated findings are **ALL LOW** (zero CRITICAL/HIGH/MEDIUM, so zero fixes applied) | **CONVERGED on the severity floor** → do NOT run another round for LOW alone → record every remaining LOW as a deferred finding in the recap + Goal Contract → mark the required criterion PASS → go to Step 3. |
+| Round cap `N` hit with CRITICAL/HIGH/MEDIUM fixes still landing                                           | **STOP & escalate** via `AskUserQuestion` — report the still-open findings; do not silently continue. (LOW-only at the cap converges via the severity-floor row above.)                                         |
 
 > **Increasing findings = STOP.** If round `R` surfaces MORE findings than round `R-1`, the fixes are regressing the code — STOP and escalate immediately (mirrors the **Issue count increasing** rule under **Iteration Tracking (Conversation-Scoped)** in `workflow-review-changes/SKILL.md`). Never trade one fix for two new findings across rounds.
 
@@ -110,7 +114,7 @@ Emit a concise convergence recap: rounds run, total fixes applied per round (the
 
 ## Convergence Detection — Why Two Conditions
 
-A round counts as converged ONLY when **both** hold: (a) the working tree is unchanged by the round, AND (b) the reviews reported clean with no validated findings. Both are required because:
+A round counts as converged ONLY when **both** hold: (a) the working tree is unchanged by the round, AND (b) the reviews reported clean at that round's bar — no validated findings in rounds 1-2, no validated CRITICAL/HIGH/MEDIUM from round 3 (deferred LOWs listed, not fixed). Both are required because:
 
 - Working-tree-unchanged alone is ambiguous — a round can make no changes because a finding was **unfixable/escalated**, not because it was clean. That is escalation, not convergence.
 - Reviews-clean alone is insufficient — an orchestrator can rationalize a "clean" verdict; the objective `git`-diff comparison is the backstop that proves no fix actually landed.
@@ -211,6 +215,20 @@ When (a) is true but (b) is false → **escalate** (a real finding the loop cann
 
 <!-- /SYNC:trade-off-interrogation-gate:reminder -->
 
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Re-run the WHOLE `/workflow-review-changes` inline, round after round, over a fixed scope ∪ accumulated fixes, until a complete round applies **zero fixes**.
@@ -221,8 +239,8 @@ When (a) is true but (b) is false → **escalate** (a real finding the loop cann
 
 **IMPORTANT MUST ATTENTION** the convergence loop is bound by the **AI-driven protocol loop (Steps 1–2) — that is the primary, host-independent mechanism you MUST self-drive whether or not any command exists.** The `/goal` command is an OPTIONAL accelerator: invoke it (a real call) ONLY when available and permitted; if it is absent/unregistered/not-permitted, record one line in the Goal Contract and proceed — NEVER error, block, or fake a gate. Correctness must not depend on `/goal`.
 **IMPORTANT MUST ATTENTION** run `/workflow-review-changes` **INLINE via the `Skill` tool — NEVER as a sub-agent** (it self-binds its own review-loop obligation + a session `/goal` gate when available).
-**IMPORTANT MUST ATTENTION** convergence = a whole round applied **ZERO fixes** (fix cycle skipped, working tree unchanged, reviews clean) — not merely one clean review.
+**IMPORTANT MUST ATTENTION** convergence = a whole round applied **ZERO fixes** (fix cycle skipped, working tree unchanged, reviews clean at that round's bar) — not merely one clean review. **From round 3 the severity floor applies: LOW findings are deferred not fixed, so a LOW-only round is a zero-fix round and ENDS the loop.**
 **IMPORTANT MUST ATTENTION** the outer loop's value is the **fresh full specialist sweep** the inner loop never re-runs (see the **Conditional Inline Re-Review Protocol** in `workflow-review-changes/SKILL.md`) — that is why this skill exists.
 **IMPORTANT MUST ATTENTION** keep the diff **base fixed** across rounds; recompute `{scope}` = branch-diff base ∪ current uncommitted changes each round.
-**IMPORTANT MUST ATTENTION** enforce the **round cap (default 5)**; findings not shrinking across 2 rounds, or cap hit with fixes still landing → **STOP & escalate** via `AskUserQuestion`. NEVER loop open-ended.
+**IMPORTANT MUST ATTENTION** enforce the **round cap (default 3)**; blocking findings not shrinking across 2 rounds, or cap hit with CRITICAL/HIGH/MEDIUM fixes still landing → **STOP & escalate** via `AskUserQuestion`. NEVER loop open-ended.
 **IMPORTANT MUST ATTENTION** do NOT commit or push unless the user explicitly asks.

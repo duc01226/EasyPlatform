@@ -496,6 +496,18 @@
             "sections": ["lessons", "anti-patterns"]
         },
         {
+            "filename": "custom-prompts-reference.md",
+            "purpose": "Index of project-specific custom prompts (name, description, triggers) — written and managed via the /custom-prompt skill; bodies live in docs/project-prompts/.",
+            "sections": [],
+            "templatePath": ".claude/templates/reference-docs/custom-prompts-reference.md"
+        },
+        {
+            "filename": "skill-protocols-reference.md",
+            "purpose": "Index of project protocol overlays layered onto framework skills (target, scope, description) — written and managed via the /project-skill-protocol skill; bodies live in docs/project-protocols/.",
+            "sections": [],
+            "templatePath": ".claude/templates/reference-docs/skill-protocols-reference.md"
+        },
+        {
             "filename": "scss-styling-guide.md",
             "purpose": "SCSS styling conventions, BEM naming, theming",
             "sections": ["bem", "theming", "responsive"]
@@ -612,5 +624,10 @@
                 "matchBy": "key-contains"
             }
         ]
+    },
+    "skillConventions": {
+        "conventionFields": ["version", "activation", "triggers", "execution-mode", "context-budget", "tags", "category"],
+        "removableFields": ["infer"],
+        "fieldFixes": { "tools": "allowed-tools" }
     }
 }

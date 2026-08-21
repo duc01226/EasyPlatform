@@ -11,6 +11,7 @@
 
 const path = require('path');
 const {
+  runHook,
   runHookSequence,
   runHooksParallel,
   getHookPath,
@@ -45,6 +46,14 @@ const SPAWN_TIMEOUT_MS = 20000;
 // ============================================================================
 
 const securityChainTests = [
+  {
+    name: '[security-chain] scout fails open when hook delivery has no payload',
+    fn: async () => {
+      const result = await runHook(SCOUT_BLOCK, undefined);
+
+      assertAllowed(result.code, 'Scout block should allow an empty hook payload');
+    }
+  },
   {
     name: '[security-chain] both hooks allow legitimate operations',
     fn: async () => {

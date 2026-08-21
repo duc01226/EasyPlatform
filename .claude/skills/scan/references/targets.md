@@ -273,6 +273,7 @@ Also: reads target doc to detect Init/Sync; in Sync mode extract section list �
 - **Think (Form dimension):** Is form state reactive or template-driven? Where does validation live — in the form, in validators, in the model? What's the error display pattern?
 - **Think (Cleanup dimension):** How are subscriptions cleaned up? Is there a shared mechanism (e.g., `untilDestroyed()`) or is each component responsible?
 - Scan targets: component base classes (`extends.*Component`, `React.Component`, `defineComponent`); form handling (reactive forms, builders, validation, error display); lifecycle conventions (init, destroy, cleanup); template/JSX conventions (structural patterns, conditional rendering, BEM classes); component communication (inputs/outputs, props/events, signals, `@Input`/`@Output`).
+- **UI/UX clause capture (DOCUMENT the project's rule — never enforce it):** record the project's ACTUAL convention for the clause-governed dimensions this agent owns — how the five interaction states (default, hover, focus, active, disabled) are expressed, plus loading where it applies (`UI-5.2`); label vs placeholder convention (`UI-7.2`); validation timing (on blur / on keystroke / on submit) and where the error message renders relative to its field (`UI-7.3`); whether entered input survives an error, navigation, or refresh, and the mechanism that preserves it (`UI-7.5`); the touch-target sizing convention against the ≥44×44pt / 8px-apart default (`UI-8.1`). Per dimension record: **project rule + `file:line`** → then **PROJECT AUTHORITY — overrides `UI-<clause>`** (the project's recorded convention is the authority) or **GAP — no project convention; the clause default applies**.
 
 **Agent 2: State Management & API Services**
 
@@ -280,6 +281,7 @@ Also: reads target doc to detect Init/Sync; in Sync mode extract section list �
 - **Think (API dimension):** Is there a service base class? What does it provide — base URL, auth headers, error mapping? Who calls the HTTP layer — directly in components or via service abstraction?
 - **Think (Subscription dimension):** What patterns prevent memory leaks? Is cleanup enforced by a linter/base class or left to developer discipline?
 - Scan targets: state management (`Store`, `useReducer`, `createStore`, `defineStore`, signals); API service base classes (`extends.*Service`, `HttpClient`, `fetch` wrappers); data fetching (interceptors, error handling, loading states, caching); subscription/cleanup (`untilDestroyed`, `takeUntil`, `unsubscribe`, dispose callbacks); shared/common service patterns + DI registration.
+- **UI/UX clause capture (DOCUMENT the project's rule — never enforce it):** record the project's ACTUAL convention for the state-feedback dimensions this agent owns — the loading, empty, and error state conventions and which layer owns each (`UI-1.5`); whether waits render structure-first skeletons for known layouts or spinners for unknown waits (`UI-9.1`); the optimistic-update pattern if one exists — update-first, reconcile-after, and how a failure rolls back visibly (`UI-9.2`). Per dimension record: **project rule + `file:line`** → then **PROJECT AUTHORITY — overrides `UI-<clause>`** (the project's recorded convention is the authority) or **GAP — no project convention; the clause default applies**.
 
 **Agent 3: Routing, Directives & Directory Structure**
 
@@ -290,21 +292,24 @@ Also: reads target doc to detect Init/Sync; in Sync mode extract section list �
 
 ### Target Sections
 
-| Section                    | Content                                                                |
-| -------------------------- | ---------------------------------------------------------------------- |
-| **Component Base Classes** | Hierarchy with what each base provides; when to use which              |
-| **State Management**       | Store pattern, reactivity approach, data flow conventions              |
-| **Forms**                  | Form creation pattern, validation approach, error display              |
-| **API Services**           | Service base class, HTTP call pattern, error handling                  |
-| **Routing**                | Route definition pattern, guards, lazy loading, navigation conventions |
-| **Directives & Pipes**     | Custom reusable behaviors, naming conventions, registration            |
-| **Directory Structure**    | Where things live: components, services, models, shared code           |
-| **Subscription Cleanup**   | How subscriptions/listeners are managed and cleaned up                 |
-| **Styling Conventions**    | Component styling approach (scoped, BEM, utility classes)              |
+| Section                    | Content                                                                                                                                                                                                                                                  |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Component Base Classes** | Hierarchy with what each base provides; when to use which                                                                                                                                                                                                |
+| **State Management**       | Store pattern, reactivity approach, data flow conventions                                                                                                                                                                                                |
+| **Forms**                  | Form creation pattern, validation approach, error display                                                                                                                                                                                                |
+| **API Services**           | Service base class, HTTP call pattern, error handling                                                                                                                                                                                                    |
+| **Routing**                | Route definition pattern, guards, lazy loading, navigation conventions                                                                                                                                                                                   |
+| **Directives & Pipes**     | Custom reusable behaviors, naming conventions, registration                                                                                                                                                                                              |
+| **Directory Structure**    | Where things live: components, services, models, shared code                                                                                                                                                                                             |
+| **Subscription Cleanup**   | How subscriptions/listeners are managed and cleaned up                                                                                                                                                                                                   |
+| **Styling Conventions**    | Component styling approach (scoped, BEM, utility classes)                                                                                                                                                                                                |
+| **UI/UX Clause Coverage**  | Table: Clause (`UI-1.5`, `UI-5.2`, `UI-7.2`, `UI-7.3`, `UI-7.5`, `UI-8.1`, `UI-9.1`, `UI-9.2`), Project rule, `file:line`, Verdict (**PROJECT AUTHORITY — overrides the clause** / **GAP — clause default applies**) — a deviation RECORD, never a grade |
 
 ### Content Rules / exceptions
 
 Standard. No declarations-only rule, no source whitelist, no directory-tree allowance — follows shared `output-quality-principles`. Per-agent: write incrementally after each pattern category, cite `file:line`, confidence tiers >80%/60-80%/<60%.
+
+- **UI/UX clause coverage is a RECORD, not a review.** The 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`; canonical text in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:ui-ux-design-principles`) are the DEFAULT only where this project is silent. A recorded project convention OUTRANKS the clause, so the generated doc states the project's rule, names the clause it overrides (`UI-<clause>`), and says the deviation is the project's authority. A clause-governed dimension with NO project convention is recorded as a **GAP** so the clause default applies. Never flag a deviation as a defect and never "fix" one — enforcement belongs to `ui-review`; this scan only makes the project's authority explicit and citable.
 
 ### Special slivers
 
@@ -312,16 +317,19 @@ Standard. No declarations-only rule, no source whitelist, no directory-tree allo
 - Round 2 fresh-eyes questions are framework-pattern specific: every example exists at claimed `file:line` (Glob+Grep); base-class names match actual definitions (Grep); store method names are real not hallucinated (Grep); cleanup patterns documented with actual implementation evidence.
 - Phase 4 extra verify: "Verify base class hierarchy from at least 3 concrete examples."
 - 3 sub-agents (vs scss's 2).
+- **UI/UX clause coverage sliver** — Agent 1 captures the interaction-state, form, and touch-target clauses (`UI-5.2`, `UI-7.2`, `UI-7.3`, `UI-7.5`, `UI-8.1`); Agent 2 captures the state-feedback clauses (`UI-1.5`, `UI-9.1`, `UI-9.2`); both write project rule + `file:line` + PROJECT AUTHORITY / GAP verdict into the **UI/UX Clause Coverage** section. Scans DOCUMENT the deviation; `ui-review` is the pass that enforces the clauses.
 
 ### Anti-Rationalization rows
 
-| Evasion                                        | Rebuttal                                                                                                                             |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| "Framework obvious, skip Phase 0 detection"    | Phase 0 is BLOCKING — grep patterns and agent scope depend on detected framework                                                     |
-| "Base class names look right"                  | Grep-verify ALL base class names — AI hallucinates class hierarchies                                                                 |
-| "Store method names are standard"              | Every store method name must be grep-verified against actual source                                                                  |
-| "Skip Round 2 even when Round 1 found issues"  | Clean Round 1 ends the scan. When issues exist, fresh-eyes mandatory after fixing — main agent rationalizes own fabricated examples. |
-| "Cleanup pattern documented, 1 example enough" | Cleanup is the most project-specific pattern — verify with 3+ grep hits                                                              |
+| Evasion                                                                | Rebuttal                                                                                                                                      |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Framework obvious, skip Phase 0 detection"                            | Phase 0 is BLOCKING — grep patterns and agent scope depend on detected framework                                                              |
+| "Base class names look right"                                          | Grep-verify ALL base class names — AI hallucinates class hierarchies                                                                          |
+| "Store method names are standard"                                      | Every store method name must be grep-verified against actual source                                                                           |
+| "Skip Round 2 even when Round 1 found issues"                          | Clean Round 1 ends the scan. When issues exist, fresh-eyes mandatory after fixing — main agent rationalizes own fabricated examples.          |
+| "Cleanup pattern documented, 1 example enough"                         | Cleanup is the most project-specific pattern — verify with 3+ grep hits                                                                       |
+| "Project already follows the UI clauses, so skip the coverage section" | Every clause-governed dimension gets a row — a matching convention is still recorded with `file:line`, and a missing one is recorded as a GAP |
+| "This form validates on keystroke — flag it as a violation"            | The scan DOCUMENTS, it never grades. Record the project's rule as the authority that overrides `UI-7.3`; enforcement is `ui-review`'s job     |
 
 ### prompt-enhance
 
@@ -371,6 +379,7 @@ Also: reads doc to detect Init/Sync; in Sync mode extract section list → skip 
 - **Think (Breakpoint dimension):** Where are breakpoints defined? Is there a responsive mixin or just raw media queries scattered across files? Mobile-first or desktop-first?
 - Scan targets: glob `**/*.scss` (or detected ext) within whitelist; global stylesheet entry points + their `@import`/`@use`/`@forward` chains; SCSS variable declarations (`^\s*\$[a-zA-Z][a-zA-Z0-9_-]*\s*:`) — dedupe, group by category; CSS custom property declarations (`--[a-zA-Z][a-zA-Z0-9_-]*\s*:`) in `:root`/theme blocks; mixin definitions (`@mixin\s+[a-zA-Z]`) — signature + one usage; function definitions (`@function\s+[a-zA-Z]`); breakpoint definitions (values from media queries + breakpoint variables).
 - **Quality gate:** if a variable category has <3 unique declarations OR >200, log "scope too narrow/broad — manual refinement required."
+- **UI/UX clause capture (DOCUMENT the project's rule — never enforce it):** from actual declarations (never inference), record the project's ACTUAL convention for the clause-governed dimensions this agent owns — the spacing base unit and which multiples of it actually appear, against the one-unit 4px-or-8px default (`UI-4.1`); whether spacing is carried by container `gap` or by child margins (`UI-4.2`); the breakpoint definitions and whether they are content-driven or device-named (`UI-4.4`); the type sizes in use versus a fixed named scale — body size against the 16px web / 17px mobile default and the never-below-14px floor (`UI-2.2`), and whether a fixed 6-step named scale exists or one-off sizes appear (`UI-2.5`); any line-length/measure constraint against the 45–75-character default (`UI-2.3`). Per dimension record: **project rule + `file:line`** → then **PROJECT AUTHORITY — overrides `UI-<clause>`** (the project's recorded convention is the authority) or **GAP — no project convention; the clause default applies**.
 
 **Agent 2: BEM Patterns & Theming**
 
@@ -378,20 +387,22 @@ Also: reads doc to detect Init/Sync; in Sync mode extract section list → skip 
 - **Think (Theming dimension):** How many themes exist? Is theming via CSS custom property overrides, SCSS theme maps, or class-based switching? How does a developer add a new theme?
 - **Think (Component scoping dimension):** Are styles co-located with components (scoped) or global? What naming convention prevents cross-component contamination?
 - Scan targets: BEM class patterns in templates/HTML (`__` and `--`) — find 5+ concrete examples; BEM naming in SCSS (`&__element`, `&--modifier`); theming patterns (CSS custom property overrides, theme class switching, dark mode); component-scoped vs global; z-index management (variables, scale, stacking context); animation/transition conventions (duration/easing variables); color palette — grep declarations only (hex/hsl/rgb in variable declarations).
+- **UI/UX clause capture (DOCUMENT the project's rule — never enforce it):** record the project's ACTUAL focus-ring treatment — the `:focus` / `:focus-visible` styling, any rule that removes the default outline, and the replacement indicator if one exists (`UI-5.5`). Record: **project rule + `file:line`** → then **PROJECT AUTHORITY — overrides `UI-5.5`** (the project's recorded convention is the authority) or **GAP — no project convention; the clause default applies**. An outline removed with no replacement is recorded as a deviation from `UI-5.5` for `ui-review` to adjudicate — the scan states it, never grades it.
 
 ### Target Sections
 
-| Section                 | Content                                                                                |
-| ----------------------- | -------------------------------------------------------------------------------------- |
-| **BEM Methodology**     | Separator style, nesting rules, block/element/modifier examples from actual components |
-| **SCSS Architecture**   | File organization, import chain, global vs component style boundary                    |
-| **Mixins & Functions**  | Table: name, signature, purpose, `file:line` — declarations only                       |
-| **Variables & Tokens**  | Table: category (color/spacing/type/breakpoint), variable name, purpose, `file:line`   |
-| **Theming**             | Theme approach, CSS custom property blocks, how to add/modify a theme                  |
-| **Responsive Patterns** | Breakpoint definitions, responsive mixin usage, mobile-first vs desktop-first          |
-| **Color Palette**       | Color variables/tokens grouped by semantic role (not raw hex list)                     |
-| **Z-Index Scale**       | Z-index variable definitions and layer naming conventions                              |
-| **Anti-Patterns**       | What NOT to do — global overrides, specificity hacks, hardcoded values                 |
+| Section                   | Content                                                                                                                                                                                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **BEM Methodology**       | Separator style, nesting rules, block/element/modifier examples from actual components                                                                                                                                                         |
+| **SCSS Architecture**     | File organization, import chain, global vs component style boundary                                                                                                                                                                            |
+| **Mixins & Functions**    | Table: name, signature, purpose, `file:line` — declarations only                                                                                                                                                                               |
+| **Variables & Tokens**    | Table: category (color/spacing/type/breakpoint), variable name, purpose, `file:line`                                                                                                                                                           |
+| **Theming**               | Theme approach, CSS custom property blocks, how to add/modify a theme                                                                                                                                                                          |
+| **Responsive Patterns**   | Breakpoint definitions, responsive mixin usage, mobile-first vs desktop-first                                                                                                                                                                  |
+| **Color Palette**         | Color variables/tokens grouped by semantic role (not raw hex list)                                                                                                                                                                             |
+| **Z-Index Scale**         | Z-index variable definitions and layer naming conventions                                                                                                                                                                                      |
+| **Anti-Patterns**         | What NOT to do — global overrides, specificity hacks, hardcoded values                                                                                                                                                                         |
+| **UI/UX Clause Coverage** | Table: Clause (`UI-2.2`, `UI-2.3`, `UI-2.5`, `UI-4.1`, `UI-4.2`, `UI-4.4`, `UI-5.5`), Project rule, `file:line`, Verdict (**PROJECT AUTHORITY — overrides the clause** / **GAP — clause default applies**) — a deviation RECORD, never a grade |
 
 ### Content Rules / exceptions
 
@@ -400,6 +411,8 @@ Also: reads doc to detect Init/Sync; in Sync mode extract section list → skip 
 - Every variable value, mixin signature, breakpoint MUST come from actual declarations; focus on project conventions NOT generic CSS tutorials.
 - Agent-1 quality gate on variable-category cardinality (<3 or >200 → flag).
 - Color palette grouped by semantic role, NOT raw hex list; colors grepped from declarations only.
+- **UI/UX clause coverage is a RECORD, not a review.** The 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`; canonical text in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:ui-ux-design-principles`) are the DEFAULT only where this project is silent. A recorded project convention OUTRANKS the clause, so the generated guide states the project's rule, names the clause it overrides (`UI-<clause>`), and says the deviation is the project's authority; a clause-governed dimension with no project convention is recorded as a **GAP** so the clause default applies. Clause values obey this target's declarations-only rule — declarations, NOT usages. Never flag a deviation as a defect — enforcement belongs to `ui-review`; this scan only records.
+- **Clause overlap with `design-system` is intentional, not duplication:** where the design-system doc records the TOKEN declaration for a shared clause (`UI-2.5` type scale, `UI-4.1` spacing unit), this guide records how stylesheets actually CONSUME it — which multiples appear, `gap` vs margin, sizes that sit off the scale. Neither entry replaces the other.
 
 ### Special slivers
 
@@ -409,17 +422,21 @@ Also: reads doc to detect Init/Sync; in Sync mode extract section list → skip 
 - Authoring branch: BEM-adoption table drives whether to document BEM rules vs utility-class conventions.
 - Round 2 fresh-eyes is declaration-focused: variable names exist as actual declarations (Grep — declarations not usages); mixin names match `@mixin` definitions; color values from declarations not fabricated hex; breakpoint values from actual config not assumed common values.
 - 2 sub-agents (vs frontend-patterns' 3).
+- **UI/UX clause coverage sliver** — Agent 1 captures the spacing, breakpoint, and type clauses (`UI-2.2`, `UI-2.3`, `UI-2.5`, `UI-4.1`, `UI-4.2`, `UI-4.4`); Agent 2 captures the focus-ring clause (`UI-5.5`); both write project rule + `file:line` + PROJECT AUTHORITY / GAP verdict into the **UI/UX Clause Coverage** section. Scans DOCUMENT the deviation; `ui-review` is the pass that enforces the clauses.
 
 ### Anti-Rationalization rows
 
-| Evasion                                            | Rebuttal                                                                                                                                |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| "Styling approach obvious, skip Phase 0 detection" | Phase 0 is BLOCKING — SCSS vs Tailwind vs CSS-in-JS require completely different agent patterns                                         |
-| "Variable names look standard (`$primary-color`)"  | Grep-verify every variable name against actual declarations — AI hallucinates variable names                                            |
-| "Breakpoints are probably 768px/1024px"            | Read breakpoint declarations — NEVER assume common values                                                                               |
-| "Color values look right"                          | ALL color values must come from grep of actual declarations                                                                             |
-| "Usages and declarations are the same thing"       | NEVER mix them — document only declarations as authoritative                                                                            |
-| "Skip Round 2 even when Round 1 found issues"      | Clean Round 1 ends the scan. When issues exist, fresh-eyes mandatory after fixing — main agent rationalizes fabricated variable values. |
+| Evasion                                                         | Rebuttal                                                                                                                                           |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Styling approach obvious, skip Phase 0 detection"              | Phase 0 is BLOCKING — SCSS vs Tailwind vs CSS-in-JS require completely different agent patterns                                                    |
+| "Variable names look standard (`$primary-color`)"               | Grep-verify every variable name against actual declarations — AI hallucinates variable names                                                       |
+| "Breakpoints are probably 768px/1024px"                         | Read breakpoint declarations — NEVER assume common values                                                                                          |
+| "Color values look right"                                       | ALL color values must come from grep of actual declarations                                                                                        |
+| "Usages and declarations are the same thing"                    | NEVER mix them — document only declarations as authoritative                                                                                       |
+| "Skip Round 2 even when Round 1 found issues"                   | Clean Round 1 ends the scan. When issues exist, fresh-eyes mandatory after fixing — main agent rationalizes fabricated variable values.            |
+| "Spacing looks like an 8px system — record that"                | Record the base unit and the multiples that actually appear, from declarations (`UI-4.1`) — an inferred spacing system is not a project convention |
+| "Breakpoints match common devices, so no clause note is needed" | Record WHETHER breakpoints are content-driven or device-named (`UI-4.4`) — that classification IS the deviation record                             |
+| "`outline: none` here is a bug — flag it"                       | The scan DOCUMENTS; record the treatment and its deviation from `UI-5.5` with `file:line`. Grading is `ui-review`'s job                            |
 
 ### prompt-enhance
 
@@ -472,19 +489,21 @@ Step 4 — check for app-specific design docs in the same directory.
 - **Discovery rules (declarations only, NOT usages):** CSS custom properties `--[a-zA-Z][a-zA-Z0-9_-]*\s*:` (LHS only, dedupe); SCSS variable declarations `^\s*\$[a-zA-Z][a-zA-Z0-9_-]*\s*:` (anchor start-of-line); color values used ≥3× across whitelist (hex/rgb/hsl); spacing scale `(padding|margin|gap)\s*:\s*[\d.]+(px|rem|em)` (extract values, dedupe); typography `(font-family|font-size|font-weight)\s*:` (extract RHS, dedupe); breakpoints `@media[^{]*\((min|max)-width:\s*[\d.]+(px|em|rem)\)` (extract widths, dedupe).
 - **Categorise:** Colors / Typography / Spacing / Breakpoints / Z-Index / Elevation / Component-prefixes / Other. Persist incrementally — append to report after each category.
 - **Quality gate:** if a category has <3 unique entries OR >200, log "scope too narrow/broad — manual refinement required."
+- **UI/UX clause capture (DOCUMENT the project's rule — never enforce it):** from the SAME declarations (never inference), record the project's ACTUAL values for the token-governed clauses — type scale step names + sizes against a fixed 6-step named scale (`UI-2.5`); the spacing base unit against the 4px-or-8px default (`UI-4.1`); accent-token count and where each accent is used, against one-accent-one-job (`UI-3.2`); the measured contrast ratio of each documented foreground/background token pair against 4.5:1 for text and 3:1 for UI edges (`UI-3.1` — COMPUTE it from the declared values; when no ratio can be computed record "unmeasured", NEVER an eyeballed or guessed number); the dark-mode surface-elevation strategy — lifted surfaces vs inverted light mode, and any softening of pure-white text (`UI-3.4`); motion duration + easing tokens against the 150–250ms ease-out default, plus any reduced-motion handling (`UI-5.4`). Per dimension record: **project rule + `file:line`** → then **PROJECT AUTHORITY — overrides `UI-<clause>`** (the project's recorded convention is the authority) or **GAP — no project convention; the clause default applies**.
 
 ### Target Sections
 
-| Section                    | Content                                                                        |
-| -------------------------- | ------------------------------------------------------------------------------ |
-| **Design System Overview** | High-level description — type, tools, organization                             |
-| **App Documentation Map**  | Table: App name, Design doc path, Token source, Component library              |
-| **Design Tokens**          | Token categories, file locations, naming convention — values from declarations |
-| **Component Inventory**    | Table: Component name, Category, Variants, Path, Has docs?                     |
-| **Gap Analysis**           | Missing docs, zero-adoption tokens, undocumented components                    |
-| **Icon & Asset Library**   | Icon set source, asset directory paths, usage patterns                         |
-| **Storybook**              | Setup (if exists), story organization, how to add new stories                  |
-| **Usage Guidelines**       | How to consume tokens and components in application code                       |
+| Section                    | Content                                                                                                                                                                                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Design System Overview** | High-level description — type, tools, organization                                                                                                                                                                                                          |
+| **App Documentation Map**  | Table: App name, Design doc path, Token source, Component library                                                                                                                                                                                           |
+| **Design Tokens**          | Token categories, file locations, naming convention — values from declarations                                                                                                                                                                              |
+| **Component Inventory**    | Table: Component name, Category, Variants, Path, Has docs?                                                                                                                                                                                                  |
+| **Gap Analysis**           | Missing docs, zero-adoption tokens, undocumented components                                                                                                                                                                                                 |
+| **Icon & Asset Library**   | Icon set source, asset directory paths, usage patterns                                                                                                                                                                                                      |
+| **Storybook**              | Setup (if exists), story organization, how to add new stories                                                                                                                                                                                               |
+| **Usage Guidelines**       | How to consume tokens and components in application code                                                                                                                                                                                                    |
+| **UI/UX Clause Coverage**  | Table: Clause (`UI-2.5`, `UI-3.1`, `UI-3.2`, `UI-3.4`, `UI-4.1`, `UI-5.4`), Project rule (token names + values), `file:line`, Verdict (**PROJECT AUTHORITY — overrides the clause** / **GAP — clause default applies**) — a deviation RECORD, never a grade |
 
 ### Content Rules / exceptions
 
@@ -492,6 +511,7 @@ Step 4 — check for app-specific design docs in the same directory.
 - **Quality gate** on entry counts (<3 too narrow / >200 too broad → manual refinement).
 - **Gap Analysis section is mandatory** — document what's missing, not just what exists.
 - No directory-tree exception declared (unlike feature-spec); shared no-trees rule stands.
+- **UI/UX clause coverage is a RECORD, not a review.** The 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`; canonical text in `.claude/skills/shared/sync-inline-versions.md` → `SYNC:ui-ux-design-principles`) are the DEFAULT only where this project is silent. A recorded project convention OUTRANKS the clause, so the generated doc states the project's rule, names the clause it overrides (`UI-<clause>`), and says the deviation is the project's authority; a clause-governed dimension with no token or convention behind it is recorded as a **GAP** so the clause default applies. Clause values obey this target's declarations-only rule, and `UI-3.1` contrast is COMPUTED or recorded "unmeasured" — never estimated. Never flag a deviation as a defect — enforcement belongs to `ui-review`; this scan only records.
 
 ### Special slivers
 
@@ -503,17 +523,20 @@ Step 4 — check for app-specific design docs in the same directory.
 - **Evidence-gate fallback** — <60% on type → Agent 1 (structure) only.
 - Sub-agent count = 3 (token discovery SEPARATE from component inventory — never merge).
 - Phase 4 verify is config-driven: verify `{docsPath}/{canonicalDoc}` + every `{docsPath}/{tokenFiles[i]}`; Glob-verify ALL component inventory paths (not 3); Grep-verify token names match declarations; Gap Analysis present.
+- **UI/UX clause coverage sliver** — Agent 3 captures the token-governed clauses (`UI-2.5`, `UI-3.1`, `UI-3.2`, `UI-3.4`, `UI-4.1`, `UI-5.4`) from declarations and writes project rule + `file:line` + PROJECT AUTHORITY / GAP verdict into the **UI/UX Clause Coverage** section. In the init-mode AUTHORING branch, the authored canonical doc ALSO carries that coverage subsection under its Foundations section, so the project's recorded values become the authority that outranks the clause defaults from day one. Scans DOCUMENT the deviation; `ui-review` is the pass that enforces the clauses.
 
 ### Anti-Rationalization rows
 
-| Evasion                                              | Rebuttal                                                                                                                                           |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "Design system type obvious, skip Phase 0 detection" | Phase 0 is BLOCKING — agent emphasis depends on detected type                                                                                      |
-| "Only 2 agents needed, skip token discovery agent"   | Token discovery is separate from component inventory — NEVER merge                                                                                 |
-| "Token values look correct"                          | Grep-verify ALL token values against declarations — "looks correct" ≠ verified                                                                     |
-| "Gap Analysis not needed"                            | Gap Analysis is a required section — documents what's missing for future work                                                                      |
-| "Skip Round 2 even when Round 1 found issues"        | Clean Round 1 (zero issues) does end the scan. But when issues exist, fresh-eyes is mandatory after fixing — main agent rationalizes own mistakes. |
-| "Verified 3 paths, that's enough"                    | Glob-verify ALL paths in inventory — spot-check is insufficient                                                                                    |
+| Evasion                                                                  | Rebuttal                                                                                                                                                       |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Design system type obvious, skip Phase 0 detection"                     | Phase 0 is BLOCKING — agent emphasis depends on detected type                                                                                                  |
+| "Only 2 agents needed, skip token discovery agent"                       | Token discovery is separate from component inventory — NEVER merge                                                                                             |
+| "Token values look correct"                                              | Grep-verify ALL token values against declarations — "looks correct" ≠ verified                                                                                 |
+| "Gap Analysis not needed"                                                | Gap Analysis is a required section — documents what's missing for future work                                                                                  |
+| "Skip Round 2 even when Round 1 found issues"                            | Clean Round 1 (zero issues) does end the scan. But when issues exist, fresh-eyes is mandatory after fixing — main agent rationalizes own mistakes.             |
+| "Verified 3 paths, that's enough"                                        | Glob-verify ALL paths in inventory — spot-check is insufficient                                                                                                |
+| "Contrast looks fine on screen"                                          | `UI-3.1` is MEASURED, never eyeballed — compute the ratio for each documented token pair (4.5:1 text, 3:1 UI edges) or record "unmeasured"; NEVER estimate one |
+| "Tokens already match the clause defaults, so skip the coverage section" | Every clause-governed dimension gets a row — a matching value is still recorded with `file:line`, and a missing one is recorded as a GAP                       |
 
 ### prompt-enhance
 
@@ -1258,16 +1281,18 @@ Frontend Patterns→ frontend-patterns-reference.md  Framework:{…} State:{…}
 - **Pre-flight is BLOCKING** — never launch scans on a backend-only project (wastes 3 child invocations).
 - **Explicit-invocation override:** `--target=ui-system` run by the user forces all 3 children regardless of freshness.
 - **Auto-trigger:** this meta-target replaces the 3 separate UI scan entries in any `project-config` scan table — one `--target=ui-system` covers design-system + scss-styling + frontend-patterns.
+- **UI/UX clause coverage is child-owned** — each child writes its OWN **UI/UX Clause Coverage** section (`design-system` the token clauses `UI-2.5`/`UI-3.1`/`UI-3.2`/`UI-3.4`/`UI-4.1`/`UI-5.4`; `scss-styling` the spacing, breakpoint, type, and focus-ring clauses; `frontend-patterns` the interaction-state, state-feedback, form, and touch-target clauses). The orchestrator neither merges nor grades them: scans RECORD where the project deliberately deviates so the project's own doc becomes the recorded authority, while `ui-review` is the pass that enforces the clauses.
 
 ### Anti-Rationalization rows
 
-| Evasion                                  | Rebuttal                                                                |
-| ---------------------------------------- | ----------------------------------------------------------------------- |
-| "Frontend code obvious, skip pre-flight" | Phase 0 is BLOCKING — backend-only project wastes 3 child invocations   |
-| "All docs are probably still fresh"      | Check last-scanned date via actual file read — never assume freshness   |
-| "Children ran, so output must be there"  | Verify each child doc content — placeholder ≠ populated                 |
-| "Summary from memory is fine"            | Summary must come from verified child docs — never fabricate findings   |
-| "Only re-run needed children"            | Explicit `--target=ui-system` runs all 3 — override the freshness check |
+| Evasion                                                           | Rebuttal                                                                                                                                                 |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Frontend code obvious, skip pre-flight"                          | Phase 0 is BLOCKING — backend-only project wastes 3 child invocations                                                                                    |
+| "All docs are probably still fresh"                               | Check last-scanned date via actual file read — never assume freshness                                                                                    |
+| "Children ran, so output must be there"                           | Verify each child doc content — placeholder ≠ populated                                                                                                  |
+| "Summary from memory is fine"                                     | Summary must come from verified child docs — never fabricate findings                                                                                    |
+| "Only re-run needed children"                                     | Explicit `--target=ui-system` runs all 3 — override the freshness check                                                                                  |
+| "Roll the children's clause coverage into one compliance verdict" | Children RECORD project conventions; the orchestrator summarizes verified doc content only. A compliance verdict is `ui-review`'s output, never a scan's |
 
 ### prompt-enhance
 

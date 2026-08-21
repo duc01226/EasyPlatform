@@ -14,6 +14,22 @@ namespace Easy.Platform.Common.JsonSerialization.Converters.Helpers;
 /// </remarks>
 public static class PlatformStringToDateTimeConverterHelper
 {
+    /// <summary>
+    /// Date-only formats accepted by this helper — an ALIAS of the platform-wide contract, deliberately not a copy.
+    /// </summary>
+    /// <remarks>
+    /// WARNING — widest blast radius in the platform. Changing
+    /// <see cref="Util.DateTimeParser.DefaultSupportDateOnlyFormats" /> changes date semantics for EVERY service, not
+    /// just this helper: it backs <c>PlatformDateTimeJsonConverter</c> / <c>PlatformDateOnlyJsonConverter</c> (added by
+    /// default in <c>PlatformJsonSerializer</c>) AND <c>PlatformDateTimeModelBinderProvider</c> /
+    /// <c>PlatformDateOnlyModelBinderProvider</c> (inserted at index 0 — highest precedence — by
+    /// <c>MvcBuilderExtensions</c>). So the array resolves every HTTP query-string date and every JSON date field
+    /// platform-wide, and a reviewer reading only the changed file cannot see that reach.
+    /// The contract is DAY-first: an ambiguous "01/06/2026" is 1 June, never 6 January. Keep it an alias — a local
+    /// copy would let this reader silently disagree with <c>Util.DateTimeParser</c> and <c>PlatformObjectJsonConverter</c>
+    /// about the same stored value, which is the exact defect the shared array exists to prevent.
+    /// Guarded by <c>PlatformStringToDateTimeConverterHelperCultureTests</c>.
+    /// </remarks>
     public static readonly string[] SupportDateOnlyFormats = Util.DateTimeParser.DefaultSupportDateOnlyFormats;
 
     /// <summary>

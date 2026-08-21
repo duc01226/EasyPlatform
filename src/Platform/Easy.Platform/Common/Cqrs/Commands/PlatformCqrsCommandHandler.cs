@@ -1,6 +1,6 @@
 #region
 
-using Easy.Platform.Application.Cqrs.Events;
+using Easy.Platform.Common.Cqrs.Events;
 using Easy.Platform.Common.Validations.Extensions;
 using MediatR;
 
@@ -112,7 +112,7 @@ public abstract class PlatformCqrsCommandHandler<TCommand, TResult>
         // Check if any command event handlers are registered for this command type
         // Only publish events if handlers exist to avoid unnecessary overhead
         if (RootServiceProvider.ImplementationAssignableToServiceTypeRegisteredCount(
-            typeof(IPlatformCqrsEventApplicationHandler<PlatformCqrsCommandEvent<TCommand, TResult>>)) > 0)
+            typeof(IPlatformCqrsEventHandler<PlatformCqrsCommandEvent<TCommand, TResult>>)) > 0)
         {
             // Publish command execution event for loose coupling and event-driven architecture
             await Cqrs.Value.SendEvent(

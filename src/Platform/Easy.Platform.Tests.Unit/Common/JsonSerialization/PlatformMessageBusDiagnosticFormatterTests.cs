@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Infrastructures.MessageBus;
+using Easy.Platform.Tests.Unit.TestInfrastructure;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.Tests.Unit.Common.JsonSerialization;
 
@@ -73,9 +73,7 @@ public class PlatformMessageBusDiagnosticFormatterTests
         var identitySentinel = CreateSentinel();
         var exceptionMessageSentinel = CreateSentinel();
         var exceptionDataSentinel = CreateSentinel();
-        var capturedLogs = new List<string>();
-        var capturedExceptions = new List<Exception?>();
-        var logger = new CaptureLogger(capturedLogs, capturedExceptions);
+        var logger = new RecordingLogger();
         var message = new DiagnosticMessage
         {
             Credential = credentialSentinel,
@@ -90,17 +88,18 @@ public class PlatformMessageBusDiagnosticFormatterTests
             message,
             exception);
 
-        capturedLogs.Should().ContainSingle();
-        capturedExceptions.Should().ContainSingle().Which.Should().BeNull(
+        var entry = logger.Entries.Should().ContainSingle().Subject;
+
+        entry.Exception.Should().BeNull(
             "the raw exception object must not be supplied to ILogger independently of formatted state");
-        capturedLogs[0].Should().Contain(nameof(DiagnosticMessage));
-        capturedLogs[0].Should().Contain(nameof(InvalidOperationException));
-        capturedLogs[0].Should().NotContain(credentialSentinel);
-        capturedLogs[0].Should().NotContain(identitySentinel);
-        capturedLogs[0].Should().Contain(
+        entry.Formatted.Should().Contain(nameof(DiagnosticMessage));
+        entry.Formatted.Should().Contain(nameof(InvalidOperationException));
+        entry.Formatted.Should().NotContain(credentialSentinel);
+        entry.Formatted.Should().NotContain(identitySentinel);
+        entry.Formatted.Should().Contain(
             exceptionMessageSentinel,
             "a consumer failure log that names only the exception type cannot be acted on");
-        capturedLogs[0].Should().NotContain(
+        entry.Formatted.Should().NotContain(
             exceptionDataSentinel,
             "Exception.Data stays unread — this is the assertion that must survive every future edit to this test");
     }
@@ -129,32 +128,5 @@ public class PlatformMessageBusDiagnosticFormatterTests
         public string Credential { get; init; } = string.Empty;
 
         public string Identity { get; init; } = string.Empty;
-    }
-
-    private sealed class CaptureLogger(
-        List<string> capturedLogs,
-        List<Exception?> capturedExceptions) : ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull
-        {
-            return null;
-        }
-
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return true;
-        }
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
-        {
-            capturedLogs.Add(formatter(state, exception));
-            capturedExceptions.Add(exception);
-        }
     }
 }

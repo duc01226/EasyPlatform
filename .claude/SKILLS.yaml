@@ -1,10 +1,10 @@
 metadata:
   title: Skills Catalog
   description: Auto-generated catalog of all available skills in ClaudeKit Engineer
-  last_updated: '2026-08-12'
-  total_skills: 163
+  last_updated: '2026-08-17'
+  total_skills: 165
   total_by_status:
-    active: 162
+    active: 164
     deprecated: 1
     experimental: 0
 categories:
@@ -315,6 +315,26 @@ skills:
       category: other
       has_scripts: false
       has_references: false
+      status: active
+      deprecated_by: null
+      deprecated_since: null
+      removal_after: null
+    - name: custom-prompt
+      path: custom-prompt/SKILL.md
+      description: '[Utilities] Use when the user invokes, lists, saves, updates,
+        or deletes a PROJECT-SPECIFIC saved prompt — a named, reusable procedure stored
+        with the project rather than in the portable framework. `/custom-prompt list`
+        prints every defined prompt with its description; `/custom-prompt <free-text
+        request>` matches the request to the closest saved prompt and executes it
+        only after a confirmation gate; `/custom-prompt save|update|delete ...` maintains
+        the registry — save never stores raw wording, it drafts the best version of
+        the prompt and confirms the name, description, inferred goal, and steps with
+        the user first. Triggers: custom prompt, custom prompts, list custom prompts,
+        save this prompt, save this prompt task, update this prompt, my saved prompt,
+        project prompt, playbook, recipe, runbook.'
+      category: other
+      has_scripts: false
+      has_references: true
       status: active
       deprecated_by: null
       deprecated_since: null
@@ -974,6 +994,25 @@ skills:
       description: '[Project Management] Use when you need to generate project status
         reports, track dependencies, manage risk registers, and facilitate team sync
         meetings.'
+      category: other
+      has_scripts: false
+      has_references: true
+      status: active
+      deprecated_by: null
+      deprecated_since: null
+      removal_after: null
+    - name: project-skill-protocol
+      path: project-skill-protocol/SKILL.md
+      description: '[Utilities] Use when a project needs to add, change, list, or
+        remove its OWN protocol rules layered on top of a framework skill — a named
+        overlay of extra project rules that applies whenever the targeted skill runs,
+        stored with the project rather than in the portable framework. `/project-skill-protocol
+        list` prints every overlay with its target and description; `add` drafts a
+        new overlay and confirms it before writing; `update` applies a surgical change;
+        `delete` removes it. Overlays are ADDITIVE ONLY — they never replace, override,
+        or waive anything the skill already does. Triggers: skill protocol, project
+        protocol, custom protocol for skill, extend a skill, overlay rules, add rules
+        to a skill, project rules for skills, skill protocol overlay.'
       category: other
       has_scripts: false
       has_references: true
@@ -1761,8 +1800,9 @@ skills:
       path: plan-execute/SKILL.md
       description: '[Implementation] Use when you need to start coding & testing an
         existing plan. Flags: --approval=off (auto/trust mode, no approval gate),
-        --tests=off (skip the test step), --parallel (parallel phase execution via
-        subagents).'
+        --tests=off (skip the test step), --parallel={auto|on|off} (default off —
+        sequential; --parallel/=on opts in to parallel sub-agent waves; =auto fans
+        out only when the plan declares PAR/SEQ tags and write sets).'
       category: utilities
       has_scripts: false
       has_references: false

@@ -15,7 +15,7 @@ memory: project
 
 **Summary:**
 
-- Triage from `git diff` → map changed files to impacted doc types via the section-impact mapping; only `.claude`/config changes → fast-exit "no docs impacted."
+- Triage from `git diff` → map changed files to impacted doc types via `node .claude/scripts/doc-impact-map.cjs` + the section-impact mapping; fast-exit ONLY when that map routes nothing (a `.claude/**`-only diff still rots glob-derived inventory counts, so it is NOT a fast exit).
 - Never create business-feature docs from scratch (recommend `/spec`); update only the impacted sections, surgically.
 - Verify the code change before fixing any stale doc; map downstream references before removing a section.
 - No meta-log in AI-facing docs — write current actionable state only; history goes to git / `CHANGELOG.md` / `docs/adr/**`.
@@ -23,7 +23,7 @@ memory: project
 **Workflow:**
 
 1. **Triage** — `git diff --name-only` → categorize changed files → determine impacted doc types
-2. **Project Docs** — Update `project-structure-reference.md`, `README.md` only when architectural change detected
+2. **Project Context Sync** — Verify the routed `docs/project-reference/**` docs and `docs/project-config.json` sections against the diff (see **Reference-Doc Freshness Contract**), then update `project-structure-reference.md` / `README.md` when architecture, scope, or setup changed
 3. **Business Feature Docs** — Auto-detect affected modules, check existing docs, update only impacted sections per section-impact mapping
 4. **Summary Report** — Report checked, updated, skipped
 
@@ -33,7 +33,9 @@ memory: project
 - NEVER auto-fix stale docs before verifying the code change — verify first, then edit
 - NEVER remove doc sections before checking downstream references — map referencing files first
 - **No meta-log in AI-facing docs** — `CLAUDE.md`, `AGENTS.md`, agent `.md`, `SKILL.md`, `.claude/docs/**` read as live instruction; write only current actionable state. NEVER narrate change-history, migration rationale, or provenance ("formerly", "removed in the … refactor", "now embedded / now lives here"). History → git / `CHANGELOG.md` / `docs/adr/**` / `plans/reports/**`
-- Fast Exit: only `.claude/` or config changes → report "No documentation impacted" and exit
+- Fast Exit: ONLY when `node .claude/scripts/doc-impact-map.cjs` routes zero docs, zero config sections, and zero unrouted files → report "No documentation impacted" and exit. A `.claude/**`- or tooling-only diff is NOT a fast exit — it rots the skill/hook/agent/workflow counts and catalogs that `CLAUDE.md`, `docs-index-reference.md`, and `project-structure-reference.md` derive by globbing
+- Freshness verdicts are evidence, not impressions — every routed doc gets `FRESH | PATCHED | RESCAN REQUIRED | UNVERIFIED`; a doc you did not check is `UNVERIFIED`, NEVER `FRESH`
+- NEVER write `<!-- Last scanned: -->` — only a full `/scan --target=X` may move that stamp; an impact-scoped patch writes `<!-- Last verified: YYYY-MM-DD (docs-update, impact-scoped) -->` on the line after it — but ONLY in a doc that already carries a `Last scanned` stamp. A doc with NO such stamp (`CLAUDE.md`, `.claude/docs/**`, any AI-facing instruction file) gets NO stamp at all; record its verdict in the run report instead — the no-meta-log rule above WINS, it is never overridden by this one
 - Section-Impact Mapping: entity change → sections 3,5,6; new endpoint → sections 8,11,12; new functionality → section 15 (mandatory)
 
 > **[IMPORTANT] Goal:** Detect docs impacted by code changes, update the right docs (project + business-feature) accurately and surgically, then report checked/updated/skipped — so docs stay synchronized with code without fabrication or scratch-creation.
@@ -49,13 +51,33 @@ memory: project
 
 ## Section-Impact Mapping
 
-| Change Type       | Doc Sections to Update         |
-| ----------------- | ------------------------------ |
-| Entity change     | 3, 5, 6                        |
-| New endpoint      | 8, 11, 12                      |
-| New functionality | 15 (mandatory)                 |
-| Architectural     | project-structure-reference.md |
-| Config/infra      | README.md, getting-started.md  |
+| Change Type                                       | Doc Sections to Update                                                                                                                  |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Entity change                                     | 3, 5, 6                                                                                                                                 |
+| New endpoint                                      | 8, 11, 12                                                                                                                               |
+| New functionality                                 | 15 (mandatory)                                                                                                                          |
+| Architectural                                     | project-structure-reference.md                                                                                                          |
+| Config/infra                                      | README.md, getting-started.md                                                                                                           |
+| Harness (`.claude/**`, `.agents/**`, `AGENTS.md`) | `CLAUDE.md` inventory counts, `docs-index-reference.md`, `project-structure-reference.md` module registry                               |
+| Dependency manifest / lockfile                    | `project-structure-reference.md` tech stack + versions + run commands; `project-config.json` → `project`, `framework`, `testing`        |
+| Infra / CI / env config                           | `project-structure-reference.md` ports, deployment, env keys; `project-config.json` → `infrastructure`, `databases`, `messaging`, `api` |
+
+## Reference-Doc Freshness Contract
+
+When the brief routes reference docs or `project-config.json` sections to you, verify FIRST and patch NARROW — run only the checks the impact map listed:
+
+| Check                             | How to answer it                                                                                                     | On failure                                                                                   |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `claims`                          | `node .claude/scripts/doc-impact-map.cjs claims <doc>` for dead paths, then grep each cited symbol at its cited file | Repoint or delete the citation                                                               |
+| `coverage`                        | Compare the map's `addedFiles` against the doc's inventory/examples                                                  | Add the missing entry with `file:line`                                                       |
+| `counts`                          | Re-derive numeric claims by glob/grep                                                                                | Update the number (and its marker region if generated)                                       |
+| `conventions`                     | Read the diff against the doc's stated rules                                                                         | New pattern → document it. Violation → REPORT it, never document a violation as a convention |
+| `commands` / `versions` / `ports` | Read the manifest / infra config — never infer                                                                       | Patch the value                                                                              |
+| `links` / `catalog`               | Existence-check each target                                                                                          | Fix or remove the row                                                                        |
+
+Escalate instead of improvising: a new subsystem, a mostly-dead section, or a structural mismatch is `RESCAN REQUIRED` → name the `/scan --target=<key>` to run. A new config section, module class, or tech stack → `/project-config`. `project-config.json` edits are surgical merges that MUST pass `validateConfig` and MUST leave every top-level section in place.
+
+**One writer per file.** If two routed docs embed the same canonical data (counts, module maps, catalogs), regenerate both from ONE reading of the source — never let a peer agent own the other copy.
 
 ## Evidence & TC Verification
 

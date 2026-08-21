@@ -161,6 +161,8 @@ const SCAN_SKILL_MAP = {
     'domain-entities-reference.md': 'scan --target=domain-entities',
     'docs-index-reference.md': 'scan --target=docs-index'
     // lessons.md excluded — managed by /learn skill
+    // custom-prompts-reference.md excluded — managed by /custom-prompt skill
+    // skill-protocols-reference.md excluded — managed by /project-skill-protocol skill
 };
 
 // =============================================================================
@@ -227,6 +229,19 @@ const DEFAULT_REFERENCE_DOCS = [
         filename: 'lessons.md',
         purpose: 'Learned lessons from past sessions — written and managed via the /learn skill (not auto-injected).',
         sections: []
+    },
+    {
+        filename: 'custom-prompts-reference.md',
+        purpose: 'Index of project-specific custom prompts (name, description, triggers) — written and managed via the /custom-prompt skill; bodies live in docs/project-prompts/.',
+        sections: [],
+        templatePath: '.claude/templates/reference-docs/custom-prompts-reference.md'
+    },
+    {
+        filename: 'skill-protocols-reference.md',
+        purpose:
+            'Index of project protocol overlays layered onto framework skills (target, scope, description) — written and managed via the /project-skill-protocol skill; bodies live in docs/project-protocols/.',
+        sections: [],
+        templatePath: '.claude/templates/reference-docs/skill-protocols-reference.md'
     },
     {
         filename: 'scss-styling-guide.md',

@@ -161,10 +161,10 @@ test('TC-WFADV-022: whole-target why-review starts in parallel with changes-revi
         { executionMode: 'subagent', contextBudget: 'high' },
         'whole-target why-review must run out-of-band so changes-review can remain inline'
     );
-    assert.equal(
-        workflow.sequence.at(-4),
-        'why-review',
-        'the settled-state final holistic why-review must remain after the conditional re-review'
+    assert.deepEqual(
+        workflow.sequence.slice(-6),
+        ['changes-review', 'why-review', 'scan --target=domain-entities', 'docs-update', 'workflow-end', 'watzup'],
+        'the settled-state final holistic why-review must remain after the conditional re-review and before terminal documentation sync'
     );
     assert.match(skillText, /Initial Parallel Phase \(Steps 1[–-]2\)/);
     assert.match(skillText, /fresh `code-reviewer` sub-agent[^\n]*FULL mode/);
@@ -172,11 +172,11 @@ test('TC-WFADV-022: whole-target why-review starts in parallel with changes-revi
     assert.match(skillText, /step 16[^\n]*settled[^\n]*whole target/i);
     assert.match(
         codexContextText,
-        /plan-execute -> changes-review -> why-review -> docs-update/,
+        /plan-execute -> changes-review -> why-review -> scan --target=domain-entities -> docs-update/,
         'generated guidance must preserve the later conditional changes-review occurrence'
     );
-    assert.match(loopSkillText, /full 19-step sequence/);
-    assert.doesNotMatch(loopSkillText, /full 18-step sequence/);
+    assert.match(loopSkillText, /full 20-step sequence/);
+    assert.doesNotMatch(loopSkillText, /full 19-step sequence/);
     assert.match(loopSkillText, /fix cycle, steps 12[–-]15/);
     assert.doesNotMatch(loopSkillText, /fix cycle, steps 11[–-]14/);
     assert.doesNotMatch(

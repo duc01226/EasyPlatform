@@ -1,4 +1,5 @@
 using Easy.Platform.Infrastructures.MessageBus;
+using Easy.Platform.Tests.Unit.TestInfrastructure;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 
@@ -30,10 +31,12 @@ public class PlatformMessageBusConsumerLogErrorTests
     private const string PiiName = "PiiSentinelGivenName";
     private const string PiiFreeText = "PiiSentinelBodyTextThatMustNeverBeLogged";
 
+    // TC-PLATCONS-060: A failed consume logs the message IDENTITY (consumer, type, TrackingId) and never its payload.
     [Fact]
+    [Trait("TechnicalSpec", "TC-PLATCONS-060")]
     public void LogError_ForTrackableMessage_LogsIdentityAndNeverThePayload()
     {
-        var logger = new CapturingLogger();
+        var logger = new RecordingLogger();
         var message = new PiiCarryingTrackableTestMessage
         {
             TrackingId = "01JTRACKINGIDSENTINEL0001",
@@ -70,16 +73,34 @@ public class PlatformMessageBusConsumerLogErrorTests
         entry.Formatted.Should().Contain(message.TrackingId);
         entry.Formatted.Should().Contain(nameof(PiiCarryingTrackableTestMessage), "the message TYPE is not personal data and is needed to triage");
         entry.Formatted.Should().Contain(typeof(FakeConsumer).FullName!, "the failing consumer must be identifiable");
-        entry.Exception.Should().BeOfType<InvalidOperationException>("the cause must survive — redaction applies to the payload, not the error");
+
+        // The cause must survive — redaction applies to the PAYLOAD, not to the error. But it survives in BOUNDED
+        // form, not by handing the raw exception to the logging pipeline. Both halves are asserted because either one
+        // alone is satisfiable by a regression: asserting only that diagnostics exist would pass while the raw object
+        // ALSO leaks; asserting only the null would pass while the cause is dropped entirely.
+        entry.Exception.Should().BeNull(
+            "the raw exception must never reach ILogger's exception argument — a structured sink expands its whole "
+            + "object graph, including Exception.Data and every inner exception MESSAGE, which routinely carry "
+            + "connection strings, tokens, and the entity values that caused the failure");
+
+        var exceptionDiagnostics = entry
+            .State.Single(kv => kv.Key == "ExceptionDiagnostics")
+            .Value.Should()
+            .BeOfType<string>()
+            .Subject;
+        exceptionDiagnostics.Should().Contain(nameof(InvalidOperationException), "the exception TYPE is what an operator triages on");
+        exceptionDiagnostics.Should().Contain("consume blew up", "the exception MESSAGE is the bounded subset deliberately kept");
     }
 
+    // TC-PLATCONS-061: A non-trackable message degrades to "no identity available" rather than throwing inside the error handler.
     [Fact]
+    [Trait("TechnicalSpec", "TC-PLATCONS-061")]
     public void LogError_ForNonTrackableMessage_StillLogsTypeAndDoesNotThrowOrLeak()
     {
         // A message type that is NOT IPlatformTrackableBusMessage takes the `as`-returns-null path. It must degrade to
         // "no identity available" rather than throwing inside an error handler — a logger that throws while reporting a
         // consume failure would replace a handled fault with an unhandled one.
-        var logger = new CapturingLogger();
+        var logger = new RecordingLogger();
         var message = new PiiCarryingPlainTestMessage { CandidateEmail = PiiEmail };
 
         var act = () => IPlatformMessageBusConsumer.LogError(logger, typeof(FakeConsumer), message, new InvalidOperationException("boom"));
@@ -116,44 +137,5 @@ public class PlatformMessageBusConsumerLogErrorTests
     private sealed class PiiCarryingPlainTestMessage
     {
         public string CandidateEmail { get; set; } = "";
-    }
-
-    private sealed record CapturedEntry(
-        LogLevel Level,
-        string Formatted,
-        IReadOnlyList<KeyValuePair<string, object?>> State,
-        Exception? Exception);
-
-    /// <summary>
-    /// A purpose-built capturing <see cref="ILogger" />. The project's convention is <c>new Mock&lt;ILogger&gt;()</c>,
-    /// but that convention exists for tests that IGNORE the logger; capturing a generic <c>Log&lt;TState&gt;</c> call
-    /// through Moq requires reflection over the formatter delegate, which is both unreadable and easy to get silently
-    /// wrong. A 10-line fake states the same intent plainly.
-    /// </summary>
-    private sealed class CapturingLogger : ILogger
-    {
-        public List<CapturedEntry> Entries { get; } = [];
-
-        public IDisposable BeginScope<TState>(TState state)
-            where TState : notnull => NoopScope.Instance;
-
-        public bool IsEnabled(LogLevel logLevel) => true;
-
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-        {
-            Entries.Add(
-                new CapturedEntry(
-                    logLevel,
-                    formatter(state, exception),
-                    (state as IEnumerable<KeyValuePair<string, object?>>)?.ToList() ?? [],
-                    exception));
-        }
-
-        private sealed class NoopScope : IDisposable
-        {
-            public static readonly NoopScope Instance = new();
-
-            public void Dispose() { }
-        }
     }
 }

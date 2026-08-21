@@ -159,3 +159,55 @@ Located in the same directory as the script:
 By default, outputs YAML to stdout. Use `--output PATH` to write to a file instead.
 
 **Note:** The script can be run from any directory - it resolves input files relative to the script location.
+
+## doc-impact-map.cjs
+
+Routes the current code changes to the `docs/project-reference/**` docs and `docs/project-config.json`
+sections those changes can make stale. Backs the impact-scoped freshness pass in `/docs-update` Phase 1,
+so a post-change freshness check costs a few targeted verifications instead of a full `/scan-all`.
+
+Routing is derived from `docs/project-config.json` (`contextGroups`, `modules`, `testing`, `e2eTesting`,
+`styling`, `designSystem`, `specRoots`) plus change-class rules for manifests, infra/CI, the docs tree, and
+the AI-harness surface — no project paths are hardcoded. It is fail-open: bad config, bad regex, or a git
+failure degrades to "route it anyway / warn", never to a false "fresh".
+
+### CLI Usage
+
+```bash
+# Map the current changes (working tree -> last commit -> untracked)
+node .claude/scripts/doc-impact-map.cjs --text
+node .claude/scripts/doc-impact-map.cjs --json
+
+# Map a branch diff instead of the working tree
+node .claude/scripts/doc-impact-map.cjs --base=origin/main --text
+
+# Map an explicit file list
+node .claude/scripts/doc-impact-map.cjs --text src/Billing/Entities/Invoice.cs
+
+# Claims mode: which file references inside a doc no longer resolve?
+node .claude/scripts/doc-impact-map.cjs claims --text docs/project-reference/project-structure-reference.md
+node .claude/scripts/doc-impact-map.cjs claims --json      # every reference doc
+```
+
+### Output (map mode)
+
+Per impacted doc: `doc`, `exists`, `lastScanned`/`ageDays`, `scanTarget` (full-rescan escalation),
+`checks` (which verifications apply), `changedFiles`/`addedFiles`/`deletedFiles`, `heuristicOnly`.
+Plus `configSections` (impacted `project-config.json` sections), `unrouted` (files no rule matched —
+these are UNKNOWN, not fresh), `fastExit`, and `warnings`.
+
+### Output (claims mode)
+
+Per doc: `checked` (path claims found), `missing` (resolves nowhere — a dead citation, i.e. a stale doc),
+and `ambiguous` (short-form citations like `shared/contract.md` that resolve by suffix to a real file —
+imprecise rather than dead). Splitting the two keeps the dead list short enough that people still read it.
+
+The same check runs as a hard gate: the `reference-doc-freshness` suite fails the build when any
+reference doc cites a path that no longer exists.
+
+A doc that names a file precisely BECAUSE it is gone (a retired artifact, a deliberately-recorded
+broken link) exempts that citation with a line-scoped `<!-- dead-link-ok -->` marker. It applies to
+its own line only — never doc-wide — so later rot in the same file still fails the gate.
+
+Tests: `node .claude/hooks/tests/run-all-tests.cjs --filter=doc-impact-map`
+`node .claude/hooks/tests/run-all-tests.cjs --filter=reference-doc-freshness`

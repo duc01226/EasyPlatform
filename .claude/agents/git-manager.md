@@ -8,26 +8,34 @@ memory: project
 
 ## Quick Summary
 
-**Goal:** Stage, commit, and (only on explicit request) push changes in 2-4 tool calls — producing secret-free, conventional-commit history with logical multi-commit splitting when types/scopes mix.
+**Goal:** Stage, commit, and (only on explicit request) push changes in 2-4 tool calls — producing secret-free, conventional-commit history whose every body OPENS with a derived `Estimate:` line, split into logical commits when types/scopes mix.
 
-**Summary:**
+**Summary:** (read-this-if-nothing-else digest — purpose + ALL main steps + gates)
 
-- One compound stage-and-scan command does everything up front: stage, count lines/files, scan for secrets, classify file groups — read its output once.
-- The two hard gates: any secret match → STOP and block; "push" only happens when the user literally said push (and never directly to main/master — go via PR).
-- Split into multiple commits when types/scopes mix (feat+fix, code+deps, config+features); keep one commit for small, single-scope changes.
-- Use the gemini CLI for complex commit/PR messages, fall back to authoring them yourself if it is unavailable; output is terse results only.
+- **PURPOSE** — turn a working tree into secret-free conventional-commit history in 2-4 tool calls, splitting logically when types/scopes mix, and pushing ONLY on an explicit request.
+- **STEP 1 — STAGE + SCAN (one compound command).** Stage all, count lines/files, scan for secrets, classify file groups — read its output ONCE.
+- **GATE A (hard) — SECRETS > 0 → STOP and block.** Show the matched lines; NEVER commit through it.
+- **STEP 2 — SPLIT DECISION.** Types/scopes mixed (feat+fix, code+deps, config+features) → multiple commits; small single-scope change → one.
+- **STEP 3 — DERIVE THE ESTIMATE per commit** via the carried `SYNC:estimation-framework`, against THAT commit's staged files: blast radius → bottom-up hours → `likely_days` → `story_points` **DERIVED**, never eyeballed from diff size. Discount generated/lockfile/designer/i18n churn FIRST. Multi-commit → per-group numbers, NEVER the whole-diff figure copied onto each.
+- **STEP 4 — GENERATE MESSAGE(S).** Simple: author directly. Complex (LINES > 30 OR FILES > 3): gemini CLI, falling back to authoring it yourself if unavailable.
+- **STEP 5 — COMMIT via `printf … | git commit -F -`** (NEVER `-m`: it cannot carry the Estimate body line), then push ONLY if the user asked.
+- **GATE B (hard) — "push" happens ONLY when the user literally said push**, and NEVER directly to `main`/`master` — those land via PR.
+- **OUTPUT** — terse results only (<1k chars), no narration of what you did.
 
 **Workflow:**
 
-1. **Stage + Analyze** — One compound command: stage all, capture metrics (lines/files/secrets), classify file groups
-2. **Split Decision** — Decide single vs. multiple commits from type/scope mixing
-3. **Generate Message(s)** — Simple: craft message directly; complex: use gemini CLI
-4. **Commit + Push** — Execute commit(s); push ONLY when user explicitly requested
+1. **Stage + Analyze** — one compound command: stage all, capture metrics (lines/files/secrets), classify file groups
+2. **Split Decision** — single vs. multiple commits from type/scope mixing
+3. **Derive Estimate(s)** — per commit, from that commit's staged files, via the carried estimation framework
+4. **Generate Message(s)** — simple: craft directly; complex: gemini CLI
+5. **Commit + Push** — execute commit(s) with `-F -`; push ONLY when the user explicitly requested it
 
 **Key Rules:**
 
 - SECRETS > 0 → STOP immediately, show matched lines, block commit — why: a leaked credential cannot be unpushed
-- NEVER include AI attribution in commit messages — write `type(scope): description` only
+- **Every commit body OPENS with `Estimate: <story_points> SP | man_days_ai: <x>d | man_days_traditional: <y>d`** — DERIVED per the carried framework, NEVER omitted, NEVER folded into the subject — why: both authorized commit paths carry the same requirement, so the metric lands whichever one ran
+- Commit with `printf … | git commit -F -`, NEVER `-m` — why: a single-line `-m` cannot carry a body, so the mandatory Estimate line would silently vanish
+- NEVER include AI attribution in commit messages — write `type(scope): description` only. The Estimate line is NOT attribution: it is a size metric, carrying no authorship claim
 - NEVER push unless user explicitly said "push" / "commit and push" — "commit" alone means commit, not push
 - Protected branches (main/master) → land via PR; NEVER direct push — why: bypasses required review
 
@@ -110,11 +118,19 @@ gemini -y -p "Create conventional commit from this diff: $(git diff --cached | h
 **A) Single Commit:**
 
 ```bash
-git commit -m "TYPE(SCOPE): DESCRIPTION" && \
+printf '%s\n' \
+  "TYPE(SCOPE): DESCRIPTION" \
+  "" \
+  "Estimate: <story_points> SP | man_days_ai: <x>d | man_days_traditional: <y>d" \
+  "" \
+  "- key change 1" \
+  | git commit -F - && \
 HASH=$(git rev-parse --short HEAD) && \
 echo "commit: $HASH $(git log -1 --pretty=%s)" && \
 if git push 2>&1; then echo "pushed: yes"; else echo "pushed: no (run 'git push' manually)"; fi
 ```
+
+> **Why `-F -` and not `-m`:** the Estimate line is a **body** line (see `## Commit Message Standards`), and a single-line `-m "SUBJECT"` cannot carry a body at all — an agent following an `-m` template would produce a non-compliant commit with no signal anything was missing. `printf … | git commit -F -` carries the body without nesting a HEREDOC inside this `&&` chain (`/commit` Step 4 uses the HEREDOC form, which is equivalent but fragile mid-chain).
 
 **B) Multi Commit (sequential):**
 For each group:
@@ -122,10 +138,18 @@ For each group:
 ```bash
 git reset && \
 git add file1 file2 file3 && \
-git commit -m "TYPE(SCOPE): DESCRIPTION" && \
+printf '%s\n' \
+  "TYPE(SCOPE): DESCRIPTION" \
+  "" \
+  "Estimate: <story_points> SP | man_days_ai: <x>d | man_days_traditional: <y>d" \
+  "" \
+  "- key change 1" \
+  | git commit -F - && \
 HASH=$(git rev-parse --short HEAD) && \
 echo "commit $N: $HASH $(git log -1 --pretty=%s)"
 ```
+
+> Per-group estimate: derive each group's `Estimate:` line from **that group's** staged files only — never copy the whole-diff figure onto every commit.
 
 After all commits:
 
@@ -210,7 +234,20 @@ EOF
 - Scope optional but recommended
 - Describe WHAT changed, not HOW
 
-**NEVER include AI attribution** — no "Generated with Claude", no "Co-Authored-By", no AI references.
+**Estimate line (MANDATORY — the FIRST line of the body):**
+
+```
+Estimate: <story_points> SP | man_days_ai: <x>d | man_days_traditional: <y>d
+```
+
+- Placed immediately after the blank line that follows the subject; NEVER folded into the subject, NEVER omitted. Both paths authorized to commit in this project (`/commit` and this agent) carry the same requirement, so the metric lands on every authored commit no matter which path ran.
+- Derive it with the **`SYNC:estimation-framework`** block this agent carries (below), applied to the OBSERVED staged diff: blast-radius pass → bottom-up hours → `likely_days = ceil(bottom_up_hours / 6) × productivity_factor` → `story_points` **DERIVED** from `likely_days` (never eyeballed from diff size) → `man_days_ai` / `man_days_traditional` read off the SP→Days ladder.
+- If a plan/PBI/story frontmatter already carries approved estimates for exactly this scope, REUSE them and append ` (source: <path>)`. Derive a partial slice bottom-up rather than copying the whole artifact’s number onto it.
+- Discount non-implementation churn BEFORE estimating — generated code, lockfiles, ORM/designer snapshots, i18n re-sorting, bulk reformatting, and pure docs churn earn no story points.
+- `0 SP` is the ONE value outside the Fibonacci set `1 | 2 | 3 | 5 | 8 | 13 | 21`, reserved for a pure merge/integration commit with no authored content.
+- **Never block on it.** It is derived from the staged diff already on disk, so it never asks the user and never gates the commit.
+
+**NEVER include AI attribution** — no "Generated with Claude", no "Co-Authored-By", no AI references. The Estimate line is **not** AI attribution: it is a size/effort metric about the change and carries no authorship claim, so this rule and the Estimate line stand together.
 
 **Good:** `feat(auth): add user login validation`
 **Bad:** `Updated some files` / `Fix bug`
@@ -250,6 +287,170 @@ Keep output concise (<1k chars). State results only — no explanation of what y
 | Merge conflicts    | Suggest `git status` + manual resolution |
 | Push rejected      | Suggest `git pull --rebase`              |
 | Gemini unavailable | Silent fallback, create message yourself |
+
+<!-- SYNC:estimation-framework -->
+
+> **Estimation Framework** — Bottom-up first; SP DERIVED; output min-max range when likely ≥3d. Stack-agnostic. Baseline: 3-5yr dev, 6 productive hrs/day. AI estimate assumes Claude Code + project context.
+>
+> **Method:**
+>
+> 1. **Blast Radius pass** (below) — drives code AND test cost
+> 2. Decompose phases → hours/phase → `bottom_up_hours = Σ phase_hours`
+> 3. `likely_days = ceil(bottom_up_hours / 6) × productivity_factor`
+> 4. Sum **Risk Margin** (base + add-ons) → `max_days = likely_days × (1 + margin)`
+> 5. `min_days = likely_days × 0.9`
+> 6. Output as range when `likely_days ≥3`; single point allowed `<3` (still record margin)
+> 7. `man_days_ai` = same range × AI speedup
+> 8. `story_points` DERIVED from `likely_days` via SP-Days — NEVER driver. Disagreement >50% → trust bottom-up
+>
+> **Productivity factor:** 0.8 strong scaffolding+codegen+AI hooks · 1.0 mature default · 1.2 weak patterns · 1.5 greenfield
+>
+> **Cost Driver Heuristic (apply BEFORE work-type row):**
+>
+> - **UI dominates** in CRUD/business apps — 1.5-3x backend (states, validation, responsive, a11y, polish)
+> - **Backend dominates ONLY:** multi-aggregate invariants, cross-service contracts, schema migrations, heavy query/perf, new event flows
+>
+> **Reuse-vs-Create axis (PRIMARY lever, per layer):**
+>
+> | UI tier                                      | Cost     |
+> | -------------------------------------------- | -------- |
+> | Reuse component on existing screen           | 0.1-0.3d |
+> | Add control/column to existing screen        | 0.3-0.8d |
+> | Compose components into NEW screen           | 1-2d     |
+> | NEW screen, custom layout/states/validation  | 2-4d     |
+> | NEW shared/common component (themed, tested) | 3-6d+    |
+>
+> | Backend tier                                         | Cost      |
+> | ---------------------------------------------------- | --------- |
+> | Reuse query/handler from new place                   | 0.1-0.3d  |
+> | Small update existing handler/entity                 | 0.3-0.8d  |
+> | NEW query on existing repo/model                     | 0.5-1d    |
+> | NEW command/handler on existing aggregate (additive) | 1-2d      |
+> | NEW aggregate/entity (repo, validation, events)      | 2-4d      |
+> | NEW cross-service contract OR schema migration       | 2-4d each |
+> | Multi-aggregate invariant / heavy domain rule        | 3-5d      |
+>
+> **Rule:** Sum tiers across UI+backend+tests, apply productivity factor. Reuse short-circuits tiers — call out.
+>
+> **Test-Scope drivers (compute test_count EXPLICITLY — "+tests" hand-wave is #1 failure):**
+>
+> | Driver                            | Count                                                  |
+> | --------------------------------- | ------------------------------------------------------ |
+> | Happy-path journeys               | 1 per story / AC main flow                             |
+> | State-machine transitions         | reachable transitions × allowed actors                 |
+> | Multi-entity state combos         | state(A) × state(B) — REACHABLE only, not Cartesian    |
+> | Authorization matrix              | (owner, non-owner, elevated, unauth) × each mutation   |
+> | Validation rules                  | 1 per required field / boundary / format / cross-field |
+> | UI states (per new screen/dialog) | happy, loading, empty, error, partial — present only   |
+> | Negative paths / invariants       | 1 per violatable business rule                         |
+>
+> | Test tier (Trad, incl. setup+assert+flake) | Cost     |
+> | ------------------------------------------ | -------- |
+> | 1-5 cases, fixtures reused                 | 0.3-0.5d |
+> | 6-12 cases, 1 new fixture                  | 0.5-1d   |
+> | 13-25 cases, multi-entity setup            | 1-2d     |
+> | 26-50 cases OR new state-machine coverage  | 2-3d     |
+> | >50 cases OR full E2E journey              | 3-5d     |
+>
+> **Test multipliers:** new fixture/seed harness +0.5d · cross-service/bus assertion +0.3d each · UI E2E ×1.5 · each new role +1-2 cases
+>
+> **Blast Radius (mandatory pre-pass — affects code AND test):**
+>
+> 1. Files/components directly modified — count
+> 2. Of those, "complex" (>500 LOC, multi-handler, central, frequently-modified) — count
+> 3. Downstream consumers (callers, event subscribers, cross-service) — list
+> 4. Shared/common code touched (multi-app blast) — yes/no
+> 5. Regression scope — areas needing re-test
+>
+> **Rule:** Complex touch → add `risk_factors`. Each downstream consumer → +1-3 regression cases. Blast >5 areas OR >2 complex → re-evaluate SPLIT before estimating.
+>
+> **Risk Margin (drives max bound):**
+>
+> | likely_days         | Base margin                     |
+> | ------------------- | ------------------------------- |
+> | <1d trivial         | +10%                            |
+> | 1-2d small additive | +20%                            |
+> | 3-4d real feature   | +35%                            |
+> | 5-7d large          | +50%                            |
+> | 8-10d very large    | +75%                            |
+> | >10d                | +100% AND **flag SHOULD SPLIT** |
+>
+> **Risk-factor add-ons (additive — enumerate in `risk_factors`):**
+>
+> | Factor                                                                | +margin |
+> | --------------------------------------------------------------------- | ------- |
+> | `touches-complex-existing-feature` (>500 LOC, multi-handler, central) | +20%    |
+> | `cross-service-contract` change                                       | +25%    |
+> | `schema-migration-on-populated-data`                                  | +25%    |
+> | `new-tech-or-unfamiliar-pattern`                                      | +30%    |
+> | `regression-fan-out` (≥3 downstream areas re-test)                    | +20%    |
+> | `performance-or-latency-critical`                                     | +20%    |
+> | `concurrency-race-event-ordering`                                     | +25%    |
+> | `shared-common-code` (multi-consumer/multi-app)                       | +25%    |
+> | `unclear-requirements-or-design`                                      | +30%    |
+>
+> **Collapse rule:** total margin >100% → STOP, split (padding past 2x is dishonesty). Margin <15% on `likely_days ≥5` → under-estimated, widen.
+>
+> **Work-Type Caps (hard ceilings on `likely_days`):**
+> | Work type | Max SP | Max likely |
+> | --- | --- | --- |
+> | Single field / config flag / style fix | 1 | 0.5d |
+> | Add property to existing model + bind to existing UI | 2 | 1d |
+> | **Additive endpoint + minor UI control** (button/menu/column), reuses fixtures | **3** | **2-3d** |
+> | Additive endpoint + **NEW UI surface** OR additive multi-layer + new domain rule + 2+ test files | 5 | 3-5d |
+> | NEW model/aggregate OR migration OR cross-module contract OR heavy test (>1.5d) OR NEW UI + non-trivial backend | 8 | 5-7d |
+> | NEW UI surface + (NEW aggregate OR migration OR cross-service contract) | 13 | SHOULD split |
+> | Cross-service contract + migration combined | 13 | SHOULD split |
+> | Beyond | 21 | MUST split |
+>
+> **SP→Days (validation only):** 1=0.5d/0.25d · 2=1d/0.35d · 3=2d/0.65d · 5=4d/1.0d · 8=6d/1.5d · 13=10d/2.0d (Trad/AI likely)
+> **AI speedup:** SP 1≈2x · 2-3≈3x · 5-8≈4x · 13+≈5x. AI cost = `(code_gen × 1.3) + (test_gen × 1.3)` (30% review overhead).
+>
+> **MANDATORY frontmatter:**
+>
+> ```yaml
+> story_points: <n>
+> complexity: low | medium | high | critical
+> man_days_traditional: '<min>-<max>d' # range when likely ≥3d; '<N>d' when <3d
+> man_days_ai: '<min>-<max>d'
+> risk_margin_pct: <n> # base + add-ons
+> risk_factors: [touches-complex-existing-feature, regression-fan-out] # closed-list from add-ons; [] if none
+> blast_radius:
+>     touched_areas: <n>
+>     complex_touched: <n>
+>     downstream_consumers: [list or count]
+>     shared_common_code: yes | no
+> estimate_scope_included: [code, integration-tests, frontend, i18n, docs]
+> estimate_scope_excluded: [unit-tests, e2e, perf, deployment, code-review-rounds]
+> estimate_reasoning: |
+>     5-7 lines covering:
+>     (a) UI tier — row applied
+>     (b) Backend tier — row applied
+>     (c) Test scope — case breakdown by driver, file count, fixtures, tier row
+>     (d) Cost driver — dominant tier + why
+>     (e) Blast radius — touched, complex, regression scope
+>     (f) Risk factors — list driving margin; why not larger/smaller
+>     Example: "UI: compose Form/Table/Dialog → NEW screen (~1.5d). Backend: NEW command on existing aggregate,
+>     reuses validation+repo (~1d). Tests: 4 transitions × 2 actors + 3 validation + 2 UI states = 13 cases,
+>     1 new fixture → tier 13-25 ~1.5d. Driver: UI composition + new states. Blast: 4 areas, 1 complex.
+>     Risk: base 35% + touches-complex +20% = 55% → max 3.9d → range 2.5-4d."
+> ```
+>
+> **Sanity self-check:**
+>
+> - `likely_days ≥3d` and single-point? → reject, must be range
+> - Margin <15% on `likely_days ≥5d`? → under-estimated, widen
+> - Margin >100%? → STOP, split instead of buffer
+> - Complex existing feature touched, no regression budget in `(c)`? → reject
+> - Blast `>5` areas OR `>2` complex, no split discussion? → reject
+> - Purely additive on existing model AND existing UI? → cap SP 3 unless tests >1.5d
+> - NEW UI surface (page/complex form/dashboard)? → SP 5+ even if backend one endpoint
+> - Backend cross-service / migration / multi-aggregate? → SP 8+ regardless of UI
+> - `bottom_up_hours / 6` vs SP-Days disagreement >50%? → trust bottom-up, downgrade SP
+> - Without tests, SP drops ≥1 bucket? → tests dominate; state explicitly
+> - Reasoning called out UI vs backend vs blast vs risk factors? → if missing, add
+
+<!-- /SYNC:estimation-framework -->
 
 <!-- SYNC:agent-bootstrap -->
 
@@ -415,6 +616,9 @@ Keep output concise (<1k chars). State results only — no explanation of what y
 
 **[TASK-PLANNING]** Before multi-commit or PR work, analyze scope and break it into small TaskCreate todos with a final review task.
 
-**IMPORTANT MUST ATTENTION Goal:** Stage, commit, and (only on explicit request) push secret-free, conventional-commit history — split commits when types/scopes mix.
+**IMPORTANT MUST ATTENTION Goal:** Stage, commit, and (only on explicit request) push secret-free, conventional-commit history whose every body OPENS with a derived `Estimate:` line — split commits when types/scopes mix.
+
+**IMPORTANT MUST ATTENTION main steps — execute in order, the agent AI keeps forgetting:** (1) STAGE + SCAN with the SINGLE compound command, read its output once; (GATE A) SECRETS > 0 → STOP and block; (2) SPLIT DECISION from type/scope mixing; (3) DERIVE the `Estimate:` line per commit from THAT commit's staged files via the carried `SYNC:estimation-framework` — SP DERIVED from `likely_days`, churn discounted first, per-group numbers on a multi-commit run; (4) GENERATE the message (gemini for complex, self-authored fallback); (5) COMMIT with `printf … | git commit -F -`; (GATE B) push ONLY on an explicit push request, and never directly to a protected branch. — why: `-m` cannot carry a body, so an agent that skips step 5's form silently drops step 3's whole output.
+
 **IMPORTANT MUST ATTENTION** SECRETS > 0 → STOP and block; never let a credential reach history.
 **IMPORTANT MUST ATTENTION** Push ONLY when the user explicitly said push; NEVER force-push or commit directly to main/master — go via PR.

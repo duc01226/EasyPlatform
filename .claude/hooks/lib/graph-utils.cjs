@@ -363,6 +363,67 @@ function releaseUpdateLock() {
 }
 
 /**
+ * Get the current git HEAD commit hash.
+ * Cheap (~10-20ms) — this is the gate that keeps the per-prompt staleness
+ * check from spawning Python on every prompt.
+ * @returns {string|null} Commit hash, or null when git is unavailable / not a repo
+ */
+function getGitHead() {
+    try {
+        return (
+            execFileSync('git', ['rev-parse', 'HEAD'], {
+                encoding: 'utf-8',
+                timeout: 5000,
+                cwd: PROJECT_DIR,
+                stdio: ['pipe', 'pipe', 'pipe']
+            }).trim() || null
+        );
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Path to the hook-owned "already evaluated this HEAD" marker.
+ *
+ * Deliberately NOT a mirror of the graph's `last_synced_commit` metadata — it
+ * records the last HEAD this hook CONSIDERED, which is a superset (a HEAD
+ * skipped as graph-ahead is evaluated but never synced). Losing or corrupting
+ * it costs at most one redundant sync, which is idempotent — it can never make
+ * the graph wrong, so it is a debounce marker and not a source of truth.
+ * @returns {string} Absolute path to the marker file
+ */
+function getLastSeenHeadPath() {
+    return path.join(PROJECT_DIR, '.code-graph', '.last-seen-head');
+}
+
+/**
+ * Read the last HEAD this hook evaluated.
+ * @returns {string|null} Commit hash, or null when never recorded
+ */
+function readLastSeenHead() {
+    try {
+        return fs.readFileSync(getLastSeenHeadPath(), 'utf-8').trim() || null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Record a HEAD as evaluated. Written whatever the sync outcome was —
+ * including the graph-ahead no-op — so sitting on an older branch does not
+ * re-spawn Python on every prompt.
+ * @param {string} head - Commit hash
+ */
+function writeLastSeenHead(head) {
+    try {
+        fs.writeFileSync(getLastSeenHeadPath(), head, 'utf-8');
+    } catch {
+        /* best-effort marker — a failed write only costs a redundant re-check */
+    }
+}
+
+/**
  * Check full graph availability: Python + tree-sitter + graph.db exists.
  * @returns {{ available: boolean, python: boolean, deps: boolean, graph: boolean }}
  */
@@ -410,6 +471,10 @@ function invokeGraph(cmd, args = [], timeoutMs = 30000) {
 
 module.exports = {
     findPython,
+    getGitHead,
+    getLastSeenHeadPath,
+    readLastSeenHead,
+    writeLastSeenHead,
     checkTreeSitter,
     getGraphDbPath,
     getScriptPath,

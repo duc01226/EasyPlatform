@@ -52,7 +52,7 @@ two events is counted once per event).
 | `session-init.cjs`         | SessionStart                   | `startup\|resume\|clear\|compact`                        | Initialize session: detect project, write env vars, validate config, cleanup temp files                                                                                                                                          |
 | `npm-auto-install.cjs`     | SessionStart                   | `startup`                                                | Auto-install missing npm packages from root `package.json`                                                                                                                                                                       |
 | `session-init-docs.cjs`    | SessionStart                   | `startup`                                                | Config skeleton + reference doc placeholder creation                                                                                                                                                                             |
-| `graph-session-init.cjs`   | SessionStart                   | `startup`                                                | Check Python/tree-sitter/graph.db, inject status guidance (skips if config not populated)                                                                                                                                        |
+| `graph-session-init.cjs`   | SessionStart                   | `startup\|resume`                                        | Check Python/tree-sitter/graph.db, then `sync` the graph with git HEAD (skips if config not populated). `resume` included so a session resumed after someone else's commits landed still reconciles                              |
 | `session-end.cjs`          | SessionEnd                     | `clear\|exit\|compact`                                   | Clean up tmpclaude temp/swap files and stale snapshots on session end                                                                                                                                                            |
 | `notifications/notify.cjs` | Stop, PreToolUse, Notification | –, `AskUserQuestion`, `AskUserPrompt\|permission_prompt` | Unified notification router → desktop dialog + optional Telegram/Discord/Slack; fires on task-complete (Stop), question (AskUserQuestion), and input/permission prompts. Single owner — replaces the retired `notify-waiting.js` |
 
@@ -115,10 +115,11 @@ Lessons are managed via the `/learn` skill. See `.claude/skills/learn/SKILL.md`.
 
 ### Context Management & Utility
 
-| Hook                     | Event                                | Purpose                                               |
-| ------------------------ | ------------------------------------ | ----------------------------------------------------- |
-| `post-edit-prettier.cjs` | PostToolUse:`Edit\|Write\|MultiEdit` | Auto-run Prettier on edited files                     |
-| `graph-auto-update.cjs`  | PostToolUse:`Edit\|Write\|MultiEdit` | Incremental graph update after file edits (debounced) |
+| Hook                     | Event                                | Purpose                                                                                                                                                                                                     |
+| ------------------------ | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `post-edit-prettier.cjs` | PostToolUse:`Edit\|Write\|MultiEdit` | Auto-run Prettier on edited files                                                                                                                                                                           |
+| `graph-auto-update.cjs`  | PostToolUse:`Edit\|Write\|MultiEdit` | Incremental graph update after file edits (debounced)                                                                                                                                                       |
+| `graph-prompt-sync.cjs`  | UserPromptSubmit                     | Re-sync the graph when git HEAD moved since the last prompt (pull/checkout/merge). Gated on a cheap `git rev-parse HEAD` compare, so Python spawns only when HEAD actually changed; never blocks the prompt |
 
 > Large-output externalization, compaction snapshots/markers, transcript recovery,
 > temp-file cleanup, and subagent-truncation detection are no longer hooks. Compaction-state
@@ -164,7 +165,7 @@ SESSION START (5 hooks)                         DURING SESSION
     ├── cleanup temp files              │
     ├── detectProjectType()             │       PROMPT (UserPromptSubmit)
     ├── resolvePlanPath()               │         init-prompt-gate.cjs (gate)
-    └── writeEnv() (CK_* vars)          │
+    └── writeEnv() (CK_* vars)          │         graph-prompt-sync.cjs (HEAD-change resync)
   npm-auto-install.cjs                  │       PRETOOLUSE GATES
   session-init-docs.cjs                 │         windows-command-detector / bash-shell-guard
   graph-session-init.cjs ───────────────┘         git-commit-block / scout-block / privacy-block
@@ -327,12 +328,12 @@ Hooks are registered in `settings.json` under `hooks.{EventName}[].hooks[]`. Eac
 
 ## Testing
 
-Primary hook test status: `test-all-hooks.cjs` passes with 224 tests, 0 failures (live run 2026-06-18; the in-suite count guard confirms docs agree at 224). The aggregate runner `run-all-tests.cjs` passes 305 tests across all discoverable suites (live run 2026-06-18).
+Primary hook test status: `test-all-hooks.cjs` passes with 224 tests, 0 failures (live run 2026-08-19; the in-suite count guard confirms docs agree at 224). The aggregate runner `run-all-tests.cjs` discovers 402 tests across all discoverable suites and passes every one it runs (live run 2026-08-19); its own post-summary count guard asserts that discovered total against both figures here. The guard keys on the DISCOVERED count, not a pass count, because a few tests gate on host capability (`git`) and on repo state, so the passed/skipped split varies per machine while 402 does not.
 
 | Test Surface          | Count | File/Location                                                     |
 | --------------------- | ----- | ----------------------------------------------------------------- |
 | Primary hook runner   | 224   | `tests/test-all-hooks.cjs`                                        |
-| Aggregate runner      | 305   | `tests/run-all-tests.cjs` (all suites)                            |
+| Aggregate runner      | 402   | `tests/run-all-tests.cjs` (all suites, discovered)                |
 | Standalone test files | TODO  | `tests/test-*.cjs/.js` excluding runner (re-verify before citing) |
 | Scout-block tests     | TODO  | `scout-block/tests/test-*.js` (re-verify before citing)           |
 | Lib unit tests        | TODO  | `lib/__tests__/*.test.cjs` (re-verify before citing)              |

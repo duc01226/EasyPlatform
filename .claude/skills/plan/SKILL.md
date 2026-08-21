@@ -21,18 +21,20 @@ disable-model-invocation: false
 **Summary:**
 
 - PLANNING ONLY — NEVER implement/execute code; produce `plan.md` + per-phase `phase-XX` files + a `goal.md` Goal Contract, then hand off.
-- **Main pipeline (the steps AI keeps forgetting):** pre-check active/suggested plan → bootstrap Goal Contract (`goal.md`) → parallel `researcher` subagents → codebase + project-reference analysis (scout if docs absent) → `planner` subagent writes `plan.md` + `phase-XX` files (Alternatives, Rationale, UI Layout, Test Specs) → post-plan granularity self-check → mandatory final tasks.
+- **Main pipeline (the steps AI keeps forgetting):** pre-check active/suggested plan → bootstrap Goal Contract (`goal.md`) → ONE research wave (`researcher` + `scout` subagents, spawned together, barrier before synthesis) → codebase + project-reference analysis (scout if docs absent) → `planner` subagent writes `plan.md` + `phase-XX` files (Alternatives, Rationale, UI Layout, Test Specs) → parallelism pass (tag every phase PAR/SEQ + write set + `## Execution Waves`) → post-plan granularity self-check → mandatory final tasks.
+- **The plan output itself carries parallelism metadata** — every phase tagged `PAR`/`SEQ` with the write set it owns, every `SEQ` naming its forcing dependency (see [Plan Parallelism Metadata](#plan-parallelism-metadata-mandatory--every-plan-output)). Omitting it is a defect of THIS skill: `/plan-execute` fans out only on what the plan declares.
 - **`--mode={ci|cro}` routing:** `ci` plans a fix from a GitHub Actions run/log (loads `references/mode-ci.md`); `cro` plans conversion-rate optimization (25-item framework, `references/mode-cro.md`); default (no flag) = standard flow. Mode only ADDS a reference payload — SAME engine, SAME `/plan-review` gate, SAME `planner` agent.
-- Default mode HARD (parallel subagents, project-reference docs, 3-round `/plan-review`); fast mode ONLY when EVERY trivial-task condition holds. Every phase passes the 5-point granularity check ("Can I start coding RIGHT NOW?"), carries `## Test Specifications` with TC IDs, uses bottom-up estimation (phase-hours drive man-days; SP DERIVED).
-- **Mandatory final tasks + gates:** write Test Specs per phase → `/plan-validate` → `/plan-review` (3-round) → `/why-review` (standalone) → re-estimate vs finalized phases; New Tech/Lib gate before approval; `AskUserQuestion` confirm before any next step.
+- Default mode HARD (parallel subagents, project-reference docs, the `/plan-review` convergence loop under its 3-round ceiling); fast mode ONLY when EVERY trivial-task condition holds. Every phase passes the 5-point granularity check ("Can I start coding RIGHT NOW?"), carries `## Test Specifications` with TC IDs, uses bottom-up estimation (phase-hours drive man-days; SP DERIVED).
+- **Mandatory final tasks + gates:** write Test Specs per phase → `/plan-validate` → `/plan-review` (convergence loop, 3-round ceiling) → `/why-review` (standalone) → re-estimate vs finalized phases; New Tech/Lib gate before approval; **Domain Entity Gate (MANDATORY when the plan touches an entity/VO/aggregate)** — apply `SYNC:domain-entity-change-gate` so the plan DECIDES classification, invariant ownership, aggregate boundary, concurrency, construction, events, and the test obligation (each naming its owning file) instead of deferring them to implementation; `AskUserQuestion` confirm before any next step.
 
 **Workflow:**
 
 1. **Pre-Check** — Detect active/suggested plan or create new directory
-2. **Research** — Parallel researcher subagents explore aspects (max 5 tool calls each)
+2. **Research wave** — All independent research threads spawned in ONE message (researcher + scout subagents, max 5 tool calls each), then a barrier before synthesis
 3. **Codebase Analysis** — Search for project reference docs (patterns-reference, project-structure, architecture, adr); scout if not found
 4. **Plan Creation** — Planner subagent creates plan.md + phase-XX files with full sections
-5. **Post-Validation** — Optionally interview user to confirm decisions via /plan-validate
+5. **Parallelism pass** — Tag every phase PAR/SEQ with its write set; declare `## Execution Waves` in plan.md
+6. **Post-Validation** — Optionally interview user to confirm decisions via /plan-validate
 
 **Key Rules:**
 
@@ -40,6 +42,7 @@ disable-model-invocation: false
 - Always run /plan-review after plan creation
 - Ask user to confirm before any next step
 - **MANDATORY IMPORTANT MUST ATTENTION** detect new tech/lib in plan and create validation task (see New Tech/Lib Gate below)
+- **MANDATORY IMPORTANT MUST ATTENTION** when the plan touches an entity, value object, or aggregate, run the **Domain Entity Gate** below — state paradigm + subdomain fit BEFORE any entity task, and answer every triggered decision row with its OWNING FILE; "discover during implementation" is not an answer. Record `No domain-entity surface — gate N/A` when it does not fire
 
 ## First Principle — Easy to Change
 
@@ -63,7 +66,7 @@ below — if a downstream rule raises change cost, this principle wins.
 
 ## Default Mode Policy
 
-> **Default mode HARD (full rigor).** Every section below — parallel researcher subagents, 3-round `/plan-review`, base-class greps, microservices/event-driven analysis, mandatory user approval — applies by default.
+> **Default mode HARD (full rigor).** Every section below — parallel researcher subagents, the full `/plan-review` convergence loop (3-round ceiling), base-class greps, microservices/event-driven analysis, mandatory user approval — applies by default.
 >
 > **Opt out to fast mode ONLY when ALL true** (task genuinely trivial):
 >
@@ -75,11 +78,30 @@ below — if a downstream rule raises change cost, this principle wins.
 >
 > **Any condition fails → use full protocol below.** When in doubt, default hard — skipping rigor on a non-trivial task wastes more rework than rigor saves.
 >
-> **Fast mode skips (and only skips):** parallel researcher subagents (direct grep instead), 3-round `/plan-review` (1 round), `/plan-validate` interview (inline confirm only), New Tech/Lib Gate (only if truly no new deps).
+> **Fast mode skips (and only skips):** parallel researcher subagents (direct grep instead), the `/plan-review` re-review loop (single round, no fresh re-review even when findings remain), `/plan-validate` interview (inline confirm only), New Tech/Lib Gate (only if truly no new deps).
 
 ## New Tech/Lib Gate (MANDATORY for all plans)
 
 **MANDATORY IMPORTANT MUST ATTENTION** after plan creation, detect new tech/packages/libraries not in project. If found: `TaskCreate` per lib → WebSearch top 3 alternatives → compare (fit, size, community, learning curve, license) → recommend with confidence % → `AskUserQuestion` to confirm. **Skip if** plan uses only existing dependencies.
+
+## Domain Entity Gate (MANDATORY when the plan touches an entity, VO, or aggregate)
+
+> Apply `SYNC:domain-entity-change-gate` (inlined below) — the SAME protocol `/plan-review` and `/changes-review` read, and whose A–P checklist `/domain-entities-review` owns. — why: a plan that leaves aggregate boundary, invariant ownership, or concurrency to "discover during implementation" ships a design review will reject, and the rework is paid twice.
+
+**Fires when** the plan introduces or changes a domain entity / value object / aggregate root, its fields, invariants, relationships, or state transitions; an aggregate boundary, repository, or cross-aggregate reference; a domain event; or a concurrency/reconstitution concern. Otherwise record `No domain-entity surface — gate N/A`.
+
+**The plan MUST name the decision AND the owning file for every triggered row** — an unanswered row is a plan that is not executable:
+
+1. **Classification** — entity vs value object vs aggregate root (swap test applied).
+2. **Invariant ownership** — which rules the entity enforces vs which the boundary validates; failure signalling (throw vs `Result`) consistent with the project convention.
+3. **Aggregate boundary + concurrency** — what shares a transaction and why; cross-aggregate refs by ID; concurrency token on the ROOT; enforcing mechanism for any set-based invariant.
+4. **Construction vs reconstitution** — separate creation and load paths; load raises no events.
+5. **Events** — what is raised, when it dispatches (after commit / outbox), domain vs integration contract.
+6. **Test obligation** — each invariant gets a property TC + boundary counter-case as a planned task, NEVER left implicit.
+
+MUST ATTENTION state **paradigm** (OO-mutable / type-driven-immutable / event-sourced) and **subdomain fit** (core / supporting / generic / CRUD) BEFORE planning entity tasks — NEVER plan a rich domain model for a CRUD subdomain, and NEVER plan setter/mutability tasks against an immutable or event-sourced model.
+
+---
 
 ## Greenfield Mode
 
@@ -166,10 +188,13 @@ Check `## Plan Context` section in injected context:
 1. If creating new: create directory using `Plan dir:` from `## Naming` section, then run `node .claude/scripts/set-active-plan.cjs {plan-dir}`. If reusing: use active plan path from Plan Context. Pass directory path to every subagent.
 2. **Goal Contract bootstrap (BEFORE investigation and phase writing):** resolve active goal per `SYNC:goal-contract-satisfaction-loop` — create/update `{plan-dir}/goal.md` from `.claude/templates/goal-contract-template.md`, recording original request, purpose, success criteria, constraints, required evidence. Every phase's success criteria maps to a saved goal criterion. Redact secrets.
 3. Follow strictly the "Plan Creation & Organization" rules in `references/engine-plan-organization.md`.
-4. Use `researcher` agents (max 2) in parallel: each researches a different aspect; max 5 tool calls per agent.
-5. Analyze codebase: search project reference docs (`patterns-reference`, `project-structure`, `architecture`, `adr`); read those found. **ONLY IF docs not found or older than 3 days:** use `/scout <instructions>` to search codebase for needed files.
-6. Main agent gathers research/scout report filepaths; pass to `planner` subagent with prompt to create implementation plan.
-7. Main agent receives implementation plan from `planner`; ask user to review.
+4. **Project-reference preflight — BEFORE dispatch.** Resolve and read the required project-reference documents first. Record missing or stale references as scoped research inputs; never discover the governing conventions only after workers have already started.
+5. **Research wave — ONE message, ONE barrier.** Enumerate the independent research threads this task needs — per-module code investigation, pattern discovery, dependency mapping, prior-art/library search — then tag each `PAR`/`SEQ` and declare `Parallel plan: wave 1 = [...] · SEQ = [...] (reason)` before dispatch. Research is read-only, so a thread is `PAR` unless it consumes another thread's output (name that output). Spawn the whole wave in ONE message: `researcher` agents (max 2) for external/prior-art threads, max 5 tool calls per agent; `scout` agents for codebase threads, one per module/area with a disjoint read scope. Give each agent its own report path under `{plan-dir}/research/` or `{plan-dir}/scout/` so no two agents write the same file.
+6. Analyze codebase against the preflight references. **ONLY IF a required reference is missing or older than 3 days:** include a scoped `/scout <instructions>` member in the research wave to gather the missing evidence; do not launch an unplanned later round trip.
+7. **Barrier, then synthesize.** Advance only after EVERY wave member returns (a skipped thread counts as returned). Read the report FILES (not memory), reconcile conflicting findings, and record unresolved gaps — a second wave is dispatched only for gaps the first wave exposed.
+8. Main agent gathers research/scout report filepaths; pass to `planner` subagent with prompt to create implementation plan.
+9. **Parallelism pass (MANDATORY before handoff).** Validate each phase's **Mode, Wave, write set, and SEQ dependency**, then write the `## Execution Waves` line — see [Plan Parallelism Metadata](#plan-parallelism-metadata-mandatory--every-plan-output). This is what lets `/plan-execute` fan out; an untagged plan executes strictly sequentially.
+10. Main agent receives implementation plan from `planner`; ask user to review.
 
 ## Post-Plan Validation (Optional)
 
@@ -230,9 +255,30 @@ After plan creation, offer validation interview to confirm decisions before impl
     ---
     ```
 
-- Save overview at `{plan-dir}/plan.md` (<80 lines): list each phase with status, progress, links to phase files.
-- For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` with sections: Context links, Overview, Key Insights, Requirements, **Alternatives Considered** (minimum 2 approaches with pros/cons), **Design Rationale** (WHY chosen approach), Architecture, **UI Layout** (see below), Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps.
+- Save overview at `{plan-dir}/plan.md` (<80 lines): list each phase with status, progress, **Mode (`PAR`/`SEQ`)**, links to phase files; add the `## Execution Waves` line below the phases table.
+- For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` with sections: Context links, Overview, Key Insights, Requirements, **Alternatives Considered** (minimum 2 approaches with pros/cons), **Design Rationale** (WHY chosen approach), Architecture, **UI Layout** (see below), Related code files, **Parallel Execution** (Mode `PAR`/`SEQ` · Write set · SEQ dependency — see below), Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps.
 - **UI Layout:** For frontend-facing phases, include ASCII wireframe. Classify components by tier (common/domain-shared/page-app). For backend-only phases: `## UI Layout` → `N/A — Backend-only change.`
+
+## Plan Parallelism Metadata (MANDATORY — every plan output)
+
+`/plan-execute` fans out ONLY on what the plan declares. An untagged plan forces sequential execution, so omitting this metadata is a defect of THIS skill, not of the executor.
+
+1. **Tag every phase `PAR` or `SEQ`** — in the `plan.md` phases table (`Mode` column) and in each phase file's `## Parallel Execution` section. `PAR` = its inputs contain no pending phase's output AND its write set is disjoint from every other `PAR` phase.
+2. **Declare the write set per phase** — the exact file paths the phase creates / modifies / deletes (globs only when their members are enumerable from the plan). Two `PAR` phases MUST have disjoint write sets; any overlap → merge the phases, or demote the later one to `SEQ` and name the shared file.
+3. **Every `SEQ` names its forcing dependency** — `SEQ — needs phase-02's {migration | generated type | contract | file}`. "Feels sequential", "safer in order", or an unnamed dependency is not a reason: retag it `PAR`.
+4. **Group `PAR` phases into waves** in a `## Execution Waves` line in `plan.md`:
+   `Execution waves: wave 1 = [phase-01, phase-03] · wave 2 = [phase-04] · SEQ = [phase-02 (needs phase-01 schema), phase-06 (approval gate)]`.
+5. **Gates and reviews are SEQ boundaries** — a user-approval, review, verification, or migration phase never shares a wave with the phases it gates; it runs after that wave's barrier.
+6. **Phase-file block format** (copy verbatim into each phase file):
+
+    ```markdown
+    ## Parallel Execution
+
+    - Mode: PAR | SEQ
+    - Write set: `src/a/x.ts`, `src/a/x.spec.ts`
+    - Wave: 1
+    - SEQ dependency: {name the phase + the exact artifact it produces — omit when Mode: PAR}
+    ```
 
 **Behavior/Sync Planning Checks**
 
@@ -247,7 +293,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 - **MANDATORY FINAL TASKS:** After all planning todos, ALWAYS add these final tasks:
     1. **Task: "Write test specifications for each phase"** — Add `## Test Specifications` with TC-{FEATURE}-{NNN} IDs to every phase file. Use `/spec [mode=tests]` if feature docs exist; `Evidence: TBD` for TDD-first mode.
     2. **Task: "Run /plan-validate"** — `/plan-validate` skill interviews user with critical questions, validates plan assumptions.
-    3. **Task: "Run /plan-review"** — `/plan-review` skill, deep 3-round protocol (R1: checklist, R2: code-proof trace, R3: adversarial simulation). Depth by SP: ≤3 → 2 rounds min, 4-8 → 3 rounds, >8 → 3 rounds + code-proof mandatory.
+    3. **Task: "Run /plan-review"** — `/plan-review` skill, convergence loop (review → validate findings → fix → fresh full re-review) bounded by a **3-round ceiling, NEVER a target**: a clean pass ENDS the loop at ANY round, round 1 included; round 3 completing with CRITICAL/HIGH/MEDIUM still open escalates via `AskUserQuestion`, never a silent PASS. SP raises the RIGOR of each round, never a round floor: ≤3 → checklist + code-proof trace; 4-8 → + adversarial simulation; >8 → code-proof trace mandatory in every round.
     4. **Task: "Run /why-review (standalone only)"** — If NOT inside a workflow, `/why-review` validates design rationale, alternatives considered, risk assessment. Skip if a workflow already includes `/why-review`.
     5. **Task: "Re-evaluate estimation against finalized plan"** — Pre-completion estimates anchor on scope guesses; finalized phases reveal true cost. After phases/TCs/decisions locked: (a) re-derive `bottom_up_hours = Σ phase_hours` from finalized phase files; (b) recompute `likely_days`, `risk_margin_pct`, `min-max range` per `SYNC:estimation-framework`; (c) compare to current frontmatter `man_days_traditional` / `story_points`. If `|delta| > 20%` → UPDATE frontmatter, add `reestimate_delta_pct: <signed>` + 1-line `reestimate_reason`. If `|delta| > 50%` → flag `SHOULD-RESCOPE` and surface to user via `AskUserQuestion` before implementation.
 
@@ -665,6 +711,57 @@ After creating all phase files, run **recursive decomposition loop**:
 
 <!-- /SYNC:ai-mistake-prevention -->
 
+<!-- SYNC:domain-entity-change-gate -->
+
+> **Domain Entity Change Gate** — ONE protocol binding every skill or agent that PLANS, IMPLEMENTS, or REVIEWS a change touching a domain entity, value object, or aggregate, so a planner, an implementer, and a reviewer apply the SAME rules to the SAME change. `/domain-entities-review` is the canonical owner of the full A–P checklist; this gate is the shared trigger plus the decision set that must be answered. NEVER re-derive a weaker local copy — why: when planning and review disagree on entity rules, the plan ships a design that review then rejects, and the rework is paid twice.
+>
+> **Trigger — fires when ANY holds:** a new entity / value object / aggregate root is introduced · an existing one gains or loses a field, invariant, relationship, or state transition · an aggregate boundary, repository, or cross-aggregate reference changes · a domain event is added, renamed, or re-payloaded · a concurrency or reconstitution concern on a root changes. State `No domain-entity surface — gate N/A` when none holds.
+>
+> **Step 1 — Detect BEFORE deciding.** Both answers change which rules even apply:
+>
+> - **Paradigm** (per aggregate, from the code — NEVER assumed): OO-mutable · type-driven/immutable · event-sourced. Setter, mutability, and reconstitution rules are written for OO-mutable; applying them to the other two manufactures false findings and false plan tasks.
+> - **Subdomain fit:** core (rich model owed) · supporting (Active Record or light model) · generic (buy, do not model) · CRUD (Transaction Script — a rich entity here is ceremony). NEVER plan or flag a rich model where the subdomain has no invariant beyond required-field.
+>
+> **Step 2 — Answer all 6 decision points.** Each is a decision the change MUST make explicitly:
+>
+> | #   | Decision point                                                                                               | Answered when                                                                                                                                                                                                                                                                                |
+> | --- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | 1   | **Classification** — entity vs value object vs aggregate root                                                | The swap test is applied ("would an identical copy be interchangeable?"); a VO is immutable with structural equality and has no repository                                                                                                                                                   |
+> | 2   | **Invariant ownership** — entity owns "can this state exist?", the boundary owns "is this input acceptable?" | Each rule is placed on one side and named; failure signalling (throw vs `Result`) matches the project convention consistently; a DB constraint is a backstop, NEVER the rule                                                                                                                 |
+> | 3   | **Aggregate boundary + concurrency**                                                                         | Only true always-consistent invariants share an aggregate; cross-aggregate references are by ID; one aggregate mutates per transaction; the ROOT carries the concurrency token; set-based invariants (uniqueness across instances) name a real enforcing mechanism, never an in-memory check |
+> | 4   | **Construction vs reconstitution**                                                                           | Creation and load are separate paths; the load path raises NO domain events and re-runs NO creation rules; required data sits in the constructor/factory                                                                                                                                     |
+> | 5   | **Events**                                                                                                   | Raised inside the aggregate; dispatched AFTER commit (outbox when crossing a process); internal domain events kept distinct from published integration contracts; handlers idempotent                                                                                                        |
+> | 6   | **Test obligation**                                                                                          | Every invariant maps to a universally-quantified property TC PLUS a boundary counter-case — the spec NAMES it and a test GUARDS it (Dual-Feedback); a single happy-path example is NOT coverage                                                                                              |
+>
+> **Step 3 — Apply by context.** Same decisions, different obligation:
+>
+> | Calling context                                                                                     | Obligation                                                                                                                                                                                                                                                                                                                                                                                                                |
+> | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | **Planning** (`/plan`)                                                                              | The plan MUST name the decision and the owning file for every triggered row. An unanswered row is a plan that is not executable — surface it, do NOT let implementation discover it.                                                                                                                                                                                                                                      |
+> | **Plan review** (`/plan-review`)                                                                    | An unanswered, hand-waved, or deferred-to-implementation row is a FINDING with `file:line` into the plan. Presence of the word "entity" is NEVER an answer.                                                                                                                                                                                                                                                               |
+> | **Implementation** (`/plan-execute`, `/fix`, and any implementing agent — e.g. `backend-developer`) | The decisions are INPUTS, not questions to reopen: implement each triggered row as the plan/spec decided it, at the owning file it named. A row that arrives UNANSWERED is a blocker — surface it and get it decided; NEVER settle it silently at the keyboard, and NEVER pick an aggregate boundary from a DB table or UI screen because the plan left it open. Paradigm and subdomain fit still gate which rules apply. |
+> | **Change review** (`/changes-review`)                                                               | Route to the owner — **Mode A (default):** read `/domain-entities-review`'s Phase 2 A–P checklist and apply it as review lenses. **Mode B (escalation):** delegate to `/domain-entities-review` when standalone AND the diff carries 3+ entity files. Findings enter the normal finding set with `file:line` + severity.                                                                                                  |
+>
+> **Duplication guard — SKIP the gate entirely when ANY row holds.** Record the deferral line, then proceed:
+>
+> | Suppressing context                                                                                                              | Deferral line                                                   |
+> | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+> | The running skill IS `/domain-entities-review`                                                                                   | `Gate is this skill's own body — A–P checklist owns it.`        |
+> | Invoked inside `$workflow-review-changes` (its step 5 runs `/domain-entities-review` as a dedicated conditional parallel member) | `Gate deferred to workflow step 5 /domain-entities-review.`     |
+> | `/why-review` running in `--validate-findings` terminal mode                                                                     | `Gate N/A — validate-findings is terminal, no sub-skill calls.` |
+>
+> — why: unguarded, this edge duplicates a review the parent workflow already runs and closes a `changes-review → domain-entities-review → why-review → changes-review` cycle.
+>
+> **BLOCKED until:** trigger evaluated (or `gate N/A` recorded) · paradigm + subdomain fit stated · all 6 triggered decision points answered or raised as findings · guard row checked before any delegation.
+
+<!-- /SYNC:domain-entity-change-gate -->
+
+<!-- SYNC:domain-entity-change-gate:reminder -->
+
+**MUST ATTENTION** when the change PLANS or REVIEWS a new/updated domain entity, value object, or aggregate, apply the **Domain Entity Change Gate** — `/domain-entities-review` owns the full A–P checklist; detect paradigm + subdomain fit FIRST, then answer all 6 decision points (classification · invariant ownership + failure signalling · aggregate boundary + concurrency · construction vs reconstitution · events · property-TC test obligation). Planning must NAME each decision; plan review treats an unanswered row as a FINDING; change review routes to the owner (Mode A read / Mode B delegate). SKIP under the 3-row duplication guard and record the deferral line. — why: one protocol shared by planner and reviewer is what stops a plan shipping an entity design that review then rejects.
+
+<!-- /SYNC:domain-entity-change-gate:reminder -->
+
 <!-- SYNC:estimation-framework:reminder -->
 
 - **MANDATORY MUST ATTENTION** estimation: bottom-up phase hours drive `man_days_traditional` (`Σh/6 × productivity_factor`); SP DERIVED. UI cost usually dominates — bump SP one bucket if NEW UI surface (page/complex form/dashboard). Frontmatter MUST include `story_points`, `complexity`, `man_days_traditional`, `man_days_ai`, `estimate_scope_included`, `estimate_scope_excluded`, `estimate_reasoning` (UI vs backend cost driver). Cap SP 3 for additive-on-existing-model+existing-UI unless test scope >1.5d. SP 13 SHOULD split, SP 21 MUST split.
@@ -758,6 +855,45 @@ After creating all phase files, run **recursive decomposition loop**:
 
 <!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
+<!-- SYNC:parallel-subagent-dispatch -->
+
+> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
+>
+> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
+> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
+> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
+> 4. **Spawn each wave in ONE message** — every `Agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
+> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
+> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
+> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
+>
+> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a skill or workflow explicitly fixes · gates awaiting user approval.
+>
+> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
+
+<!-- /SYNC:parallel-subagent-dispatch -->
+
+<!-- SYNC:parallel-subagent-dispatch:reminder -->
+
+- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
+- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
+
+<!-- /SYNC:parallel-subagent-dispatch:reminder -->
+
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** deliver a validated, implementation-ready plan — every phase startable immediately (exact file paths, zero open decisions, mapped TC IDs) — so coding runs without rework at minimum future change cost.
@@ -778,6 +914,7 @@ After creating all phase files, run **recursive decomposition loop**:
 - **Iterative Phase Quality:** score complexity first; decompose at score ≥6.
 - **Fix-Layer Accountability:** NEVER fix at the crash site; fix the invariant owner.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Parallel Sub-Agent Dispatch:** Tag tasks PAR/SEQ, group PAR into disjoint-write-set waves, spawn each wave in ONE message, barrier before advancing.
 
 **IMPORTANT MUST ATTENTION** PLANNING ONLY — NEVER implement or execute code; produce `plan.md` + per-phase files + `goal.md` Goal Contract, then hand off — why: this skill's contract is a plan, not a change.
 **IMPORTANT MUST ATTENTION** default mode HARD — opt out to fast mode ONLY when ALL trivial-task conditions hold — why: skipping rigor on a non-trivial task costs more rework than rigor saves.
@@ -791,23 +928,27 @@ After creating all phase files, run **recursive decomposition loop**:
 **MANDATORY IMPORTANT MUST ATTENTION** for `.claude` skills/hooks/workflows/sync work, plans MUST include generated-mirror sync action or explicit no-sync evidence — why: a silently stale mirror diverges from source.
 **MANDATORY IMPORTANT MUST ATTENTION** NEVER skip `/plan-review` after plan creation — run it standalone or as the workflow step; standalone `/plan` also appends `/changes-review` as a final task.
 **IMPORTANT MUST ATTENTION** search 3+ existing patterns and read target code BEFORE planning; cite `file:line`; run graph trace when `.code-graph/graph.db` exists — why: local conventions override generic framework defaults.
-**MANDATORY IMPORTANT MUST ATTENTION** run the full main pipeline in order — pre-check plan → bootstrap `goal.md` → parallel `researcher` subagents → codebase + project-reference analysis (scout if docs absent) → `planner` writes `plan.md` + `phase-XX` → granularity self-check → mandatory final tasks; NEVER skip a step because it seems obvious — why: the skipped step (Goal Contract, granularity, test specs) is the one AI silently drops.
-**MANDATORY IMPORTANT MUST ATTENTION** queue the final-task block on EVERY plan — Test Specs per phase → `/plan-validate` → `/plan-review` (3-round) → `/why-review` (standalone only) → re-estimate vs finalized phases (flag `SHOULD-RESCOPE` when delta >50%).
+**MANDATORY IMPORTANT MUST ATTENTION** run the full main pipeline in order — pre-check plan → bootstrap `goal.md` → ONE research wave (`researcher` + `scout` in one message) → barrier → codebase + project-reference analysis (scout if docs absent) → `planner` writes `plan.md` + `phase-XX` → parallelism pass (PAR/SEQ + write sets + `## Execution Waves`) → granularity self-check → mandatory final tasks; NEVER skip a step because it seems obvious — why: the skipped step (Goal Contract, granularity, test specs) is the one AI silently drops.
+**MANDATORY IMPORTANT MUST ATTENTION** dispatch the research threads as ONE wave in ONE message (declare `Parallel plan:` first, one report path per agent) and synthesize only after EVERY member returns — why: dripping researchers one per turn serializes the cheapest-to-parallelize half of planning.
+**MANDATORY IMPORTANT MUST ATTENTION** the emitted plan MUST carry parallelism metadata — every phase tagged `PAR`/`SEQ`, its write set declared, every `SEQ` naming the exact artifact it waits on, and `## Execution Waves` in `plan.md` — why: `/plan-execute` fans out only on what the plan declares, so an untagged plan silently forces sequential execution.
+**MANDATORY IMPORTANT MUST ATTENTION** queue the final-task block on EVERY plan — Test Specs per phase → `/plan-validate` → `/plan-review` (convergence loop, 3-round ceiling — a clean pass ends it at any round) → `/why-review` (standalone only) → re-estimate vs finalized phases (flag `SHOULD-RESCOPE` when delta >50%).
 **IMPORTANT MUST ATTENTION** `--mode={ci|cro}` only ADDS a domain reference load (`references/mode-ci.md` / `mode-cro.md`) + intake on top of the SAME engine, gate, and `planner` agent — default (no flag) runs the standard flow byte-for-byte; NEVER let a mode replace the engine or skip `/plan-review`.
 
 **Anti-Rationalization:**
 
-| Evasion                                | Rebuttal                                                                                                  |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| "Task too simple to plan"              | Default mode HARD. Opt out ONLY when ALL trivial conditions hold.                                         |
-| "I already know the codebase"          | Show `file:line` from 3+ patterns + graph trace. No proof = not read.                                     |
-| "Phase is clear enough"                | Run the 5-point granularity check: "Can I start coding RIGHT NOW?" — else sub-plan.                       |
-| "Plan looks good, skip review"         | NEVER skip `/plan-review` — fresh eyes catch author blind spots.                                          |
-| "Only existing libs, skip the gate"    | Prove it — grep manifests. Any new tech/lib → WebSearch + `AskUserQuestion` before approval.              |
-| "I'll just estimate SP directly"       | SP is DERIVED from bottom-up phase hours, never the driver. Σh/6 × productivity first.                    |
-| "It's a `.claude` change, no sync"     | State the mirror action or explicit no-sync evidence — stale mirrors fail the oracle.                     |
-| "`--mode=ci`, so skip the normal flow" | Mode only ADDS a reference payload — same engine, same `/plan-review`, same `planner` agent.              |
-| "Plan's done, skip the final tasks"    | Test Specs → `/plan-validate` → `/plan-review` → `/why-review` → re-estimate are MANDATORY, not optional. |
+| Evasion                                 | Rebuttal                                                                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| "Task too simple to plan"               | Default mode HARD. Opt out ONLY when ALL trivial conditions hold.                                                       |
+| "I already know the codebase"           | Show `file:line` from 3+ patterns + graph trace. No proof = not read.                                                   |
+| "Phase is clear enough"                 | Run the 5-point granularity check: "Can I start coding RIGHT NOW?" — else sub-plan.                                     |
+| "Plan looks good, skip review"          | NEVER skip `/plan-review` — fresh eyes catch author blind spots.                                                        |
+| "Only existing libs, skip the gate"     | Prove it — grep manifests. Any new tech/lib → WebSearch + `AskUserQuestion` before approval.                            |
+| "I'll just estimate SP directly"        | SP is DERIVED from bottom-up phase hours, never the driver. Σh/6 × productivity first.                                  |
+| "It's a `.claude` change, no sync"      | State the mirror action or explicit no-sync evidence — stale mirrors fail the oracle.                                   |
+| "`--mode=ci`, so skip the normal flow"  | Mode only ADDS a reference payload — same engine, same `/plan-review`, same `planner` agent.                            |
+| "Plan's done, skip the final tasks"     | Test Specs → `/plan-validate` → `/plan-review` → `/why-review` → re-estimate are MANDATORY, not optional.               |
+| "Phases feel sequential, skip the tags" | "Feels sequential" is not a dependency. Tag `PAR`/`SEQ`, declare write sets, and name the artifact each `SEQ` waits on. |
+| "The executor can work the order out"   | It can't — `/plan-execute` fans out only on declared write sets. No tags = sequential execution you caused.             |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break into small todo tasks and sub-tasks via TaskCreate.
 

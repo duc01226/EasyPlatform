@@ -2,9 +2,9 @@
 
 using System.Collections.Concurrent;
 using System.Reflection;
-using Easy.Platform.Application.BackgroundLock;
 using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.DependencyInjection;
+using Easy.Platform.Common.Execution;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -1395,12 +1395,32 @@ public static class DependencyInjectionExtension
         Func<int, TimeSpan> retryDelayProvider = null,
         Func<ILogger>? loggerFactory = null)
     {
-        var scope = serviceProvider.GetRequiredService<IPlatformRootServiceProvider>().CreateTrackedScope();
+        var rootServiceProvider = serviceProvider.GetRequiredService<IPlatformRootServiceProvider>();
+        var scope = rootServiceProvider.CreateTrackedScope();
+
+        // Same contract as the async overloads: snapshot the scheduling flow's ambient state HERE, on the
+        // synchronous caller thread, because this is the last point at which that state is provably alive.
+        var flowContextCarrier = rootServiceProvider.GetService<IPlatformDetachedExecutionFlowContextCarrier>();
+        var capturedFlowContext = flowContextCarrier?.CaptureFromSchedulingFlow();
 
         Util.TaskRunner.QueueActionInBackground(
             () =>
             {
-                using (scope) method(scope);
+                // Same contract as the async overloads: the scope is ROOT-derived, so this flow is detached
+                // from whatever scope scheduled it and must not read that scope's ambient state. Marked here
+                // too — every root-derived dispatch on this type marks, without exception, so a caller can
+                // never reinstate the race by picking the synchronous sibling.
+                PlatformDetachedExecutionFlow.MarkDetached();
+
+                using (scope)
+                {
+                    // Restored AFTER the mark and BEFORE the caller's work, so that work sees a complete context
+                    // on its very first touch. Marking without restoring would trade the recycled-state crash for
+                    // a silent loss of everything that state carried.
+                    flowContextCarrier?.RestoreIntoDetachedFlow(scope.ServiceProvider, capturedFlowContext);
+
+                    method(scope);
+                }
             },
             retryCount,
             retryDelayProvider,
@@ -1463,13 +1483,35 @@ public static class DependencyInjectionExtension
         // background task (fire-and-forget pattern).
         var scope = rootSp.CreateTrackedScope();
 
+        // Captured on the caller thread, alongside the scope and for the same reason: this is the last moment
+        // the scheduling flow's ambient state is provably alive. Capturing inside the spawned delegate would
+        // race the teardown the detach marker exists to survive, and would read through a flag that by then
+        // already denies the read.
+        var flowContextCarrier = rootSp.GetService<IPlatformDetachedExecutionFlowContextCarrier>();
+        var capturedFlowContext = flowContextCarrier?.CaptureFromSchedulingFlow();
+
         // DefaultPool keeps legacy callers branch-free: when background-lock services exist, they
         // get the shared Default bulkhead; in minimal/unit-test containers registry can be absent
         // and TaskRunner simply runs without admission throttling.
         Util.TaskRunner.QueueActionInBackground(
             async () =>
             {
-                await using (scope) await method(scope);
+                // Marked INSIDE the spawned delegate (never on the caller thread) so the AsyncLocal write
+                // lands in this task's copy-on-write execution context. The scope came from the ROOT
+                // provider, so this flow is detached from whatever scope scheduled it. Components that hold
+                // ambient scope-owned state consult that flag and resolve from dispatch-time values instead
+                // of racing the scheduler's teardown of it.
+                PlatformDetachedExecutionFlow.MarkDetached();
+
+                await using (scope)
+                {
+                    // "Resolve from dispatch-time values" is only true if someone actually carries them across.
+                    // This is that step, and it runs before the caller's work so the first touch of the context
+                    // already sees the originating request's identity rather than an empty one.
+                    flowContextCarrier?.RestoreIntoDetachedFlow(scope.ServiceProvider, capturedFlowContext);
+
+                    await method(scope);
+                }
             },
             registry?.DefaultPool,
             retryCount,
@@ -1501,12 +1543,26 @@ public static class DependencyInjectionExtension
         // parent serviceProvider cannot be disposed before scope creation under fire-and-forget.
         var scope = rootSp.CreateTrackedScope();
 
+        // See the non-pooled overload above: captured on the caller thread, while the scheduling flow's
+        // ambient state is still alive.
+        var flowContextCarrier = rootSp.GetService<IPlatformDetachedExecutionFlowContextCarrier>();
+        var capturedFlowContext = flowContextCarrier?.CaptureFromSchedulingFlow();
+
         // Named pools isolate unrelated domains from each other: saturation in inbox consumption
         // should not consume all slots used by outbox dispatch, cache writes, or default work.
         Util.TaskRunner.QueueActionInBackground(
             async () =>
             {
-                await using (scope) await method(scope);
+                // See the non-pooled overload above: marked inside the spawned delegate because the scope
+                // is root-derived and therefore detached from its scheduling caller's ambient state.
+                PlatformDetachedExecutionFlow.MarkDetached();
+
+                await using (scope)
+                {
+                    flowContextCarrier?.RestoreIntoDetachedFlow(scope.ServiceProvider, capturedFlowContext);
+
+                    await method(scope);
+                }
             },
             pool,
             retryCount,

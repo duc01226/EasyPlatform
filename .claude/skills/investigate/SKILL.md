@@ -97,6 +97,27 @@ See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7
 
 **If preceded by `/scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files.
 
+### Parallel Investigation Threads (Discovery → ONE wave → Graph Expand)
+
+Investigation is strictly READ-ONLY, so no two threads can ever share a write target — this is the single most parallelizable activity in the framework, and reading thread-by-thread is the default defect, not a safe choice. Once Step 1 names the surface, decompose the target into independent threads BEFORE reading anything deeply:
+
+| Decomposition axis | One thread per…                                    | Use when                                                                          |
+| ------------------ | -------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **Per-module**     | module / bounded context the target spans          | the feature crosses several modules                                               |
+| **Per-layer**      | backend · frontend · data/persistence              | a full-stack flow — each layer reads a disjoint file set                          |
+| **Per-question**   | one hypothesis, or one "how does X work?" question | Phase 0 classified `debug`, or the prompt carries several independent questions   |
+| **Per-service**    | each service that produces/consumes the flow       | cross-service / event-driven target (pairs with the Cross-Service Check protocol) |
+
+Dispatch rules specific to this skill:
+
+1. **Declare, then spawn in ONE message** — `Parallel plan: wave 1 = [thread A, thread B, …] · SEQ = [Graph Expand, Flow Mapping, Analysis, Synthesis] (each consumes the whole wave)`.
+2. **Route per thread** — file/symbol landscape threads → `scout` (`scout-external` under `--ext`); root-cause / hypothesis threads → `debugger`. Never a generic reviewer for either.
+3. **Own scope + own report path per thread** — each brief names its exact files/questions AND its own write target (`.ai/workspace/analysis/[feature]-{thread}.md`, or `plans/reports/…`); two threads NEVER write the same file, and each persists incrementally rather than returning a transcript.
+4. **Graph Expand stays SEQ on YOU** — run Step 2's `code_graph` commands yourself AFTER the barrier, on 2-3 key files the wave surfaced. It is the step that reconciles independent threads into one dependency network, and it is why the barrier cannot be skipped.
+5. **Synthesize from the returned reports, not from memory** — re-read each thread's analysis file, then write Steps 4-6 (Flow Mapping → Analysis → Synthesis) yourself.
+
+**The SEQ boundary — name it explicitly:** a thread whose STARTING POINT is another thread's finding is SEQ, not PAR. "Trace the consumers of the published event" cannot start until "which event is published" returns — put it in wave 2 and name the finding it waits on. Threads that merely share a topic (same feature, different layer) are still PAR.
+
 ## Investigation Techniques
 
 ### Discovery Search Patterns
@@ -606,6 +627,45 @@ Find working reference → compare implementations → identify differences → 
 
 <!-- /SYNC:nested-task-creation:reminder -->
 
+<!-- SYNC:parallel-subagent-dispatch -->
+
+> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
+>
+> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
+> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
+> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
+> 4. **Spawn each wave in ONE message** — every `Agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
+> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
+> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
+> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
+>
+> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a skill or workflow explicitly fixes · gates awaiting user approval.
+>
+> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
+
+<!-- /SYNC:parallel-subagent-dispatch -->
+
+<!-- SYNC:parallel-subagent-dispatch:reminder -->
+
+- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
+- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
+
+<!-- /SYNC:parallel-subagent-dispatch:reminder -->
+
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Produce evidence-backed understanding of how existing code works — strictly READ-ONLY, every claim traced to `file:line` or explicitly marked "inferred" — so the next decision or change rests on verified system flow, never assumption.
@@ -626,6 +686,7 @@ Find working reference → compare implementations → identify differences → 
 - **Fix-Layer Accountability:** trace full data flow, fix at owning layer, not crash site.
 - **Source/Test Drift Check:** when source behavior changes, inspect affected tests for intended-behavior alignment.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Parallel Sub-Agent Dispatch:** Tag tasks PAR/SEQ, group PAR into disjoint-write-set waves, spawn each wave in ONE message, barrier before advancing.
 
 **IMPORTANT MUST ATTENTION** stay strictly READ-ONLY — NEVER edit code, plans, or specs during investigation; deliver findings only — why: investigation that mutates state stops being investigation and corrupts the baseline the next step trusts.
 **IMPORTANT MUST ATTENTION** cite `file:line` for every claim; mark unverified statements "inferred" — confidence >80% to act, <60% DO NOT recommend — why: an unmarked guess reads as fact and propagates into the next decision.

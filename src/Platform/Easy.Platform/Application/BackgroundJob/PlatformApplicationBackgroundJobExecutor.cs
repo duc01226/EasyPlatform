@@ -97,7 +97,7 @@ public abstract class PlatformApplicationBackgroundJobExecutor<TParam> : Platfor
             }
 
             if (ApplicationSettingContext.IsDebugInformationMode)
-                Logger.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(InternalExecuteAsync));
+                Logger.LogInformation("{Type} {Method} FINISHED", GetType().FullName, nameof(InternalExecuteAsync));
         }
     }
 

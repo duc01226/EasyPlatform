@@ -17,8 +17,11 @@
     <ProjectReference Include="..\Easy.Platform.AzureFileStorage\Easy.Platform.AzureFileStorage.csproj" />
     <ProjectReference Include="..\Easy.Platform.Benchmark\Easy.Platform.Benchmark.csproj" />
     <ProjectReference Include="..\Easy.Platform.EfCore\Easy.Platform.EfCore.csproj" />
+    <ProjectReference Include="..\Easy.Platform.FireBasePushNotification\Easy.Platform.FirebasePushNotification.csproj" />
+    <ProjectReference Include="..\Easy.Platform.HangfireBackgroundJob\Easy.Platform.HangfireBackgroundJob.csproj" />
     <ProjectReference Include="..\Easy.Platform.MongoDB\Easy.Platform.MongoDB.csproj" />
     <ProjectReference Include="..\Easy.Platform.RabbitMQ\Easy.Platform.RabbitMQ.csproj" />
+    <ProjectReference Include="..\Easy.Platform.RedisCache\Easy.Platform.RedisCache.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +31,12 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="[7.0.0]" />
+    <!--
+      Test-only EF Core provider. HasOwnedCollectionWithStoreGeneratedKey is pure MODEL inspection, but reading
+      DbContext.Model still requires SOME provider to be configured. InMemory is the cheapest one that builds a real
+      EF model (owned types, shadow keys and all) without a database, which keeps this a true unit test.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="Roslyn.Analyzers" Version="1.0.3.4" />

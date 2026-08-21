@@ -245,7 +245,7 @@ module.exports = {
                 // still passes, but DROPPING a rule from any family skill fails loudly.
                 const rules = {
                     'who-is-at-fault': 'who is at fault — the source code or the test code',
-                    'root-cause-first': 'Root-cause first',
+                    'root-cause-first': 'trace end-to-start before editing',
                     'triangulate-spec-and-source': 'Triangulate against the spec AND the source',
                     'classify-source-wrong': 'SOURCE-WRONG',
                     'classify-test-wrong': 'TEST-WRONG',

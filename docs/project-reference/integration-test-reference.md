@@ -1,4 +1,5 @@
 <!-- Last scanned: 2026-06-12 -->
+<!-- Last verified: 2026-08-21 (docs-update, impact-scoped) -->
 
 # Integration Test Reference
 
@@ -18,15 +19,25 @@
 
 **Infrastructure MUST be running:**
 
-| Service    | Endpoint                             | Required                    |
-| ---------- | ------------------------------------ | --------------------------- |
-| MongoDB    | `localhost:27017` (root/rootPassXXX) | Yes (default)               |
-| RabbitMQ   | `localhost:5672` (guest/guest)       | Yes                         |
-| Redis      | `localhost:6379`                     | Yes                         |
-| PostgreSQL | `localhost:54320`                    | Only for PostgreSQL variant |
-| SQL Server | `localhost:14330`                    | Only for SQL Server variant |
+| Service    | Endpoint          | Required                                                             |
+| ---------- | ----------------- | -------------------------------------------------------------------- |
+| MongoDB    | `localhost:27017` | Yes (default; local Compose credentials configured in test settings) |
+| RabbitMQ   | `localhost:5672`  | Yes (local Compose credentials configured in test settings)          |
+| Redis      | `localhost:6379`  | Yes                                                                  |
+| PostgreSQL | `localhost:54320` | Only for PostgreSQL variant                                          |
+| SQL Server | `localhost:14330` | Only for SQL Server variant                                          |
 
 Start infrastructure: `src/start-dev-platform-example-app.infrastructure.cmd`
+
+Before any test run, verify the intended Compose project identity—not only port connectivity—with the configured readiness check (`docs/project-config.json:370-378`):
+
+```bash
+docker ps --filter "label=com.docker.compose.project=easyplatform-example" --format "{{.Names}} => {{.Status}}"
+```
+
+Empty output means the required stack is not started. The suite hosts the API in-process through `WebApplicationFactory<Program>` with host-port binding disabled (`src/Backend/PlatformExampleApp.IntegrationTests/WebAppFactory/TextSnippetWebApplicationFactory.cs:40-55`); `text-snippet-api` is not an integration-test prerequisite and a separately running API can conflict.
+
+Verification gate: run the integration suite twice consecutively with no database reset; both runs must pass. Test data accumulates, so use unique data rather than resetting shared databases.
 
 ## Test Base Classes
 
@@ -186,7 +197,7 @@ IntegrationTestHelper.UniqueEmail("test")     // "test_a1b2c3d4@test.local"
 
 ### Database State Assertions
 
-ALL assertions use `WaitUntilAsync` polling (default 5s timeout, 100ms interval) for eventual consistency. Fresh DI scope per poll iteration prevents stale reads.
+ALL assertions use `WaitUntilAsync` polling (default 120s timeout, 100ms interval) for eventual consistency (`src/Platform/Easy.Platform.AutomationTest/IntegrationTests/PlatformIntegrationTestHelper.cs:21,47-67`). Fresh DI scope per poll iteration prevents stale reads.
 
 ```csharp
 // Entity exists (src/Platform/.../PlatformServiceIntegrationTestBase.cs:445)

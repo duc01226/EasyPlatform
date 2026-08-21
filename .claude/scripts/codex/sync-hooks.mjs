@@ -21,12 +21,40 @@ const supportedEvents = new Set([
   "Stop",
 ]);
 
+const nodeHookLauncher = [
+  "const fs = require('node:fs');",
+  "const path = require('node:path');",
+  "const hookPath = process.argv[1];",
+  "let root = process.cwd();",
+  "for (let candidate = root; ; candidate = path.dirname(candidate)) {",
+  "if (fs.existsSync(path.join(candidate, '.claude'))) { root = candidate; break; }",
+  "if (path.dirname(candidate) === candidate) break;",
+  "}",
+  "process.chdir(root);",
+  "process.env.CLAUDE_PROJECT_DIR = root;",
+  "require(path.join(root, hookPath));",
+].join(" ");
+
 function normalizeCommand(command) {
   if (typeof command !== "string" || command.trim().length === 0) {
     return null;
   }
 
-  // Claude uses $CLAUDE_PROJECT_DIR; Codex doesn't provide that variable.
+  // Claude uses $CLAUDE_PROJECT_DIR; Codex commands run from the session cwd,
+  // which may be a repository subdirectory. Launch Node hooks through a
+  // cross-platform resolver: nearest .claude parent in either a worktree or a
+  // bare framework copy. This avoids an embedded checkout path and a Git
+  // subprocess on every hook invocation.
+  const nodeProjectHook = command.match(
+    /^\s*node\s+"?\$(?:\{CLAUDE_PROJECT_DIR\}|CLAUDE_PROJECT_DIR)"?((?:[/\\][^\s"']+)+)\s*$/
+  );
+  if (nodeProjectHook) {
+    const hookPath = nodeProjectHook[1].replace(/^[\\/]+/, "").replaceAll("\\", "/");
+    return `node -e "${nodeHookLauncher}" -- ${JSON.stringify(hookPath)}`;
+  }
+
+  // Preserve the previous cwd-relative behavior for non-Node commands whose
+  // project-root variable cannot be safely wrapped without changing semantics.
   let normalized = command
     .replaceAll('"$CLAUDE_PROJECT_DIR"', ".")
     .replaceAll('"${CLAUDE_PROJECT_DIR}"', ".")
@@ -62,7 +90,7 @@ async function main() {
     source: path.relative(rootDir, claudeSettingsPath).replaceAll("\\", "/"),
     target: path.relative(rootDir, codexHooksPath).replaceAll("\\", "/"),
     notes: [
-      "Codex hooks are currently disabled on Windows runtimes.",
+      "Generated Node hook commands resolve from the nearest .claude parent, so the tracked mirror works in worktrees, session subdirectories, and bare framework copies.",
       "Tool matcher capabilities may vary by Codex runtime; source matchers are preserved when possible.",
       "UserPromptSubmit and Stop now preserve source matcher filters when present.",
       "Claude SessionStart hooks are intentionally omitted; Codex startup context comes from AGENTS.md and generated static context files.",

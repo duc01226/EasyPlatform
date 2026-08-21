@@ -19,18 +19,18 @@ description: '[DDD Quality] Use when you need to review domain entities and valu
 
 **Summary:** read-this-if-nothing-else digest — the skill's main steps in order:
 
-- **Phase 0 (gate):** discover the project's real entity/VO base classes, validation API, domain exception type + blast radius FIRST — discovered conventions override every generic DDD rule. — why: wrong base classes = wrong checklist, every downstream finding is noise.
+- **Phase 0 (gate):** discover the project's real entity/VO base classes, validation API, domain exception type, failure-signalling convention, concurrency mechanism + blast radius FIRST, then **0.4 detect the modelling paradigm** (OO-mutable / type-driven-immutable / event-sourced) per aggregate — discovered conventions override every generic DDD rule. — why: wrong base classes = wrong checklist, and setter rules applied to an immutable or event-sourced model manufacture false findings.
 - **Phase 1:** create the report, run the mandatory high-signal grep patterns (hidden `validate()` overrides, leaked persistence/business logic, missing identity markers) BEFORE reading individual files, write every grep result immediately, categorize files (root/entity/VO/unknown).
-- **Phase 2:** per-file checklist A–L (entity-vs-VO classification, base-class compliance, VO immutability/structural equality, anemic-model detection, domain invariants, invariant→property-TC Dual-Feedback, aggregate-by-ID, navigation serialization safety, domain events, query expressions, ubiquitous language, OOP) — append findings per file, NEVER batch.
-- **Phase 3 → 4:** holistic cross-entity synthesis in the current pass, then final report with health score (`100 − (CRIT×25 + HIGH×10 + MED×3 + LOW×1)`); 10+ entity files → switch to parallel `code-reviewer` sub-agents automatically.
+- **Phase 2:** per-file checklist **A–P** — A–L (entity-vs-VO classification, base-class compliance, VO immutability/structural equality, anemic-model detection, domain invariants, invariant→property-TC Dual-Feedback, aggregate-by-ID, navigation serialization safety, domain events, query expressions, ubiquitous language, OOP) plus **M** invariant-vs-validation ownership + failure signalling, **N** construction-vs-reconstitution, **O** event dispatch timing/outbox/domain-vs-integration contract, **P** aggregate concurrency + transaction boundary — append findings per file, NEVER batch.
+- **Phase 3 → 4:** holistic cross-entity synthesis in the current pass, including **3.1 model-level dimensions** (bounded-context sharing; subdomain fit — judge whether a rich model is warranted BEFORE reporting anemia), then final report with health score (`100 − (CRIT×25 + HIGH×10 + MED×3 + LOW×1)`); 10+ entity files → switch to parallel `code-reviewer` sub-agents automatically.
 - **Phase 5 (validation-first loop):** validate via `/why-review` gate before any fix, fix only validated findings, then restart the FULL review; a clean pass ENDS the review. Every finding needs `file:line` at confidence >80%. Close with `AskUserQuestion` next-steps.
 
 **Workflow:**
 
-1. **Phase 0** — Discover project stack + entity/VO base classes + validation API + domain exception type + blast radius **(MANDATORY FIRST)**
+1. **Phase 0** — Discover project stack + entity/VO base classes + validation API + domain exception type + failure-signalling convention + concurrency mechanism + blast radius, then **0.4 detect modelling paradigm per aggregate** **(MANDATORY FIRST)**
 2. **Phase 1** — Create report; run mandatory grep patterns BEFORE per-file reads; write results immediately; categorize files
-3. **Phase 2** — Entity-by-entity DDD review (per-file checklist A–L + project-specific rules); append per file, never batch
-4. **Phase 3** — Holistic cross-entity synthesis in the current pass; fresh-context sub-agent only after validated fixes or explicit high-risk trigger
+3. **Phase 2** — Entity-by-entity DDD review (per-file checklist **A–P** + project-specific rules); append per file, never batch
+4. **Phase 3** — Holistic cross-entity synthesis in the current pass, incl. **3.1 model-level dimensions** (bounded-context sharing, subdomain fit); fresh-context sub-agent only after validated fixes or explicit high-risk trigger
 5. **Phase 4** — Final report: critical issues, health score, refactoring priority, recommendations
 6. **Phase 5** — Why-Review self-validation gate (MANDATORY when findings exist) → validate → fix validated → restart full review until clean → `AskUserQuestion` next-steps
 7. **Scale rule** — 10+ entity files → parallel `code-reviewer` sub-agents, then consolidate
@@ -42,6 +42,8 @@ description: '[DDD Quality] Use when you need to review domain entities and valu
 - MUST ATTENTION validate findings via the Phase 5 `/why-review` gate before any fix, then restart the full review after validated fixes — a clean pass ENDS the review — why: every fix invalidates the prior verdict and AI reports inherit confirmation bias.
 - NEVER report a finding without `file:line` evidence at confidence >80% — why: unproven findings inflate severity downstream.
 - MUST ATTENTION append findings per file and persist to `plans/reports/` incrementally; 10+ entity files → parallel sub-agents — why: batched writes vanish on context/budget cutoff.
+- MUST ATTENTION detect the modelling paradigm (0.4) before applying any setter/mutability rule, and judge subdomain fit (3.1) before reporting anemic model — NEVER flag a paradigm-appropriate or appropriately-simple design as a violation — why: uniform tactical DDD over CRUD is itself an anti-pattern, and rules written for mutable OO are meaningless against an immutable or event-sourced model.
+- MUST ATTENTION treat invariant and validation as different questions with different owners (entity vs boundary), and keep failure signalling consistent with the Phase 0 convention — why: collapsing them buries UX checks in entities and parks business rules in bypassable validators.
 
 **Severity Classification:**
 
@@ -51,6 +53,16 @@ description: '[DDD Quality] Use when you need to review domain entities and valu
 | HIGH     | Must fix    | Incorrect behavior, invariant gap, architectural violation |
 | MEDIUM   | Should fix  | Design debt, maintainability, likely future bug            |
 | LOW      | Nice to fix | Convention, documentation, minor clarity                   |
+
+---
+
+## Canonical Owner — Domain Entity Change Gate
+
+> This skill is the **canonical owner** of `SYNC:domain-entity-change-gate`. `/plan`, `/plan-review`, and `/changes-review` inline that gate and route here for the full checklist, so a design planned under the gate is reviewed under the same rules. The gate's 6 decision points map to this skill as: classification → **A** · invariant ownership + failure signalling → **E/M** · aggregate boundary + concurrency → **F/P** · construction vs reconstitution → **N** · events → **H/O** · test obligation → **E2**; paradigm detection is **0.4** and subdomain fit is **3.1**.
+>
+> Do NOT apply the gate as a separate pass when running this skill — Phase 2 A–P **is** the gate, in full. Record `Gate is this skill's own body — A–P checklist owns it.` — why: a second pass over the same rules duplicates findings and inflates severity counts.
+>
+> Changing an entity rule here → update `.claude/skills/shared/sync-inline-versions.md` FIRST if the rule belongs to the gate's 6 decision points, then propagate to the three consumers. NEVER edit an inlined copy directly.
 
 ---
 
@@ -99,14 +111,17 @@ rg "{configured-entity-markers}" {configured-source-roots} | head -10
 
 **Record in report (required before Phase 2):**
 
-| Convention              | Discovered Value                     |
-| ----------------------- | ------------------------------------ |
-| Entity base class(es)   | `{class names with file:line}`       |
-| VO base class(es)       | `{class names with file:line}`       |
-| Validation API          | `{how validation done}`              |
-| Domain exception type   | `{exception class used}`             |
-| Navigation/FK pattern   | `{annotation + FK property pattern}` |
-| Persistence annotations | `{ORM annotations}`                  |
+| Convention                    | Discovered Value                                               |
+| ----------------------------- | -------------------------------------------------------------- |
+| Entity base class(es)         | `{class names with file:line}`                                 |
+| VO base class(es)             | `{class names with file:line}`                                 |
+| Validation API                | `{how validation done}`                                        |
+| Domain exception type         | `{exception class used}`                                       |
+| Navigation/FK pattern         | `{annotation + FK property pattern}`                           |
+| Persistence annotations       | `{ORM annotations}`                                            |
+| Failure-signalling convention | `{throws domain exception \| returns Result/Either \| mixed}`  |
+| Concurrency mechanism         | `{version/rowversion/etag field on roots, or none}`            |
+| Modelling paradigm            | `{OO-mutable \| type-driven/immutable \| event-sourced}` (0.4) |
 
 If project reference docs exist → read them and extract: service-specific base class requirements, documented anti-patterns, naming conventions, cross-service rules.
 
@@ -122,6 +137,22 @@ python .claude/scripts/code_graph trace <entity-file> --direction both --json --
 ```
 
 Record: entity file count, downstream consumers, risk level. Use to prioritize review order (highest-impact first).
+
+### 0.4 Modelling Paradigm Detection (MUST ATTENTION — gates which per-file rules apply)
+
+> Sections C/D/N assume a mutable OO entity. Applying them to an immutable or event-sourced model manufactures false findings — detect the paradigm BEFORE the checklist. — why: "no public setters" is a finding in OO code and meaningless in a model that has no setters by construction.
+
+Detect from the domain source, NEVER assume:
+
+| Paradigm                    | Detection signal                                                                                                                | Checklist adaptation                                                                                                                                                                                                                               |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **OO-mutable** (default)    | Classes with private setters + state-changing methods                                                                           | Full A–P checklist as written                                                                                                                                                                                                                      |
+| **Type-driven / immutable** | Sealed hierarchies, discriminated unions, records-only, `With*()`/copy-returning methods, smart constructors returning `Result` | Section C immutability applies to entities too; Section D reads "no state-mutating method returns void"; illegal-state-representability replaces runtime guards — flag a status enum + nullable per-status fields as the union that was never made |
+| **Event-sourced**           | `apply`/`evolve`/`when` per event, `From(events)` / stream-fold reconstitution, no persisted state                              | Section C setter rules N/A; Section N reconstitution = the fold; Section O owns event-schema evolution; a CRUD-shaped event (`{Entity}Updated` with full payload) is a HIGH finding — it carries no business meaning                               |
+
+- MUST ATTENTION record the detected paradigm in the report before Phase 2 and state which sections were adapted or marked N/A — why: an unrecorded adaptation reads as a skipped check.
+- NEVER flag a paradigm-appropriate pattern as a violation of a rule written for another paradigm — verify against 0.4 first.
+- Mixed paradigms per aggregate are legitimate (event-source one aggregate, not the system) — detect per aggregate, NEVER once per repo.
 
 ---
 
@@ -318,11 +349,93 @@ For EACH entity/VO file: read file → append findings to report IMMEDIATELY. NE
 - Capability traits added via focused interfaces — NEVER monolithic interface bundle (ISP).
 - Entity subclasses MUST be substitutable for base — `base.method()` NEVER skipped in override (LSP).
 
+#### M. Invariant vs Validation Ownership + Failure Signalling (MUST ATTENTION)
+
+> Two different questions wearing one word. **Invariant** = "can this state legally exist?" — owned by the entity, failure is a bug. **Validation** = "is this input acceptable right now?" — owned by the application boundary, failure is a user error. Collapsing them produces both classic defects at once: form validation buried in entities, and business rules parked in a bypassable `Validator`.
+
+**Think:** for each rule the entity enforces, ask who is allowed to violate it. A user typo → boundary validation. A code path reaching an impossible state → entity invariant.
+
+- flag input-shape checks inside the entity (required-field, max-length, format-for-UX, localized messages) → MEDIUM, belongs at the boundary — why: the entity now changes when the form changes.
+- flag a business rule living ONLY in a `*Validator` / `*Rules` / handler guard while the entity permits the state → HIGH invariant gap — why: every other entry point reaches invalid state.
+- NEVER accept a database constraint or trigger as the invariant's enforcement — it is a backstop; the model must state the rule — why: an opaque SQL error is not a domain contract and cannot be unit-tested.
+- MUST ATTENTION verify failure signalling matches the convention discovered in Phase 0 — mixed exception/`Result` for the SAME class of failure is a HIGH finding — why: callers cannot know which to handle, so one path goes unhandled.
+- Expected business outcomes (insufficient funds, slot taken) returning `Result`, unreachable-state guards throwing → correct split; flag the inverse (throwing for expected outcomes in a hot path, or `Result` for a "cannot happen") as MEDIUM.
+- flag mutations returning bare `bool` → MEDIUM: loses WHY and is trivially ignored.
+- flag silent clamping of bad input (`if (qty < 0) qty = 0`) → HIGH — why: hides a caller bug and persists wrong data with no signal.
+
+**Detection signal:** business rule text appearing in BOTH a validator/handler and the entity, or appearing ONLY outside the entity.
+
+#### N. Construction vs Reconstitution (MUST ATTENTION)
+
+> Creating a new entity runs business rules and raises events. Loading an existing one from storage MUST do neither. One constructor serving both makes creation rules unenforceable without breaking loading.
+
+**Think:** trace both paths separately — `new` from a command, and materialization by the ORM/stream fold. Ask what each is allowed to run.
+
+- MUST ATTENTION verify a distinct reconstitution path exists (private/protected ctor, ORM materialization hook, or `From(events)` fold) separate from the creation factory — why: without it, creation invariants must be weakened until loading passes.
+- CRITICAL if the load path raises domain events — loading N entities emits N phantom events — why: downstream handlers fire for things that did not happen.
+- flag creation rules re-run on load (clock checks, uniqueness calls, `startsOn >= today`) → HIGH: historical rows fail to load once the rule tightens.
+- MUST ATTENTION verify required data sits in the constructor/factory and optional data in methods — an entity constructible without a value it cannot exist without is a HIGH invariant gap.
+- flag public parameterless constructor + public setters as the creation path → CRITICAL anemic entry point (paradigm-adjusted per 0.4; framework-required non-public ctors are fine).
+- flag 5+ positional constructor params → MEDIUM: group into VOs FIRST, consider a builder only after.
+- NEVER flag a framework-mandated non-public parameterless constructor as a violation — verify the discovered persistence convention first.
+
+**Detection signal:** one public constructor referenced by both the command handler and the ORM/mapping configuration.
+
+#### O. Event Dispatch Timing + Contract Boundary (MUST ATTENTION)
+
+> Section H owns event **raising**. This owns what happens **after** — when they dispatch, who may consume them, and how they evolve. Wrong timing silently couples an unrelated handler's failure to the core write.
+
+**Think:** follow one raised event to its consumer and ask what happens if the consumer throws, if the transaction rolls back, and if the event is delivered twice.
+
+- CRITICAL if events dispatch synchronously INSIDE the write transaction — a handler failure rolls back the business operation — why: an unrelated feature can now break the core write.
+- CRITICAL if events publish to a broker BEFORE the transaction commits — you announced a fact that may never have happened; require the transactional outbox (events persisted in the SAME transaction, relayed after commit).
+- MUST ATTENTION verify the event buffer is cleared after dispatch — an uncleared buffer republishes on the next save (MEDIUM–HIGH by blast radius).
+- MUST ATTENTION verify internal domain events are distinct from published integration events — flag an internal event placed on the bus as HIGH — why: consumers become coupled to your model's internal shape, permanently, and it can no longer be refactored.
+- flag fat events carrying the whole aggregate → MEDIUM: violates least privilege and blocks schema evolution. Events carry IDs + the minimal meaningful payload.
+- flag events named as commands (`SendEmail`, `UpdateStock`) → MEDIUM: an event states what happened; command-naming re-couples producer to consumer.
+- flag handlers with no idempotency guard where delivery is at-least-once → HIGH.
+- Event-sourced projects (0.4): MUST ATTENTION verify a versioning/upcasting strategy exists — why: a past event can never be changed, only upcast, and the first schema change without a plan has no rollback.
+
+**Detection signal:** dispatch/publish call inside the same transaction scope as the repository save, or an integration-event type imported from the domain assembly.
+
+#### P. Aggregate Concurrency + Transaction Boundary (MUST ATTENTION)
+
+> Section F owns aggregate _shape_. This owns what makes "one aggregate per transaction" actually safe under concurrent load.
+
+**Think:** two users act on the same aggregate at the same instant — what stops the second write from silently discarding the first?
+
+- MUST ATTENTION verify aggregate roots carry an optimistic-concurrency token (version/rowversion/etag) when the discovered persistence layer supports one — absence is HIGH on any contended or money/data-integrity path — why: last-write-wins silently discards a committed decision.
+- NEVER accept a concurrency token on a CHILD entity as the aggregate's token — the version belongs to the ROOT, because a change anywhere inside the aggregate is a change to the aggregate.
+- flag a single transaction mutating 2+ aggregate roots → HIGH: lock-ordering and deadlock risk, and it blocks later service extraction. Route the second change through a domain event.
+- flag an aggregate whose parts are routinely written by different users concurrently → MEDIUM sizing finding: the boundary is too big and produces concurrency failures on unrelated work.
+- MUST ATTENTION check invariants claimed to span aggregates (uniqueness across all instances, "max N active per tenant") — these cannot live inside one aggregate; verify the owning mechanism (DB constraint + domain service, or a reservation pattern) exists and is stated — why: a set-based invariant enforced by an in-memory check races under concurrency and passes every single-threaded test.
+
+**Detection signal:** repository save of two roots inside one unit-of-work scope, or a root type with no version/timestamp concurrency member.
+
 ---
 
 ## Phase 3: Holistic Synthesis + Fresh-Context Gate
 
 After all Phase 2 files are reviewed, synthesize cross-entity DDD concerns in the current report. Do not spawn a fresh sub-agent only because findings exist. Findings must go through the why-review validation gate before any fix.
+
+### 3.1 Model-Level Dimensions (MUST ATTENTION — judged over the whole model, NEVER per file)
+
+Two concerns are invisible file-by-file and only appear when the model is viewed whole. Run one focused pass each.
+
+**Dimension 1 — Bounded-context sharing.** **Think:** does one entity class serve two different businesses?
+
+- MUST ATTENTION flag a single entity class consumed by two contexts with divergent rules (a `Customer` used by Sales, Support, AND Billing) → HIGH — why: the class accretes every context's fields and rules, becomes the god entity nobody can change, and no context owns it.
+- The same word meaning different things per context is CORRECT, NEVER a duplication to eliminate — flag an attempt to unify them as a MEDIUM finding against the unifier.
+- MUST ATTENTION verify a translation boundary exists where contexts meet (anti-corruption layer, mapper, published contract) — direct cross-context entity reuse is HIGH.
+- flag domain concepts leaking into a shared/generic/infrastructure layer (tenant/customer/product IDs, business rules in a "reusable" base) → HIGH — why: a layer coupled to one consumer's domain is no longer reusable.
+
+**Dimension 2 — Subdomain fit.** **Think:** does this code deserve a rich domain model at all?
+
+- MUST ATTENTION judge fit BEFORE reporting anemic-model findings: a rich entity is correct in a **core** subdomain (complex, differentiating, changes often); Active Record or Transaction Script is CORRECT in supporting/generic subdomains and in pure CRUD.
+- NEVER report "anemic model" against code whose subdomain has no invariants beyond required-field — that is CRUD, and the finding is noise — why: uniform tactical DDD over CRUD is itself an anti-pattern, adding ceremony and indirection with no invariant to protect.
+- flag the inverse too: a **core** subdomain implemented as Transaction Script with business rules scattered across handlers → HIGH, this is where the rich model was owed.
+- flag generic subdomains modelled in-house (auth, billing, email, scheduling) → MEDIUM: buy or adopt, do not model.
+- MUST ATTENTION state the subdomain judgment and its evidence in the report — an anemic-model finding without it is unproven — why: "anemic" and "appropriately simple" look identical in a diff.
 
 Spawn a fresh `code-reviewer` sub-agent only when one of these conditions is true:
 
@@ -345,6 +458,10 @@ Review domain entity and value object files holistically for DDD design quality:
 - Navigation property hygiene across entire domain layer
 - Ubiquitous language consistency across all entities
 - Missed cross-entity interactions
+- Bounded-context sharing: one entity class serving two contexts with divergent rules?
+- Subdomain fit: does this model deserve rich entities, or is Active Record / Transaction Script correct here?
+- Concurrency: do aggregate roots carry an optimistic-concurrency token? Any transaction mutating 2+ roots?
+- Set-based invariants (uniqueness across all instances) — enforced by a real mechanism, or by a racy in-memory check?
 
 ## Review Mode
 Fresh full review after a validated fix cycle or explicit high-risk trigger. ZERO memory of prior rounds. Re-read all target files from scratch via own tool calls.
@@ -375,7 +492,14 @@ Check every entity:
 2. Invariants enforced at entity level (lowest layer) — NEVER application layer only.
 3. Aggregate: only root has repository; cross-aggregate = ID only; child mutations = domain method.
 4. Domain events raised in entity — NEVER inline side effects in entity methods.
-5. Anemic model: entity has no domain methods + handlers contain all logic → CRITICAL violation.
+5. Anemic model: entity has no domain methods + handlers contain all logic → CRITICAL violation — BUT judge subdomain fit first: in a CRUD/supporting subdomain with no invariants, simple is CORRECT and "anemic" is a false finding.
+6. Invariant vs validation: entity owns "can this state exist?"; the boundary owns "is this input acceptable?". A business rule living ONLY in a validator/handler = HIGH invariant gap. Input-shape/UX checks inside the entity = MEDIUM, wrong layer.
+7. Failure signalling consistent with the project convention — mixed exception/`Result` for the same failure class = HIGH. NEVER raw language exceptions for domain violations.
+8. Creation vs reconstitution are separate paths. Load path raising domain events = CRITICAL (N loaded entities emit N phantom events). Creation rules re-run on load = HIGH.
+9. Event dispatch: synchronous in-transaction dispatch = CRITICAL (handler failure rolls back the business op); publish-before-commit = CRITICAL (announced a fact that may never have happened) — require the outbox. Internal domain events published as integration contracts = HIGH.
+10. Concurrency: aggregate roots carry an optimistic-concurrency token (version on the ROOT, never on a child); a transaction mutating 2+ roots = HIGH.
+11. Bounded contexts: one entity class shared across contexts with divergent rules = HIGH. The same word meaning different things per context is CORRECT — NEVER unify it.
+12. Modelling paradigm: detect OO-mutable vs immutable/type-driven vs event-sourced BEFORE applying setter/mutability rules — NEVER flag a paradigm-appropriate pattern against a rule written for another paradigm.
 
 ### Fix-Layer Accountability
 NEVER fix at crash site. Validation fails because handler skips entity validate()? → fix entity, not handler. Aggregate boundary violated? → fix entity relationship, not handler defensiveness.
@@ -410,7 +534,7 @@ After sub-agent returns:
 1. Read the sub-agent report
 2. Integrate as `## Re-Review {N} Findings` in main report — NEVER filter or override
 3. If findings remain: validate the new finding set before any additional fixes
-4. Repeat only after another validated-finding fix cycle; if the same blocker repeats across 3 full invocations with no progress, escalate via `AskUserQuestion`
+4. Repeat only after another validated-finding fix cycle; if the same blocker repeats across 2 full invocations with no progress, escalate via `AskUserQuestion`
 5. Final verdict MUST incorporate every review pass that actually ran
 
 ---
@@ -495,6 +619,26 @@ Graph risk: {HIGH | MEDIUM | LOW | N/A} | Downstream consumers: {N}
 | `ensureCan*()` guard   | Operation preconditions (throw domain exception) |
 | Before-delete hook     | Pre-delete constraints                           |
 | Application layer ONLY | ← NEVER — always enforce in entity too           |
+
+### Invariant vs Validation Decision Table
+
+|               | **Invariant**                                  | **Validation**                        |
+| ------------- | ---------------------------------------------- | ------------------------------------- |
+| Question      | "Can this state legally exist?"                | "Is this input acceptable right now?" |
+| Owner         | entity / aggregate                             | application boundary                  |
+| Failure means | a bug, a broken model                          | a user error                          |
+| Signalled as  | domain exception (or `Result` per convention)  | validation result / problem details   |
+| Example       | order total always equals the sum of its lines | the email field is required           |
+
+### Paradigm Adaptation Table (from Phase 0.4)
+
+| Rule as written                    | OO-mutable    | Type-driven / immutable              | Event-sourced            |
+| ---------------------------------- | ------------- | ------------------------------------ | ------------------------ |
+| "No public setters" (D)            | applies       | N/A — nothing mutates                | N/A — no state to set    |
+| "VO immutable" (C)                 | applies       | applies to entities too              | applies                  |
+| "Reconstitution path separate" (N) | ORM ctor/hook | smart constructor                    | the event fold           |
+| "Status enum + guards"             | correct       | **anti-pattern** — should be a union | replaced by event stream |
+| "Events raised in entity" (H/O)    | applies       | applies                              | events ARE the state     |
 
 ### Aggregate Boundary Rules
 
@@ -740,11 +884,29 @@ If no domain entity files match in changes mode → announce "No domain entity c
 
 <!-- SYNC:double-round-trip-review -->
 
-> **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass finds no issues. **A clean review ENDS the loop — no further rounds required.**
+> **Validated-Finding Fix + Full Re-Review Loop** — Re-review is triggered by a validated finding fix cycle, not by a round number. Review purpose: `review → validate findings → fix validated findings → full re-review` until a complete review pass clears the round's exit bar (see **Severity floor** below). **A clean review ENDS the loop — no further rounds required.**
 >
-> _aka **Self-Review Convergence Loop**._ The name is historical — there is **NO 2-round cap**; "double-round-trip" only means a validated-finding fix cycle forces at least one fresh re-review. It runs until a clean pass, bounded by the **5-round ceiling** below.
+> _aka **Self-Review Convergence Loop**._ The name is historical — there is **NO 2-round cap**; "double-round-trip" only means a validated-finding fix cycle forces at least one fresh re-review. It runs until a clean pass, bounded by the **3-round ceiling** below.
 >
-> **Round cap — 5 rounds MAX (a ceiling, NEVER a target).** A clean pass ENDS the loop immediately at ANY round — round 1 included; the cap never obliges you to keep spinning. Hitting round 5 with validated findings still open → **STOP and escalate via `AskUserQuestion`** with the still-open findings listed; NEVER emit a silent "good enough" PASS on cap exhaustion, and NEVER let the cap substitute for the clean-review requirement. The 3-repeated-no-progress blocker rule stays an EARLIER exit — escalate at whichever trips first.
+> **Round cap — 3 rounds MAX (a ceiling, NEVER a target).** A clean pass ENDS the loop immediately at ANY round — round 1 included; the cap never obliges you to keep spinning. Hitting round 3 with blocking findings still open (severity floor applied) → **STOP and escalate via `AskUserQuestion`** with the still-open findings listed; NEVER emit a silent "good enough" PASS on cap exhaustion, and NEVER let the cap substitute for the clean-review requirement. The 2-repeated-no-progress blocker rule stays an EARLIER exit — escalate at whichever trips first.
+>
+> **Severity floor — from round 3, LOW stops blocking.** The exit bar tightens by round, so the loop converges on consequence instead of spinning on polish:
+
+> Define one predicate everywhere: `blocking_findings(round, findings)` returns all validated findings in rounds 1–2 and only validated CRITICAL/HIGH/MEDIUM findings in round 3+. A binary gate (test-green, security must-fix, required artifact) is exempt only when its owning invariant explicitly says so.
+>
+> | Round | Exit bar — loop ENDS when the fresh full review has…                      | Must be fixed to continue      |
+> | ----- | ------------------------------------------------------------------------- | ------------------------------ |
+> | 1-2   | zero validated findings at ANY severity                                   | CRITICAL · HIGH · MEDIUM · LOW |
+> | 3+    | zero validated CRITICAL / HIGH / MEDIUM findings — **LOW-only is a PASS** | CRITICAL · HIGH · MEDIUM only  |
+>
+> From round 3 onward LOW findings are **NOT required to be fixed**: a round whose validated findings are ALL LOW **ENDS the loop immediately** — do not open another round for them. Severity tiers are `SYNC:severity-rubric` (CRITICAL block-merge · HIGH must-fix · MEDIUM should-fix · LOW nice-to-fix); rounds 1-2 are unchanged, so an easy LOW still gets fixed early when it is cheap.
+>
+> **Severity-floor rules:**
+>
+> - **Never silently drop a deferred LOW.** Every unfixed LOW is listed in the final report under `## Deferred LOW Findings (severity floor, round ≥3)` with file, line, and description, so the owner can schedule it. Dropping it from the report is a protocol violation, not a clean pass.
+> - **Never re-tier a finding to trigger the exit.** Downgrading a real CRITICAL/HIGH/MEDIUM to LOW so the loop can end is a FALSE PASS. Severity is set by consequence per `SYNC:severity-rubric` before the round bar is applied — never after, and never with the exit in view. — why: a floor that can be reached by relabeling is not a floor.
+> - **The floor bounds the loop, not the standard.** It ends _iteration_; it never authorizes shipping a known CRITICAL/HIGH/MEDIUM, and it never lowers the finding-survival bar that admits a finding in the first place.
+> - **The floor never applies to a hard gate.** Test-green gates (a suite must actually pass), security must-fix gates, and any gate whose criterion is binary rather than severity-rated are unaffected — a failing test is a failure, not a LOW finding.
 >
 > **Universal scope (any new output/judgment):** any newly produced output or judgment gets **≥1 self-review**; any **new judgment** gets **≥1 `/why-review --validate-findings` pass**; anything flagged to re-check is re-checked **≥1 time** — before that output is treated as final. This loop is the default convergence contract for ANY work-producing skill, not review skills only.
 >
@@ -755,7 +917,7 @@ If no domain entity files match in changes mode → announce "No domain entity c
 > **Decision after Round 1:**
 >
 > - **No issues found (PASS, zero findings)** → review ENDS. Do NOT spawn a fresh sub-agent for confirmation.
-> - **Issues found (FAIL, or any non-zero findings)** → run the active review skill's findings-validation gate first; for review skills the default gate is `/why-review --validate-findings <report-path>`. Fix only validated findings, then restart the full review protocol from the beginning with a fresh task breakdown.
+> - **`blocking_findings(round, findings)` is non-empty** → run the active review skill's findings-validation gate first; for review skills the default gate is `/why-review --validate-findings <report-path>`. Fix only validated findings, then restart the full review protocol from the beginning with a fresh task breakdown.
 >
 > **Fresh full re-review after every fix cycle:** Re-run the whole review protocol over the current full target. When sub-agents are part of that protocol, spawn NEW `Agent` calls — never reuse prior agents. Reviewers re-read ALL files from scratch with ZERO memory of prior rounds. See `SYNC:fresh-context-review` for the spawn mechanism and `SYNC:review-protocol-injection` for the canonical Agent prompt template. Each fresh full review must catch:
 >
@@ -766,22 +928,24 @@ If no domain entity files match in changes mode → announce "No domain entity c
 > - Subtle edge cases the prior round rationalized away
 > - Regressions introduced by the fixes themselves
 >
-> **Loop termination:** After each full re-review, repeat the same decision: clean → END; issues → validate findings → fix → restart from the first review phase. Continue until a complete review pass finds zero issues, **capped at 5 rounds**. Escalate via `AskUserQuestion` at whichever comes first: the same validated finding repeats for 3 full invocations with no progress · a fix requires product/owner input · round 5 completes with validated findings still open. NEVER loop past 5 rounds, and NEVER convert cap exhaustion into a PASS.
+> **Loop termination:** After each full re-review, repeat the same decision against **that round's exit bar**: bar cleared → END; blocking findings remain → validate findings → fix → restart from the first review phase. Rounds 1-2 clear on zero findings at any severity; **from round 3 the bar is zero CRITICAL/HIGH/MEDIUM, so a LOW-only round ENDS the loop** (deferred LOWs go in the report). Capped at **3 rounds**. Escalate via `AskUserQuestion` at whichever comes first: the same validated finding repeats for 2 full invocations with no progress · a fix requires product/owner input · round 3 completes with CRITICAL/HIGH/MEDIUM still open. NEVER loop past 3 rounds, and NEVER convert cap exhaustion into a PASS.
 >
 > **Rules:**
 >
 > - A clean Round 1 ENDS the review — no mandatory Round 2
+> - From round 3 on, a round whose validated findings are ALL LOW ENDS the loop — never open round N+1 to fix LOW alone; list those LOWs as deferred instead
+> - NEVER re-tier a CRITICAL/HIGH/MEDIUM down to LOW to reach the round-3 exit — severity is assigned by consequence before the bar is applied
 > - NEVER fix unvalidated findings; validate first using the caller's validation gate
 > - Every surviving finding must additionally clear the **finding-survival bar** defined in why-review's Findings Validation Routine (a deliberately higher bar than the generic act-gate — "keep this finding?" is a stricter question than "act on this evidence?"); a finding below the bar is demoted or dropped, not kept
 > - NEVER skip the full re-review after a fix cycle (every fix invalidates the prior verdict)
 > - NEVER reuse a sub-agent across rounds — every iteration that uses sub-agents spawns NEW Agent calls
 > - Main agent READS sub-agent reports but MUST NOT filter, reinterpret, or override findings
-> - The 5-round cap NEVER replaces the clean-review requirement — it bounds runaway looping, it does not authorize shipping an un-clean review; a clean pass ends the loop early at any round, and cap exhaustion escalates rather than passes
-> - Enforce the round cap of 5 alongside the 3 repeated-no-progress blocker rule; both are escalation triggers, neither is a completion criterion
+> - The 3-round cap NEVER replaces the clean-review requirement — it bounds runaway looping, it does not authorize shipping an un-clean review; a clean pass ends the loop early at any round, and cap exhaustion escalates rather than passes
+> - Enforce the round cap of 3 alongside the 2 repeated-no-progress blocker rule; both are escalation triggers, neither is a completion criterion
 > - Track recursive invocation count and repeated blockers in conversation context (session-scoped)
 > - Final verdict must incorporate ALL rounds executed
 >
-> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed.**
+> **Report must include `## Round N Findings (Fresh Sub-Agent)` for every round N≥2 that was executed, plus `## Deferred LOW Findings (severity floor, round ≥3)` whenever the loop ended on the round-3+ bar with LOWs still open.**
 
 <!-- /SYNC:double-round-trip-review -->
 
@@ -806,7 +970,7 @@ If no domain entity files match in changes mode → announce "No domain entity c
 > - SKIP fresh sub-agent when the prior full review found zero issues (no fixes = nothing new to verify)
 > - NEVER skip the full review restart after a fix cycle — every fix invalidates the prior verdict
 > - NEVER reuse a sub-agent across rounds — every fresh round spawns a NEW `Agent` call
-> - Continue until a complete full review pass has zero findings; if the same blocker repeats 3 times with no progress, escalate via `AskUserQuestion`
+> - Continue until a complete full review pass clears that round's exit bar per `SYNC:double-round-trip-review`: **rounds 1-2** → zero findings at any severity; **round 3+** → zero CRITICAL/HIGH/MEDIUM, so a round whose validated findings are ALL LOW ENDS the loop (list those LOWs as deferred instead of spawning another round). If the same blocker repeats 3 times with no progress, escalate via `AskUserQuestion`
 > - Track iteration count and repeated blockers in conversation context (session-scoped, no persistent files)
 
 <!-- /SYNC:fresh-context-review -->
@@ -1040,7 +1204,8 @@ If no domain entity files match in changes mode → announce "No domain entity c
 <!-- SYNC:double-round-trip-review:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** execute the review loop (aka **Self-Review Convergence Loop**): review → validate findings → fix validated findings → full re-review. A complete review pass with zero findings ENDS the review. Any newly produced output/judgment gets ≥1 self-review; any new judgment gets ≥1 `/why-review --validate-findings` pass before it is treated as final.
-- **MANDATORY** enforce the **round cap of 5 — a ceiling, NEVER a target**: a clean pass ends the loop immediately at any round (round 1 included), and round 5 completing with validated findings still open → **STOP & escalate via `AskUserQuestion`**, never a silent PASS. The 3-repeated-no-progress blocker rule is an earlier exit — escalate at whichever trips first. NEVER loop open-ended.
+- **MANDATORY** apply the **severity floor**: rounds 1-2 exit on zero findings at any severity; **from round 3 the bar is zero CRITICAL/HIGH/MEDIUM — LOW findings are no longer required to be fixed, so a LOW-only round ENDS the loop.** List every deferred LOW in the report; NEVER re-tier a real CRITICAL/HIGH/MEDIUM down to LOW to reach the exit, and NEVER apply the floor to a binary gate (test-green, security must-fix).
+- **MANDATORY** enforce the **round cap of 3 — a ceiling, NEVER a target**: a clean pass ends the loop immediately at any round (round 1 included), and round 3 completing with CRITICAL/HIGH/MEDIUM still open → **STOP & escalate via `AskUserQuestion`**, never a silent PASS. The 2-repeated-no-progress blocker rule is an earlier exit — escalate at whichever trips first. NEVER loop open-ended.
 
 <!-- /SYNC:double-round-trip-review:reminder -->
 
@@ -1058,6 +1223,45 @@ If no domain entity files match in changes mode → announce "No domain entity c
 - **MANDATORY — non-asking contexts escalate BY HANDOFF, never by silence.** `AskUserQuestion` reaches only the main interactive agent: a sub-agent cannot ask the user, and a terminal/verdict-only mode asks nothing by design. There the duty is REDIRECTED, not waived — still name the trade-off, still decide materiality, record `confirmed? = NO — cannot ask from this context`, **state the unconfirmed MATERIAL trade-off in your RETURNED verdict/summary so the CALLER escalates it** (a note only in an on-disk report is not a handoff), and never emit an unqualified PASS. Applies ONLY where the user is genuinely unreachable (spawned sub-agent, terminal validate mode, headless run) — if you CAN ask, you MUST ask.
 
 <!-- /SYNC:trade-off-interrogation-gate:reminder -->
+
+<!-- SYNC:parallel-subagent-dispatch -->
+
+> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
+>
+> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
+> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
+> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
+> 4. **Spawn each wave in ONE message** — every `Agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
+> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
+> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
+> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
+>
+> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a skill or workflow explicitly fixes · gates awaiting user approval.
+>
+> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
+
+<!-- /SYNC:parallel-subagent-dispatch -->
+
+<!-- SYNC:parallel-subagent-dispatch:reminder -->
+
+- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
+- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
+
+<!-- /SYNC:parallel-subagent-dispatch:reminder -->
+
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
 
 ## Closing Reminders
 
@@ -1078,6 +1282,7 @@ If no domain entity files match in changes mode → announce "No domain entity c
 - **Systematic Review Batching:** 10+ files → size-capped parallel batches, then reduce.
 - **Severity Rubric:** Classify by consequence; Critical/High block PASS until resolved.
 - **Category Review Thinking:** Derive each category's concerns from first principles — NEVER a fixed checklist.
+- **Parallel Sub-Agent Dispatch:** Tag tasks PAR/SEQ, group PAR into disjoint-write-set waves, spawn each wave in ONE message, barrier before advancing.
 
 **Top-3 (primacy-recency — these 3 are also at file top):**
 
@@ -1103,6 +1308,14 @@ If no domain entity files match in changes mode → announce "No domain entity c
 - **MANDATORY MUST ATTENTION** map every verified §5 invariant to a universally-quantified property TC + boundary counter-case (Dual-Feedback) — spec NAMES it AND a test GUARDS it — why: an enforced invariant with no property test is one refactor from silent regression.
 - **MANDATORY MUST ATTENTION** treat 2+ violations of the same kind as a structural/architectural finding, not isolated style notes — why: repeated leaks reveal a missing pattern, not individual slips.
 - **MANDATORY MUST ATTENTION** classify by consequence not fix-effort (CRITICAL/HIGH block PASS); 10+ entity files → switch to parallel `code-reviewer` sub-agents automatically — why: one "High" must mean the same everywhere, and serial review of many files exhausts context.
+- **MANDATORY MUST ATTENTION** detect the modelling paradigm per aggregate (0.4) BEFORE applying any setter/mutability/reconstitution rule, and record which sections were adapted or marked N/A — NEVER flag a paradigm-appropriate pattern against a rule written for another paradigm — why: "no public setters" is a real finding in OO code and meaningless in a model that has none by construction.
+- **MANDATORY MUST ATTENTION** judge subdomain fit (3.1) BEFORE reporting anemic model, and state the judgment with evidence — a rich model is owed in a CORE subdomain and is ceremony in CRUD — why: "anemic" and "appropriately simple" look identical in a diff, and uniform tactical DDD over CRUD is itself an anti-pattern.
+- **MANDATORY MUST ATTENTION** separate invariant (entity owns "can this state exist?") from validation (boundary owns "is this input acceptable?"); a business rule living ONLY in a validator/handler is a HIGH invariant gap, and input-shape/UX checks inside the entity are MEDIUM wrong-layer — NEVER accept a DB constraint or trigger as the invariant's enforcement, it is a backstop — why: any other entry point reaches invalid state, and an opaque SQL error is not a domain contract.
+- **MANDATORY MUST ATTENTION** keep failure signalling consistent with the Phase 0 convention — mixed exception/`Result` for the SAME failure class is HIGH; NEVER silently clamp bad input or return bare `bool` from a mutation — why: callers cannot know which to handle, so one path goes unhandled, and clamping persists wrong data with no signal.
+- **MANDATORY MUST ATTENTION** verify creation and reconstitution are separate paths — the load path raising domain events is CRITICAL (N loaded entities emit N phantom events) and creation rules re-run on load is HIGH — why: without a separate path, creation invariants must be weakened until historical rows load.
+- **MANDATORY MUST ATTENTION** NEVER allow synchronous in-transaction event dispatch (a handler failure rolls back the business operation) or publish-before-commit (announces a fact that may never have happened) — require the transactional outbox, clear the buffer after dispatch, and keep internal domain events distinct from published integration contracts — why: unrelated features must not be able to break the core write, and a published internal event couples every consumer to your model's shape permanently.
+- **MANDATORY MUST ATTENTION** verify aggregate roots carry an optimistic-concurrency token on the ROOT (never on a child), flag any transaction mutating 2+ roots, and verify set-based invariants (uniqueness across all instances) have a real enforcing mechanism — why: last-write-wins silently discards a committed decision, and an in-memory uniqueness check races under concurrency while passing every single-threaded test.
+- **MANDATORY MUST ATTENTION** flag one entity class shared across bounded contexts with divergent rules as HIGH, and NEVER treat the same word meaning different things per context as duplication to unify — verify a translation boundary exists where contexts meet — why: a unified cross-context entity accretes every context's rules until nobody owns it.
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using `TaskCreate`; add a final "Analyze AI mistakes & lessons learned" review task.
 
@@ -1110,13 +1323,18 @@ If no domain entity files match in changes mode → announce "No domain entity c
 
 **Anti-Rationalization:**
 
-| Evasion                                        | Rebuttal                                                                                                                   |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| "Generic DDD rule fits, skip Phase 0"          | Discovered base classes override generic rules — verify the project's real entity/VO base FIRST or every finding is noise. |
-| "Finding is obvious, skip evidence"            | No `file:line` proof = no finding. Confidence <60% → DO NOT recommend.                                                     |
-| "Clean enough, skip the re-review after fixes" | Every fix invalidates the prior verdict — restart the full review until a clean pass ENDS it.                              |
-| "Looks anemic, flag it"                        | Inspect callers + base class first — pattern fit, not pattern resemblance, decides anemic vs. correct delegation.          |
-| "Invariant enforced in code, that's coverage"  | Dual-Feedback: spec must NAME it AND a property TC must GUARD it — code-only is INCOMPLETE.                                |
-| "Many entities, review them inline"            | 10+ files → parallel sub-agents; persist per-file findings to `plans/reports/` or they vanish on budget cutoff.            |
+| Evasion                                           | Rebuttal                                                                                                                                                                     |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Generic DDD rule fits, skip Phase 0"             | Discovered base classes override generic rules — verify the project's real entity/VO base FIRST or every finding is noise.                                                   |
+| "Finding is obvious, skip evidence"               | No `file:line` proof = no finding. Confidence <60% → DO NOT recommend.                                                                                                       |
+| "Clean enough, skip the re-review after fixes"    | Every fix invalidates the prior verdict — restart the full review until a clean pass ENDS it.                                                                                |
+| "Looks anemic, flag it"                           | Inspect callers + base class first — pattern fit, not pattern resemblance, decides anemic vs. correct delegation.                                                            |
+| "Invariant enforced in code, that's coverage"     | Dual-Feedback: spec must NAME it AND a property TC must GUARD it — code-only is INCOMPLETE.                                                                                  |
+| "Many entities, review them inline"               | 10+ files → parallel sub-agents; persist per-file findings to `plans/reports/` or they vanish on budget cutoff.                                                              |
+| "No setters here, model is fine"                  | Detect the paradigm (0.4) first — an immutable or event-sourced model has no setters BY CONSTRUCTION; the absence proves nothing until you know which model you are reading. |
+| "Entity has no methods → anemic"                  | Judge subdomain fit (3.1) first. CRUD/supporting subdomain with no invariants → simple IS correct; the finding is noise.                                                     |
+| "Rule is enforced, location is style"             | Location IS the rule. In a validator/handler it is bypassable by every other entry point — that is a HIGH invariant gap, not a preference.                                   |
+| "Events are raised correctly, done"               | Raising is Section H. Section O owns WHEN they dispatch — in-transaction dispatch and publish-before-commit are CRITICAL regardless of how cleanly they were raised.         |
+| "Single-threaded tests pass, concurrency is fine" | A set-based invariant checked in memory passes every single-threaded test and races in production. Verify the enforcing mechanism, not the test result.                      |
 
 **IMPORTANT MUST ATTENTION** Phase 0 discovery FIRST (base classes override generic rules) · NEVER report a finding without `file:line` evidence at confidence >80% · validate findings before fixing, then restart the full review — a clean pass ENDS it.

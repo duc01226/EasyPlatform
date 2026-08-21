@@ -5,7 +5,7 @@
 **Audience:** AI engineers, tech leads, and teams wanting to build reliable AI-assisted development systems.
 **Scope:** What each layer does, why it exists, how the pieces compose, the design principles behind every decision, and which AI agent best practices each addresses.
 
-> **Document Sync Status** — Current local verification (2026-08-12): **16 hook files · 163 skills · 19 workflows · 29 agents** using the ADR-0002 filesystem metrics. Codex mirrors are committed under `.agents/`, `.codex/`, and `AGENTS.md`. Notable mechanisms documented here include multi-AI-tool portability (§13), behavioral-principle injection (§8.21), self-validating review (§8.20), and embedded sequential-thinking.
+> **Document Sync Status** — Current local verification (2026-08-17): **16 hook files · 165 skills · 19 workflows · 29 agents** using the ADR-0002 filesystem metrics. Codex mirrors are committed under `.agents/`, `.codex/`, and `AGENTS.md`. Notable mechanisms documented here include multi-AI-tool portability (§13), behavioral-principle injection (§8.21), self-validating review (§8.20), and embedded sequential-thinking.
 
 ---
 
@@ -45,7 +45,7 @@
 
 ## 1. Executive Summary
 
-This framework wraps Claude Code in a three-pillar execution framework — **16 top-level hook files**, **163 skills**, **19 registered workflows**, and **29 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
+This framework wraps Claude Code in a three-pillar execution framework — **17 top-level hook files**, **165 skills**, **19 registered workflows**, and **29 specialized agents** — that transforms a generic LLM into a project-aware, quality-enforced, hallucination-resistant development agent. The framework covers the **entire software development lifecycle** — from idea capture and TDD test specification through implementation, testing, E2E testing, code review, and documentation — with AI as a first-class participant at every stage.
 
 It is also **harness- and project-agnostic**: the `.claude/` source compiles to verified OpenAI Codex mirrors (`AGENTS.md`, `.agents/`, `.codex/`), while all project-specific knowledge is factored into `project-config.json` + reference docs — so the same behavior runs on any supported AI tool and ports to any codebase (Section 13).
 
@@ -117,7 +117,7 @@ graph TB
         end
     end
 
-    subgraph "Intelligence Layer — 163 Skills"
+    subgraph "Intelligence Layer — 165 Skills"
         SP[Shared Protocols<br/>5 files]
         IS[Implementation Skills<br/>feature-implement, fix, refactor]
         QS[Quality Skills<br/>code-review, prove-fix]
@@ -313,7 +313,7 @@ HOOK SYSTEM (16 top-level .cjs hooks + 1 .js notification helper)
 │   ├── post-edit-prettier.cjs ────── Auto-format after edits
 │   └── graph-auto-update.cjs ─────── Incremental graph update after edits (debounced)
 │
-└── SUPPORT INFRASTRUCTURE (25 lib modules)
+└── SUPPORT INFRASTRUCTURE (26 lib modules)
     ├── State: ck-session-state, workflow-state, todo-state, agent-files-state
     ├── Context: prompt-injections
     ├── Memory: swap-engine (externalize large outputs), temp-file-cleanup
@@ -455,11 +455,11 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate
 2. Declare confidence level...
 ```
 
-### 5.2 Skill Categories (163 skills)
+### 5.2 Skill Categories (165 skills)
 
 ```mermaid
 mindmap
-  root((163 Skills))
+  root((165 Skills))
     Quality & Verification
       code-review
       prove-fix
@@ -772,7 +772,7 @@ Workflows are **JSON-defined sequences of skills** stored in `.claude/workflows.
 }
 ```
 
-### 6.2 Workflow Catalog (18 Workflows)
+### 6.2 Workflow Catalog (19 Workflows)
 
 ```
 WORKFLOW CATALOG
@@ -785,8 +785,9 @@ WORKFLOW CATALOG
 ├── REFACTORING (1)
 │   └── workflow-refactor
 │
-├── TESTING (4)
+├── TESTING (5)
 │   ├── workflow-e2e (--source=changes|recording|update-ui)
+│   ├── workflow-integration-test-green
 │   ├── workflow-spec-sync
 │   ├── workflow-seed-test-data
 │   └── workflow-write-integration-test
@@ -879,7 +880,7 @@ The hook and skill system is **project-agnostic**. All project-specific knowledg
 graph LR
     subgraph "Generic Framework (reusable)"
         H[16 Hook Files]
-        S[163 Skills]
+        S[165 Skills]
         W[18 Workflows]
     end
 
@@ -1560,10 +1561,10 @@ feature:
   plan-execute → seed-test-data → domain-entities-review → spec [mode=tests] → why-review → artifact-review --type=spec-tests →
   spec [mode=sync] → integration-test → integration-test-review →
   integration-test-verify → workflow-review-changes →
-  security-review → changelog → test → docs-update → workflow-end → watzup
+  security-review → changelog → test → scan --target=domain-entities → docs-update → workflow-end → watzup
 ```
 
-**Note:** `feature` includes a second planning round (`plan → plan-review`) that refines the implementation plan with test strategy after specs are written, and two verification points after implementation — `/integration-test-verify` following integration-test generation and the final `/test` regression check before docs.
+**Note:** `feature` includes a second planning round (`plan → plan-review`) that refines the implementation plan with test strategy after specs are written, and two verification points after implementation — `/integration-test-verify` following integration-test generation and the final `/test` regression check. After that test and before `/docs-update`, run `/scan --target=domain-entities` only when the final diff changes an entity/model, DTO/data contract, persistence schema/migration, or entity-sync evidence; otherwise complete the scan task with a cited skip reason.
 
 ---
 
@@ -3177,7 +3178,7 @@ NEVER skip, batch-complete, or mark done without invoking the sub-skill.
 
 # Task  Subject                                               Conditional?
   1     Phase 0 — Triage                                      No — always
-  2     Phase 1 — Project docs update                         Yes — arch changes only
+  2     Phase 1 — Project context sync (impact-scoped)        No — unless the impact map is empty
   3     Phase 2 — /spec invocation                            Yes — service files changed
   4     Phase 2.5 — /spec-index [mode=index]                  Yes — Feature Spec changed; bucket has derived index
   5     Phase 3 — /spec [mode=tests] update                   Yes — behavior changed
@@ -3312,7 +3313,7 @@ Sections 8.1–8.2 cover injecting _project knowledge_ (patterns, reference docs
 | **Surface ambiguity**              | Multiple valid interpretations → present each with an effort estimate and ask; never silently pick the broad/complex path                        | Clarify-before-assume             |
 | **Output quality**                 | Token efficiency without quality loss — no inventories/dir-trees/redundant examples; lead with the answer; unresolved questions at the end       | Signal density                    |
 
-The short principles are authored once as SYNC-tagged blocks in `.claude/skills/shared/sync-inline-versions.md` (the critical-thinking-mindset block + the AI-mistake-prevention block) and composed by `.claude/scripts/lib/hookless-prompt-protocol.cjs`; `.claude/hooks/lib/prompt-injections.cjs` is only a delegating compat wrapper that reads those canonical blocks (it holds no body copies). Their long-form canon lives in `.claude/docs/development-rules.md` and `.claude/docs/anti-hallucination-patterns.md`; and the SYNC-tagged blocks propagate into skill bodies and the cross-tool mirrors (Section 13.5).
+The short principles are authored once as SYNC-tagged blocks in `.claude/skills/shared/sync-inline-versions.md` (the critical-thinking-mindset block + the AI-mistake-prevention block — joined for the SKILL tier by the parallel-subagent-dispatch block, which is skill-only because a headless leaf sub-agent cannot partition and spawn its own parallel waves) and composed by `.claude/scripts/lib/hookless-prompt-protocol.cjs`; `.claude/hooks/lib/prompt-injections.cjs` is only a delegating compat wrapper that reads those canonical blocks (it holds no body copies). Their long-form canon lives in `.claude/docs/development-rules.md` and `.claude/docs/anti-hallucination-patterns.md`; and the SYNC-tagged blocks propagate into skill bodies and the cross-tool mirrors (Section 13.5).
 
 #### Static delivery — principle stays in the attention window
 
@@ -3485,7 +3486,7 @@ flowchart TB
 | **Context injection at decision points**       | Static path→patternsDoc guidance in CLAUDE.md / SKILL.md (was hook-injected)                             | Skills/Config |
 | **Reminder rules prevent forgetting**          | Static SYNC rules + the workflow catalog baked into CLAUDE.md, re-read every prompt                      | Skills/Config |
 | **Generic & configurable via config**          | project-config.json drives path→patternsDoc routing                                                      | Config        |
-| **Prompt engineering quality**                 | 163 skills with YAML frontmatter + behavior protocols                                                    | Skills        |
+| **Prompt engineering quality**                 | 165 skills with YAML frontmatter + behavior protocols                                                    | Skills        |
 | **Auto-select workflow path before acting**    | Model reads the static catalog → direct/skill/workflow/custom path                                       | Workflows     |
 | **Confirm plan with questions**                | /plan-validate asks 3-8 questions before implementation                                                  | Skills        |
 | **Sequential thinking for complex problems**   | /sequential-thinking skill + /debug-investigate skill                                                    | Skills        |
@@ -3529,7 +3530,7 @@ flowchart TB
 ├── .ckignore ─────────── Scout block patterns
 ├── workflows.json ─────── 19 workflow definitions
 ├── workflows/ ──────────── Workflow definitions (primary-workflow.md, etc.)
-├── hooks/ ─────────────── 15 top-level .cjs hooks (+ 1 .js helper) + 25 lib modules
+├── hooks/ ─────────────── 15 top-level .cjs hooks (+ 1 .js helper) + 26 lib modules
 │   ├── session-init.cjs
 │   ├── path-boundary-block.cjs
 │   ├── ...
@@ -3539,7 +3540,7 @@ flowchart TB
 │   │   ├── todo-state.cjs
 │   │   └── ...
 │   └── tests/ ────────── Test suites
-├── skills/ ────────────── 163 skill definitions
+├── skills/ ────────────── 165 skill definitions
 │   ├── {skill-name}/SKILL.md
 │   ├── shared/ ───────── 6 shared reference/protocol files
 │   └── _templates/ ───── Skill scaffolding
@@ -3859,7 +3860,7 @@ The framework succeeds because it aligns with how LLMs actually fail:
 
 ### The Result
 
-**16 top-level hook files**, **163 skills**, **19 registered workflows**, and **29 specialized agents** working in concert to deliver:
+**17 top-level hook files**, **165 skills**, **19 registered workflows**, and **29 specialized agents** working in concert to deliver:
 
 - **Fewer hallucinations** — Evidence gates and proof traces catch AI fabrications before they reach files
 - **Better code quality** — Pattern injection ensures AI follows project conventions, not generic training data
@@ -3867,7 +3868,7 @@ The framework succeeds because it aligns with how LLMs actually fail:
 - **Consistent adherence** — Programmatic enforcement means quality doesn't degrade in long sessions or complex tasks
 - **Recovery from amnesia** — External state persistence means context compaction doesn't lose progress
 - **Persistent learning** — Mistakes captured once prevent recurrence across all future sessions
-- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 163 skills (Section 8.15)
+- **Prompt engineering depth** — Role prompting, chain-of-thought, few-shot, negative prompting, and iterative refinement applied systematically across 165 skills (Section 8.15)
 - **Context engineering precision** — JIT injection, dedup, external memory, budget management, and recovery keep the AI informed without overwhelming its context window (Section 8.16)
 
 The framework is **generic and reusable**. Replace `project-config.json` with your project's specifics, and the entire system adapts — different tech stack, different patterns, different conventions, same quality enforcement.

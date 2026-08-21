@@ -312,6 +312,25 @@
 - category: other
   deprecated_by: null
   deprecated_since: null
+  description: '[Utilities] Use when the user invokes, lists, saves, updates, or deletes
+    a PROJECT-SPECIFIC saved prompt — a named, reusable procedure stored with the
+    project rather than in the portable framework. `/custom-prompt list` prints every
+    defined prompt with its description; `/custom-prompt <free-text request>` matches
+    the request to the closest saved prompt and executes it only after a confirmation
+    gate; `/custom-prompt save|update|delete ...` maintains the registry — save never
+    stores raw wording, it drafts the best version of the prompt and confirms the
+    name, description, inferred goal, and steps with the user first. Triggers: custom
+    prompt, custom prompts, list custom prompts, save this prompt, save this prompt
+    task, update this prompt, my saved prompt, project prompt, playbook, recipe, runbook.'
+  has_references: true
+  has_scripts: false
+  name: custom-prompt
+  path: custom-prompt/SKILL.md
+  removal_after: null
+  status: active
+- category: other
+  deprecated_by: null
+  deprecated_since: null
   description: '[DevOps] Use when you need to run or create database migrations.'
   has_references: false
   has_scripts: false
@@ -1008,7 +1027,9 @@
   deprecated_since: null
   description: '[Implementation] Use when you need to start coding & testing an existing
     plan. Flags: --approval=off (auto/trust mode, no approval gate), --tests=off (skip
-    the test step), --parallel (parallel phase execution via subagents).'
+    the test step), --parallel={auto|on|off} (default off — sequential; --parallel/=on
+    opts in to parallel sub-agent waves; =auto fans out only when the plan declares
+    PAR/SEQ tags and write sets).'
   has_references: false
   has_scripts: false
   name: plan-execute

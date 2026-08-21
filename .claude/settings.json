@@ -26,6 +26,7 @@
         "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "400000",
         "CLAUDE_CODE_DISABLE_1M_CONTEXT": "0",
         "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+        "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1",
         "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP": "1000",
         "MCP_TIMEOUT": "30000"
     },
@@ -188,7 +189,7 @@
                         "type": "command"
                     }
                 ],
-                "matcher": "startup"
+                "matcher": "startup|resume"
             }
         ],
         "Stop": [
@@ -206,6 +207,14 @@
                 "hooks": [
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/init-prompt-gate.cjs",
+                        "type": "command"
+                    }
+                ]
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/graph-prompt-sync.cjs",
                         "type": "command"
                     }
                 ]

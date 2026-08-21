@@ -99,8 +99,10 @@ try {
 
   // Validate input not empty
   if (!hookInput || hookInput.trim().length === 0) {
-    console.error("ERROR: Empty input");
-    process.exit(2);
+    // Without a payload there is no path to evaluate, so preserve the hook's
+    // fail-open policy for malformed or incomplete delivery.
+    console.error("WARN: Empty input, allowing operation");
+    process.exit(0);
   }
 
   // Parse JSON

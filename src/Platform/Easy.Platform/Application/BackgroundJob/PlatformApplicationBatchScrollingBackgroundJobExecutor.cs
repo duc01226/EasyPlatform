@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 
@@ -95,6 +96,8 @@ namespace Easy.Platform.Application.BackgroundJob;
 /// ## Configuration Options:
 /// - **BatchKeyPageSize**: Number of batch keys processed per page (default: 1000)
 /// - **BatchPageSize**: Page size for scrolling pagination within batches (default: 100)
+/// - **EnableForwardProgressGuard**: Whether a repeated scrolling page throws (default: true). MUST be turned off by a
+///   job that legitimately leaves rows matching EntitiesQueryBuilder — see the property's own docs for the contract
 /// - **HandleBatchErrorAsync**: Override for custom error handling per batch
 /// </summary>
 /// <typeparam name="TEntity">The entity type being processed</typeparam>
@@ -176,6 +179,12 @@ public abstract class PlatformApplicationBatchScrollingBackgroundJobExecutor<TEn
     {
         try
         {
+            // Forward-progress state for the guard below. Holds ONLY the immediately preceding page's identity set —
+            // never an accumulated history of every entity seen, which would grow with the batch (unbounded memory on a
+            // large batch) and would also fire on legitimate re-selection several pages apart.
+            HashSet<object>? previousPageEntityIds = null;
+            var guardInactiveLogged = false;
+
             // Execute scrolling pagination for this batch
             await UnitOfWorkManager.ExecuteInjectScopedScrollingPagingAsync<TEntity>(
                 async (IServiceProvider serviceProvider) =>
@@ -186,11 +195,30 @@ public abstract class PlatformApplicationBatchScrollingBackgroundJobExecutor<TEn
                         loadRelatedEntities: EntitiesQueryLoadRelatedEntities());
 
                     if (entities.Count > 0)
+                    {
+                        // The page query above is Take(BatchPageSize) with NO Skip, so this is not offset paging: it
+                        // advances ONLY because processing mutates entities out of EntitiesQueryBuilder's match set.
+                        // For a job that owes that drain contract, pages 2..N re-selecting the SAME rows is a
+                        // data-corruption defect — detect it and fail loudly instead of repeating the work. A job that
+                        // LEGITIMATELY leaves rows in the match set opts out via EnableForwardProgressGuard instead.
+                        (previousPageEntityIds, guardInactiveLogged) =
+                            CheckPageForwardProgress(entities, batchKey, previousPageEntityIds, guardInactiveLogged);
+
                         await ProcessEntitiesAsync(entities, batchKey, param, serviceProvider);
+                    }
 
                     return entities;
                 },
-                await CountEntitiesAsync(ServiceProvider, query => EntitiesQueryBuilder(query, param, batchKey)) / BatchKeyPageSize
+                // Divide by BatchPageSize — the page size the query above actually pages by (:185) — NOT by
+                // BatchKeyPageSize, which sizes the batch-KEY pages in ProcessAllBatchesAsync and is a different unit entirely.
+                // Dividing an ENTITY count by the KEY page size (default 1000 vs 100) made maxExecutionCount 0 for any
+                // batch under 1000 entities. ExecuteScrollingPagingAsync runs the body once and then loops only
+                // `while (totalExecutionCount <= maxExecutionCount && ...)` (Util.Pager.cs:109-118), so 0 meant exactly
+                // one page ran and every later page was silently skipped while the job still reported success.
+                // Floor division is correct, not a truncation bug: the body gets one free execution before the loop, so
+                // N/PageSize == ceil(N/PageSize) - 1 covers the final partial page. Same convention as
+                // PlatformMongoDbContext.cs:1355 and the Inbox/Outbox cleaner hosted services.
+                await CountEntitiesAsync(ServiceProvider, query => EntitiesQueryBuilder(query, param, batchKey)) / BatchPageSize
             );
         }
         catch (Exception ex)
@@ -198,6 +226,112 @@ public abstract class PlatformApplicationBatchScrollingBackgroundJobExecutor<TEn
             await HandleBatchErrorAsync(batchKey, param, ex);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Runs the forward-progress guard for ONE scrolled page and returns the state the NEXT page must be compared
+    /// against. Extracted from the scrolling body so the guard reads as one named concept and the body stays flat.
+    /// <para>
+    /// Returns a null id set — which disables every later comparison, because the guard only fires when BOTH sides are
+    /// non-null — in the two cases where the guard must not judge the batch: the subclass turned it off via
+    /// <see cref="EnableForwardProgressGuard" />, or entity identity is unresolvable (<see cref="ResolvePageEntityIds" />).
+    /// When it is off, identity is never even resolved, so a disabled guard costs nothing per page.
+    /// </para>
+    /// </summary>
+    /// <returns>
+    /// The page's identity set to remember as "previous", and whether the guard-inactive warning has now been logged
+    /// for this batch (carried through so it is logged at most once per batch rather than once per page).
+    /// </returns>
+    private (HashSet<object>? PageEntityIds, bool GuardInactiveLogged) CheckPageForwardProgress(
+        List<TEntity> entities,
+        TBatchKey batchKey,
+        HashSet<object>? previousPageEntityIds,
+        bool guardInactiveAlreadyLogged)
+    {
+        // A subclass whose ProcessEntitiesAsync may legitimately leave rows matching EntitiesQueryBuilder opted out —
+        // comparing pages for it would halt a HEALTHY job, so skip the comparison and its identity capture entirely.
+        if (!EnableForwardProgressGuard) return (null, guardInactiveAlreadyLogged);
+
+        var currentPageEntityIds = ResolvePageEntityIds(entities);
+        var guardInactiveLogged = guardInactiveAlreadyLogged;
+
+        // A guard that silently cannot run is indistinguishable from one that runs and passes, so say when it is off.
+        // ONCE per batch, never per page: the cause is structural (TEntity is only constrained to class), so it cannot
+        // change mid-batch and per-page logging would flood a large batch.
+        if (currentPageEntityIds == null && !guardInactiveAlreadyLogged)
+        {
+            guardInactiveLogged = true;
+
+            Logger.LogWarning(
+                "[BackgroundJob] Job Batch forward-progress guard is INACTIVE because entity identity is unresolvable. BackgroundJobType_Name:{BackgroundJobType_Name}. BatchKey:{BatchKey}",
+                GetType().Name,
+                batchKey);
+        }
+
+        if (previousPageEntityIds != null && currentPageEntityIds != null && previousPageEntityIds.SetEquals(currentPageEntityIds))
+            throw LogBatchNotDrainingError(batchKey, entities.Count);
+
+        return (currentPageEntityIds, guardInactiveLogged);
+    }
+
+    /// <summary>
+    /// Resolves the identity of every entity in one page, for the forward-progress guard in <see cref="ProcessSingleBatchAsync" />.
+    /// Identity is the entity KEY (<see cref="IEntity.GetId" />) — never the reference and never object equality, because
+    /// each page comes back as freshly materialized instances.
+    /// <para>
+    /// Returns null when identity is NOT resolvable for the whole page — <typeparamref name="TEntity" /> is only
+    /// constrained to <c>class</c>, and a null key cannot be told apart from another null key. The guard then stays OFF
+    /// for that comparison: a false positive halts a healthy production job, so "cannot prove" must never mean "fail".
+    /// </para>
+    /// </summary>
+    private static HashSet<object>? ResolvePageEntityIds(List<TEntity> entities)
+    {
+        var entityIds = new HashSet<object>(entities.Count);
+
+        foreach (var entity in entities)
+        {
+            if (entity is not IEntity identifiableEntity) return null;
+
+            var entityId = identifiableEntity.GetId();
+
+            if (entityId is null) return null;
+
+            entityIds.Add(entityId);
+        }
+
+        return entityIds;
+    }
+
+    /// <summary>
+    /// Logs and builds the error thrown when a batch's scrolling page repeats the previous page's entities, i.e. the
+    /// scroll cannot drain. Returned rather than thrown so the <c>throw</c> stays visible at the detection site.
+    /// </summary>
+    private InvalidOperationException LogBatchNotDrainingError(TBatchKey batchKey, int pageEntitiesCount)
+    {
+        var error = new InvalidOperationException(
+            $"[BackgroundJob] {GetType().Name} scrolling cannot drain BatchKey:{batchKey}. The page just fetched returned the SAME "
+            + $"{pageEntitiesCount} entities (by id) as the page before it, so THIS run is stopped here instead of scrolling the same "
+            + $"page for the rest of its budget. It does NOT prevent every repeat: the job now fails loudly and the scheduler retries "
+            + $"it, and each retry reprocesses the earlier page(s) before stopping here again — bounded, alertable repetition instead "
+            + $"of a silent one. "
+            + $"The page query is Take({BatchPageSize}) with NO Skip, so it advances ONLY when processing moves entities OUT of the "
+            + $"{nameof(EntitiesQueryBuilder)} match set — the likely cause is that {GetType().Name}.{nameof(EntitiesQueryBuilder)} does "
+            + $"not exclude already-processed entities. Fix it by filtering on the field {nameof(ProcessEntitiesAsync)} updates, or make "
+            + $"{nameof(ProcessEntitiesAsync)} actually persist that change on EVERY path including its failure paths — an entity whose "
+            + $"processing failed silently still matches the filter and is re-selected forever. If instead this job is MEANT to leave "
+            + $"rows matching (swallow-and-continue error handling, a filtered subtype, an unstamped branch, or a drain applied "
+            + $"asynchronously by an event handler / bus consumer), override {nameof(EnableForwardProgressGuard)} to false. "
+            + $"BatchPageSize:{BatchPageSize}.");
+
+        Logger.LogError(
+            error.BeautifyStackTrace(),
+            "[BackgroundJob] Job Batch scrolling did not drain and was stopped before reprocessing. BackgroundJobType_Name:{BackgroundJobType_Name}. BatchKey:{BatchKey}. BatchPageSize:{BatchPageSize}. PageEntitiesCount:{PageEntitiesCount}",
+            GetType().Name,
+            batchKey,
+            BatchPageSize,
+            pageEntitiesCount);
+
+        return error;
     }
 
     #region Abstract Methods - Must be implemented by derived classes
@@ -405,6 +539,37 @@ public abstract class PlatformApplicationBatchScrollingBackgroundJobExecutor<TEn
     /// ```
     /// </summary>
     protected virtual int BatchPageSize => 100;
+
+    /// <summary>
+    /// Whether the forward-progress guard is ACTIVE for this job. The guard throws when a scrolled page returns the
+    /// same entities (by id) as the page immediately before it.
+    ///
+    /// **Default**: true
+    ///
+    /// **The drain contract this enforces**: the page query is `Take(BatchPageSize)` with NO `Skip`, so scrolling
+    /// advances ONLY because <see cref="ProcessEntitiesAsync" /> moves the entities it just processed OUT of the
+    /// <see cref="EntitiesQueryBuilder" /> match set — on EVERY page, on EVERY code path, and visibly to the very next
+    /// page query. A job that owes that contract keeps the guard ON and gets loud detection of a stuck scroll instead
+    /// of silently reprocessing the same rows.
+    ///
+    /// **MUST override to false when the job legitimately leaves rows matching EntitiesQueryBuilder**, because for
+    /// such a job a repeated page is normal and the guard would halt a HEALTHY run. Known shapes:
+    /// - **swallow-and-continue error handling**: a failed item is logged, left unstamped, and retried on the next scan;
+    /// - **a filtered subtype or skipped branch**: `OfType&lt;TSub&gt;()`, an early `return`, or a `switch` with no
+    ///   `default`, so some matched rows are never stamped;
+    /// - **asynchronous drain**: the state change is applied by an entity-event handler, a bus consumer, or a
+    ///   search-index projection, so it is not yet visible to the next page query.
+    ///
+    /// **Example Override**:
+    /// ```csharp
+    /// // ProcessEntitiesAsync logs and continues on failure, leaving those rows matching until the next scan.
+    /// protected override bool EnableForwardProgressGuard => false;
+    /// ```
+    ///
+    /// Turning it off does NOT make a stuck scroll safe — it restores the pre-guard behavior, where such a batch
+    /// reprocesses the same page until the scrolling budget (entity count / <see cref="BatchPageSize" />) is spent.
+    /// </summary>
+    protected virtual bool EnableForwardProgressGuard => true;
 
     /// <summary>
     /// Handles errors that occur during individual batch processing.

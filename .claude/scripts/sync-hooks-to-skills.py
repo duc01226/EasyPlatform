@@ -27,7 +27,11 @@ Tiered blocks (agents):
   same set as CODE_AGENTS): dev-rules + coding-pattern pointers for agents that
   write/modify/review/debug/optimize/test code. Appended on top of whichever tier
   (Core or Code) the agent already has. Non-code-standards agents never receive it.
-Skills keep the original 2-block SKILL_BLOCK_ORDER (no skills regression).
+Skills keep the original 2-block SKILL_BLOCK_ORDER; skills named in
+ORCHESTRATOR_SKILLS additionally receive parallel-subagent-dispatch
+(ORCHESTRATOR_SKILL_BLOCK_ORDER). `--prune` removes a PRUNABLE_BLOCKS block from
+any file whose tier no longer grants it — without it, leaving a tier is a one-way
+door.
 
 Agent tier is set by explicit CODE_AGENTS / READONLY_CODE_AGENTS /
 CORE_ONLY_AGENTS membership; an agent in none of the three sets (or in more than
@@ -54,6 +58,25 @@ PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__
 # ─── Canonical block content ────────────────────────────────────────────────
 
 BLOCKS = {
+    "parallel-subagent-dispatch": """\
+<!-- SYNC:parallel-subagent-dispatch -->
+
+> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
+>
+> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
+> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
+> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
+> 4. **Spawn each wave in ONE message** — every `Agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
+> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
+> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
+> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
+>
+> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a workflow explicitly fixes · gates awaiting user approval.
+>
+> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
+
+<!-- /SYNC:parallel-subagent-dispatch -->""",
+
     "critical-thinking-mindset": """\
 <!-- SYNC:critical-thinking-mindset -->
 
@@ -67,14 +90,15 @@ BLOCKS = {
 
 > **AI Mistake Prevention** — Failure modes to avoid on every task:
 >
-**Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-**Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-**Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-**Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-**Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-**Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-**Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-**Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
+> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
+> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
+> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
+> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
+> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
+> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
+> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
+> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
 
 <!-- /SYNC:ai-mistake-prevention -->""",
 
@@ -131,6 +155,15 @@ BLOCKS = {
 > **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
 
 <!-- /SYNC:project-reference-docs-guide -->""",
+
+    "project-protocol-overlay": """\
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->""",
 
     "understand-code-first": """\
 <!-- SYNC:understand-code-first -->
@@ -239,6 +272,12 @@ BLOCKS = {
 }
 
 REMINDERS = {
+    "parallel-subagent-dispatch": """\
+  <!-- SYNC:parallel-subagent-dispatch:reminder -->
+- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
+- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
+  <!-- /SYNC:parallel-subagent-dispatch:reminder -->""",
+
     "critical-thinking-mindset": """\
   <!-- SYNC:critical-thinking-mindset:reminder -->
 **MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
@@ -267,6 +306,13 @@ REMINDERS = {
 - **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `/project-init` or the narrow lower-level route before ordinary project-specific work.
   <!-- /SYNC:project-reference-docs-guide:reminder -->""",
 
+    "project-protocol-overlay": """\
+  <!-- SYNC:project-protocol-overlay:reminder -->
+
+  **MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+  <!-- /SYNC:project-protocol-overlay:reminder -->""",
+
     "cross-service-check": """\
   <!-- SYNC:cross-service-check:reminder -->
 **IMPORTANT MUST ATTENTION** microservices/event-driven: scan producers, consumers, sagas, contracts in task scope. Per touchpoint: owner · message · consumers · risk (NONE/ADDITIVE/BREAKING). Missing consumer = silent regression.
@@ -274,8 +320,71 @@ REMINDERS = {
 }
 
 # ─── Tier ordering ───────────────────────────────────────────────────────────
-# Skills keep the original 2-block order (no skills regression).
-SKILL_BLOCK_ORDER = ["critical-thinking-mindset", "ai-mistake-prevention"]
+# Skills: the original 2 universal blocks + parallel-subagent-dispatch.
+# parallel-subagent-dispatch is SKILL-ONLY on purpose — NOT because an agent is
+# incapable of spawning (agent files generally carry no `tools:` restriction, and
+# several agent definitions explicitly instruct their own fan-out). It is excluded
+# because an agent receives ONE already-scoped brief from an orchestrator that has
+# ALREADY done the PAR/SEQ tagging and wave partitioning; re-running that
+# partitioning protocol inside the leaf re-decides upstream's decision and spends
+# tokens on every agent for it. An agent that legitimately fans out carries that
+# instruction in its own `.claude/agents/*.md` definition, where its scope is known.
+# Mirrored — by convention, no automated cross-check — in agent_protocol_matrix.py
+# EXCLUDED_ORCHESTRATION and in the TC-UAR-017 AGENT_ADOPTION_EXEMPT set alongside
+# parallel-phase-advancement and sub-agent-selection. Do NOT add it to
+# CORE_BLOCK_ORDER.
+#
+# It is also NOT universal across skills. It reaches ONLY the ORCHESTRATOR_SKILLS
+# tier below — skills that actually dispatch sub-agents or drive a multi-step task
+# list. Measured cost of the universal alternative: ~793 tokens/skill x 163 skills
+# (~129k repo-wide, ~20k inside a single 25-step workflow), landing in skills like
+# `coding-level`, `ck-help` and `compact` that own no task list to partition and so
+# can never act on it. That violates the role-relevance rule in
+# `.claude/skills/shared/sync-inline-versions.md` ("Universal guidance must help
+# every receiving skill or agent"), which is the same lesson the agent tiers below
+# already encode. Keep the two-tier split.
+# project-protocol-overlay is universal across SKILLS and skill-only, for the SAME reason
+# parallel-subagent-dispatch is skill-only: overlay resolution is performed by whoever INVOKES
+# the skill; a headless leaf sub-agent receives one already-scoped brief whose overlay the
+# dispatching orchestrator already resolved. It IS role-relevant to every skill though — any
+# skill can be an overlay Target — so it belongs in SKILL_BLOCK_ORDER, not the orchestrator tier.
+# Mirrored — by convention, no automated cross-check — in agent_protocol_matrix.py
+# EXCLUDED_ORCHESTRATION and in the TC-UAR-017 AGENT_ADOPTION_EXEMPT set. Do NOT add it to
+# CORE_BLOCK_ORDER, any *_AGENTS set, or PRUNABLE_BLOCKS.
+SKILL_BLOCK_ORDER = ["critical-thinking-mindset", "ai-mistake-prevention", "project-protocol-overlay"]
+
+# Orchestrator skills: SKILL_BLOCK_ORDER + the parallel-dispatch protocol.
+ORCHESTRATOR_SKILL_BLOCK_ORDER = SKILL_BLOCK_ORDER + ["parallel-subagent-dispatch"]
+
+# Membership is evidence-derived, not taste: every name below either already
+# dispatched sub-agents before this tier existed (`git grep -lE
+# "subagent_type|in ONE message|spawn .*sub-?agent" HEAD -- '.claude/skills/*/SKILL.md'`)
+# or orchestrates a multi-step task list that the protocol governs (plan,
+# plan-execute, investigate, scan). A skill that never spawns and never partitions
+# a task list does NOT belong here — it cannot act on the protocol.
+ORCHESTRATOR_SKILLS = {
+    "architecture-design", "architecture-review", "architecture-review-full", "artifact-review",
+    "changes-review", "code-review", "code-simplifier", "commit",
+    "context-optimization", "db-migrate", "debug-investigate", "docs-update",
+    "demo-guide", "domain-entities-review", "e2e-test", "feature-presentation", "integration-test",
+    "integration-test-review", "investigate", "knowledge-review",
+    "performance-review", "plan", "plan-execute", "plan-review",
+    "production-readiness-review", "project-init", "scan",
+    "scan-codebase-health", "scout", "security-review", "seed-test-data",
+    "spec-clarify", "spec-discovery", "spec-index", "start-workflow",
+    "tech-spec", "test", "ui-review", "understand", "why-review",
+    "workflow-code-to-spec", "workflow-idea-to-pbi", "workflow-idea-to-spec",
+    "workflow-review-changes",
+}
+
+# Blocks whose presence is governed STRICTLY by tier membership: when a file's tier
+# order omits one of these, `--prune` deletes its fenced region (and its :reminder).
+# Deliberately an explicit allow-list rather than "every BLOCKS key absent from
+# block_order" — skills legitimately carry shared blocks that no tier order lists
+# (fresh-context-review, systematic-review-batching, ...), and a blanket rule would
+# silently delete them. Adding a block here is a commitment that its ONLY reason to
+# exist in a file is tier membership.
+PRUNABLE_BLOCKS = {"parallel-subagent-dispatch"}
 
 # Core: every agent. (critical-thinking + ai-mistake already present in agents.)
 # agent-bootstrap (Phase 03): self-contained subagent startup contract for hookless
@@ -348,16 +457,36 @@ CODE_STANDARDS_AGENTS = {
 # ─── File discovery ──────────────────────────────────────────────────────────
 
 def find_target_files(agents_only=False):
-    """Return [(path, block_order)] — skills get SKILL_BLOCK_ORDER; each agent is
+    """Return [(path, block_order)] — skills get SKILL_BLOCK_ORDER, or
+    ORCHESTRATOR_SKILL_BLOCK_ORDER when named in ORCHESTRATOR_SKILLS; each agent is
     classified by explicit tier membership. Raises SystemExit on any agent that is
-    unclassified or double-classified (no silent default).
+    unclassified or double-classified (no silent default), and on any
+    ORCHESTRATOR_SKILLS entry with no skill directory on disk.
     agents_only=True skips skills (scope a run to .claude/agents)."""
     skills_pattern = os.path.join(PROJECT_DIR, ".claude", "skills", "*", "SKILL.md")
     agents_pattern = os.path.join(PROJECT_DIR, ".claude", "agents", "*.md")
 
-    targets = [] if agents_only else [
-        (path, SKILL_BLOCK_ORDER) for path in sorted(glob_module.glob(skills_pattern))
-    ]
+    targets = []
+    if not agents_only:
+        skill_paths = sorted(glob_module.glob(skills_pattern))
+        # Unlike agents, an unlisted skill is NOT an error — the base tier is the
+        # correct default. The real failure mode here is the opposite one: a name in
+        # ORCHESTRATOR_SKILLS that no longer matches a directory (typo, rename, or
+        # deletion) would silently stop granting the block to a skill that needs it.
+        # Fail loudly instead.
+        on_disk = {os.path.basename(os.path.dirname(p)) for p in skill_paths}
+        unknown = sorted(ORCHESTRATOR_SKILLS - on_disk)
+        if unknown:
+            raise SystemExit(
+                f"ORCHESTRATOR_SKILLS names {len(unknown)} skill(s) that do not exist "
+                f"on disk: {', '.join(unknown)} - fix the name(s) or remove them "
+                f"(edit {os.path.basename(__file__)})."
+            )
+        for path in skill_paths:
+            name = os.path.basename(os.path.dirname(path))
+            order = (ORCHESTRATOR_SKILL_BLOCK_ORDER if name in ORCHESTRATOR_SKILLS
+                     else SKILL_BLOCK_ORDER)
+            targets.append((path, order))
 
     for path in sorted(glob_module.glob(agents_pattern)):
         name = os.path.splitext(os.path.basename(path))[0]
@@ -436,13 +565,47 @@ def normalize_fences(text):
     return FENCE_FLUSH_RE.sub(r"\1", text)
 
 
-def process_file(path, block_order, dry_run=False):
+def _prune_re(block_name):
+    """Match one fenced SYNC region (main or :reminder) plus its surrounding blank
+    lines, so removal never leaves a double blank gap behind."""
+    tag = re.escape(block_name)
+    return re.compile(
+        r"\n*^<!-- SYNC:" + tag + r" -->.*?^<!-- /SYNC:" + tag + r" -->[ \t]*$\n*",
+        re.MULTILINE | re.DOTALL,
+    )
+
+
+def prune_blocks(content, block_order):
+    """Remove every PRUNABLE_BLOCKS region this file's tier order does not grant.
+
+    Counterpart to the insertion path: without it a skill that leaves a tier keeps
+    the block forever, which makes any tier narrowing a one-way door. Only names in
+    PRUNABLE_BLOCKS are ever touched. The `:reminder` fence is removed first — the
+    main-block pattern requires an exact `<tag> -->` and so cannot match it, and
+    removing the parent first would orphan the reminder.
+    """
+    removed = []
+    for name in sorted(PRUNABLE_BLOCKS - set(block_order)):
+        for variant in (f"{name}:reminder", name):
+            new_content = _prune_re(variant).sub("\n\n", content)
+            if new_content != content:
+                content, _ = new_content, removed.append(variant)
+    return content, removed
+
+
+def process_file(path, block_order, dry_run=False, prune=False):
     with open(path, "r", encoding="utf-8") as f:
         original = f.read()
 
     # Repair malformed (indented) fences first so the work is idempotent even when
     # no block is missing — covers present-but-malformed blocks (see TC-UAR-006).
     content = normalize_fences(original)
+
+    # Prune BEFORE computing what is missing: a block this tier no longer grants
+    # must not be counted as "present" and left in place.
+    if prune:
+        content, _pruned = prune_blocks(content, block_order)
+
     lines = content.splitlines()
 
     missing_blocks = [name for name in block_order if not block_present(content, name)]
@@ -497,6 +660,8 @@ def main():
     dry_run = "--dry-run" in sys.argv
     verbose = "--verbose" in sys.argv or "-v" in sys.argv
     agents_only = "--agents-only" in sys.argv
+    # Opt-in: removal is destructive, so it never rides along with a plain sync.
+    prune = "--prune" in sys.argv
 
     targets = find_target_files(agents_only=agents_only)
     if not targets:
@@ -510,7 +675,7 @@ def main():
     for path, block_order in targets:
         rel = os.path.relpath(path, PROJECT_DIR)
         try:
-            result = process_file(path, block_order, dry_run=dry_run)
+            result = process_file(path, block_order, dry_run=dry_run, prune=prune)
             if result == "updated":
                 updated += 1
                 if verbose:

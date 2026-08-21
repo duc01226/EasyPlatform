@@ -52,6 +52,25 @@ const IMPLEMENTATION_WORKFLOW_IDS = new Set([
   "workflow-feature",
 ]);
 
+const DOMAIN_ENTITY_REFERENCE_REFRESH_WORKFLOW_IDS = new Set([
+  "workflow-big-feature",
+  "workflow-bugfix",
+  "workflow-feature",
+]);
+const DOMAIN_ENTITY_REFERENCE_REFRESH_CONTEXT_TERMS = [
+  "after /test",
+  "before /docs-update",
+  "run /scan --target=domain-entities",
+  "when the final diff",
+  "final diff",
+  "entity/model",
+  "dto/data contract",
+  "persistence schema/migration",
+  "entity-sync",
+  "otherwise",
+  "cited skip reason",
+];
+
 const IMPLEMENTATION_STEPS = new Set(["feature-implement", "fix", "plan-execute"]);
 const CANONICAL_SPEC_BEFORE_FIRST_PLAN_WORKFLOW_IDS = new Set([
   "workflow-bugfix",
@@ -184,6 +203,107 @@ const REVIEW_CHANGES_INLINE_SURFACES = [
     forbid: [],
   },
 ];
+
+// The static workflow catalog is a fast route-selection surface, not the complete execution
+// contract. start-workflow must always load the selected canonical entry before TaskCreate so a
+// workflow's pre-actions (including conditional run/skip rules) reach the concrete task.
+const START_WORKFLOW_PREACTION_SURFACE = ".claude/skills/start-workflow/SKILL.md";
+const START_WORKFLOW_PREACTION_REQUIREMENTS = [
+  {
+    label: "Tier-2 canonical entry read before TaskCreate",
+    re: /Tier 2[^.\n]*required[^.\n]*before[^.\n]*TaskCreate/i,
+  },
+  {
+    label: "three-workflow policy scope",
+    re: /workflow-big-feature[^.\n]*workflow-bugfix[^.\n]*workflow-feature/i,
+  },
+  {
+    label: "JSON-aware complete canonical-entry read",
+    re: /JSON-aware[^.\n]*complete[^.\n]*canonical[^.\n]*entry/i,
+  },
+  {
+    label: "preActions inject-context loading",
+    re: /preActions\.injectContext/i,
+  },
+  {
+    label: "static catalog route-selection boundary",
+    re: /static catalog is a route-selection aid/i,
+  },
+  {
+    label: "conditional task run/skip propagation",
+    re: /exact canonical run condition and evidence-backed skip transition/i,
+  },
+  {
+    label: "host-neutral Tier-1 workflow-id selection",
+    re: /exact workflow ID/i,
+  },
+  {
+    label: "Tier-1 non-execution boundary",
+    re: /Do NOT parse a static catalog sequence/i,
+  },
+  {
+    label: "host-neutral step invocation guidance",
+    re: /active host's command syntax/i,
+  },
+  {
+    label: "conditional completion exception",
+    re: /conditional(?:ly)? skipped task[^.\n]*without invoking(?: its)? `?Skill`? tool/i,
+  },
+];
+const START_WORKFLOW_PREACTION_FORBIDDEN = [
+  { label: "stop-at-first-success tier fallback", re: /stop at first success/i },
+  {
+    label: "parallel-groups-only Tier-2 condition",
+    re: /use Tier 2 when the workflow may declare `parallelGroups`/i,
+  },
+  {
+    label: "static catalog command parsing mandate",
+    re: /Parse the `Steps:` value[^\n]*TaskCreate/i,
+  },
+  {
+    label: "Claude-only generic step placeholder",
+    re: /invoke each as `\/<stepId>`/i,
+  },
+  {
+    label: "fixed-context workflow extraction",
+    re: /(?:context=35|--context 35|context=30|--context 30)/i,
+  },
+  {
+    label: "slash-form task activity template",
+    re: /activeForm="Executing \/\{step-name\}"/i,
+  },
+  {
+    label: "unapproved all-standard-workflow Tier-2 expansion",
+    re: /before every standard-workflow TaskCreate/i,
+  },
+];
+
+export function checkStartWorkflowPreActionPolicy(rel, content) {
+  if (rel !== START_WORKFLOW_PREACTION_SURFACE) return [];
+  const failures = START_WORKFLOW_PREACTION_REQUIREMENTS.flatMap(({ label, re }) =>
+    re.test(content)
+      ? []
+      : [
+          `start-workflow pre-action violation (${rel}): missing ${label} — load the selected canonical workflow entry before TaskCreate so conditional pre-actions reach the task`,
+        ]
+  );
+  for (const { label, re } of START_WORKFLOW_PREACTION_FORBIDDEN) {
+    if (re.test(content)) {
+      failures.push(
+        `start-workflow pre-action violation (${rel}): found ${label} — Tier 1 selects a route and Tier 2 must load the canonical execution contract before TaskCreate`
+      );
+    }
+  }
+  return failures;
+}
+
+async function checkStartWorkflowPreActionCoverage(rootDir, failures) {
+  const filePath = path.join(rootDir, ...START_WORKFLOW_PREACTION_SURFACE.split("/"));
+  if (!(await exists(filePath))) return 0;
+  const content = await fs.readFile(filePath, "utf8");
+  failures.push(...checkStartWorkflowPreActionPolicy(START_WORKFLOW_PREACTION_SURFACE, content));
+  return 1;
+}
 
 // Pure, content-only checker (exported for unit tests): given a known surface `rel` and its
 // content, return the list of inline-execution policy violations. Unknown `rel` ⇒ no-op.
@@ -427,6 +547,36 @@ function ensureWorkflowPolicy(workflowId, workflow, sequence, failures) {
     failures.push(
       `Workflow policy violation (${workflowId}): missing ordered closure docs-update -> workflow-end`
     );
+  }
+
+  if (DOMAIN_ENTITY_REFERENCE_REFRESH_WORKFLOW_IDS.has(workflowId)) {
+    const domainEntityScanStep = "scan --target=domain-entities";
+    const scanCount = sequence.filter((step) => step === domainEntityScanStep).length;
+    const scanIndex = sequence.indexOf(domainEntityScanStep);
+    const hasTerminalDomainEntityRefresh =
+      scanCount === 1 &&
+      scanIndex > 0 &&
+      sequence[scanIndex - 1] === "test" &&
+      sequence[scanIndex + 1] === "docs-update";
+    if (scanCount !== 1) {
+      failures.push(
+        `Workflow policy violation (${workflowId}): requires exactly one terminal domain-entity reference refresh test -> scan --target=domain-entities -> docs-update (found ${scanCount})`
+      );
+    } else if (!hasTerminalDomainEntityRefresh) {
+      failures.push(
+        `Workflow policy violation (${workflowId}): missing terminal domain-entity reference refresh test -> scan --target=domain-entities -> docs-update`
+      );
+    }
+
+    const workflowContext = normalizeWhitespace(workflow?.preActions?.injectContext ?? "").toLowerCase();
+    const missingContextTerms = DOMAIN_ENTITY_REFERENCE_REFRESH_CONTEXT_TERMS.filter(
+      (term) => !workflowContext.includes(term)
+    );
+    if (missingContextTerms.length > 0) {
+      failures.push(
+        `Workflow policy violation (${workflowId}): missing conditional domain-entity reference refresh context term(s): ${missingContextTerms.join(", ")}`
+      );
+    }
   }
 
   if (TDD_WORKFLOW_IDS.has(workflowId)) {
@@ -771,6 +921,11 @@ async function main() {
     failures
   );
 
+  const startWorkflowPreActionCheckedCount = await checkStartWorkflowPreActionCoverage(
+    rootDir,
+    failures
+  );
+
   if (failures.length > 0) {
     console.error("[codex-verify-workflow-cycle] FAIL");
     for (const failure of failures) {
@@ -784,7 +939,7 @@ async function main() {
     (id) => Array.isArray(workflows[id]?.parallelGroups) && workflows[id].parallelGroups.length > 0
   ).length;
   console.log(
-    `[codex-verify-workflow-cycle] PASS (${workflowIds.length} workflow(s) across .claude/.agents skills; ${TARGET_WORKFLOW_IDS.length} policy-checked; ${groupedCount} parallelGroups workflow(s) parity-checked; ${goalContractCheckedCount} goal-contract skill(s) checked; ${reviewChangesInlineCheckedCount} workflow-review-changes inline-execution surface(s) checked)`
+    `[codex-verify-workflow-cycle] PASS (${workflowIds.length} workflow(s) across .claude/.agents skills; ${TARGET_WORKFLOW_IDS.length} policy-checked; ${groupedCount} parallelGroups workflow(s) parity-checked; ${goalContractCheckedCount} goal-contract skill(s) checked; ${reviewChangesInlineCheckedCount} workflow-review-changes inline-execution surface(s) checked; ${startWorkflowPreActionCheckedCount} start-workflow pre-action surface(s) checked)`
   );
 }
 

@@ -1,7 +1,9 @@
 # Scale Protocol — sizing, understanding groups, task breakdown, accumulation
 
 > Loaded at SKILL.md Step 0.5, **only when the sized tier is S2 or larger**. S0/S1 runs never pay for this file — one group, append per section, done.
->
+
+**S2 gather agents receive no fragment path.** They return bounded evidence to the orchestrator, which alone authors the combined report; fragment/shard ownership starts at S3+.
+
 > This file answers the four questions a big target makes unavoidable: **what is one group**, **what order do the groups go in**, **what tasks exist before the first deep read**, and **how does the ONE report file accumulate so a run that dies mid-way still leaves finished work on disk**.
 >
 > **The deliverable is a single combined markdown file at every tier and every group count.** Scale changes how many groups exist and how the work is dispatched — never how many files come out.
@@ -125,7 +127,19 @@ This order governs **three** things at once: the task order, the write order, an
 
 ## 6. Sub-agent fan-out (tier S3+)
 
-At S3+ one context cannot hold the target. Dispatch **one sub-agent per group**, in parallel batches bounded by the host's concurrency.
+At S3+ one context cannot hold the target. Dispatch **one sub-agent per group**, and spawn **every member of a wave in ONE message** — never one agent per turn. Group agents share no write target (each owns its own fragment), so the entire group set is ONE wave, bounded only by the host's concurrency; when the set exceeds that bound, split it into consecutive waves and barrier between them rather than dripping agents out one at a time.
+
+**Declare before the first spawn** — `Parallel plan: wave 1 = [G1…G8] · wave 2 = [G9…G12] · SEQ = [synthesis, spine, self-check]` — then advance only after EVERY member of the wave returns. A group correctly never spawned (empty after decomposition, out of resolved scope) counts as returned; never hold a wave open for it. — why: an undeclared wave silently degrades into the sequential run it was meant to replace, and nothing in the output shows that it did.
+
+### 6.1 Axis fan-out — MORE THAN ONE agent for ONE oversized group
+
+A group that sits at or above the size guard (> 8 files or > 2000 diff-lines) **and that the decomposition axis could not split further** — a genuinely cohesive but large unit — gets **multiple agents**, split by **gather axis, never by file**. The Step 1 inventories are mutually blind and read-only, so they parallelize cleanly, and each one is exactly the kind of pass that a single agent covering the whole group does thinnest.
+
+- **Split by axis, not by file.** Two agents each holding half a group's files each see half a mechanism and both report it confidently. Two agents holding all the files but different questions see the whole mechanism twice, from angles that do not overlap. — why: file-splitting a cohesive group manufactures the exact partial-view failure the group tests exist to prevent.
+- **Each axis agent writes its OWN shard** — `tmp/understand/fragments/{run-slug}/G{n}.{axis}.md`, created FIRST and appended per section, exactly as a whole-group fragment. **Never a shared fragment path:** N appenders to one file is the same lost-update race that §6 forbids for the report, one directory down.
+- **The ORCHESTRATOR spawns axis agents — a group agent NEVER spawns its own.** Fan-out stays one level deep; an agent that re-partitions its own brief re-decides a split the orchestrator already made, with less information than the orchestrator had. — why: nested fan-out is unbounded in principle and invisible in the wave declaration, so the barrier stops meaning what it says.
+- **Merge shards in SECTION order, not completion order**, into one `# G{n}` block before it enters the report — the same rule §6 applies to fragments, one level down. Verify every shard on disk first; a missing shard is a re-run, never a silently shortened block.
+- **Cap: ≤ 3 axis agents per group**, and axis fan-out applies only to groups that actually breach the size guard — a normal group stays one agent. When the cap bites, say which axes were folded together, per the no-silent-truncation rule.
 
 **Each sub-agent's prompt MUST carry, verbatim:**
 

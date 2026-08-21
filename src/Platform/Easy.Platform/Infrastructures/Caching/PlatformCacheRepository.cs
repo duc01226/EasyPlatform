@@ -571,8 +571,28 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         }
     }
 
+    /// <summary>
+    /// A very large, overflow-safe stand-in for "no expiration" on APIs (like <see cref="HybridCacheEntryOptions" />)
+    /// whose <c>TimeSpan?</c> expiration has no literal infinite sentinel - a <see langword="null" /> value there
+    /// means "fall back to the library's own configured default", NOT "never expire" (see
+    /// <see cref="Microsoft.Extensions.Caching.Hybrid.HybridCacheOptions.DefaultEntryOptions" /> doc remarks: "If no
+    /// value is specified ... the implementation can choose a reasonable default"). <see cref="TimeSpan.MaxValue" />
+    /// is deliberately NOT used: adding it to a current-time instant is a documented overflow ("no expiration"
+    /// business intent must not risk an ArgumentOutOfRangeException/OverflowException inside the caching library).
+    /// 100 years comfortably outlives any real deployment while staying far below <see cref="DateTime.MaxValue" />
+    /// even after being added to "now".
+    /// </summary>
+    public static readonly TimeSpan NeverExpireHybridCacheDuration = TimeSpan.FromDays(365 * 100);
+
     protected DistributedCacheEntryOptions MapToDistributedCacheEntryOptions(PlatformCacheEntryOptions options)
     {
+        if (options?.NeverExpire == true)
+            return new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = null,
+                SlidingExpiration = null
+            };
+
         return new DistributedCacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = options?.AbsoluteExpirationRelativeToNow() ?? CacheSettings.DefaultCacheEntryOptions.AbsoluteExpirationRelativeToNow(),
@@ -582,6 +602,12 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
 
     protected HybridCacheEntryOptions MapToHybridCacheEntryOptions(PlatformCacheEntryOptions options)
     {
+        if (options?.NeverExpire == true)
+            return new HybridCacheEntryOptions
+            {
+                Expiration = NeverExpireHybridCacheDuration
+            };
+
         return new HybridCacheEntryOptions
         {
             Expiration = options?.AbsoluteExpirationRelativeToNow() ?? CacheSettings.DefaultCacheEntryOptions.AbsoluteExpirationRelativeToNow()
@@ -647,12 +673,7 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
                     .SetAsync(
                         globalAllRequestCacheKeysCacheKey,
                         PlatformJsonSerializer.SerializeToUtf8Bytes(modifiedCacheValue),
-                        MapToDistributedCacheEntryOptions(
-                            new PlatformCacheEntryOptions
-                            {
-                                UnusedExpirationInSeconds = null,
-                                AbsoluteExpirationInSeconds = null
-                            }));
+                        MapToDistributedCacheEntryOptions(PlatformCacheEntryOptions.NeverExpireOptions()));
             }
         });
     }

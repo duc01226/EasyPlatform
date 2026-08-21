@@ -4,7 +4,7 @@ using Easy.Platform.Common.Utils;
 
 #endregion
 
-namespace Easy.Platform.Application.BackgroundLock;
+namespace Easy.Platform.Common.BackgroundLock;
 
 /// <summary>
 /// Per-pool sizing and timeout configuration for a named <c>BackgroundActionPermitPool</c>.

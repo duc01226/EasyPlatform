@@ -35,6 +35,31 @@ public class PlatformDefaultApplicationRequestContextAccessor : IPlatformApplica
     protected static readonly AsyncLocal<RequestContextHolder> RequestContextCurrentThread = new();
 
     /// <summary>
+    /// The request context belonging to the CURRENT execution flow, independent of any service scope, or null when
+    /// the flow carries none.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Why this is exposed, and why it is not <c>Current</c>.</b> A dispatch boundary that needs to snapshot the
+    /// scheduling flow's context holds only a service provider, and usually the ROOT one — every
+    /// <c>ExecuteScopedInBackground*</c> call site resolves <c>IPlatformRootServiceProvider</c> first. Resolving an
+    /// accessor from there and reading <see cref="Current" /> would return that ROOT scope's
+    /// <see cref="PerScopeInitiatedContext" />, which is created once and then reused for the life of the process:
+    /// the first request's values would be baked in and served to every later request. This property sidesteps that
+    /// entirely by reading the <see cref="AsyncLocal{T}" /> the platform already flows, so the answer follows the
+    /// EXECUTION FLOW rather than whichever scope the caller happened to hold.
+    /// </para>
+    /// <para>
+    /// <b>What it does not include.</b> Values written with <c>onlySelf: true</c> onto a scope's own context never
+    /// reach this instance — only writes that go through the accessor
+    /// (<see cref="SetValues" /> / <see cref="AddValues" />) are mirrored here. That is the same subset a child
+    /// scope already inherits through <c>InitContext</c>, so a caller reading this sees exactly what scope
+    /// inheritance would have given it, never less.
+    /// </para>
+    /// </remarks>
+    public static IPlatformApplicationRequestContext? CurrentExecutionFlowContext => RequestContextCurrentThread.Value?.Context;
+
+    /// <summary>
     /// Defines how the request context lifetime is managed.
     /// Determines whether context is scoped, follows async flow, or uses a combination of both approaches.
     /// </summary>

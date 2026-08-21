@@ -127,13 +127,13 @@ You are a **teacher, a coach, and a router**, in that order.
 
 4. **Size the target BEFORE you read it (cheap signals only — this step costs seconds).** Count, do not estimate: in-scope **files** (`git diff --name-only` + untracked, or a glob of the named area), distinct user-facing **capabilities/flows**, distinct **modules / bounded contexts** (`docs/project-config.json` → modules), and **changed lines** where a diff exists. Read the tier off the table — **first row whose trigger matches, top-down** — and announce it in one line (`Scope: S3 · Large — 63 files, 9 capabilities, 4 modules → 8 groups`).
 
-    | Tier             | Trigger (first match wins)                         | Understanding groups        | Report shape | How the work runs                            |
-    | ---------------- | -------------------------------------------------- | --------------------------- | ------------ | -------------------------------------------- |
-    | **S0 · Point**   | One file, one decision, one concept, one error     | 1                           | One file     | Inline, section by section                   |
-    | **S1 · Small**   | < 10 in-scope files, one capability                | 1                           | One file     | Inline, section by section                   |
-    | **S2 · Multi**   | ≥ 10 files **OR** ≥ 2 capabilities/flows/contexts  | 2–6                         | One file     | Inline, group by group                       |
-    | **S3 · Large**   | > 40 files **OR** > 6 groups                       | 6–12                        | One file     | One sub-agent per group, front-loaded writes |
-    | **S4 · Program** | Whole repo · multi-service · "explain the project" | Grouped per context, nested | One file     | Group agents → context synthesizers → spine  |
+    | Tier             | Trigger (first match wins)                         | Understanding groups        | Report shape | How the work runs                                                                                                         |
+    | ---------------- | -------------------------------------------------- | --------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+    | **S0 · Point**   | One file, one decision, one concept, one error     | 1                           | One file     | Inline, section by section                                                                                                |
+    | **S1 · Small**   | < 10 in-scope files, one capability                | 1                           | One file     | Inline, section by section                                                                                                |
+    | **S2 · Multi**   | ≥ 10 files **OR** ≥ 2 capabilities/flows/contexts  | 2–6                         | One file     | **Gather fans out** — one read-only gather agent per group, all in ONE wave; orchestrator authors inline from the returns |
+    | **S3 · Large**   | > 40 files **OR** > 6 groups                       | 6–12                        | One file     | One sub-agent per group, **every group spawned in ONE wave**, front-loaded fragment writes                                |
+    | **S4 · Program** | Whole repo · multi-service · "explain the project" | Grouped per context, nested | One file     | Group agents in waves → context synthesizers → spine                                                                      |
 
     > The thresholds are the framework's existing map-reduce ladder (`SYNC:systematic-review-batching`: < 10 sequential · ≥ 10 batch · > 6 categories or > 40 files hierarchical), **adopted deliberately** so `understand` and the review skills never partition the same target two different ways. What differs is only the unit and the output: this skill batches by **explainable group** and emits **teaching**, never findings. — why: a developer who runs both skills on one change should meet the same boundaries twice, not two competing maps.
 
@@ -142,6 +142,19 @@ You are a **teacher, a coach, and a router**, in that order.
 5. **Decompose into understanding groups, then break the work into TASKS — before any deep read.**
     - **A group is an explainable unit** — its own §1–§13 are answerable about it alone, its name has no "and" in it, and it fits ≤ 8 files **or** ≤ 2000 diff-lines. Decomposition axis, first rung yielding ≥2 cohesive groups: **module/bounded context** → **capability/story cluster** → **end-to-end flow** → **layer slice** (horizontal sweeps only) → **directory** (last resort, labelled _"structural grouping — not a conceptual boundary"_). MUST ATTENTION record which rung you landed on — the reader calibrates on it exactly as on a grep-derived route. Tier S0/S1 → exactly one group, and this collapses to the classic single-file report with zero overhead.
     - **[BLOCKING] Create the task list BEFORE gathering.** `TaskList` FIRST — an interrupted or compacted run **resumes its tasks, never duplicates them**. Then create one task per group plus the fixed tasks: _size & decompose · scope-wide gather · open report + ledger · {one per group} · cross-group synthesis · chat summary + index · contract self-check_. Exactly one `in_progress`; transition it before the work and `completed` immediately after the evidence exists. **A group task completes ONLY when that group's block is on disk** — evidence is the path plus the sections it carries, never a summary in context. At S0/S1 still create one task per report part (I·II·III·IV). — why: a run that dies mid-report must show the reader exactly where it stopped, at every size.
+    - **Decompose to the FINEST unit that still explains something.** Do not stop at the coarsest split that clears the group tests — a group holding 8 loosely-related files is two groups pretending to be one, and it serialises work that could have run concurrently. Push down the decomposition axis one more rung whenever the result still yields cohesive, individually-explainable groups. More, smaller groups = more parallel width and a finer resume point; the ≤12-per-level guard and the nesting rule bound the count. — why: decomposition width IS the parallelism budget — a target split into 3 groups can never run 8-wide, no matter how many agents are available.
+    - **[BLOCKING at S2+] Tag every task `PAR` or `SEQ`, then declare the waves — BEFORE dispatching any of them.** `PAR` = its inputs do not include another pending task's output AND its write target is disjoint from every other `PAR` task; everything else is `SEQ` and must name the dependency that forces it. The fixed task set classifies the same way on every run:
+    - **S2 never assigns fragment ownership:** gather agents return bounded evidence only and the orchestrator authors the one report. Fragment paths begin at S3+.
+
+        | Task                                       | Mode                      | Why                                                                                    |
+        | ------------------------------------------ | ------------------------- | -------------------------------------------------------------------------------------- |
+        | size & decompose                           | `SEQ`                     | every other task consumes its group set                                                |
+        | scope-wide gather · open report + ledger   | `PAR`                     | one is read-only, the other writes only the report skeleton — disjoint targets         |
+        | {one per group}                            | **`PAR` — the main wave** | each group reads its own file list and writes its OWN fragment; no shared write target |
+        | cross-group synthesis                      | `SEQ`                     | consumes every group block                                                             |
+        | chat summary + index · contract self-check | `SEQ`                     | consume the finished report                                                            |
+
+        Announce it in one line before the first spawn — `Parallel plan: wave 1 = [scope gather, open report+ledger] · wave 2 = [G1…G8] · SEQ = [synthesis, summary, self-check] (each consumes the whole wave)` — then spawn **every member of a wave in ONE message**, never dripped one per turn, and honour the barrier: advance only after EVERY member returns. — why: a declared wave is checkable; an undeclared one silently degrades into the sequential run it was meant to replace.
 
     > **Scale Protocol** — grouping algorithm and the three group tests · group ordering (contract-inward at group altitude) · the exact task set · the accumulation ledger and write order · resumability after a cutoff · sub-agent fan-out rules at S3+ · caps and the no-silent-truncation rule · the degradation ladder.
     >
@@ -464,6 +477,44 @@ Offer a simpler restatement or analogy for any dense point proactively, without 
 
 <!-- /SYNC:ai-mistake-prevention:reminder -->
 
+<!-- SYNC:parallel-subagent-dispatch -->
+
+> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
+>
+> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
+> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
+> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
+> 4. **Spawn each wave in ONE message** — every `Agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
+> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
+> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
+> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
+>
+> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a skill or workflow explicitly fixes · gates awaiting user approval.
+>
+> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
+
+<!-- /SYNC:parallel-subagent-dispatch -->
+
+<!-- SYNC:parallel-subagent-dispatch:reminder -->
+
+- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
+- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
+  <!-- /SYNC:parallel-subagent-dispatch:reminder -->
+
+<!-- SYNC:project-protocol-overlay -->
+
+> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
+>
+> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+
+<!-- /SYNC:project-protocol-overlay -->
+
+<!-- SYNC:project-protocol-overlay:reminder -->
+
+**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+
+<!-- /SYNC:project-protocol-overlay:reminder -->
+
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** the developer can **judge** the work and **review** it, not merely accept it — they carry traced understanding of what was done, a picture of the system, the stories and rules it serves, a route saying which files to open first, the concepts behind it, why THIS option beat the others, what it cost, how to run and demo it, and which levers they'd pull to change it. AI accelerates the human without eroding their grasp of the codebase or their authority over it. Taught in full, at every coding level **and at every scope** — scope changes how many understanding groups the report carries, never how many sections.
@@ -477,10 +528,12 @@ Offer a simpler restatement or analogy for any dense point proactively, without 
 - **Incremental Persistence:** create the report file BEFORE the first section; append per section and per group; never hold results in memory.
 - **Output Quality:** dense, token-efficient prose; lead with the answer.
 - **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Parallel Sub-Agent Dispatch:** Tag tasks PAR/SEQ, group PAR into disjoint-write-set waves, spawn each wave in ONE message, barrier before advancing.
 
 - **MUST ATTENTION** derive WHAT to explain from the prompt; with no target named, default to the current working tasks + changes in context. Never impose a fixed agenda.
 - **MUST ATTENTION** SIZE the target into a scope tier (S0–S4) **before** reading it and DECOMPOSE anything above S1 into understanding groups (≤8 files / ≤2000 diff-lines, each explainable on its own) — announce both in one line. A bigger target buys **MORE GROUPS, never FEWER SECTIONS**; _"too big to explain properly"_ is a conclusion this skill may never reach.
 - **MUST ATTENTION** BREAK THE WORK INTO TASKS **before the first deep read** — `TaskList` first (resume, never duplicate), one task per group plus the fixed spine tasks, exactly one `in_progress`, and a group task marked `completed` ONLY when its block is on disk.
+- **MUST ATTENTION** DECOMPOSE TO THE FINEST EXPLAINABLE UNIT, then TAG every task `PAR`/`SEQ`, DECLARE the waves, and SPAWN each wave in ONE message — group tasks are the main `PAR` wave (each owns its own fragment, so no shared write target); synthesis, spine, summary and self-check are `SEQ` because each consumes the whole wave. An oversized group that cannot split further gets up to 3 agents split by GATHER AXIS, never by file, each writing its own shard — and the ORCHESTRATOR spawns them, never the group agent. NEVER drip agents one per turn, and NEVER advance a barrier on a wave that has not fully returned. — why: decomposition width IS the parallelism budget, and an undeclared wave silently degrades into the sequential run it replaced.
 - **MUST ATTENTION** OPEN the report — spine, ledger, reserved stubs — before section one, then ACCUMULATE group by group (write the block → update its ledger row → complete the task) and synthesize the scope-wide sections **from the written blocks**, never from memory. After any cutoff or compaction, verify every `written` ledger row against the filesystem before continuing.
 - **MUST ATTENTION** DELEGATE the GATHERING — `/scout`, `/investigate`, `/debug-investigate`, `/graph-trace` — when read + grep + trace cannot fill an inventory; NEVER delegate to a mutating or findings-emitting skill, never let a delegate author a section, and re-verify every delegated claim against `file:line` before it enters the report. At S3+ the delegation runs inside the group's sub-agent, not the orchestrator.
 - **MUST ATTENTION** announce anything deferred, sampled, or dropped in BOTH the spine and the chat summary — bounded coverage must never read as complete coverage.

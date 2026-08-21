@@ -3,7 +3,6 @@
 using System.Diagnostics;
 using System.Reflection;
 using Easy.Platform.Application.BackgroundJob;
-using Easy.Platform.Application.BackgroundLock;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Application.Cqrs.Events;
 using Easy.Platform.Application.Cqrs.Queries;
@@ -21,6 +20,7 @@ using Easy.Platform.Application.Services;
 using Easy.Platform.Common;
 using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.DependencyInjection;
+using Easy.Platform.Common.Execution;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.HostingBackgroundServices;
 using Easy.Platform.Common.Utils;
@@ -459,6 +459,16 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
             IPlatformBackgroundJobSchedulerCarryRequestContextService,
             PlatformApplicationBackgroundJobSchedulerCarryRequestContextService
         >(ServiceLifeTime.Scoped);
+
+        // Carries the request context across the detach boundary that PlatformDetachedExecutionFlow creates.
+        // Singleton, and deliberately so: it holds no scope state — capture reads the execution flow's own context
+        // and restore is handed the destination scope explicitly. A scoped registration would be resolved from the
+        // ROOT provider by every background dispatch site (they all start from IPlatformRootServiceProvider) and
+        // would therefore capture a process-wide scope's context instead of the scheduling request's.
+        serviceCollection.Register<
+            IPlatformDetachedExecutionFlowContextCarrier,
+            PlatformApplicationDetachedExecutionFlowContextCarrier
+        >(ServiceLifeTime.Singleton);
 
         // Background-lock (per-domain permit pool) infrastructure is platform-wide, not bus-specific.
         // The registry owns named bulkheads such as EventHandlerFanOut, InboxConsume, OutboxDispatch,

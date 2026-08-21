@@ -103,6 +103,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
 
     // ReSharper disable once StaticMemberInGenericType
     private static readonly ConcurrentDictionary<string, Type> GetCachedExistingOriginalEntityCustomGetRuntimeTypeFnCachedResultDict = new();
+    private static readonly ConcurrentDictionary<string, bool> HasOwnedCollectionWithStoreGeneratedKeyCachedResultDict = new();
 
     private readonly Lazy<ILogger> lazyLogger;
     private readonly Lazy<PlatformPersistenceConfiguration<TDbContext>> lazyPersistenceConfiguration;
@@ -1582,8 +1583,20 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                 id => GetQuery<TEntity>().AsNoTracking().AnyAsync(p => p.Id.Equals(id), cancellationToken: cancellationToken)
             );
 
+            var toUpdateEntity = entity.WithIf(!entity.Id.Equals(existingEntity.Id), entity => entity.Id = existingEntity.Id);
+
+            // An owned collection keyed by a store-generated (shadow) property cannot be written from a DETACHED graph:
+            // UpdateAsync would attach it via DbSet.Update, and a detached owned row carries no value for that key, so
+            // SaveChanges fails with "The value of shadow key property '...' is unknown when attempting to save changes"
+            // and takes the whole unit of work with it. Detaching also hides the rows already stored, so children the
+            // caller removed are never deleted and children it added are issued as updates against rows that do not exist.
+            // Loading the row TRACKED first and applying the caller's state onto that instance is what makes the write
+            // legal: the stored owned rows enter the change tracker with their real keys, so the provider can compute a
+            // correct delete/insert set. Only entity types that actually have such a collection take this path.
+            toUpdateEntity = await LoadTrackedAndMergeIfOwnedCollectionWithStoreGeneratedKeyAsync<TEntity, TPrimaryKey>(toUpdateEntity, cancellationToken);
+
             return await UpdateAsync<TEntity, TPrimaryKey>(
-                entity.WithIf(!entity.Id.Equals(existingEntity.Id), entity => entity.Id = existingEntity.Id),
+                toUpdateEntity,
                 existingEntity,
                 dismissSendEvent,
                 checkDiff,
@@ -1616,29 +1629,52 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                 customCheckExistingPredicateBuilder
             );
 
+            // An owned collection keyed by a store-generated (shadow) property cannot be written from a DETACHED
+            // graph: UpdateManyAsync would attach it via DbSet.Update, and a detached owned row carries no value for
+            // that key, so SaveChanges fails with "The value of shadow key property '...' is unknown when attempting
+            // to save changes" and takes the whole unit of work with it. Detaching also hides the rows already stored,
+            // so children the caller removed are never deleted and children it added are issued as updates against
+            // rows that do not exist. For those entity types this ONE existence read is loaded TRACKED and the
+            // caller's state is merged onto the tracked instances below, which is what lets the provider compute a
+            // correct delete/insert set. The diff baseline that the same read feeds to SetCachedExistingOriginalEntity
+            // is a DeepClone, so it can never alias the instances the merge then mutates. Every other entity type
+            // keeps the original no-tracking read, and either way the whole batch still costs ONE query.
+            var shouldMergeIntoTrackedExistingEntities = HasOwnedCollectionWithStoreGeneratedKey<TEntity>();
+
             var existingEntitiesQuery = GetQuery<TEntity>()
-                .AsNoTracking()
+                .PipeIf(!shouldMergeIntoTrackedExistingEntities, query => query.AsNoTracking())
                 .Where(existingEntitiesPredicate);
 
             // Only need to check by entityIds if no custom check condition
             if (!shouldMatchExistingEntitiesByPredicate)
             {
-                var existingEntityIds = await ContextThreadSafeLock.ExecuteLockActionAsync(
+                // Keyed by id rather than reduced to an id set: when the rows were loaded tracked they are also the
+                // instances the caller's state is merged onto, so the batch never needs a second read to find them.
+                var existingEntityById = await ContextThreadSafeLock.ExecuteLockActionAsync(
                     () =>
                         existingEntitiesQuery
                             .ToListAsync(cancellationToken)
                             .Then(items =>
                                 items
                                     .PipeAction(items => items.ForEach(p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p)))
-                                    .Pipe(existingEntities => existingEntities.Select(p => p.Id).ToHashSet())
+                                    .Pipe(existingEntities => existingEntities.ToDictionary(p => p.Id))
                             ),
                     cancellationToken
                 );
-                var (toUpdateEntities, newEntities) = entities.WhereSplitResult(p => existingEntityIds.Contains(p.Id));
+                var (toUpdateEntities, newEntities) = entities.WhereSplitResult(p => existingEntityById.ContainsKey(p.Id));
 
                 // Ef core is not thread safe so that couldn't use when all
                 await CreateManyAsync<TEntity, TPrimaryKey>(newEntities, dismissSendEvent, eventCustomConfig, cancellationToken);
-                await UpdateManyAsync<TEntity, TPrimaryKey>(toUpdateEntities, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
+                await UpdateManyAsync<TEntity, TPrimaryKey>(
+                    toUpdateEntities.PipeIf(
+                        shouldMergeIntoTrackedExistingEntities,
+                        toUpdateEntities => toUpdateEntities.SelectList(p => MergeIntoTrackedExistingEntity(existingEntityById[p.Id], p))
+                    ),
+                    dismissSendEvent,
+                    checkDiff,
+                    eventCustomConfig,
+                    cancellationToken
+                );
             }
             else
             {
@@ -1668,7 +1704,9 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                 // Ef core is not thread safe so that couldn't use when all
                 await CreateManyAsync<TEntity, TPrimaryKey>(newEntities.Select(p => p.ToUpsertEntity).ToList(), dismissSendEvent, eventCustomConfig, cancellationToken);
                 await UpdateManyAsync<TEntity, TPrimaryKey>(
-                    existingToUpdateEntities.Select(p => p.ToUpsertEntity).ToList(),
+                    existingToUpdateEntities.SelectList(p =>
+                        shouldMergeIntoTrackedExistingEntities ? MergeIntoTrackedExistingEntity(p.MatchedExistingEntity!, p.ToUpsertEntity) : p.ToUpsertEntity
+                    ),
                     dismissSendEvent,
                     checkDiff,
                     eventCustomConfig,
@@ -1952,6 +1990,135 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
         return MappedUnitOfWork?.SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p, false, GetCachedExistingOriginalEntityCustomGetRuntimeTypeFn);
+    }
+
+    /// <summary>
+    /// True when <typeparamref name="TEntity" /> owns a collection whose primary key contains a store-generated shadow
+    /// property — an <c>OwnsMany</c> declared without an explicit <c>HasKey</c>, for which EF Core synthesizes the key.
+    /// Such rows have no key value while detached, so they can only be written through a tracked instance.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Searches the owned graph at ANY depth, not only the root's direct navigations: an <c>OwnsMany</c> nested inside
+    /// an <c>OwnsOne</c> is reachable only through the intermediate owned type and is invisible to a root-direct scan,
+    /// while still being written through the same detached graph. See the recursive overload for the traversal rules.
+    /// </para>
+    /// <para>
+    /// Resolved from the model once per (DbContext type, entity type) because it is fixed at model-build time.
+    /// </para>
+    /// </remarks>
+    protected bool HasOwnedCollectionWithStoreGeneratedKey<TEntity>()
+        where TEntity : class
+    {
+        return HasOwnedCollectionWithStoreGeneratedKeyCachedResultDict.GetOrAdd(
+            $"{GetType().Name}_{typeof(TEntity).FullName}",
+            _ =>
+            {
+                var rootEntityType = Model.FindEntityType(typeof(TEntity));
+
+                return rootEntityType != null && HasOwnedCollectionWithStoreGeneratedKey(rootEntityType, []);
+            }
+        );
+    }
+
+    /// <summary>
+    /// Recursive half of <see cref="HasOwnedCollectionWithStoreGeneratedKey{TEntity}" />: reports whether
+    /// <paramref name="entityType" /> reaches a shadow-keyed owned COLLECTION at ANY owned depth, not just as a
+    /// direct navigation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>Why depth matters.</strong> An <c>OwnsMany</c> declared INSIDE an <c>OwnsOne</c> is reachable only
+    /// through the intermediate owned type, so it never appears in the root's own <see cref="IEntityType.GetNavigations" />.
+    /// A root-direct scan therefore answers "no shadow-keyed owned collection" for an entity that has one, the
+    /// detached graph takes the no-tracking path, and the save fails with "The value of shadow key property '...' is
+    /// unknown" — the exact failure this detection exists to prevent.
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Why the walk follows OWNED navigations only.</strong> Owned types are part of THIS aggregate and are
+    /// written through the same graph, so their nested collections share the root's save path. An ordinary
+    /// relationship points at a different aggregate root with its own key and its own save; following those would
+    /// walk most of the model and flag nearly every entity type, turning a targeted correctness fix into a
+    /// model-wide loss of no-tracking reads.
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>What <paramref name="visitedOwnedTypes" /> is for.</strong> EF Core builds ownership as a TREE rooted
+    /// at each aggregate — an owned type's only navigation back out is to its owner, which the owned-only filter
+    /// above already excludes — so this walk is not expected to meet the same type twice. The set is therefore a
+    /// cheap termination safeguard, NOT a load-bearing cycle breaker: it costs one hash insert per owned type, while
+    /// being wrong about the model's shape would cost an infinite recursion inside a save path. Returning
+    /// <c>false</c> on revisit is correct and not merely safe — this is a depth-first walk, so a type already in the
+    /// set has already been fully explored and has already contributed its answer.
+    /// <see cref="!:PlatformEfCoreNestedOwnedCollectionDetectionTests" /> records the matching decision to omit a
+    /// cyclic test case: fabricating a model EF refuses to build would prove nothing about this guard.
+    /// </para>
+    /// </remarks>
+    private static bool HasOwnedCollectionWithStoreGeneratedKey(IEntityType entityType, HashSet<IEntityType> visitedOwnedTypes)
+    {
+        return entityType
+            .GetNavigations()
+            .Where(navigation => navigation.TargetEntityType.IsOwned())
+            .Any(ownedNavigation =>
+                (ownedNavigation.IsCollection
+                    && ownedNavigation.TargetEntityType.FindPrimaryKey()?.Properties.Any(property => property.IsShadowProperty()) == true)
+                // Add() doubles as the termination guard: it returns false for an already-explored type, short-circuiting
+                // the recursion. Evaluated only when the direct check above did not already answer true.
+                || (visitedOwnedTypes.Add(ownedNavigation.TargetEntityType)
+                    && HasOwnedCollectionWithStoreGeneratedKey(ownedNavigation.TargetEntityType, visitedOwnedTypes))
+            );
+    }
+
+    /// <summary>
+    /// For an entity type flagged by <see cref="HasOwnedCollectionWithStoreGeneratedKey{TEntity}" />, loads the stored
+    /// row TRACKED and applies <paramref name="entity" />'s state onto it, returning the tracked instance to be saved.
+    /// Any other entity type — or a row that no longer exists — is returned unchanged, so no other write path moves.
+    /// </summary>
+    protected async Task<TEntity> LoadTrackedAndMergeIfOwnedCollectionWithStoreGeneratedKeyAsync<TEntity, TPrimaryKey>(
+        TEntity entity,
+        CancellationToken cancellationToken = default
+    )
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        if (!HasOwnedCollectionWithStoreGeneratedKey<TEntity>()) return entity;
+
+        var trackedEntity = await ContextThreadSafeLock.ExecuteLockActionAsync(
+            () => GetQuery<TEntity>().FirstOrDefaultAsync(p => p.Id.Equals(entity.Id), cancellationToken),
+            cancellationToken
+        );
+
+        // Row vanished between the existence check and here (a concurrent delete): leave the caller's entity alone and
+        // let the normal update path report it, rather than inventing a different failure here.
+        if (trackedEntity == null) return entity;
+
+        return MergeIntoTrackedExistingEntity(trackedEntity, entity);
+    }
+
+    /// <summary>
+    /// Applies <paramref name="entity" />'s state onto <paramref name="trackedExistingEntity" /> — the instance the
+    /// change tracker already holds for that row — and returns the tracked instance to be saved in its place.
+    /// </summary>
+    /// <remarks>
+    /// Scalars are copied through the change tracker; owned navigations are replaced wholesale, which is what lets the
+    /// provider delete the owned rows the caller dropped and insert the ones it added. Non-owned navigations are left as
+    /// loaded — an entity owning shadow-keyed collections whose related aggregates must also be written should write
+    /// those through their own repositories rather than by re-attaching a detached graph. The caller is responsible for
+    /// having captured its diff baseline first; SetCachedExistingOriginalEntity stores a DeepClone, so a baseline taken
+    /// from the same read survives this mutation.
+    /// </remarks>
+    protected TEntity MergeIntoTrackedExistingEntity<TEntity>(TEntity trackedExistingEntity, TEntity entity)
+        where TEntity : class
+    {
+        Entry(trackedExistingEntity).CurrentValues.SetValues(entity);
+
+        Model
+            .FindEntityType(typeof(TEntity))
+            ?.GetNavigations()
+            .Where(navigation => navigation.TargetEntityType.IsOwned())
+            .ForEach(navigation => navigation.PropertyInfo?.SetValue(trackedExistingEntity, navigation.PropertyInfo.GetValue(entity)));
+
+        return trackedExistingEntity;
     }
 
     public Type GetCachedExistingOriginalEntityCustomGetRuntimeTypeFn<TEntity>(TEntity entity)

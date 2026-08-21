@@ -460,6 +460,25 @@ def get_current_head(repo_root: Path) -> str | None:
         return None
 
 
+def _is_ancestor(repo_root: Path, maybe_ancestor: str, descendant: str) -> bool:
+    """True only when `maybe_ancestor` is a strict-or-equal ancestor of `descendant`.
+
+    Wraps `git merge-base --is-ancestor`, whose exit codes are: 0 = yes, 1 = no,
+    anything else = error (e.g. either commit missing locally after a force-push).
+    Only exit 0 answers yes — an error must NOT be read as "yes", or an
+    unreachable commit would silently suppress a needed resync.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", maybe_ancestor, descendant],
+            capture_output=True, text=True,
+            cwd=str(repo_root), timeout=_GIT_TIMEOUT,
+        )
+        return result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
 def _get_git_diff_files(repo_root: Path, old_ref: str, new_ref: str) -> dict[str, list[str]]:
     """Get files changed between two git refs, categorized by status.
 
@@ -559,6 +578,18 @@ def sync_with_git(repo_root: Path, store: GraphStore) -> dict:
     # Same commit — already synced
     if last_synced == current_head:
         return {"status": "ok", "reason": "up_to_date", "synced_commit": current_head,
+                "files_synced": 0}
+
+    # HEAD is behind the graph — checked out an older branch/commit that the
+    # graph already covers. Do nothing: leave the nodes and last_synced_commit
+    # alone rather than re-parsing backwards. Without this, `git diff A..B`
+    # succeeds in BOTH directions, so an older checkout would silently rewrite
+    # the graph to the older tree and drag last_synced_commit backwards with it.
+    # Diverged branches are NOT "behind" (neither commit is an ancestor of the
+    # other), so they still fall through and sync normally.
+    if _is_ancestor(repo_root, current_head, last_synced):
+        return {"status": "ok", "reason": "graph_ahead_skipped",
+                "synced_commit": last_synced, "head_commit": current_head,
                 "files_synced": 0}
 
     # Different commit — diff and sync

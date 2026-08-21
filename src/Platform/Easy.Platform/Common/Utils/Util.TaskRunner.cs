@@ -50,11 +50,11 @@ public static partial class Util
         /// </list>
         /// <para>Caller pattern: <c>if (retryAttempt &gt; LogErrorRetryThreshold(retryCount)) Logger.LogError(...);</c></para>
         /// <para>Consumed by: <see cref="Easy.Platform.Common.Cqrs.Events.PlatformCqrsEventHandler"/>,
-        /// <see cref="Easy.Platform.Application.Cqrs.Events.PlatformCqrsEventApplicationHandler"/>,
+        /// <c>PlatformCqrsEventApplicationHandler</c>,
         /// <see cref="Easy.Platform.Infrastructures.MessageBus.PlatformMessageBusConsumer"/>,
-        /// <see cref="Easy.Platform.Application.MessageBus.Consumers.PlatformApplicationBusMessageConsumer"/>,
-        /// <see cref="Easy.Platform.Application.MessageBus.InboxPattern.PlatformInboxMessageBusConsumerHelper"/>,
-        /// and <see cref="Easy.Platform.Application.MessageBus.OutboxPattern.PlatformOutboxMessageBusProducerHelper"/>.</para>
+        /// <c>PlatformApplicationBusMessageConsumer</c>,
+        /// <c>PlatformInboxMessageBusConsumerHelper</c>,
+        /// and <c>PlatformOutboxMessageBusProducerHelper</c>.</para>
         /// </remarks>
         public static int LogErrorRetryThreshold(int retryCount)
         {

@@ -99,6 +99,22 @@ GOAL_CONTRACT = list(ALL_REVIEW_SKILLS)
 # verify-review-validate-coverage.mjs).
 TRADE_OFF = list(ALL_REVIEW_SKILLS)
 
+# The 40-clause UI/UX Design Principles. NOT an ALL_REVIEW_SKILLS tag — its carriers are the
+# UI-surface skills across THREE roles (review · design/plan · build), which is a different
+# population from "every review skill": most review skills never touch a user-facing surface,
+# and three of these carriers (design, ui-ux-pro-max, pbi-mockup) are not review skills at all.
+# Declared here so a canonical-body edit auto-propagates to every carrier and
+# verify-sync-adoption-parity.mjs can sense drift; without the tag in MATRIX the bodies would
+# silently fossilize at whatever they were on the day they were embedded.
+UI_DESIGN_PRINCIPLES = [
+    # review role — clauses are fail-conditions citing UI-<clause> + file:line
+    "ui-review", "web-design-guidelines", "artifact-review", "test-ui",
+    # design/plan role — clauses shape the artifact the skill authors
+    "design", "design-spec", "ui-ux-pro-max", "figma-design",
+    # build role — pbi-mockup emits real markup, so clauses are build constraints
+    "pbi-mockup",
+]
+
 # Canonical apply order per skill (stable, cosmetic only).
 MATRIX = [
     ("SYNC:systematic-review-batching", BATCHING),
@@ -107,6 +123,7 @@ MATRIX = [
     ("SYNC:double-round-trip-review", DOUBLE_ROUND_TRIP),
     ("SYNC:goal-contract-satisfaction-loop", GOAL_CONTRACT),
     ("SYNC:trade-off-interrogation-gate", TRADE_OFF),
+    ("SYNC:ui-ux-design-principles", UI_DESIGN_PRINCIPLES),
 ]
 
 CLOSING_RE = re.compile(r"^## Closing Reminders\b.*$", re.MULTILINE)

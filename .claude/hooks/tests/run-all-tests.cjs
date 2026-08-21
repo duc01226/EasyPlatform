@@ -329,7 +329,75 @@ async function main() {
 
   // Exit with error code if any tests failed
   const hasFailures = allResults.some(r => r.failed > 0);
-  process.exit(hasFailures ? 1 : 0);
+
+  // Aggregate-test count drift guard. Mirrors the primary runner's guard
+  // (test-all-hooks.cjs, "Hook-test count drift guard") and lives here for the same
+  // reason it lives there rather than in a suite: a counted test cannot see the parent
+  // runner's live total from inside its own subprocess, and one that read `allResults`
+  // would read the tally before its own increment. So this is a post-summary hard
+  // assertion, deliberately NOT a counted test.
+  //
+  // It asserts the DISCOVERED total (passed + failed + skipped), never the pass count.
+  // Several tests gate on host capability (`git` availability in doc-impact-map) and on
+  // repo state (an empty protocol registry in project-protocol-drift), so the
+  // passed/skipped SPLIT legitimately differs per machine while the discovered total
+  // does not. Guarding the split would fire on a git-less host and train readers to
+  // ignore the guard — the failure mode a drift guard exists to prevent.
+  //
+  // Only meaningful on a COMPLETE, clean run: `--filter` executes a subset, `--bail`
+  // stops early, and a suite that fails to LOAD contributes failed:1 in place of its
+  // real test count. In each of those cases the total is not the canonical figure, so
+  // stay silent instead of reporting a drift that isn't one.
+  let countGuardFailed = false;
+  if (!flags.filter && !hasFailures) {
+    const liveTotal = allResults.reduce((sum, r) => sum + r.passed + r.failed + r.skipped, 0);
+    const docsDir = path.join(__dirname, '..', '..', 'docs');
+    const countTargets = [
+      {
+        file: path.join(docsDir, 'hooks', 'README.md'),
+        label: 'docs/hooks/README.md "discovers N tests" prose',
+        pattern: /run-all-tests\.cjs\` discovers (\d+) tests/
+      },
+      {
+        file: path.join(docsDir, 'hooks', 'README.md'),
+        label: 'docs/hooks/README.md "Aggregate runner" row',
+        pattern: /\|\s*Aggregate runner\s*\|\s*(\d+)\s*\|/
+      }
+    ];
+
+    const mismatches = [];
+    for (const target of countTargets) {
+      let content;
+      try {
+        content = fs.readFileSync(target.file, 'utf8');
+      } catch (err) {
+        mismatches.push(`${target.label}: cannot read (${err.code || err.message})`);
+        continue;
+      }
+      const match = content.match(target.pattern);
+      if (!match) {
+        mismatches.push(`${target.label}: no count matching ${target.pattern} found`);
+        continue;
+      }
+      const documented = Number(match[1]);
+      if (documented !== liveTotal) {
+        mismatches.push(`${target.label}: documents ${documented}, runner discovered ${liveTotal}`);
+      }
+    }
+
+    if (mismatches.length > 0) {
+      countGuardFailed = true;
+      console.log(`${COLORS.red}Aggregate-test count drift:${COLORS.reset}`);
+      for (const m of mismatches) {
+        console.log(`  ${COLORS.red}${SYMBOLS.fail}${COLORS.reset} ${m}`);
+      }
+      console.log(`  ${COLORS.dim}Fix: set the count to ${liveTotal} in the file(s) above.${COLORS.reset}\n`);
+    } else {
+      console.log(`${COLORS.green}Count guard:${COLORS.reset} docs agree (${liveTotal} tests discovered)\n`);
+    }
+  }
+
+  process.exit(hasFailures || countGuardFailed ? 1 : 0);
 }
 
 // Run if executed directly

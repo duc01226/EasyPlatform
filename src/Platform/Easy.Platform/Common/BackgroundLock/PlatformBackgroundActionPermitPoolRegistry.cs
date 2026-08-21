@@ -1,7 +1,6 @@
 #region
 
 using System.Collections.Concurrent;
-using Easy.Platform.Application.BackgroundLock;
 using Microsoft.Extensions.Logging;
 
 #endregion

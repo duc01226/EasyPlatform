@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Cqrs.Events;
+using Easy.Platform.Tests.Unit.TestInfrastructure;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -52,16 +53,17 @@ public class PlatformFailureCorrelationIdTests
     [Fact]
     public void EventHandlerLogError_WhenEventHasId_RendersThatIdIntoTheLog()
     {
-        var (handler, capturedLogs, loggerFactory) = CreateHandler();
+        var (handler, loggerFactory) = CreateHandler();
         var @event = new CorrelationTestEvent();
 
         handler.LogError(@event, new InvalidOperationException("boom"), loggerFactory);
 
-        capturedLogs.Should().ContainSingle();
-        capturedLogs[0].Should().Contain(
+        var formatted = loggerFactory.Logger.Entries.Should().ContainSingle().Subject.Formatted;
+
+        formatted.Should().Contain(
             @event.Id,
             "without the id, a swallowed failure names the handler but not the record that triggered it");
-        capturedLogs[0].Should().NotContain(
+        formatted.Should().NotContain(
             "{EventId}",
             "a literal token means the argument list and the template drifted — Serilog will not report this");
     }
@@ -73,7 +75,7 @@ public class PlatformFailureCorrelationIdTests
     [Fact]
     public void EventHandlerLogError_WhenEventIdThrows_LogsPlaceholderWithoutThrowing()
     {
-        var (handler, capturedLogs, loggerFactory) = CreateHandler();
+        var (handler, loggerFactory) = CreateHandler();
 
         var act = () => handler.LogError(
             new ThrowingIdTestEvent(),
@@ -81,9 +83,11 @@ public class PlatformFailureCorrelationIdTests
             loggerFactory);
 
         act.Should().NotThrow("the correlation id must never become the reason a failure goes unrecorded");
-        capturedLogs.Should().ContainSingle();
-        capturedLogs[0].Should().Contain("unknown");
-        capturedLogs[0].Should().Contain(
+
+        var formatted = loggerFactory.Logger.Entries.Should().ContainSingle().Subject.Formatted;
+
+        formatted.Should().Contain("unknown");
+        formatted.Should().Contain(
             nameof(InvalidOperationException),
             "degrading the id must not cost the rest of the diagnostic");
     }
@@ -235,16 +239,15 @@ public class PlatformFailureCorrelationIdTests
         return File.ReadAllText(fullPath);
     }
 
-    private static (CorrelationTestEventHandler Handler, List<string> CapturedLogs, ILoggerFactory LoggerFactory) CreateHandler()
+    private static (CorrelationTestEventHandler Handler, RecordingLoggerFactory LoggerFactory) CreateHandler()
     {
-        var capturedLogs = new List<string>();
-        var loggerFactory = new CaptureLoggerFactory(capturedLogs);
+        var loggerFactory = new RecordingLoggerFactory();
         var handler = new CorrelationTestEventHandler(
             loggerFactory,
             new Mock<IPlatformRootServiceProvider>().Object,
             new Mock<IServiceProvider>().Object);
 
-        return (handler, capturedLogs, loggerFactory);
+        return (handler, loggerFactory);
     }
 
     private sealed record LogErrorCall(string Template, List<string> Tokens, int ArgumentCount);
@@ -292,46 +295,6 @@ public class PlatformFailureCorrelationIdTests
         protected override Task HandleAsync(PlatformCqrsEvent @event, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
-        }
-    }
-
-    private sealed class CaptureLoggerFactory(List<string> capturedLogs) : ILoggerFactory
-    {
-        public ILogger CreateLogger(string categoryName)
-        {
-            return new CaptureLogger(capturedLogs);
-        }
-
-        public void AddProvider(ILoggerProvider provider)
-        {
-        }
-
-        public void Dispose()
-        {
-        }
-    }
-
-    private sealed class CaptureLogger(List<string> capturedLogs) : ILogger
-    {
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull
-        {
-            return null;
-        }
-
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return true;
-        }
-
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
-        {
-            capturedLogs.Add(formatter(state, exception));
         }
     }
 }

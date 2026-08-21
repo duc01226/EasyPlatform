@@ -7,9 +7,9 @@
 | Goal                         | Document                                                                                        |
 | ---------------------------- | ----------------------------------------------------------------------------------------------- |
 | **New to Claude Code?**      | [quick-start.md](./quick-start.md) - 5-minute onboarding                                        |
-| **Need a skill?**            | [skills/README.md](./skills/README.md) - 163 skills catalog                                     |
+| **Need a skill?**            | [skills/README.md](./skills/README.md) - 165 skills catalog                                     |
 | **Building a feature?**      | [skills/README.md](./skills/README.md) + `docs/project-reference/` patterns                     |
-| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 16 top-level hook files deep-dive                        |
+| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 17 top-level hook files deep-dive                        |
 | **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 19 workflows                                      |
 | **Configuring Claude?**      | [configuration/README.md](./configuration/README.md)                                            |
 | **Team collaboration?**      | [team-collaboration-guide.md](./team-collaboration-guide.md) - PO, BA, QA, QC, UX, PM workflows |
@@ -23,11 +23,11 @@
 |-- README.md                 <- You are here (Navigation hub)
 |-- quick-start.md            5-minute onboarding guide
 |
-|-- skills/                   163 skills across 15+ domains
+|-- skills/                   165 skills across 15+ domains
 |   |-- README.md             Skills overview + full catalog
 |   +-- (patterns)           → docs/project-reference/
 |
-|-- hooks/                    16 top-level hook files, 25 lib modules
+|-- hooks/                    17 top-level hook files, 26 lib modules
 |   |-- README.md             Hooks overview, lessons system, session lifecycle
 |   +-- extending-hooks.md    How to create custom hooks
 |
@@ -143,8 +143,8 @@
 
 | Category               | Count |
 | ---------------------- | ----- |
-| Skills                 | 163   |
-| Hook files (top-level) | 16    |
+| Skills                 | 165   |
+| Hook files (top-level) | 17    |
 | Lib Modules            | 25    |
 | Hook Events            | 8     |
 | Agents                 | 29    |
