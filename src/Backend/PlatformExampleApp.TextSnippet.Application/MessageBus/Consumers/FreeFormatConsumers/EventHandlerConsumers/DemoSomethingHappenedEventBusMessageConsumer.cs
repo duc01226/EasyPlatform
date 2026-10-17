@@ -1,6 +1,8 @@
 using Easy.Platform.Application.MessageBus.Consumers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Application.MessageBus.FreeFormatMessages.EventMessages;
 
 namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.FreeFormatConsumers.EventHandlerConsumers;
@@ -16,6 +18,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.FreeFo
 /// </summary>
 internal sealed class DemoSomethingHappenedEventBusMessageConsumer : PlatformApplicationMessageBusConsumer<DemoSomethingHappenedEventBusMessage>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public DemoSomethingHappenedEventBusMessageConsumer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager uowManager,

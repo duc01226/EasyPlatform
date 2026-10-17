@@ -24,12 +24,11 @@ Caveats:
     or `<!-- SYNC:foo --> ... <!-- /SYNC:foo -->` will be matched as if it were
     a real layout marker.
   - Currently safe in practice because `re.search` finds the FIRST occurrence and
-    every live skill puts the real markers BEFORE any fence-internal duplicates.
-    The only known live skill with fence-internal duplicates is
-    .claude/skills/story/SKILL.md (lines 427-818, a markdown template inside a
-    4-backtick fence). Real markers there appear before the fenced ones, so the
-    extraction succeeds and the leftover fence-internal text rides along inside
-    the closing-reminders carve — preserving rendering by accident.
+    every live SKILL.md puts the real markers BEFORE any fence-internal duplicates.
+    The known example of fence-internal duplicates is
+    .claude/skills/work-item/references/mode-story.md (a markdown template inside a
+    4-backtick fence); this migrator rewrites SKILL.md files only, so that
+    reference is never carved.
   - If future skills place fence-internal markers BEFORE the real ones, this
     migrator will mis-carve. Add fence-aware tokenization (or a normalization
     pre-pass that strips fenced regions before regex search) when that happens.

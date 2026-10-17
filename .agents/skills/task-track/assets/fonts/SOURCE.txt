@@ -1,0 +1,7 @@
+Red Hat Display, Red Hat Text and Red Hat Mono, variable weight, upright only.
+Licence: SIL Open Font License 1.1 (see the OFL-red-hat-*.txt files beside this one).
+Copied unchanged from the npm packages @fontsource-variable/red-hat-display,
+@fontsource-variable/red-hat-text and @fontsource-variable/red-hat-mono, version 5.3.0
+(files/red-hat-<family>-<subset>-wght-normal.woff2, subsets latin and latin-ext).
+The workspace server serves exactly these files under /fonts/; the stylesheet names them there.
+Characters outside the two subsets fall back to the platform font.

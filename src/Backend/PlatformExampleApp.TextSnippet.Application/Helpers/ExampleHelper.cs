@@ -24,11 +24,11 @@ internal sealed class ExampleHelper : IPlatformHelper
         this.fullTextSearchPersistenceService = fullTextSearchPersistenceService;
     }
 
-    public async Task<SearchEntityByNameHelperResult> SearchEntityByName(string name)
+    public async Task<SearchEntityByNameHelperResult> SearchEntityByName(string name, string? createdByUserId)
     {
         var firstFoundTextSnippet = await textSnippetRepository.FirstOrDefaultAsync(
             query => fullTextSearchPersistenceService.Search(
-                query,
+                query.Where(TextSnippetEntity.CreatedByUserExpr(createdByUserId)),
                 searchText: name,
                 inFullTextSearchProps:
                 [

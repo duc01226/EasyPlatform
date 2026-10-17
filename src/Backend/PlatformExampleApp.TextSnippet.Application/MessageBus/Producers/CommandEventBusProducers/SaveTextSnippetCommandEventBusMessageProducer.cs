@@ -1,13 +1,17 @@
 using Easy.Platform.Application.MessageBus.Producers;
 using Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.CommandEventBusProducers;
 
 public class SaveTextSnippetCommandEventBusMessageProducer : PlatformCqrsCommandEventBusMessageProducer<SaveSnippetTextCommand>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public SaveTextSnippetCommandEventBusMessageProducer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager unitOfWorkManager,

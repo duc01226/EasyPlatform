@@ -84,7 +84,14 @@ namespace Easy.Platform.RabbitMQ;
 /// <para>• <strong>Process Coordination:</strong> Ensures proper startup sequencing with dependency management</para>
 /// <para>• <strong>Connection Recovery:</strong> Automatic connection recovery and retry mechanisms</para>
 /// <para>• <strong>Message Acknowledgment:</strong> Proper message acknowledgment patterns for delivery guarantees</para>
-/// <para>• <strong>Error Handling:</strong> Comprehensive error handling with retry and dead letter support</para>
+/// <para>• <strong>Error Handling:</strong> Retry with backoff, backed by the durable INBOX table — a consumer that
+/// throws leaves a <c>Failed</c> row that is retried and later <c>Ignored</c>, which is where failed messages are
+/// recovered from.</para>
+/// <para>⛔ <strong>NOT dead-letter support</strong> — this line used to claim it. No <c>x-dead-letter-exchange</c>
+/// and no DLX exists anywhere in this repository, so a message that is never routed (unbound consumer queue) or that
+/// outlives <c>message-ttl</c> is discarded with no trace. See docs/deployment.md § "There is NO dead-letter queue".</para>
+/// <para>Matched unreadable deliveries are explicitly parked by <c>PlatformRabbitMqMalformedMessageRecovery</c>
+/// with publisher confirmation before ACK; this separate bounded recovery queue is not a DLX or automatic replay.</para>
 /// </summary>
 public abstract class PlatformRabbitMqMessageBusModule : PlatformMessageBusModule
 {

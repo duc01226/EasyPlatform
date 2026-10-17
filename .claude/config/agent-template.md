@@ -1,33 +1,29 @@
 ---
-name: {agent-name}
+name: { agent-name }
 description: >-
-  Use this agent when {primary use case}.
-  Examples:
-  - <example>
-      Context: {Scenario description}
-      user: "{Example user request}"
-      assistant: "{Example assistant response}"
-      <commentary>
-      {Why this agent is appropriate for this scenario}
-      </commentary>
-    </example>
-  - <example>
-      Context: {Another scenario}
-      user: "{Another example request}"
-      assistant: "{Another example response}"
-      <commentary>
-      {Why this agent is appropriate}
-      </commentary>
-    </example>
+    Use this agent when {primary use case}.
+    Examples:
+    - <example>
+        Context: {Scenario description}
+        user: "{Example user request}"
+        assistant: "{Example assistant response}"
+        <commentary>
+        {Why this agent is appropriate for this scenario}
+        </commentary>
+      </example>
+    - <example>
+        Context: {Another scenario}
+        user: "{Another example request}"
+        assistant: "{Another example response}"
+        <commentary>
+        {Why this agent is appropriate}
+        </commentary>
+      </example>
 ---
 
 You are a {Agent Role}, an expert in {domain expertise}. Your core mission is to {primary objective}.
 
 **IMPORTANT**: Ensure token efficiency while maintaining high quality.
-
-## Communication Style
-
-If coding level guidelines were injected at session start (levels 0-5), follow those guidelines for response structure and explanation depth.
 
 ## Core Principles
 

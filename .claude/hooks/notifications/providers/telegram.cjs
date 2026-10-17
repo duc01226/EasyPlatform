@@ -1,11 +1,18 @@
 /**
  * Telegram notification provider
- * Ported from telegram_notify.sh - uses Telegram Bot API
+ * Uses Telegram Bot API
  */
 'use strict';
 
 const path = require('path');
 const { send } = require('../lib/sender.cjs');
+const { EVENT_COPY } = require('../lib/event-copy.cjs');
+
+// Leading icon for each event that uses the shared alert copy. An event added to
+// the shared copy without an icon here falls back to the generic bell rather than
+// rendering a literal "undefined".
+const SHARED_COPY_ICONS = { Stop: '🚀', SessionEnd: '🏁', AskUserQuestion: '❓' };
+const FALLBACK_ICON = '🔔';
 
 /**
  * Format timestamp as YYYY-MM-DD HH:MM:SS
@@ -32,16 +39,21 @@ function formatMessage(input) {
   const timestamp = getTimestamp();
   const sessionDisplay = sessionId ? `${sessionId.slice(0, 8)}...` : 'N/A';
 
-  switch (hookType) {
-    case 'Stop':
-      return `🚀 *Project Task Completed*
+  if (Object.prototype.hasOwnProperty.call(EVENT_COPY, hookType)) {
+    const copy = EVENT_COPY[hookType];
+    const icon = Object.prototype.hasOwnProperty.call(SHARED_COPY_ICONS, hookType) ? SHARED_COPY_ICONS[hookType] : FALLBACK_ICON;
+    return `${icon} *${copy.title}*
 
 📅 *Time:* ${timestamp}
 📁 *Project:* ${projectName}
 🆔 *Session:* ${sessionDisplay}
 
-📍 *Location:* \`${projectDir}\``;
+${copy.summary}.
 
+📍 *Location:* \`${projectDir}\``;
+  }
+
+  switch (hookType) {
     case 'SubagentStop': {
       const agentType = input.agent_type || 'unknown';
       return `🤖 *Project Subagent Completed*
@@ -63,7 +75,7 @@ Specialized agent completed its task.
 📁 *Project:* ${projectName}
 🆔 *Session:* ${sessionDisplay}
 
-Claude is waiting for your input.
+AI agent is waiting for your input.
 
 📍 *Location:* \`${projectDir}\``;
 
@@ -104,6 +116,6 @@ module.exports = {
       text: message,
       parse_mode: 'Markdown',
       disable_web_page_preview: true
-    });
+    }, { event: input.hook_event_name });
   }
 };

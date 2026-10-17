@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  html-export self-check fixture (tests/fixtures/known-good.html).
+  `--to=png --self-check` renders this page first: it must load with zero console errors, zero
+  uncaught exceptions and non-blank DOM evidence at any viewport, or the verifier is treated as broken.
+  Keep it self-contained: no network requests, no fonts to fetch, no timers.
+  Test input only, with no user-facing surface, so the UI/UX design gate does not apply to it.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>html-export known-good fixture</title>
+<style>
+  body { margin: 0; padding: 24px; font: 16px/1.5 system-ui, sans-serif; color: #1a1a1a; background: #ffffff; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  svg { display: block; margin-top: 16px; }
+</style>
+</head>
+<body>
+<h1>Known-good render</h1>
+<p>This page renders text and an inline SVG with no errors, so a correct verifier reports it as a pass.</p>
+<svg width="120" height="48" viewBox="0 0 120 48" role="img" aria-label="Solid bar">
+  <rect x="0" y="0" width="120" height="48" fill="#2f6f4e"></rect>
+</svg>
+<script>document.documentElement.setAttribute('data-known-good', 'loaded');</script>
+</body>
+</html>

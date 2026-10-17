@@ -7,11 +7,11 @@ Use --output to write to a specific file instead.
 
 import argparse
 import difflib
+import io
 import json
 import os
 import re
 import sys
-import yaml
 from pathlib import Path
 from datetime import datetime
 
@@ -21,15 +21,122 @@ SKILL_STATUSES = ('active', 'deprecated', 'experimental')
 # Script directory for resolving relative paths
 SCRIPT_DIR = Path(__file__).parent
 
-# Windows UTF-8 compatibility (use shared utility)
+# Windows UTF-8 compatibility. The fallback keeps this utility standalone when
+# copied without its shared helper, and detaches legacy streams before wrapping.
+def _ensure_utf8_fallback(stream):
+    reconfigure = getattr(stream, 'reconfigure', None)
+    if callable(reconfigure):
+        try:
+            reconfigure(encoding='utf-8')
+        except (AttributeError, io.UnsupportedOperation, ValueError):
+            pass
+        else:
+            return stream
+
+    buffer = getattr(stream, 'buffer', None)
+    detach = getattr(stream, 'detach', None)
+    if buffer is None or not callable(detach):
+        return stream
+
+    previous_errors = getattr(stream, 'errors', None) or 'strict'
+    line_buffering = bool(getattr(stream, 'line_buffering', False))
+    write_through = bool(getattr(stream, 'write_through', False))
+    try:
+        detached_buffer = detach()
+    except (AttributeError, OSError, ValueError):
+        return stream
+
+    return io.TextIOWrapper(
+        detached_buffer,
+        encoding='utf-8',
+        errors=previous_errors,
+        line_buffering=line_buffering,
+        write_through=write_through,
+    )
+
+
 try:
-    from win_compat import ensure_utf8_stdout
-    ensure_utf8_stdout()
+    from win_compat import ensure_utf8_stderr, ensure_utf8_stdout
 except ImportError:
     if sys.platform == 'win32':
-        import io
-        if hasattr(sys.stdout, 'buffer'):
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stdout = _ensure_utf8_fallback(sys.stdout)
+        sys.stderr = _ensure_utf8_fallback(sys.stderr)
+else:
+    ensure_utf8_stdout()
+    ensure_utf8_stderr()
+
+# After the stream setup: on Windows the install hint must print a non-ASCII path verbatim.
+try:
+    import yaml
+except ModuleNotFoundError as error:
+    # Recover the declared PyYAML dependency before printing an actionable diagnostic.
+    # Any other missing module is a different fault and re-raises.
+    if error.name != 'yaml':
+        raise
+    _requirements = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'requirements.txt')
+    try:
+        from lib.python_dependencies import ensure_pyyaml
+    except ModuleNotFoundError as helper_error:
+        # A standalone copied script retains its actionable diagnostic.
+        if helper_error.name not in ('lib', 'lib.python_dependencies'):
+            raise
+        _recovered = False
+    else:
+        _recovered = ensure_pyyaml(_requirements)
+    if _recovered:
+        import yaml
+    else:
+        # Quoted for the shell it names, so the hint still pastes when a path holds a space or a
+        # metacharacter such as '&'. On Windows that is PowerShell: list2cmdline renders C-runtime
+        # arguments and leaves '&' bare for the shell. A PowerShell single-quoted string is literal
+        # except for its quote characters, which are doubled. U+2018-U+201B are quote characters too
+        # (language spec 2.3.5.2, single-quote-character): left bare, one would end the literal.
+        if os.name == 'nt':
+            import re
+            def _quote(part):
+                if re.fullmatch(r'[A-Za-z0-9._-]+', part):
+                    return part
+                return "'" + re.sub("(['\u2018\u2019\u201a\u201b])", r'\1\1', part) + "'"
+            def _command(argv):
+                return '& ' + ' '.join(_quote(part) for part in argv)
+            _shell = 'from PowerShell '
+        else:
+            import shlex
+            def _command(argv):
+                # shlex.join is 3.8+; the installers advertise Python 3.7+, so quote by hand.
+                return ' '.join(shlex.quote(part) for part in argv)
+            _shell = ''
+        _install = ['-m', 'pip', 'install', '-r', _requirements]
+        # pip refuses to install into an interpreter marked EXTERNALLY-MANAGED (PEP 668) unless it
+        # runs inside a virtual environment, so that host gets a venv recipe instead. Same rule as pip.
+        # The probe is advisory: if sysconfig cannot answer, fall back to the plain pip hint rather
+        # than replace the message this block exists to print with a traceback.
+        try:
+            import sysconfig
+            _managed = sys.prefix == getattr(sys, 'base_prefix', sys.prefix) and os.path.isfile(
+                os.path.join(sysconfig.get_path('stdlib'), 'EXTERNALLY-MANAGED'))
+        except Exception:
+            _managed = False
+        if _managed:
+            # The framework's shared venv; hooks/lib/graph-utils.cjs creates the same one.
+            _project = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            _venv = os.path.join(_project, 'tmp', 'claude-temp', '.venv')
+            _bin = os.path.join(_venv, 'Scripts' if os.name == 'nt' else 'bin')
+            _venv_python = os.path.join(_bin, 'python.exe' if os.name == 'nt' else 'python')
+            if os.name == 'nt':
+                _path = f"$env:Path = {_quote(_bin + ';')} + $env:Path"
+            else:
+                _path = f'export PATH={shlex.quote(_bin)}:"$PATH"'
+            _hint = (
+                "This Python is externally managed (PEP 668), so pip will not install into it.\n"
+                f"Create a virtual environment {_shell}with: {_command([sys.executable, '-m', 'venv', _venv])}\n"
+                f"Install it {_shell}with: {_command([_venv_python] + _install)}\n"
+                f"Then put the environment first on PATH: {_path}\n"
+            )
+        else:
+            _hint = f"Install it {_shell}with: {_command([sys.executable] + _install)}\n"
+        sys.stderr.write(f"{os.path.basename(__file__)} requires PyYAML, declared in {_requirements}.\n" + _hint)
+        sys.exit(3)
 
 try:
     from scan_skills import scan_skills
@@ -97,7 +204,7 @@ def generate_commands_yaml():
             'integrate': 'Integrations',
             'plan': 'Planning',
             'review': 'Code Review',
-            'scout': 'Scout Commands',
+            'investigate': 'Investigation Commands',
             'skill': 'Skill Management'
         },
         'commands': categories
@@ -111,7 +218,7 @@ def _status_of(skill):
     status = skill.get('status') or 'active'
     if status not in SKILL_STATUSES:
         # Unknown status (likely typo) — warn but coerce to 'active' so
-        # the catalog still builds. Per plan-review M3.
+        # the catalog still builds. Per plan review M3.
         print(
             f"WARN: skill '{skill.get('name', '?')}' has unknown status "
             f"'{status}' (expected one of {SKILL_STATUSES}); coercing to 'active'.",
@@ -260,7 +367,11 @@ def inject_counts(file_path, verbose=True):
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(f"inject target does not exist: {file_path}")
-    text = path.read_text(encoding='utf-8')
+    # newline='' keeps the file's own line endings byte-for-byte. Text mode would rewrite every
+    # EOL to os.linesep on Windows, turning a one-digit count refresh into a whole-file CRLF
+    # churn that downstream generators then mistake for content.
+    with path.open(encoding='utf-8', newline='') as handle:
+        text = handle.read()
     matches = list(COUNT_MARKER_RE.finditer(text))
     changes = []  # list of (kind, filter, old, new)
 
@@ -276,7 +387,8 @@ def inject_counts(file_path, verbose=True):
 
     new_text = COUNT_MARKER_RE.sub(replacer, text)
     if new_text != text:
-        path.write_text(new_text, encoding='utf-8')
+        with path.open('w', encoding='utf-8', newline='') as handle:
+            handle.write(new_text)
         if verbose:
             print(f"✓ Updated {len(changes)} marker(s) in {file_path}:", file=sys.stderr)
             for kind, filt, old, new in changes:
@@ -310,20 +422,41 @@ def check_counts(file_path):
 
 
 def write_output(content, output_path=None, label=None):
-    """Write content to stdout or file."""
-    if output_path:
-        path = Path(output_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding='utf-8')
-        print(f"✓ Generated {output_path}", file=sys.stderr)
-    else:
+    """Write content to stdout, or to a file ONLY when its meaning changed.
+
+    `last_updated` is stamped from the clock on every run, so an unconditional
+    write rewrites a tracked catalog whose entries are identical. That produces a
+    conflict-prone one-line diff on any branch that merely re-ran the generator.
+    The volatility rule already exists here — `normalize_catalog_for_check` masks
+    exactly this field for `--check`; applying it on the write path too keeps one
+    definition of "did anything real change" for both modes.
+    """
+    if not output_path:
         print(content)
+        return
+
+    path = Path(output_path)
+    if path.exists():
+        on_disk = path.read_text(encoding='utf-8')
+        comparable_on_disk, comparable_generated = normalize_catalog_for_check(on_disk, content)
+        if comparable_on_disk == comparable_generated:
+            print(f"= Unchanged {output_path} (no content change — not rewritten)", file=sys.stderr)
+            return
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # newline='' writes the generated '\n' verbatim. Default text mode translates it to os.linesep,
+    # so on Windows every regen rewrote the whole catalog as CRLF against an LF-committed file —
+    # a whole-file diff that buries the real entry changes. Same rule as inject_counts() above; the
+    # read side is universal-newline, so the unchanged-comparison was never the part that drifted.
+    with path.open('w', encoding='utf-8', newline='') as handle:
+        handle.write(content)
+    print(f"✓ Generated {output_path}", file=sys.stderr)
 
 
 def check_against_file(generated, target_path, label):
     """Compare freshly generated catalog against an on-disk file.
 
-    Exit code contract (per ADR-0001 `--check` Mode + plan-review M2):
+    Exit code contract (per ADR-0001 `--check` Mode + plan review M2):
       0 = identical (clean tree)
       1 = drift detected (unified diff on stderr)
       2 = target file does not exist (CI can't certify a nonexistent catalog)

@@ -1,205 +1,313 @@
 {
-    "$id": "workflows.schema.json",
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "additionalProperties": false,
-    "definitions": {
-        "PreActions": {
-            "additionalProperties": false,
-            "description": "Actions to perform before starting the workflow sequence. Used to inject context or pre-read files.",
-            "properties": {
-                "injectContext": {
-                    "description": "Context text to inject into the agent's prompt before workflow execution. Typically contains workflow-specific instructions or checklists.",
-                    "minLength": 1,
-                    "title": "Inject Context",
-                    "type": "string"
-                },
-                "readFiles": {
-                    "description": "List of file paths (relative to project root) to read before workflow execution. Used to pre-load templates, guides, or reference documents.",
-                    "items": {
-                        "minLength": 1,
-                        "type": "string"
-                    },
-                    "minItems": 1,
-                    "title": "Read Files",
-                    "type": "array"
-                }
-            },
-            "title": "Pre-Actions",
-            "type": "object"
-        },
-        "Settings": {
-            "additionalProperties": false,
-            "description": "Global configuration for workflow detection.",
-            "properties": {
-                "enabled": {
-                    "default": true,
-                    "description": "Master toggle to enable or disable all workflow detection and automation.",
-                    "title": "Enable Workflows",
-                    "type": "boolean"
-                },
-                "showDetection": {
-                    "default": true,
-                    "description": "Whether to display the detected intent and workflow sequence to the user before execution.",
-                    "title": "Show Detection",
-                    "type": "boolean"
-                }
-            },
-            "required": ["enabled", "showDetection"],
-            "title": "Global Settings",
-            "type": "object"
-        },
-        "StepMeta": {
-            "additionalProperties": false,
-            "description": "Optional runtime hints for a specific workflow step. Read by the model (per the model-driven advancement rule) to decide sub-agent vs inline execution. Overrides values in the skill's SKILL.md front matter.",
-            "properties": {
-                "contextBudget": {
-                    "description": "Expected context consumption of this step. 'critical' = always run as sub-agent. 'high' = recommend sub-agent. 'medium' = optional sub-agent. 'low' = inline safe.",
-                    "enum": ["low", "medium", "high", "critical"],
-                    "title": "Context Budget",
-                    "type": "string"
-                },
-                "executionMode": {
-                    "description": "Explicit execution mode override. 'subagent' = MUST run via Agent tool. 'inline' = safe to run as Skill tool call.",
-                    "enum": ["subagent", "inline"],
-                    "title": "Execution Mode",
-                    "type": "string"
-                }
-            },
-            "title": "Step Metadata",
-            "type": "object"
-        },
-        "WorkflowEntry": {
-            "additionalProperties": false,
-            "description": "Defines a workflow selected by AI-native intent detection. Contains natural language descriptions for when to use/not use, an ordered sequence of commands, and optional pre-actions.",
-            "properties": {
-                "description": {
-                    "description": "Detailed description of what this workflow does and when it is triggered.",
-                    "minLength": 1,
-                    "title": "Workflow Description",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Human-readable display name for the workflow, shown to users during detection.",
-                    "examples": ["Feature Implementation", "Bug Fix", "Code Investigation"],
-                    "minLength": 1,
-                    "title": "Workflow Name",
-                    "type": "string"
-                },
-                "parallelGroups": {
-                    "description": "Optional declaration of parallel-phase barrier groups within `sequence`. Each group's members run concurrently as ONE all-return barrier: spawn ALL members together (one message), then advance past the group ONLY after EVERY member returns (a skipped conditional member counts as returned). This is the portable, machine-visible complement to the prose advancement rule — the sync renderer collapses a group's members into a single `[parallel ⇉ all-return barrier: ...]` token in the Codex context mirrors, so the barrier is visible to hookless tools that read only the rendered sequence. Every member MUST be a value present in this workflow's `sequence`, members SHOULD be contiguous in `sequence`, and a member MUST NOT appear in more than one group.",
-                    "items": {
-                        "additionalProperties": false,
-                        "properties": {
-                            "barrier": {
-                                "const": true,
-                                "description": "Always true — the group is an all-return barrier: the workflow advances past the group only after every member has returned. Declared explicitly so the structure self-documents the barrier semantics.",
-                                "title": "All-Return Barrier",
-                                "type": "boolean"
-                            },
-                            "conditionalMembers": {
-                                "description": "Subset of `members` that are conditionally included (spawned only when their trigger is present). A skipped conditional member still counts as 'returned' for the barrier. Rendered with a `*` suffix in the mirror barrier token. Each value MUST also appear in `members`.",
-                                "items": {
-                                    "minLength": 1,
-                                    "type": "string"
-                                },
-                                "title": "Conditional Members",
-                                "type": "array"
-                            },
-                            "id": {
-                                "description": "Stable identifier for this parallel group (e.g. 'reviewers').",
-                                "minLength": 1,
-                                "title": "Group Id",
-                                "type": "string"
-                            },
-                            "members": {
-                                "description": "Command keys that form the barrier. Each MUST exist in this workflow's `sequence`. Order is not significant for execution — all members are spawned together — but determines left-to-right order inside the rendered barrier token.",
-                                "items": {
-                                    "minLength": 1,
-                                    "type": "string"
-                                },
-                                "minItems": 2,
-                                "title": "Group Members",
-                                "type": "array"
-                            }
-                        },
-                        "required": ["id", "members", "barrier"],
-                        "title": "Parallel Group",
-                        "type": "object"
-                    },
-                    "title": "Parallel Phase Groups",
-                    "type": "array"
-                },
-                "preActions": {
-                    "$ref": "#/definitions/PreActions"
-                },
-                "sequence": {
-                    "description": "Ordered list of step-skill names to execute. Each step resolves to the slash command /<step>. Steps run in sequence from first to last.",
-                    "items": {
-                        "minLength": 1,
-                        "type": "string"
-                    },
-                    "minItems": 1,
-                    "title": "Command Sequence",
-                    "type": "array"
-                },
-                "stepMeta": {
-                    "additionalProperties": {
-                        "$ref": "#/definitions/StepMeta"
-                    },
-                    "description": "Optional per-step metadata overrides keyed by command key (must match a value in sequence). Overrides execution-mode or context-budget from the skill's SKILL.md front matter. The model reads this when advancing workflow steps.",
-                    "title": "Step Metadata Overrides",
-                    "type": "object"
-                },
-                "whenToUse": {
-                    "description": "Natural language description of when the AI should select this workflow. The AI model reads this to decide which workflow matches the user's intent.",
-                    "examples": [
-                        "User reports a bug, error, crash, broken functionality, or asks to fix/debug/troubleshoot an issue.",
-                        "User wants to implement, add, create, or build a new feature or functionality."
-                    ],
-                    "minLength": 1,
-                    "title": "When To Use",
-                    "type": "string"
-                }
-            },
-            "required": ["name", "description", "sequence", "whenToUse"],
-            "title": "Workflow Definition",
-            "type": "object"
-        }
+  "$id": "workflows.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "Applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when", "skipReason"],
+      "properties": {
+        "when": { "type": "string", "pattern": "\\S" },
+        "skipReason": { "type": "string", "pattern": "\\S" }
+      },
+      "description": "Model-evaluated condition and required reason when skipped; the occurrence remains in the task list."
     },
-    "description": "Schema for Claude Code workflow automation configuration. Defines AI-native intent detection and workflow sequences for AI agent orchestration.",
-    "properties": {
-        "$schema": {
-            "description": "Path or URL to the JSON Schema file for IDE validation and autocompletion.",
-            "title": "Schema Reference",
+    "Occurrence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "skill"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "skill": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "args": { "type": "string" },
+        "applicability": { "$ref": "#/definitions/Applicability" },
+        "role": {
+          "default": "core",
+          "description": "Step semantics. gate = never skipped; carries no applicability. core = runs by default (an unannotated step is core). optional = runs only when applicability.when holds; requires applicability with when and skipReason.",
+          "enum": ["gate", "core", "optional"],
+          "title": "Step Role",
+          "type": "string"
+        }
+      },
+      "allOf": [
+        { "if": { "required": ["role"], "properties": { "role": { "const": "optional" } } }, "then": { "required": ["applicability"] } },
+        { "if": { "required": ["role"], "properties": { "role": { "const": "gate" } } }, "then": { "not": { "required": ["applicability"] } } }
+      ]
+    },
+    "OutcomeGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "satisfiedBy"],
+      "properties": {
+        "id": {
+          "description": "Outcome a finished run must prove. tests-pass = changed behaviour is tested and green; review-converged = the review loop converged; spec-synced = specs match the changed behaviour; plan-approved = the plan was reviewed and approved; root-cause-traced = a bug's root cause is traced before the fix; run-closed = the run closed through its close step.",
+          "enum": ["tests-pass", "review-converged", "spec-synced", "plan-approved", "root-cause-traced", "run-closed"],
+          "type": "string"
+        },
+        "satisfiedBy": {
+          "description": "Satisfiers of this gate (alternatives): a skill name, or a skill name plus invocation arguments (for example \"plan --mode=validate\") when one skill serves several roles; a satisfier with arguments matches only occurrences whose args contain every one of its argument tokens. Each satisfier MUST match a step in the workflow's sequence (with variants: in at least one mode), and every resolved mode MUST contain at least one of them.",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*( \\S.*)?$" },
+          "minItems": 1,
+          "uniqueItems": true,
+          "type": "array"
+        },
+        "when": {
+          "description": "Model-evaluated condition for a conditional gate (for example 'behavior or public contract changed'). Absent = the gate always applies.",
+          "pattern": "\\S",
+          "type": "string"
+        }
+      },
+      "title": "Outcome Gate"
+    },
+    "Phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "steps"],
+      "properties": {
+        "id": { "enum": ["discover", "specify", "plan", "build", "review", "verify", "close"], "description": "Phase name; phases appear in this order and at most once." },
+        "steps": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }, "description": "Occurrence IDs of this phase, in sequence order." },
+        "exit": { "type": "array", "items": { "type": "string" }, "description": "Outcome gate IDs this phase closes; a satisfier lies in this phase or an earlier one." }
+      },
+      "title": "Phase",
+      "description": "One todo per phase: the phase lists its steps as lines and completes when every line is closed and its exit gates hold."
+    },
+    "Phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/Phase" },
+      "title": "Phases",
+      "description": "Contiguous phases that together list every occurrence of the mode exactly once, in order. Requires explicit occurrence objects; a parallel group stays inside one phase; every outcome gate is the exit of exactly one phase."
+    },
+    "Variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequence"],
+      "properties": {
+        "sequence": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/Occurrence" } },
+        "phases": { "$ref": "#/definitions/Phases" },
+        "parallelGroups": { "$ref": "#/definitions/WorkflowEntry/properties/parallelGroups" },
+        "stepMeta": { "$ref": "#/definitions/WorkflowEntry/properties/stepMeta" },
+        "outcomeGates": {
+          "description": "Gates this mode adds to the entry-level outcomeGates shared by every mode. The selected mode's gate list is the entry-level gates followed by these; gate IDs stay unique across both lists.",
+          "items": { "$ref": "#/definitions/OutcomeGate" },
+          "minItems": 1,
+          "title": "Variant Outcome Gates",
+          "type": "array"
+        }
+      },
+      "description": "Complete ordered mode; no inheritance of base sequence, parallel groups or step metadata. Group members and stepMeta keys reference occurrence IDs. Entry-level outcomeGates apply to every mode; a variant may add gates of its own."
+    },
+    "PreActions": {
+      "additionalProperties": false,
+      "description": "Actions to perform before starting the workflow sequence. Used to inject context or pre-read files.",
+      "properties": {
+        "domainEntityReferenceRefresh": {
+          "description": "Conditional instruction to refresh domain-entity reference documentation from the final change set, or record an evidence-backed skip reason.",
+          "pattern": "\\S",
+          "type": "string"
+        },
+        "injectContext": {
+          "description": "Context text to inject into the agent's prompt before workflow execution. Typically contains workflow-specific instructions or checklists.",
+          "minLength": 1,
+          "title": "Inject Context",
+          "type": "string"
+        },
+        "readFiles": {
+          "description": "List of file paths (relative to project root) to read before workflow execution. Used to pre-load templates, guides, or reference documents.",
+          "items": {
+            "minLength": 1,
             "type": "string"
+          },
+          "minItems": 1,
+          "title": "Read Files",
+          "type": "array"
+        }
+      },
+      "title": "Pre-Actions",
+      "type": "object"
+    },
+    "StepMeta": {
+      "additionalProperties": false,
+      "description": "Optional runtime hints for a specific workflow step. Read by the model (per the model-driven advancement rule) to decide sub-agent vs inline execution. Overrides values in the skill's SKILL.md front matter.",
+      "properties": {
+        "contextBudget": {
+          "description": "Expected context consumption of this step. 'critical' = always run as sub-agent. 'high' = recommend sub-agent. 'medium' = optional sub-agent. 'low' = inline safe.",
+          "enum": ["low", "medium", "high", "critical"],
+          "title": "Context Budget",
+          "type": "string"
+        },
+        "executionMode": {
+          "description": "Explicit execution mode override. 'subagent' = MUST run via Agent tool. 'inline' = safe to run as Skill tool call.",
+          "enum": ["subagent", "inline"],
+          "title": "Execution Mode",
+          "type": "string"
+        }
+      },
+      "title": "Step Metadata",
+      "type": "object"
+    },
+    "WorkflowEntry": {
+      "additionalProperties": false,
+      "dependencies": { "variants": ["defaultMode"], "defaultMode": ["variants"] },
+      "description": "Defines a workflow selected by AI-native intent detection. Contains natural language descriptions for when to use/not use, an ordered sequence of commands, and optional pre-actions.",
+      "properties": {
+        "activation": {
+          "default": "auto",
+          "description": "Which option the workflow question recommends. Every tier: only when the model's own route is to start a catalog workflow (first task of a session only; a direct, single-skill or custom-simple route asks nothing), the model asks the user one question — the full workflow with its step count, a slimmer custom route, or direct execution. auto: recommend by catalog fit. confirm: recommend the full workflow only when no leaner route would do. manual: never recommend the full workflow; its wrapper skill also sets disable-model-invocation: true (the Codex mirror then sets allow_implicit_invocation: false). An explicit user request runs every tier directly, with no question.",
+          "enum": ["auto", "confirm", "manual"],
+          "title": "Activation Tier",
+          "type": "string"
+        },
+        "defaultMode": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "intent": {
+          "description": "One sentence, one line: the goal this workflow must achieve. Steps are recommendations toward it; outcomeGates are what must hold.",
+          "pattern": "^[^\\r\\n]*\\S[^\\r\\n]*$",
+          "title": "Workflow Intent",
+          "type": "string"
+        },
+        "outcomeGates": {
+          "description": "Evidence every finished run must produce, in every mode. Gate IDs are unique per workflow (and per resolved mode when a variant adds gates).",
+          "items": { "$ref": "#/definitions/OutcomeGate" },
+          "minItems": 1,
+          "title": "Outcome Gates",
+          "type": "array"
+        },
+        "variants": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+          "additionalProperties": { "$ref": "#/definitions/Variant" }
         },
         "description": {
-            "description": "Human-readable description of this workflow configuration file.",
-            "minLength": 1,
-            "title": "Configuration Description",
-            "type": "string"
+          "description": "Detailed description of what this workflow does and when it is triggered.",
+          "minLength": 1,
+          "title": "Workflow Description",
+          "type": "string"
         },
-        "settings": {
-            "$ref": "#/definitions/Settings"
+        "name": {
+          "description": "Human-readable display name for the workflow, shown to users during detection.",
+          "examples": ["Feature Implementation", "Bug Fix", "Code Investigation"],
+          "minLength": 1,
+          "title": "Workflow Name",
+          "type": "string"
         },
-        "version": {
-            "description": "Semantic version of the workflow configuration (e.g., 2.0.0).",
-            "examples": ["1.0.0", "2.0.0"],
-            "pattern": "^\\d+\\.\\d+\\.\\d+$",
-            "title": "Configuration Version",
-            "type": "string"
-        },
-        "workflows": {
-            "additionalProperties": {
-                "$ref": "#/definitions/WorkflowEntry"
+        "parallelGroups": {
+          "description": "All-return barrier groups: spawn every member together and advance only after every member returns or records a conditional skip. Members MUST form a contiguous sequence segment and MUST NOT belong to multiple groups. Legacy members reference unique command strings; explicit occurrences and variants reference semantic occurrence IDs. Ambiguous repeated legacy commands are rejected by the resolver.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "barrier": {
+                "const": true,
+                "description": "Always true — the group is an all-return barrier: the workflow advances past the group only after every member has returned. Declared explicitly so the structure self-documents the barrier semantics.",
+                "title": "All-Return Barrier",
+                "type": "boolean"
+              },
+              "conditionalMembers": {
+                "description": "Subset of `members` that are conditionally included (spawned only when their trigger is present). A skipped conditional member still counts as 'returned' for the barrier. Rendered with a `*` suffix in the mirror barrier token. Each value MUST also appear in `members`.",
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "title": "Conditional Members",
+                "uniqueItems": true,
+                "type": "array"
+              },
+              "id": {
+                "description": "Stable identifier for this parallel group (e.g. 'reviewers').",
+                "minLength": 1,
+                "title": "Group Id",
+                "type": "string"
+              },
+              "members": {
+                "description": "Occurrence IDs (or unique legacy command keys) forming the barrier. Every member MUST exist in the selected sequence. Listed order is not execution order; all members run together.",
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "minItems": 2,
+                "uniqueItems": true,
+                "title": "Group Members",
+                "type": "array"
+              }
             },
-            "description": "Named workflow definitions selected by AI-native intent detection. Each workflow has a natural language whenToUse description that the AI reads to determine which workflow matches the user's intent.",
-            "minProperties": 1,
-            "title": "Workflow Definitions",
+            "required": ["id", "members", "barrier"],
+            "title": "Parallel Group",
             "type": "object"
+          },
+          "title": "Parallel Phase Groups",
+          "type": "array"
+        },
+        "preActions": {
+          "$ref": "#/definitions/PreActions"
+        },
+        "phases": {
+          "$ref": "#/definitions/Phases"
+        },
+        "sequence": {
+          "description": "Ordered legacy command strings or explicit occurrences. With variants, this base sequence remains a compatibility projection; execution uses the complete selected variant.",
+          "items": {
+            "oneOf": [{ "type": "string", "pattern": "\\S" }, { "$ref": "#/definitions/Occurrence" }]
+          },
+          "minItems": 1,
+          "title": "Command Sequence",
+          "type": "array"
+        },
+        "stepMeta": {
+          "additionalProperties": {
+            "$ref": "#/definitions/StepMeta"
+          },
+          "description": "Metadata keyed by occurrence ID, or by legacy command string (applies to every matching legacy occurrence). Keys must resolve in the selected sequence. Variants own their metadata without inheriting base overrides.",
+          "title": "Step Metadata Overrides",
+          "type": "object"
+        },
+        "whenToUse": {
+          "description": "Natural language description of when the AI should select this workflow. The AI model reads this to decide which workflow matches the user's intent.",
+          "examples": [
+            "User reports a bug, error, crash, broken functionality, or asks to fix/debug/troubleshoot an issue.",
+            "User wants to implement, add, create, or build a new feature or functionality."
+          ],
+          "minLength": 1,
+          "title": "When To Use",
+          "type": "string"
         }
+      },
+      "required": ["name", "description", "sequence", "whenToUse"],
+      "title": "Workflow Definition",
+      "type": "object"
+    }
+  },
+  "description": "Schema for Claude Code workflow automation configuration. Defines AI-native intent detection and workflow sequences for AI agent orchestration.",
+  "properties": {
+    "$schema": {
+      "description": "Path or URL to the JSON Schema file for IDE validation and autocompletion.",
+      "title": "Schema Reference",
+      "type": "string"
     },
-    "required": ["version", "description", "settings", "workflows"],
-    "title": "Workflow Configuration",
-    "type": "object"
+    "description": {
+      "description": "Human-readable description of this workflow configuration file.",
+      "minLength": 1,
+      "title": "Configuration Description",
+      "type": "string"
+    },
+    "version": {
+      "description": "Semantic version of the workflow configuration (e.g., 2.0.0).",
+      "examples": ["1.0.0", "2.0.0"],
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "title": "Configuration Version",
+      "type": "string"
+    },
+    "workflows": {
+      "additionalProperties": {
+        "$ref": "#/definitions/WorkflowEntry"
+      },
+      "description": "Named workflow definitions selected by AI-native intent detection. Each workflow has a natural language whenToUse description that the AI reads to determine which workflow matches the user's intent.",
+      "minProperties": 1,
+      "title": "Workflow Definitions",
+      "type": "object"
+    }
+  },
+  "required": ["version", "description", "workflows"],
+  "title": "Workflow Configuration",
+  "type": "object"
 }

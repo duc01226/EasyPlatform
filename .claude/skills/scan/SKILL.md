@@ -1,85 +1,111 @@
 ---
 name: scan
 version: 1.0.0
-description: '[Documentation] Use when scanning the codebase to (re)generate ONE project-reference doc. Parameterized by `--target=<key>`: project-structure | backend-patterns | frontend-patterns | scss-styling | design-system | code-review-rules | domain-entities | feature-spec | docs-index | e2e-tests | integration-tests | seed-test-data | ui-system. Shared 4-phase scan engine; per-target detail lives in references/targets.md. `ui-system` is an orchestrator meta-target (`kind: orchestrator`) that runs the 3 UI child scans in parallel instead of the 4-phase engine.'
+description: '[Documentation] Use when a workflow step or the user asks for one project-reference doc rebuild via --target=<key>, preserving verified rules. All selected reference docs: scan-all.'
 ---
+
+<!-- PROTOCOL-GUIDES:START -->
+
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
+
+- `output-quality-principles` — Readable guidance and verified contents for long skill/doc files; writing, updating or auditing a skill or reference document, or another Markdown artifact over 200 lines → .claude/skills/shared/protocols/output-quality-principles.md
+- `scan-and-update-reference-doc` — Baseline-safe updates with semantic retention and truthful freshness; scanning or updating a reference doc → .claude/skills/shared/protocols/scan-and-update-reference-doc.md
+
+<!-- PROTOCOL-GUIDES:END -->
 
 ## Quick Summary
 
-**Goal:** Scan the codebase for ONE target reference doc and surgically (re)populate it with actual patterns — every example from real project files with `file:line`. The 4-phase engine below is shared; the per-target data (which doc, how many sub-agents, what to detect, what sections to write, what NOT to do) comes from the target's entry in `references/targets.md`.
+**Goal:** Scan one selected built-in or explicitly generic custom reference doc and deliver a surgical, evidence-backed update that preserves action-changing rules, exceptions and verified discovery without report bulk.
+
+**Summary:**
+
+- **Purpose:** Run one selected, applicable manifest target; its entry owns the output doc, capability evidence, detection, agents, sections, exceptions, and enhancement requirements.
+- **Ordered path:** Resolve optional config/selection → applicability and mode/baseline → plan owner scopes → scan into unique shards → candidate/retention review → enhance + final quality gate → baseline/no-op/freshness check and application → report.
+- **Modes/gates:** Init/Sync and target-defined Force; `kind: orchestrator` uses its procedure; unknown key STOPs; unsupported capability is a reported skip, not a guessed fallback.
+- **Evidence:** Use real `file:line` examples, incremental unique reports, surgical writes, all-path/name checks, target exceptions, and graph checks when the project supports them.
 
 **Workflow:**
 
-1. **Resolve target** — Read `--target=<key>`; load its entry from `references/targets.md`
-2. **Assess** — Read target doc, detect init vs sync (vs force) mode, run the target's Phase-0 detection table(s)
-3. **Scan** — Launch the target's sub-agents in parallel; discover patterns with `file:line` evidence
-4. **Report** — Write structured findings to report file (incremental, not batched)
-5. **Generate** — Surgical update of the reference doc from report (apply target's Target Sections + Content Rules)
-6. **Verify** — Multi-round fresh-eyes review validates examples and coverage; then prompt-enhance the doc
+1. **Validate** — Resolve optional config; validate declared sections and derive missing facts from repository evidence.
+2. **Resolve** — Parse `--target=<key>`, load its manifest entry, and confirm the output is selected or separately owned as an always-on input.
+3. **Assess** — Check capability evidence before running target-specific Phase 0 detection.
+4. **Scan** — Run only applicable declared work; capture authority and evidence in the temporary report.
+5. **Write** — Build a candidate; verify its claims, semantic coverage and consumer contracts.
+6. **Apply** — Enhance when required; review retention, reconcile the baseline, and apply only meaningful changes with truthful freshness.
+7. **Report** — Persist findings and return complete, unchanged, skipped, or blocked status with evidence.
 
 **Key Rules:**
 
-**MUST ATTENTION** resolve `--target` FIRST and load its manifest entry — every target-specific behavior (doc path, sub-agent count/roles, Phase-0 tables, Target Sections, Content Rules, special gates, anti-rationalization rows) comes from that entry, NOT from memory
-**MUST ATTENTION** detect framework/type FIRST (per the target's Phase-0 table) — scan strategy derives from detection, never hardcoded
-**MUST ATTENTION** every code example from actual project files with `file:line` — NEVER fabricate
-**MUST ATTENTION** run graph command on key files before concluding — grep finds text, graph finds structure
+**MUST ATTENTION** resolve `--target` FIRST; the manifest entry owns all target-specific behavior, never memory.
+**MUST ATTENTION** validate config and target applicability before scanning; a catalog entry is not proof the project uses that capability.
+**MUST ATTENTION** detect framework/type only after applicability is established; derive scan terms and scopes from evidence, never hardcode.
+**MUST ATTENTION** use actual project examples with `file:line` — NEVER fabricate.
+**MUST ATTENTION** treat graph output as an optional, stale-able hint for code relationships (source callers remain the evidence); an absent graph is not a scan failure.
 
-- Surgical update only — NEVER rewrite entire doc, NEVER remove a section without evidence it's obsolete
-- Some targets OVERRIDE shared output rules or add a branch (e.g. `feature-spec` intentionally includes directory trees; `design-system` has an init-mode Authoring branch with a sentinel-removal step). Always honor the target entry's "Content Rules / exceptions" and "Special slivers".
+- Update affected sections; preserve meaningful guidance and parser contracts; disposition removed redundancy or outside-purpose material.
+- Honor target-entry Content Rules/exceptions and Special slivers, including target-specific branches.
 
 ---
+
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Scan (parameterized reference-doc scanner)](#scan-parameterized-reference-doc-scanner)
+- [Phase 0.0: Resolve Target (BLOCKING — do this before anything else)](#phase-00-resolve-target-blocking--do-this-before-anything-else)
+- [Phase 0: Classify & Assess](#phase-0-classify--assess)
+- [Phase 1: Plan Scan Strategy](#phase-1-plan-scan-strategy)
+- [Phase 2: Execute Scan (Parallel Sub-Agents)](#phase-2-execute-scan-parallel-sub-agents)
+- [Phase 3: Analyze & Generate](#phase-3-analyze--generate)
+- [Phase 4: Write & Verify](#phase-4-write--verify)
+- [Final Step: Enhance Scanned Doc (MANDATORY — before Phase 4 application)](#final-step-enhance-scanned-doc-mandatory--before-phase-4-application)
+- [Closing Reminders](#closing-reminders)
 
 # Scan (parameterized reference-doc scanner)
 
 ## Phase 0.0: Resolve Target (BLOCKING — do this before anything else)
 
-1. Parse `--target=<key>` from the invocation (e.g. `/scan --target=backend-patterns`). Accept the key with or without the `--target=` prefix.
-2. If no target is supplied or the key is unknown → **STOP** and list the valid keys (see frontmatter / `references/targets.md`), ask the user which target to scan.
-3. **Read the target's entry in `references/targets.md`.** That entry is the single source of truth for this run and supplies:
-    - `doc` — the reference doc path this scan writes
-    - `description` — the doc's purpose blurb
-    - `sub-agents` — exact count + role of each parallel sub-agent
-    - **Phase 0 detection** — the classification table(s) and BLOCKING gates for this target
-    - **Sub-agent Think scopes** — each sub-agent's Think question(s) + scan-target bullets
-    - **Target Sections** — the output doc's section list
-    - **Content Rules / exceptions** — including any override of the shared output-quality rules
-    - **Special slivers** — target-unique BLOCKING gates, Authoring branches, sentinel removals, whitelist scopes
-    - **Anti-Rationalization rows** — target-specific evasions to refuse
-    - **prompt-enhance** — the final `/prompt-enhance <doc>` step
-4. **Orchestrator branch (BLOCKING check):** if the loaded entry is marked **`kind: orchestrator`** (e.g. `ui-system`), it does NOT run the 4-phase doc engine. SKIP Phases 0–4 below and instead follow the entry's **Orchestration Procedure** (pre-flight gate → launch the child `--target=` scans in parallel → verify each child doc has real content → summarize). Standard (single-doc scanner) targets ignore this step and continue with the shared engine below.
+1. Parse `--target=<key>` from the invocation (e.g. `/scan --target=backend-patterns`). Built-in keys use their manifest entry. The reserved `generic-reference-doc` mode also requires `--filename="<relative-path>"`. If no target or an unknown key is supplied, STOP and list registered keys; never guess the intended target.
+2. **Validate project config.** Resolve the configured config path through `.claude/hooks/lib/project-config-loader.cjs` (default `docs/project-config.json`). Absent config is supported: use the runtime capability resolver and repository evidence. Present config requires a non-empty `project.name`; omitted sections use neutral defaults/skips. Repair declared invalid sections through `project-init` / `project-config` before relying on them.
+3. **Resolve output selection.** Read the effective `referenceDocs` selection through the project config/runtime resolver. An explicit array, including `[]`, is exact for task-specific docs. A built-in target may write only its manifest `doc` when that exact filename is selected. `generic-reference-doc` may write only the exact selected custom filename whose `scanTarget` is `generic`; a missing/`manual` target or unselected filename blocks the scan. Custom docs never inherit a built-in target by basename. The `lessons.md` and docs-index inputs are ensured by project-init separately from task-specific selection.
+4. **Read `references/targets.md` (registry index: selection rules, path roots, key → file table), then the resolved target's own file `references/targets/<key>.md` — MANDATORY; the index carries no scan data and no other target file is needed.** `generic-reference-doc` uses the index's Dynamic Target section instead of a target file. The target file supplies:
+   - `doc` — the reference doc path this scan owns
+   - applicability and skip evidence
+   - description, sub-agent roles, Phase 0 detection, Think scopes, sections, content rules, exceptions, special slivers, anti-rationalization, and enhancement requirements
+5. **Check applicability before scanning.** Verify the capability from relevant config plus repository evidence. Config may select or point to search locations, but does not prove that a code pattern exists. If evidence shows the capability is absent, report `SKIPPED` with the config fields and paths checked and write nothing. If evidence conflicts materially, stop and surface the conflict.
+6. **Orchestrator branch:** if the entry is `kind: orchestrator`, follow its applicability-aware procedure and include only eligible children. Do not run the shared single-doc engine for the orchestrator.
 
 > Everything below is the SHARED engine (standard single-doc scanner targets). Wherever it says "the target entry," read the loaded manifest entry — do not assume values from another target. **Orchestrator-kind targets do not use this engine** — they run their entry's Orchestration Procedure instead.
 
 ## Phase 0: Classify & Assess
 
-**Before any other step**, run in parallel:
+After config, output selection, and applicability pass, run only the checks relevant to this target:
 
 1. Read the target's `doc`.
-    - Detect mode: **Init** (placeholder — headings only / sentinel present) or **Sync** (populated). Some targets add a **Force** mode (user says "rebuild"/"reset" → treat as Init even if the doc exists) — honor it if the target entry defines it.
-    - In Sync mode: list already-documented sections → skip re-scanning those unless staleness suspected.
-2. Run the target entry's **Phase 0 detection** table(s) — detect framework / system type / architecture exactly as that table specifies. This is BLOCKING: grep terms and sub-agent scope derive from detection.
-3. Load relevant paths from `docs/project-config.json` (e.g. `contextGroups`/`modules`/`designSystem`/`e2eTesting`/`integrationTestVerify`) if the target entry references them.
-4. Run a graph command on the primary entry point: `python .claude/scripts/code_graph trace <entry-file> --direction both --json` (when `.code-graph/graph.db` exists).
+   - Detect mode: **Init** (placeholder — headings only / sentinel present) or **Sync** (populated). Some targets add a **Force** mode (user says "rebuild"/"reset" → treat as Init even if the doc exists) — honor it if the target entry defines it.
+   - Save the exact baseline (or record absence) in the unique temporary report directory. Classify full owner scan, impact-scoped verification or editorial rewrite under `scan-and-update-reference-doc`; existing sections are not evidence that their owners were checked.
+2. Run the target entry's **Phase 0 detection** table(s) only for the evidenced capability. For a generic custom doc, derive evidence and search scope from its configured purpose and sections, then verify against repository sources without assuming a stack, architecture, or test convention. Derive patterns from source, manifests, test config, or documentation; a framework name in config is a search hint to verify, not permission to invent usage.
+3. Load only relevant configured paths and profiles, and validate every declared section the scan consumes. Omitted optional properties mean neutral defaults or a skipped branch; a declared malformed property blocks the scan.
+4. For code-oriented targets, trace relevant files with the project graph only when `.code-graph/graph.db` and the graph tool are available.
 
-**Evidence gate:** Confidence <60% on the target's primary detection axis → report uncertainty, DO NOT proceed with detection-specific scanning (or fall back exactly as the target entry's evidence-gate instruction specifies, e.g. "proceed with Agent 1 only").
+**Evidence gate:** If applicability or framework detection cannot be established, report what was checked and what remains unknown. Skip absent capabilities; ask only when unresolved evidence materially changes the doc and cannot be settled from config or source. Never substitute a guessed manifest fallback.
 
 ## Phase 1: Plan Scan Strategy
 
-From the detected framework/type, derive the concrete patterns to search (naming conventions, base classes, config locations). NEVER assume these — derive from actual file evidence.
+From the evidenced framework/type, derive concrete patterns to search (naming, lifecycle, data access, configuration, and test organization). Treat architecture patterns such as repositories, CQRS, events, or domain entities as options to evaluate against observed boundaries, not mandatory structures.
 
-**Create `TaskCreate` entries** for each sub-agent listed in the target entry and for each phase before proceeding.
+Record authoritative owners and exemplar preconditions; distinguish intended practice from legacy frequency. Bound exploration by selected owner scope and relevant consumers, use live registries, and record unknowns rather than exhaustive inventories. Create work items only for applicable branches. When delegation is authorized, assign disjoint source scopes and reconcile their union, including boundary files, before dispatch; the main agent owns output writes.
 
 ## Phase 2: Execute Scan (Parallel Sub-Agents)
 
-Launch the **N general-purpose sub-agents** defined in the target entry (count + roles vary per target — e.g. backend-patterns/domain-entities use 4, project-structure/frontend-patterns/design-system/code-review-rules/e2e-tests use 3, scss-styling/feature-spec/integration-tests use 2, docs-index uses a single main-agent scan + a fresh-eyes verifier). Give each sub-agent its **Think scope** + scan-target bullets verbatim from the entry. Each sub-agent MUST:
+Launch only the general-purpose sub-agents defined for applicable branches in the target entry. Give each sub-agent its **Think scope** + scan-target bullets verbatim from the entry. Each sub-agent MUST:
 
 - Write findings incrementally after each file/section — NEVER batch at end
 - Cite `file:line` for every pattern example
-- Confidence: >80% document as pattern; 60-80% document as "observed (unverified)"; <60% omit
+- Confidence: >80% document with authority/preconditions; 60-80% label unresolved observations, never required practice; <60% omit or report a material unknown
 
-Each worker writes a **unique shard** under `plans/reports/scan-{target}-{YYMMDD}-{HHMM}/`; workers never append to the same report. After the barrier, the main agent reads and validates every shard and is the **sole writer** of `plans/reports/scan-{target}-{YYMMDD}-{HHMM}-report.md`.
+Each worker writes a **unique shard** under `tmp/reports/scan-{target}-{YYMMDD}-{HHMM}/`; workers never append to the same report. After the barrier, the main agent reads and validates every shard and is the **sole writer** of `tmp/reports/scan-{target}-{YYMMDD}-{HHMM}-report.md`.
 
-> Honor any **conditional / ordered** sub-agents from the entry (e.g. an Anti-Pattern agent that runs AFTER the discovery agents; a Cross-Service agent that runs ONLY for microservices; a BDD agent that runs ONLY if a BDD framework is detected). Honor any **CRITICAL security flag** the entry defines (e.g. hardcoded credentials).
+> Honor every **conditional / ordered** sub-agent from the entry (for example, cross-service work only when service boundaries exist, or a BDD agent only when BDD artifacts are present). Honor any **CRITICAL security flag** the entry defines. Never create extra architecture or test components to fill a section.
 
 ## Phase 3: Analyze & Generate
 
@@ -87,12 +113,12 @@ Read the full report. Apply the fresh-eyes protocol:
 
 **Round 1 (main agent):** Build section drafts from report findings, using the target entry's **Target Sections** + **Content Rules / exceptions**.
 
-**Round 2 (fresh sub-agent, zero memory of Round 1):** Sub-agent re-reads report + draft doc independently and checks (apply the target entry's Round-2 verification specifics):
+**Round 2 (only after Round 1 finds and fixes issues; fresh sub-agent, zero memory of Round 1):** Sub-agent re-reads report + draft doc independently and checks (apply the target entry's Round-2 verification specifics):
 
 - Does every code example match an actual existing file (Glob verify)?
 - Do class/token/variable names in examples match actual declarations (Grep verify)?
-- Are required sections (Anti-Patterns / Coverage Report / Gap Analysis / M1-M2 Compliance / etc. as the target mandates) populated?
-- Coverage gaps: which Target Sections have no examples?
+- Do consumer-required sections retain valid syntax/data? Unsupported sections are omitted or explicitly dispositioned, not filled to satisfy a heading.
+- Does each section improve an action or discovery decision? Check exceptions, rationale and exemplar fit; put audit/coverage evidence in the report unless needed for action or required by the local owner.
 
 **Round 3 only if Round 2 finds issues.** Max 3 rounds → escalate to user if unresolved. (Clean Round 1 ends the scan; fresh-eyes is mandatory only after issues are found and fixed.)
 
@@ -100,176 +126,77 @@ Read the full report. Apply the fresh-eyes protocol:
 
 ## Phase 4: Write & Verify
 
-1. Write the updated doc with `<!-- Last scanned: YYYY-MM-DD -->` at top.
-2. Surgical update only — preserve sections with no staleness, update only diverged sections; preserve manual annotations.
+1. **[BLOCKING] No-op scans write NOTHING — not even the stamp.** Finish enhancement and semantic review on the full candidate before application; choose freshness metadata according to the classified operation, then compare it against the doc on disk with the shared guard, which ignores volatile stamps and whitespace:
+
+   ```bash
+   node .claude/hooks/lib/doc-stamp-guard.cjs --check <target doc> --candidate <candidate file> --baseline <baseline file>
+   ```
+
+   - **Exit 4 (CONFLICT)** → preserve candidate/live baseline, reconcile newer guidance and repeat semantic/discovery checks before retrying. Single main writer applies immediately after the check; it is optimistic detection, not locking.
+   - **Exit 0 (CHANGED)** → write the fully reviewed candidate with truthful operation metadata.
+   - **Exit 3 (NO-OP)** → do **NOT** write the file, do **NOT** touch the stamp. Only after a full owner scan, record verification in the local ledger; impact/editorial work preserves full-scan staleness:
+
+     ```bash
+     node .claude/hooks/lib/doc-stamp-guard.cjs --record-verified <doc filename>
+     ```
+
+     Then report `unchanged (no write)`. Date-only rewrites create merge conflicts without adding information.
+
+2. Apply only affected guidance; preserve manual annotations and meaningful local rules. Remove redundant/outside-purpose sections with semantic dispositions, preserving parser-owned structures. Never use a pointer that cannot deliver the rule when needed.
 3. Verify (Glob check): **ALL** code example file paths exist — not just a sample of 5.
 4. Verify (Grep check): class/token/variable names in examples match actual declarations.
 5. Verify any target-mandated section is real, not hypothetical (Anti-Patterns / Coverage gaps / M1-M2 leaks / ports-from-config / etc.).
-6. Run a graph command on 2-3 key files to validate call-chain accuracy.
-7. Report: sections updated / unchanged / coverage gaps / violations found.
+6. For code-oriented claims, validate call-chain or dependency claims with the available project graph; when no supported graph exists, trace relevant source callers directly.
+7. **Convention classes (main agent only, never a worker):** when the valid project config declares convention classes, follow their configured additive merge procedure. Omitted optional convention configuration is a skip; do not create classes from guessed stack facts. Workers keep writing only their unique shard; the main agent stays the sole writer.
+8. Report: sections updated / unchanged / coverage gaps / violations found / convention classes added-refreshed-kept.
 
-> **Output-rule overrides:** apply the target entry's "Content Rules / exceptions" — e.g. `feature-spec` intentionally INCLUDES a directory tree (overriding the shared no-trees rule); `docs-index` intentionally OUTPUTS glob-verified counts (its counts are the deliverable); `e2e-tests`/`integration-tests` forbid hardcoded counts and use grep-expression statistics.
+> **Output-rule overrides:** apply the target entry's "Content Rules / exceptions" — owner-required index rows/counts/anchors remain intact; contractual thresholds/versions remain actionable. Detailed statistics and coverage reports stay in temporary evidence unless they govern action or a consumer requires them.
 
 <!-- SCAN:prompt-enhance-final-step -->
 
-## Final Step: Enhance Scanned Doc (MANDATORY)
+## Final Step: Enhance Scanned Doc (MANDATORY — before Phase 4 application)
 
-**MUST ATTENTION** after the doc is written and verified, create a REQUIRED final todo task and run `/prompt-enhance <the target entry's doc>` — why: this reference doc is injected into AI context on every downstream session; `/prompt-enhance`'s default `--op=enhance` keeps it as concise as possible while staying valuable enough for AI (caveman compression + attention anchoring — top/bottom Goal, inline READ summaries, token density). A scan is NOT complete until its doc is prompt-enhanced.
+**MUST ATTENTION** for a changed candidate, run `/prompt-enhance` with the target output identity and its ownership contract before application when required by the manifest. Use its agent-guide branch; compare final semantic dispositions against the baseline so enhancement cannot restore removed bulk. A skipped or unchanged target is not rewritten or enhanced.
 
-**TaskCreate (required, last task):** `Run /prompt-enhance <target doc> on the scanned doc`
+**TaskCreate (last task when a doc changed):** `Enhance candidate and review semantic retention before applying <target doc>`
 
 <!-- /SCAN:prompt-enhance-final-step -->
 
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks per file read. Prevents context loss from long files. Simple tasks: ask user whether to skip.
+## Closing Reminders
 
-**Prerequisites:** **MUST ATTENTION READ** before executing:
+**IMPORTANT MUST ATTENTION Goal:** Scan one selected built-in or explicitly generic custom reference doc and deliver a surgical, evidence-backed update that preserves action-changing rules, exceptions and verified discovery without report bulk.
 
-<!-- SYNC:critical-thinking-mindset -->
+**MUST ATTENTION Main steps:** Resolve config/selection and target → verify applicability → classify Init/Sync/target-defined Force and save baseline → plan applicable owner scopes → scan into unique shards → review evidence and retention → enhance when required → reconcile baseline/no-op/freshness and apply → report. Orchestrator targets follow their own procedure.
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:scan-and-update-reference-doc -->
-
-> **Scan & Update Reference Doc** — Surgical updates only, never full rewrite.
->
-> 1. **Read existing doc** first — understand current structure and manual annotations
-> 2. **Detect mode:** Placeholder (only headings, no content) → Init mode. Has content → Sync mode.
-> 3. **Scan codebase** for current state (grep/glob for patterns, counts, file paths)
-> 4. **Diff** findings vs doc content — identify stale sections only
-> 5. **Update ONLY** sections where code diverged from doc. Preserve manual annotations.
-> 6. **Update metadata** (date, counts, version) in frontmatter or header
-> 7. **NEVER** rewrite entire doc. NEVER remove sections without evidence they're obsolete.
-
-<!-- /SYNC:scan-and-update-reference-doc -->
-
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
-
-<!-- /SYNC:output-quality-principles -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
-
-<!-- /SYNC:ai-mistake-prevention -->
+- **MUST ATTENTION** load the registry and target entry first; derive detection/search terms from evidence and honor Content Rules, Special slivers and Anti-Rationalization exceptions.
+- **MUST ATTENTION** verify every emitted path/name/claim and generated projection; cite `file:line`, document above 80% confidence, label 60–80% unresolved, omit below 60%. An optional graph is only a hint; trace source callers when absent. Absence is neither a scan limitation nor a finding.
+- **MUST ATTENTION** use small tracked tasks: one per phase/worker plus final quality review. Sub-agents append incremental findings to unique shards; tag PAR/SEQ tasks, dispatch each disjoint PAR wave together and reconcile at the barrier; the main agent is sole writer. Do not ask whether to skip a clear one-target scan.
+- **MUST ATTENTION** clean Round 1 ends the scan; after Round 1 finds and fixes issues, Round 2 fresh-eyes review is mandatory; Round 3 runs only if Round 2 finds issues (max 3 rounds).
+- **MUST ATTENTION** preserve manual guidance and semantic dispositions; reject/reconcile live-byte conflicts, write nothing for no-ops, and advance full-scan freshness only for a full owner scan.
+- **MUST ATTENTION** report evidence-backed review-group/rule recommendations through project-config; write only the selected doc and existing authorized convention output, never review policy or tool installation.
 
 <!-- SYNC:scan-and-update-reference-doc:reminder -->
 
-**IMPORTANT MUST ATTENTION** read existing doc first, scan codebase, diff, surgical update only. Never rewrite entire doc.
+**IMPORTANT MUST ATTENTION** read/save baseline, classify full/impact/editorial operation, preserve semantic dispositions and manual guidance, reject/reconcile changed live bytes before application. No-op writes nothing; only full owner scans advance full-scan freshness.
 
 <!-- /SYNC:scan-and-update-reference-doc:reminder -->
 
 <!-- SYNC:output-quality-principles:reminder -->
 
-**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer. (Per-target exceptions in the manifest entry override this — e.g. feature-spec trees, docs-index counts.)
+**IMPORTANT MUST ATTENTION** lead with useful guidance and readable priorities; preserve action-changing conditions/numbers and required structures. When writing, updating or auditing Markdown skill/doc content, verify top, heading-linked contents over 200 lines (stricter owner thresholds remain); refresh after edits and report gaps in read-only audits. Remove report bulk; judge semantic value rather than word counts.
 
 <!-- /SYNC:output-quality-principles:reminder -->
 
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- SYNC:parallel-subagent-dispatch -->
-
-> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
->
-> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
-> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
-> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
-> 4. **Spawn each wave in ONE message** — every `Agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
-> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
-> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
-> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
->
-> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a skill or workflow explicitly fixes · gates awaiting user approval.
->
-> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
-
-<!-- /SYNC:parallel-subagent-dispatch -->
-
-<!-- SYNC:parallel-subagent-dispatch:reminder -->
-
-- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
-- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
-
-<!-- /SYNC:parallel-subagent-dispatch:reminder -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
-
-## Closing Reminders
-
-**IMPORTANT MUST ATTENTION** resolve `--target` and load its manifest entry FIRST — never scan from memory of "what a backend/frontend/design scan does"
-
-**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
-
-- **Critical Thinking:** traced `file:line` proof per claim; confidence >80% to act.
-- **Scan & Update Doc:** read existing doc, diff, surgical update only — never full rewrite.
-- **Output Quality:** no counts/trees/TOCs; 1 example per pattern; lead with answer.
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Parallel Sub-Agent Dispatch:** Tag tasks PAR/SEQ, group PAR into disjoint-write-set waves, spawn each wave in ONE message, barrier before advancing.
-
-**IMPORTANT MUST ATTENTION Final Step:** run `/prompt-enhance <target doc>` as the REQUIRED last todo task — never end the scan without enhancing the doc it just wrote
-**IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one task per sub-agent, one per phase
-**IMPORTANT MUST ATTENTION** detect framework/type FIRST in Phase 0 — all grep terms derive from detection, never hardcoded
-**IMPORTANT MUST ATTENTION** cite `file:line` for every pattern (confidence >80% to document; <60% omit)
-**IMPORTANT MUST ATTENTION** run graph command on key files — grep finds text, graph finds structure (callers, event chains, blast radius)
-**IMPORTANT MUST ATTENTION** sub-agents write findings incrementally after each file — NEVER batch at end (context loss)
-**IMPORTANT MUST ATTENTION** read existing doc FIRST, diff findings, surgical update only — NEVER rewrite entire doc
-**IMPORTANT MUST ATTENTION** multi-round fresh-eyes review — main agent rationalizes its own mistakes; Round 2 sub-agent catches what main agent dismissed
-**IMPORTANT MUST ATTENTION** honor the target entry's Content-Rule exceptions, Special slivers, and Anti-Rationalization rows — they encode why this target differs from the others
-
 **Anti-Rationalization (shared — the target entry adds its own rows):**
 
-| Evasion                                                       | Rebuttal                                                                                              |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Evasion                                           | Rebuttal                                                                            |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | "I know what a `<target>` scan does, skip the manifest entry" | The entry holds the BLOCKING gates, sub-agent count, and exceptions — scanning from memory drops them |
-| "Framework/type already known, skip Phase 0 detection"        | Phase 0 is BLOCKING — derive grep terms from evidence, not assumption                                 |
-| "Doc has content, skip re-read"                               | Show section list extracted from doc as proof of re-read                                              |
-| "Examples look right"                                         | Glob-verify ALL file paths + Grep-verify ALL names — looking right ≠ verified                         |
-| "Round 2 review not needed for small scan"                    | Main agent rationalizes own mistakes. Fresh sub-agent is non-negotiable.                              |
+| "Framework/type already known, skip Phase 0 detection" | Phase 0 is BLOCKING — derive grep terms from evidence, not assumption               |
+| "Doc has content, skip re-read"                   | Show section list extracted from doc as proof of re-read                            |
+| "Examples look right"                             | Glob-verify ALL file paths + Grep-verify ALL names — looking right ≠ verified       |
+| "Round 2 review not needed after fixing a small scan" | Size does not waive the issue-triggered gate: corrected Round 1 requires a fresh sub-agent; a clean Round 1 ends the scan. |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and break into small todo tasks and sub-tasks using TaskCreate.

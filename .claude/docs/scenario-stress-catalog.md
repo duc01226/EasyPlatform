@@ -25,7 +25,7 @@
 | **B2** | Business-critical                     | outage costs revenue/trust; data loss is unacceptable; HA expected; real (if unwritten) availability + durability expectations        |
 | **B3** | Mission-critical / regulated          | strict availability + durability SLOs; explicit RPO/RTO targets; legal/compliance obligation; failure endangers money, safety, or law |
 
-> **How to derive the tier:** read business impact from `docs/specs/**`, product docs, SLA/SLO notes,
+> **How to derive the tier:** read business impact from the business spec root (default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path), product docs, SLA/SLO notes,
 > `docs/project-config.json`, and the domain the system serves. Cite `file:line`/evidence + a confidence %.
 > **Unknown → state the assumption; do NOT default to B3** (that would over-harden by reflex).
 >

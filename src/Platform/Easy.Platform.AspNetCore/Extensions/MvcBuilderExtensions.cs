@@ -1,10 +1,12 @@
 #region
 
+using System.Reflection;
 using System.Text.Json.Serialization;
 using Easy.Platform.AspNetCore.Mvc.ModelBinding;
 using Easy.Platform.AspNetCore.Mvc.NamedJsonFormatters;
 using Easy.Platform.Common.JsonSerialization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -48,6 +50,45 @@ namespace Easy.Platform.AspNetCore.Extensions;
 /// </remarks>
 public static class MvcBuilderExtensions
 {
+    /// <summary>
+    /// Adds the explicitly selected module assemblies to MVC controller discovery.
+    /// </summary>
+    /// <param name="builder">The MVC builder to configure.</param>
+    /// <param name="assemblies">The controller assemblies to add. Null or empty input is a no-op.</param>
+    /// <returns>The configured MVC builder.</returns>
+    /// <remarks>
+    /// Application parts are deduplicated by assembly identity so a controller assembly can be selected by more
+    /// than one module registration path without producing duplicate parts. This method does not discover
+    /// referenced assemblies implicitly.
+    /// </remarks>
+    public static IMvcBuilder AddPlatformControllerAssemblies(this IMvcBuilder builder, IEnumerable<Assembly> assemblies)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        if (assemblies == null)
+            return builder;
+
+        var registeredAssemblyIdentities = builder.PartManager.ApplicationParts
+            .OfType<AssemblyPart>()
+            .Select(applicationPart => applicationPart.Assembly.FullName)
+            .Where(assemblyIdentity => assemblyIdentity != null)
+            .ToHashSet(StringComparer.Ordinal);
+
+        foreach (var assembly in assemblies)
+        {
+            if (assembly == null)
+                continue;
+
+            var assemblyIdentity = assembly.FullName ?? assembly.GetName().Name;
+            if (assemblyIdentity == null || !registeredAssemblyIdentities.Add(assemblyIdentity))
+                continue;
+
+            builder.PartManager.ApplicationParts.Add(new AssemblyPart(assembly));
+        }
+
+        return builder;
+    }
+
     /// <summary>
     /// Adds support for multiple named JSON serialization configurations within the same ASP.NET Core application.
     /// This enables different API endpoints or versions to use different JSON serialization settings

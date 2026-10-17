@@ -2,12 +2,19 @@
 
 using System.Reflection;
 using Easy.Platform.Application;
+using Easy.Platform.Application.MessageBus.Consumers;
+using Easy.Platform.Application.MessageBus.InboxPattern;
+using Easy.Platform.Application.MessageBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.Producers;
+using Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.AspNetCore.Constants;
 using Easy.Platform.AspNetCore.Context.RequestContext;
 using Easy.Platform.AspNetCore.Context.RequestContext.RequestContextKeyToClaimTypeMapper;
 using Easy.Platform.AspNetCore.Context.RequestContext.RequestContextKeyToClaimTypeMapper.Abstract;
 using Easy.Platform.AspNetCore.ExceptionHandling;
+using Easy.Platform.AspNetCore.Extensions;
 using Easy.Platform.AspNetCore.Middleware;
 using Easy.Platform.AspNetCore.Middleware.Abstracts;
 using Easy.Platform.AspNetCore.OpenApi;
@@ -15,6 +22,7 @@ using Easy.Platform.Common;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.HostingBackgroundServices;
 using Easy.Platform.Common.JsonSerialization;
+using Easy.Platform.Infrastructures.MessageBus;
 using Easy.Platform.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Json;
@@ -384,9 +392,85 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
         return [Assembly];
     }
 
+    /// <summary>
+    /// Gets the assemblies that this module explicitly owns for MVC controller discovery.
+    /// </summary>
+    /// <returns>The controller assemblies to expose through the host MVC application-part manager.</returns>
+    /// <remarks>
+    /// The default is the concrete module assembly. Override this in a composite module to opt in additional API
+    /// assemblies; referenced assemblies are never scanned implicitly.
+    /// </remarks>
+    public virtual List<Assembly> GetAssembliesForControllerDiscovery()
+    {
+        return [Assembly];
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the root ASP.NET Core module should fail fast on invalid module composition.
+    /// </summary>
+    /// <remarks>
+    /// Existing hosts remain compatible by default. Composite hosts can enable the setting through configuration;
+    /// a registry created in strict mode also enables the validation path.
+    /// </remarks>
+    protected virtual bool EnableStrictCompositionValidation =>
+        Configuration?.GetValue<bool?>(PlatformModuleCompositionOptions.StrictValidationConfigurationKey) == true;
+
+    protected override void ValidateComposition()
+    {
+        if (!IsRootModule)
+            return;
+
+        var compositionServiceProvider = CurrentAppBuilder?.ApplicationServices ?? ServiceProvider;
+        var messageBusStoreRegistry = compositionServiceProvider?.GetService<IPlatformMessageBusStoreRegistry>();
+        var strictValidationEnabled = EnableStrictCompositionValidation ||
+                                      messageBusStoreRegistry?.IsStrictCompositionValidationEnabled == true;
+
+        if (!strictValidationEnabled)
+            return;
+
+        PlatformModuleCompositionValidator.Validate(
+            new PlatformModuleCompositionOptions
+            {
+                StrictValidationEnabled = true,
+                ServiceCollection = ServiceCollection,
+                ServiceProvider = compositionServiceProvider,
+                MessageBusStoreRegistry = messageBusStoreRegistry,
+                ControllerAssemblies = GetAssembliesForControllerDiscovery() ?? [],
+                RegisteredSeederTypes = GetRegisteredImplementationTypes(typeof(IPlatformApplicationDataSeeder)),
+                RegisteredConsumerTypes = GetRegisteredImplementationTypes(typeof(IPlatformMessageBusConsumer)),
+                RegisteredProducerTypes = GetRegisteredImplementationTypes(typeof(IPlatformCqrsEventBusMessageProducer)),
+                ApplicationSettingContextRegistrationCount = ServiceCollection?.Count(descriptor =>
+                    descriptor.ServiceType == typeof(IPlatformApplicationSettingContext)) ?? 0,
+                InfrastructureAssemblies = [typeof(PlatformApplicationModule).Assembly],
+                HasMessageBusScannerRegistration = HasServiceRegistration(typeof(IPlatformMessageBusScanner)),
+                HasInboxConsumerWorkerRegistration = HasServiceRegistration(typeof(PlatformConsumeInboxBusMessageHostedService)),
+                HasInboxCleanerWorkerRegistration = HasServiceRegistration(typeof(PlatformInboxBusMessageCleanerHostedService)),
+                HasApplicationProducerRegistration = HasServiceRegistration(typeof(IPlatformApplicationBusMessageProducer)),
+                HasKeyedApplicationProducerRegistration = HasServiceRegistration(typeof(IPlatformKeyedApplicationBusMessageProducer)),
+                HasOutboxSenderWorkerRegistration = HasServiceRegistration(typeof(PlatformSendOutboxBusMessageHostedService)),
+                HasOutboxCleanerWorkerRegistration = HasServiceRegistration(typeof(PlatformOutboxBusMessageCleanerHostedService)),
+                HasMessageBusStoreRegistryRegistration = HasServiceRegistration(typeof(IPlatformMessageBusStoreRegistry))
+            });
+    }
+
     protected override void InternalRegister(IServiceCollection serviceCollection)
     {
         base.InternalRegister(serviceCollection);
+
+        var controllerAssemblies = GetAssembliesForControllerDiscovery()?
+            .Where(assembly => assembly != null)
+            .Distinct()
+            .ToList() ?? [];
+
+        if (controllerAssemblies.Count > 0)
+        {
+            var mvcBuilder = serviceCollection.AddControllers();
+
+            RegisterOncePerAssembly(
+                assembly => mvcBuilder.AddPlatformControllerAssemblies([assembly]),
+                controllerAssemblies,
+                nameof(GetAssembliesForControllerDiscovery));
+        }
 
         serviceCollection.Configure<JsonOptions>(options => PlatformJsonSerializer.ConfigApplyCurrentOptions(options.SerializerOptions));
         RegisterRequestContext(serviceCollection);
@@ -426,6 +510,26 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
             Logger.LogInformation("[PlatformModule] EnvironmentVariable AspCoreEnvironmentValue={AspCoreEnvironmentValue}", PlatformEnvironment.AspCoreEnvironmentValue);
             Logger.LogInformation("[PlatformModule] EnvironmentVariable AspCoreUrlsValue={AspCoreUrlsValue}", PlatformEnvironment.AspCoreUrlsValue);
         }
+    }
+
+    private List<Type> GetRegisteredImplementationTypes(Type contractType)
+    {
+        if (ServiceCollection == null)
+            return [];
+
+        return ServiceCollection
+            .Select(descriptor => descriptor.ImplementationType)
+            .Where(type => type != null && type.IsClass && !type.IsAbstract && type.IsAssignableTo(contractType))
+            .Distinct()
+            .ToList();
+    }
+
+    private bool HasServiceRegistration(Type serviceType)
+    {
+        return ServiceCollection?.Any(descriptor =>
+                   descriptor.ServiceType == serviceType ||
+                   descriptor.ImplementationType == serviceType ||
+                   descriptor.ImplementationInstance?.GetType() == serviceType) == true;
     }
 
     /// <summary>

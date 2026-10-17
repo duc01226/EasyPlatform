@@ -1,8 +1,8 @@
 # Code Review Graph — Setup Guide
 
-Structural code intelligence for easy-claude. Parses your codebase with Tree-sitter into a knowledge graph (functions, classes, imports, calls, inheritance) stored in SQLite. Enables graph-blast-radius analysis, dependency tracing, and graph-powered code reviews.
+Structural code intelligence for easy-claude. Parses your codebase with Tree-sitter into a knowledge graph (functions, classes, imports, calls, inheritance) stored in SQLite. Enables blast-radius analysis, dependency tracing, and graph-powered code reviews.
 
-**Optional feature** — everything works without it. When installed, skills and hooks automatically use the graph for richer context.
+**Optional feature** — everything works without it. When installed, the graph is an optional advisory source: a hint that can be stale or incomplete, never a requirement, and verified by reading the files.
 
 ## Prerequisites
 
@@ -10,11 +10,15 @@ Structural code intelligence for easy-claude. Parses your codebase with Tree-sit
 
 ## Installation
 
-```bash
-pip install tree-sitter tree-sitter-language-pack networkx
-```
+Python 3.10+ required; `/graph-code --mode=build` installs the rest into the hooks' environment (`tree-sitter`, `tree-sitter-language-pack`, `networkx`, on first use). Do not `pip install` them into the system Python.
+
+## Enable or disable
+
+`hooks.codeGraph.enabled` in `docs/project-config.json` sets the mode: `auto` (default) = active only once `.code-graph/graph.db` exists; `on` = always active; `off` = the graph hooks stay silent and the graph CLI refuses every command. A malformed value counts as `off`. Read `.claude/docs/hooks/README.md` § Code graph mode when you need what each hook does per mode.
 
 ## First Build
+
+Run `/graph-code --mode=build` (installs the tooling, then builds). The CLI build it runs:
 
 ```bash
 python .claude/scripts/code_graph build --json
@@ -42,13 +46,13 @@ The tool auto-creates `.code-graph/.gitignore` with `*` content (prevents commit
 
 | Command                     | Description                                                                                     |
 | --------------------------- | ----------------------------------------------------------------------------------------------- |
-| `/graph-build`              | Build or update the knowledge graph                                                             |
-| `/graph-blast-radius`       | Analyze impact of current changes                                                               |
-| `/graph-export`             | Export full graph to JSON (`--format=json`) or single-file Mermaid diagram (`--format=mermaid`) |
-| `/graph-query`              | Natural language queries (callers, imports, tests)                                              |
-| `/graph-connect-api`        | Detect frontend-backend API connections                                                         |
-| `/graph-trace`              | Trace full system flow (upstream/downstream/both)                                               |
-| `/graph-build --scope=sync` | Sync graph with git state after pull/checkout                                                   |
+| `/graph-code --mode=build`              | Build or update the knowledge graph                                                             |
+| `/graph-code --mode=blast-radius`       | Analyze impact of current changes                                                               |
+| `/graph-code --mode=export`             | Export full graph to JSON (`--format=json`) or single-file Mermaid diagram (`--format=mermaid`) |
+| `/graph-code --mode=query`              | Natural language queries (callers, imports, tests)                                              |
+| `/graph-code --mode=connect-api`        | Detect frontend-backend API connections                                                         |
+| `/graph-code --mode=trace`              | Trace full system flow (upstream/downstream/both)                                               |
+| `/graph-code --mode=build --scope=sync` | Sync graph with git state after pull/checkout                                                   |
 
 ### CLI Commands
 
@@ -125,9 +129,9 @@ The graph maintains itself through 2 automatic hooks (plus a manual rebuild):
 | ----------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **Claude edits a file** | `graph-auto-update.cjs` (PostToolUse)   | Re-parses the edited file, updates nodes/edges. 3s debounce + atomic lock prevents duplicates.                       |
 | **New session starts**  | `graph-session-init.cjs` (SessionStart) | Diffs `last_synced_commit` vs current HEAD. Re-parses all files changed since last sync (git pull, checkout, merge). |
-| **Manual rebuild**      | `/graph-build`                          | Full rebuild from scratch. Safety net if graph gets out of sync.                                                     |
+| **Manual rebuild**      | `/graph-code --mode=build`                          | Full rebuild from scratch. Safety net if graph gets out of sync.                                                     |
 
-> Blast radius, trace CLI hints, and grep-to-graph suggestions are pulled on demand by the `graph-*` skills and the Graph Intelligence gate in `CLAUDE.md` — not injected by a hook.
+> Blast radius, trace CLI hints, and grep-to-graph suggestions can be pulled on demand by the `graph-*` skills per the hook-delivered graph advice (`.claude/skills/shared/protocols/graph-assisted-investigation.md`) — optional, not injected by a hook.
 
 **After `git pull`:** The next Claude session automatically syncs. No manual action needed.
 
@@ -152,6 +156,17 @@ This creates edges like `TRIGGERS_EVENT`, `MESSAGE_BUS`, `PRODUCES_EVENT` betwee
 - **Free-format bus messages** — `new XxxBusMessage` → `PlatformApplicationMessageBusConsumer<XxxBusMessage>` (`MESSAGE_BUS`)
 - **Command event handlers** — Command → CommandEventApplicationHandler (`TRIGGERS_COMMAND_EVENT`)
 
+**Rule shape.** Each rule has a `source` and a `target`; both sides are scanned independently and joined on a captured key. Per side:
+
+- `contentPattern` — regex over each file line; the joined key is the captured group (`keyGroup`, default 1). Use for keys that appear in code (e.g. `SPEC_REFERENCE` in a comment, a queue constant name).
+- `pathPattern` — regex over the repo-relative POSIX path; the key is captured from the **filename** (e.g. `^specs/([a-z0-9-]+/\d+-[a-z0-9-]+)\.md$`, which is how a spec file is addressed by id+slug). Use when the key lives in the path, not the content.
+- `paths` — scope each side to its own directories; `filePatterns` / `filePattern` — glob(s) the side scans. A rule may use `contentPattern` on one side and `pathPattern` on the other.
+- `matchBy` — `key-equals` (default) or `key-contains`.
+
+If a pattern declares no capture group, that rule's side is skipped (a whole-line hash would join nothing).
+
+**Scan scope.** The connector walks the repo from the root; add generated/heavy trees to `graphSettings.scanSkipDirs` in `docs/project-config.json` (e.g. `[".next-e2e"]`) so they are not scanned.
+
 **Auto-connect:** After every `build`, `update`, and `sync`, implicit connections are automatically refreshed — no manual `connect-implicit` needed. The auto-connect also refreshes API endpoint connections (`connect-api`).
 
 ## Frontend↔Backend API Connections (Zero-Config)
@@ -166,6 +181,7 @@ The graph automatically detects frontend HTTP calls and matches them to backend 
 | React (`react` in package.json)           | Spring (`pom.xml` + `spring-boot`)         |
 | Vue (`vue.config.js`, `vue`)              | Express (`express` in package.json)        |
 | Next.js (`next.config.js`)                | NestJS (`@nestjs/core`)                    |
+|                                           | Next.js App Router (`app/**/route.ts`)     |
 | Svelte (`svelte.config.js`)               | FastAPI (`fastapi` in requirements.txt)    |
 |                                           | Django (`manage.py`)                       |
 |                                           | Rails (`Gemfile` + `rails`)                |
@@ -180,7 +196,7 @@ The graph automatically detects frontend HTTP calls and matches them to backend 
 
 ### Custom Patterns (Optional)
 
-For projects with custom HTTP service base classes, add patterns to `docs/project-config.json`:
+For projects with custom HTTP service base classes (or file-based routes the detector cannot infer), configure `docs/project-config.json`:
 
 ```json
 {
@@ -204,6 +220,32 @@ For projects with custom HTTP service base classes, add patterns to `docs/projec
 
 Custom patterns **extend** (not replace) built-in framework patterns.
 
+**File-based routes (e.g. Next.js App Router).** When routes live in files rather than decorators, point `paths` at each route tree and declare how the file maps to a URL:
+
+```json
+{
+    "graphConnectors": {
+        "apiEndpoints": {
+            "enabled": true,
+            "frontend": { "framework": "nextjs", "paths": ["apps/web/app"] },
+            "backend": {
+                "framework": "next-app-router",
+                "routeFile": "route.ts",
+                "methodExports": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+                "paths": [
+                    { "dir": "apps/web/app/api", "urlPrefix": "/api" },
+                    { "dir": "apps/portal/app/api", "urlPrefix": "/api" }
+                ]
+            }
+        }
+    }
+}
+```
+
+- `routeFile` — filename that marks a route module (default `route.ts`); `urlPrefix` on a path entry (or `routePrefix` as a fallback) is prepended to the derived route.
+- `methodExports` — exported HTTP method names, one edge per method; defaults to the standard set above.
+- `paths` entries are either a bare string or `{ "dir", "urlPrefix" }`; a bare string uses `routePrefix`.
+
 ## Supported Languages
 
 Python, TypeScript, JavaScript, Vue, Go, Rust, Java, C#, Ruby, Kotlin, Swift, PHP, Solidity, C/C++
@@ -212,10 +254,10 @@ Python, TypeScript, JavaScript, Vue, Go, Rust, Java, C#, Ruby, Kotlin, Swift, PH
 
 | Issue                                 | Fix                                                                      |
 | ------------------------------------- | ------------------------------------------------------------------------ |
-| `Python not found`                    | Install Python 3.10+. Windows: use `py` launcher.                        |
-| `No module named 'tree_sitter'`       | Run `pip install tree-sitter tree-sitter-language-pack networkx`         |
-| `tree-sitter compile error`           | Ensure C compiler available. Windows: install Visual Studio Build Tools. |
-| `graph.db not found`                  | Run `/graph-build` first                                                 |
+| `Python not found`                    | Install Python 3.10+. Windows: `py -3` launcher; macOS/Linux: `python3`. |
+| `No module named 'tree_sitter'`       | Run `/graph-code --mode=build`: it installs the tooling into the hooks' environment. A direct CLI call must use that environment's Python (`/graph-code --mode=build` Step 0 prints how to find it) |
+| `tree-sitter compile error`           | Ensure a C compiler. Windows: VS Build Tools; macOS: `xcode-select --install`; Linux: `build-essential`/`gcc`. |
+| `graph.db not found`                  | Run `/graph-code --mode=build` first                                                 |
 | `Incremental update finds no changes` | Run `build` (full) instead of `update` after branch switches             |
 
 ## Attribution

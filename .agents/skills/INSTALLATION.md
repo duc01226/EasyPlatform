@@ -1,376 +1,83 @@
-# Skills Installation Guide
+# Skill Dependency Setup
 
-This guide explains how to install dependencies for Claude Code skills.
+Read this guide when a selected skill helper needs a runtime, package or external tool.
+Read the selected `SKILL.md` and its setup reference first; its manifest owns exact requirements.
+Install only what the requested operation needs and verify the actual helper afterward.
 
-## Overview
+## Contents
 
-Skills are organized into groups with Python utility scripts. Each skill's scripts directory contains a `requirements.txt` file listing dependencies.
+- [Select the dependency owner](#select-the-dependency-owner)
+- [Check the runtime](#check-the-runtime)
+- [Install selected packages](#install-selected-packages)
+- [Optional broad installers](#optional-broad-installers)
+- [Configure credentials](#configure-credentials)
+- [Verify and recover](#verify-and-recover)
 
-## Automated Installation (Recommended)
+## Select the dependency owner
 
-Use the provided installation scripts for automated setup:
+Do not infer setup from a skill's subject or an upstream example. Read the installed entrypoint:
 
-### Linux/macOS
+| Operation | Read when preparing it |
+| --- | --- |
+| Catalog scanning/generation | [Script setup](../scripts/README.md#installation), with the declared Python requirements and bounded PyYAML recovery |
+| Skill structure/navigation validation | [skill-creator helper paths](skill-creator/SKILL.md#helper-invocation-paths); Node/Python standard libraries only |
+| HTML export | [html-export](html-export/SKILL.md); its [package manifest](html-export/package.json) and selected export reference own browser/PDF/video dependencies |
+| PDF or DOCX conversion | [pdf-convert](pdf-convert/SKILL.md) or [docx-convert](docx-convert/SKILL.md); read only the selected direction's setup |
+| Optional task workspace | [task-track engine protocol](task-track/references/engine-protocol.md); its runtime/package setup differs from project-guide mode |
+| Code graph | [Graph setup](../docs/code-graph-setup.md); graph packages and install-on-use behavior have their own owner |
 
-```bash
-cd .claude/skills
-chmod +x install.sh
-./install.sh
-```
+## Check the runtime
 
-The script will:
+Run probes from the project root. Use the selected helper's version requirement rather than a
+single version for every skill. Node-based validation and sync run through plain `node` commands.
+Some optional helpers require a newer Node version; inspect their manifest.
 
-- Detect your OS (Linux or macOS)
-- Install package managers (Homebrew for macOS, apt-get for Linux)
-- Install system dependencies (FFmpeg, ImageMagick)
-- Install Node.js and global packages (rmbg-cli, pnpm, wrangler, repomix)
-- Create Python virtual environment
-- Install Python packages for all skills
-- Install test dependencies
-- Verify all installations
-
-### Windows (PowerShell)
-
-Run as Administrator:
-
-```powershell
-cd .claude\skills
-Set-ExecutionPolicy Bypass -Scope Process -Force
-.\install.ps1
-```
-
-Options:
-
-```powershell
-# Skip Chocolatey installation if already installed
-.\install.ps1 -SkipChocolatey
-
-# Show help
-.\install.ps1 -Help
-```
-
-The script will:
-
-- Install Chocolatey package manager (if needed)
-- Install system dependencies (FFmpeg, ImageMagick)
-- Install Node.js and global packages
-- Create Python virtual environment
-- Install Python packages
-- Verify all installations
-
-### What Gets Installed
-
-**System Tools:**
-
-- FFmpeg (video/audio processing)
-- ImageMagick (image processing)
-
-**Node.js Packages (global):**
-
-- rmbg-cli (AI background removal)
-- pnpm (package manager)
-- wrangler (Cloudflare CLI)
-- repomix (repository packaging)
-
-**Python Packages:**
-
-- google-genai (Gemini API)
-- pypdf, python-docx (document processing)
-- Pillow (image processing)
-- pytest, pytest-cov (testing)
-
-## Manual Installation
-
-If you prefer manual installation or the automated script fails:
-
-## Quick Start
-
-### Option 1: Install All Dependencies (Recommended)
-
-```bash
-# Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install all skill dependencies
-pip install -r .claude/skills/visual analysis tooling/scripts/requirements.txt
-
-# Install test dependencies for development
-pip install pytest pytest-cov pytest-mock
-```
-
-### Option 2: Install Per-Skill
-
-Navigate to specific skill and install:
-
-```bash
-cd .claude/skills/visual analysis tooling/scripts
-pip install -r requirements.txt
-```
-
-## Skills Dependencies
-
-### Python Package Dependencies
-
-Most skills use only Python standard library. Only **visual analysis tooling** requires external packages:
-
-**visual analysis tooling** (`.claude/skills/visual analysis tooling/scripts/requirements.txt`):
-
-- `google-genai>=0.1.0` - Google Gemini API
-- `pypdf>=4.0.0` - PDF processing
-- `python-docx>=1.0.0` - DOCX conversion
-- `docx2pdf>=0.1.8` - PDF conversion (Windows only)
-- `markdown>=3.5.0` - Markdown processing
-- `Pillow>=10.0.0` - Image processing
-- `python-dotenv>=1.0.0` - Environment variables
-
-### System Tool Dependencies
-
-Several skills require external CLI tools:
-
-#### media processing tooling
-
-- **FFmpeg**: Video/audio processing
-    - Ubuntu/Debian: `sudo apt-get install ffmpeg`
-    - macOS: `brew install ffmpeg`
-    - Windows: `choco install ffmpeg`
-- **ImageMagick**: Image processing
-    - Ubuntu/Debian: `sudo apt-get install imagemagick`
-    - macOS: `brew install imagemagick`
-    - Windows: `choco install imagemagick`
-- **RMBG CLI**: AI background removal
-    - All platforms: `npm install -g rmbg-cli`
-
-#### devops
-
-- **Cloudflare Wrangler**: `npm install -g wrangler`
-- **Docker**: https://docs.docker.com/get-docker/
-- **Google Cloud CLI**: https://cloud.google.com/sdk/docs/install
-
-#### better-auth, repomix, shopify
-
-- **Node.js 18+**: https://nodejs.org/
-- **Better Auth**: `npm install better-auth`
-- **Repomix**: `npm install -g repomix`
-- **Shopify CLI**: `npm install -g @shopify/cli @shopify/theme`
-
-#### databases
-
-- **Database client(s)**: install the clients required by the configured repository databases
-
-#### web-frameworks, shadcn-tailwind
-
-- **Node.js 18+**: https://nodejs.org/
-- **pnpm**: `npm install -g pnpm`
-- **yarn**: `npm install -g yarn`
-
-## Installation by OS
-
-### Linux (Ubuntu/Debian)
-
-```bash
-# Python environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Python packages (visual analysis tooling only)
-cd .claude/skills/visual analysis tooling/scripts
-pip install -r requirements.txt
-
-# System tools
-sudo apt-get update
-sudo apt-get install -y ffmpeg imagemagick {configured-database-client}
-
-# Node.js and tools
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-npm install -g pnpm wrangler repomix rmbg-cli @shopify/cli
-```
-
-### macOS
-
-```bash
-# Python environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Python packages (visual analysis tooling only)
-cd .claude/skills/visual analysis tooling/scripts
-pip install -r requirements.txt
-
-# System tools via Homebrew
-brew install ffmpeg imagemagick {configured-database-client}
-
-# Node.js and tools
-brew install node
-npm install -g pnpm wrangler repomix rmbg-cli @shopify/cli
-```
-
-### Windows
-
-```powershell
-# Python environment
-python -m venv .venv
-.venv\Scripts\activate
-
-# Python packages (visual analysis tooling only)
-cd .claude\skills\visual analysis tooling\scripts
-pip install -r requirements.txt
-
-# System tools via Chocolatey
-choco install ffmpeg imagemagick nodejs
-
-# Node.js tools
-npm install -g pnpm wrangler repomix rmbg-cli @shopify/cli
-```
-
-## Testing Dependencies
-
-All skills include test dependencies in `requirements.txt`:
-
-```txt
-pytest>=8.0.0
-pytest-cov>=4.1.0
-pytest-mock>=3.12.0
-```
-
-To run tests for a skill:
-
-```bash
-cd .claude/skills/{skill-name}/scripts
-python -m pytest tests/ -v --cov=. --cov-report=term-missing
-```
-
-## Environment Variables
-
-Skills respect environment variable loading priority:
-
-1. **process.env** (highest priority - runtime environment)
-2. **`.claude/skills/{skill-name}/.env`** (skill-specific config)
-3. **`.claude/skills/.env`** (shared skills config)
-4. **`.claude/.env`** (global Claude config)
-
-Example `.env` files are provided where needed (e.g., `devops/.env.example`).
-
-## Troubleshooting
-
-### "externally-managed-environment" Error
-
-If you see this error when installing packages:
-
-```bash
-# Use virtual environment (recommended)
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# Or use pipx for CLI tools
-pipx install google-genai
-```
-
-### Missing System Tools
-
-If scripts fail with "command not found":
-
-```bash
-# Check if tool is installed
-which ffmpeg
-which docker
-which node
-
-# Verify tool works
-ffmpeg -version
-docker --version
+```sh
 node --version
+# macOS / Linux
+python3 --version
 ```
 
-### Permission Errors
-
-On Linux/macOS, you may need to make scripts executable:
-
-```bash
-chmod +x .claude/skills/*/scripts/*.py
-```
-
-## Minimal Installation
-
-If you only want to use specific skills:
-
-**For visual analysis tooling only:**
-
-```bash
-pip install google-genai pypdf python-docx markdown Pillow python-dotenv
-```
-
-**For media processing tooling only:**
-
-```bash
-# macOS
-brew install ffmpeg imagemagick
-npm install -g rmbg-cli
-
-# Linux
-sudo apt-get install ffmpeg imagemagick
-npm install -g rmbg-cli
-
+```powershell
 # Windows
-choco install ffmpeg imagemagick
-npm install -g rmbg-cli
+py -3 --version
 ```
 
-**For other skills:**
-Most other skills (better-auth, repomix, shopify, devops, web-frameworks, shadcn-tailwind, databases) use only Python stdlib and require no `pip install`.
+A missing runtime is a setup problem. Use the host's supported provisioning path, then re-probe the
+same executable the helper will use. Do not report a missing required check as passing.
 
-## Development Setup
+## Install selected packages
 
-For contributors working on skills:
+Follow the selected owner's command and manifest. Read [the script dependency guide](../scripts/README.md#installation)
+when using its declared requirements or bounded recovery. For other Python helpers, use an isolated
+virtual environment when the owner requires packages and the system interpreter is managed.
+Use `python3 -m venv <environment-path>` on macOS/Linux or `py -3 -m venv <environment-path>` on Windows,
+then invoke that environment's interpreter for its declared requirements. Do not override system
+Python protections or install a guessed package set.
 
-```bash
-# Install all test dependencies
-pip install pytest pytest-cov pytest-mock
+For Node helpers, install at the package directory the skill names and preserve its lockfile and
+startup policy. Do not substitute a root `npm run` command for a self-running framework entrypoint.
+Read the export owner's setup before adding browser binaries, FFmpeg or other system tools.
 
-# Install pre-commit hooks (if available)
-pre-commit install
+## Optional broad installers
 
-# Run all tests
-pytest .claude/skills/*/scripts/tests/ -v
+Read [install.sh](install.sh) on macOS/Linux or [install.ps1](install.ps1) on Windows before requesting
+broad machine setup. These are interactive convenience installers that can install package managers,
+system tools and global packages; they are broader than most individual skill operations.
+Their current prompts/options are authoritative. Prefer the selected helper's setup for ordinary work;
+inspect the script's result summary and any partial failures when a broad install is requested.
 
-# Check coverage across all skills
-pytest .claude/skills/*/scripts/tests/ --cov=.claude/skills --cov-report=html
-```
+## Configure credentials
 
-## Skill-Specific Notes
+Read the selected helper's environment loader and setup instructions for its credential names and
+precedence. Do not assume every helper uses one `.env` search order or needs an API key.
+Use environment variables or the configured secret store, keep real values out of source/logs, and
+preserve the requested operation's authorization boundaries.
 
-### visual analysis tooling
+## Verify and recover
 
-- Requires `GEMINI_API_KEY` in environment
-- Get API key: https://aistudio.google.com/app/apikey
-- Windows users: `docx2pdf` requires Microsoft Word installed
-
-### media processing tooling
-
-- FFmpeg must be in PATH
-- ImageMagick must be in PATH
-- RMBG CLI must be installed globally
-- Test with: `ffmpeg -version`, `convert -version`, and `rmbg --version`
-
-### devops
-
-- Cloudflare: Requires `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
-- GCloud: Requires `GOOGLE_APPLICATION_CREDENTIALS` path to service account JSON
-- Docker: Must have Docker daemon running
-
-### shopify
-
-- Requires Shopify CLI authentication: `shopify auth login`
-- Partner account needed for app development
-
-## Getting Help
-
-If dependencies fail to install or scripts don't work:
-
-1. Check the skill's `scripts/requirements.txt` for specific versions
-2. Verify system tools are installed and in PATH
-3. Check environment variables are set correctly
-4. Review skill's `SKILL.md` for additional setup instructions
-5. Open an issue: https://github.com/anthropics/claude-code/issues
+Probe the actual consumer after setup, then run the selected operation's check and inspect its
+output artifact or state. Installing a package alone does not prove that the helper can import or
+execute it. On failure, retain the command, exit code and redacted diagnostic under project `tmp/`;
+distinguish missing setup from a source defect before editing. Use the owning skill's bounded
+recovery path; stop with the missing capability when a required check remains unavailable.

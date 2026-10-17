@@ -26,6 +26,16 @@
 
 ---
 
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Section 8 Header](#section-8-header)
+- [Individual TC Entry](#individual-tc-entry)
+- [Category Sections](#category-sections)
+- [Priority Definitions](#priority-definitions)
+- [TDD-First Mode Notes](#tdd-first-mode-notes)
+- [Closing Reminders](#closing-reminders)
+
 ## Section 8 Header
 
 ```markdown
@@ -79,12 +89,12 @@ And {additional visible verification}
 
 **Expected Result:** {what the demo SHOWS — fill every dimension that applies; omit with a reason, never silently}
 
-| Dimension               | What to state                                                                                                                         |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **UI**                  | What the user sees on screen — the control, message, or view that changes                                                             |
-| **System behavior**     | What the system does in response, in business terms                                                                                   |
+| Dimension | What to state |
+| --- | --- |
+| **UI** | What the user sees on screen — the control, message, or view that changes |
+| **System behavior** | What the system does in response, in business terms |
 | **Business data state** | What is now true about the business — in business language, NEVER storage language ("the application is withdrawn", not "Status = 3") |
-| **Data shown on UI**    | What the user reads back — the values displayed, and where                                                                            |
+| **Data shown on UI** | What the user reads back — the values displayed, and where |
 
 **Acceptance Criteria:**
 
@@ -182,9 +192,9 @@ And {no hidden downstream business state changes outside the expected outcome}
 
 **Trigger:** every **BUSINESS-VISIBLE** bugfix spec MUST have ≥1 Preservation TC per "Healthy input" enumerated in the plan's Preservation Inventory (see `SYNC:preservation-inventory`).
 
-⚠️ **[GATE] A TECHNICAL-ONLY bugfix produces ZERO Preservation TCs in the business spec.** Run the business-visibility gate first (`author.md` → _"Business-visibility gate"_): if the business rule, the user-visible outcome, and the business data state are all unchanged, this section is a **correct no-op** — the preservation obligation is real but belongs to the **technical** spec tree and its integration tests, not to a business spec.
+⚠️ **[GATE] A TECHNICAL-ONLY bugfix produces ZERO Preservation TCs in the business spec.** Run the business-visibility gate first (`author.md` → *"Business-visibility gate"*): if the business rule, the user-visible outcome, and the business data state are all unchanged, this section is a **correct no-op** — the preservation obligation is real but belongs to the **technical** spec tree and its integration tests, not to a business spec.
 
-**Preservation TCs in a business spec must be demoable business outcomes** — _"the employee's approved leave balance still reads 12 days after the fix"_ — never _"the consumer still writes the projection row"_. If the preserved state can only be observed by inspecting a queue, projection, or database row no user-facing behavior depends on, it is a technical preservation test and does not belong here.
+**Preservation TCs in a business spec must be demoable business outcomes** — *"the employee's approved leave balance still reads 12 days after the fix"* — never *"the consumer still writes the projection row"*. If the preserved state can only be observed by inspecting a queue, projection, or database row no user-facing behavior depends on, it is a technical preservation test and does not belong here.
 
 ### External Outcome Tests
 
@@ -220,13 +230,16 @@ When generating TCs before implementation:
 >
 > A test earns trust by reproducing a situation the system can actually meet in production. A scenario that could never occur in real life proves nothing when it passes, and wastes hours when it fails.
 >
-> 1. **Ask the fidelity question BEFORE writing the setup:** _"Can this sequence, timing, and data actually occur in production?"_ If no, the test is mis-specified — fix the SCENARIO, never the assertion.
-> 2. **Model real pacing between actor steps.** Two distinct actor actions that production separates by seconds, minutes, or hours MUST NOT be fired back-to-back in the same millisecond. Compressed pacing manufactures races the system was never designed to survive, then reports them as product defects.
-> 3. **Wait on a real signal, never a blind sleep.** Find an observable proving the prior step finished — a persisted state change, an audit/version stamp, a queue/worker idle marker, a completion event — and poll until it settles (unchanged across a short stability window). Use a fixed delay ONLY when no observable exists, and say so in a comment.
+> 1. **Ask the fidelity question BEFORE writing the setup:** *"Can this sequence, timing, and data actually occur in production?"* If no, the test is mis-specified — fix the SCENARIO, never the assertion.
+> 2. **Model only real actor pacing.** Preserve delays present in the real journey; add presentation pacing only when the project contract configures it. Never add a fixed delay to make readiness or settling appear reliable.
+> 2a. **Use the runner's synchronization idiom.** Before an action, use the browser/device runner's native wait or an evidenced project helper for applicable readiness and actionability. Bound custom waits and include useful diagnostics; do not require a helper API or object model the project does not use.
+> 2b. **Observe → act → observe.** After an action, wait for the expected positive or negative postcondition before the next dependent action, using observable state and the configured runner. Keep the final business assertion in the test. A timeout is a test failure with diagnostics, not permission to weaken the assertion.
+> 3. **Wait on a real signal, never a blind sleep.** Find an observable proving the prior step finished — a persisted state change, an audit/version stamp, a queue/worker idle marker, a completion event — and poll until it settles (unchanged across a short stability window). Use a fixed delay ONLY when no observable exists, and say so in a comment. A browser action delay MUST never replace a readiness/actionability wait.
 > 4. **Barriers belong in ARRANGE, never in ASSERT.** Waiting for a precondition is fidelity. Widening an assertion's timeout, loosening a comparison, adding a retry around a failing assertion, or skipping the test is masking. NEVER do the latter to force green.
 > 5. **Distinguish harness-amplified from real.** Test topologies (shared infra, fan-out consumers, parallel suites, cold starts) can make a rare production race routine locally. Before filing a product defect, state whether the trigger exists in production and at what likelihood.
 > 6. **Keep the protected invariant intact.** Improving fidelity must NEVER reduce what the test protects. If a realistic scenario no longer exercises the rule, the rule needs a DIFFERENT realistic scenario — not a weaker assertion.
 > 7. **Deliberate impossible-state tests are allowed, but MUST be labelled.** Corruption-repair, migration, and fail-safe tests intentionally construct states production should never reach; comment WHY the state is reachable (upstream bug, partial write, legacy data), so they are never confused with unrealistic setups.
+> 8. **Visible browser evidence is part of fidelity.** When the project contract calls for human-QC on a web surface, use its configured visible browser runner or control path when supported; attach runtime/network listeners before interaction and capture/read the configured screenshots, traces, or video. Follow the runner's native waits or an evidenced bounded project helper, and redact sensitive evidence. An unread artifact is not an observation.
 
 <!-- /SYNC:real-world-fidelity-testing -->
 

@@ -1,40 +1,36 @@
 {
-    "settings": {
-        "enabled": true,
-        "showDetection": true
+  "workflows": [
+    {
+      "id": "feature",
+      "name": "Feature Implementation",
+      "priority": 1,
+      "triggerPatterns": ["\\bimplement\\b", "\\badd\\b.*feature", "\\bcreate\\b.*new", "\\bbuild\\b"],
+      "excludePatterns": ["\\bexplain\\b", "\\bhow\\s+does\\b"],
+      "sequence": ["/plan", "/feature-implement", "/test"]
     },
-    "workflows": [
-        {
-            "id": "feature",
-            "name": "Feature Implementation",
-            "priority": 1,
-            "triggerPatterns": ["\\bimplement\\b", "\\badd\\b.*feature", "\\bcreate\\b.*new", "\\bbuild\\b"],
-            "excludePatterns": ["\\bexplain\\b", "\\bhow\\s+does\\b"],
-            "sequence": ["/plan", "/feature-implement", "/test"]
-        },
-        {
-            "id": "bugfix",
-            "name": "Bug Fix",
-            "priority": 2,
-            "triggerPatterns": ["\\bbug\\b", "\\bfix\\b", "\\berror\\b", "\\bnot\\s+working\\b"],
-            "excludePatterns": [],
-            "sequence": ["/scout", "/debug-investigate", "/fix", "/test"]
-        },
-        {
-            "id": "refactor",
-            "name": "Code Refactoring",
-            "priority": 3,
-            "triggerPatterns": ["\\brefactor\\b", "\\brestructure\\b", "\\bclean\\s*up\\b"],
-            "excludePatterns": [],
-            "sequence": ["/plan", "/plan-execute", "/test", "/code-review"]
-        },
-        {
-            "id": "investigation",
-            "name": "Code Investigation",
-            "priority": 4,
-            "triggerPatterns": ["\\bhow\\s+does\\b", "\\bexplain\\b", "\\bwhere\\s+is\\b", "\\binvestigate\\b"],
-            "excludePatterns": [],
-            "sequence": ["/scout", "/investigate"]
-        }
-    ]
+    {
+      "id": "bugfix",
+      "name": "Bug Fix",
+      "priority": 2,
+      "triggerPatterns": ["\\bbug\\b", "\\bfix\\b", "\\berror\\b", "\\bnot\\s+working\\b"],
+      "excludePatterns": [],
+      "sequence": ["/investigate", "/investigate --mode=debug", "/fix", "/test"]
+    },
+    {
+      "id": "refactor",
+      "name": "Code Refactoring",
+      "priority": 3,
+      "triggerPatterns": ["\\brefactor\\b", "\\brestructure\\b", "\\bclean\\s*up\\b"],
+      "excludePatterns": [],
+      "sequence": ["/plan", "/plan --mode=execute", "/test", "/code-quality-review"]
+    },
+    {
+      "id": "investigation",
+      "name": "Code Investigation",
+      "priority": 4,
+      "triggerPatterns": ["\\bhow\\s+does\\b", "\\bexplain\\b", "\\bwhere\\s+is\\b", "\\binvestigate\\b"],
+      "excludePatterns": [],
+      "sequence": ["/investigate"]
+    }
+  ]
 }

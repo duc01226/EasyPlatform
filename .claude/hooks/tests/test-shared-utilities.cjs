@@ -16,6 +16,8 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { spawn } = require('child_process');
+const vm = require('node:vm');
+const { createRequire } = require('node:module');
 
 const {
     assertEqual,
@@ -45,12 +47,15 @@ const VERBOSE = process.argv.includes('--verbose');
  */
 function captureStderr(fn) {
     const originalError = console.error;
+    const originalWrite = process.stderr.write;
     const captured = [];
     console.error = (...args) => captured.push(args.join(' '));
+    process.stderr.write = chunk => captured.push(String(chunk));
     try {
         fn();
     } finally {
         console.error = originalError;
+        process.stderr.write = originalWrite;
     }
     return captured;
 }
@@ -256,6 +261,67 @@ async function testIntegration(suite) {
 // Main
 // ============================================================================
 
+async function testTempOwnership() {
+    const group = new TestGroup('test-utils temporary ownership');
+    group.test('cleanup removes only this helper instance roots and preserves foreign siblings', () => {
+        // Even a regressed broad scanner sees only this private fixture, never OS temp.
+        const sandboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'runtime-ownership-proof-'));
+        const helperPath = path.join(__dirname, 'helpers/test-utils.cjs');
+        const loadOwner = (remove = fs.rmSync) => {
+            const module = { exports: {} };
+            const nativeRequire = createRequire(helperPath);
+            const sandbox = { module, exports: module.exports, require: name => name === 'os'
+                ? { ...os, tmpdir: () => sandboxRoot }
+                : name === 'fs' ? { ...fs, rmSync: remove } : nativeRequire(name) };
+            vm.runInNewContext(fs.readFileSync(helperPath, 'utf8'), sandbox, { filename: helperPath });
+            return module.exports;
+        };
+        try {
+            const owner = loadOwner();
+            const otherOwner = loadOwner();
+            const owned = owner.createTempDir();
+            const ownedSecond = owner.createTempDir();
+            const foreign = otherOwner.createTempDir();
+            const sentinel = path.join(foreign, 'keep.txt');
+            fs.writeFileSync(sentinel, 'other active run');
+            const child = path.join(owned, 'child');
+            fs.mkdirSync(child);
+            for (const target of [undefined, sandboxRoot, foreign, child]) owner.cleanupTempDir(target);
+            assertTrue(fs.existsSync(child), 'A child path is not the exact owned root');
+            assertEqual(fs.readFileSync(sentinel, 'utf8'), 'other active run');
+            owner.cleanupTempDir(owned);
+            assertFalse(fs.existsSync(owned), 'Explicit owned root must be deleted');
+            fs.mkdirSync(owned);
+            owner.cleanupAllTestDirs();
+            assertFalse(fs.existsSync(ownedSecond), 'Remaining owned roots must be deleted');
+            assertEqual(fs.readFileSync(sentinel, 'utf8'), 'other active run', 'Foreign fixture must survive cleanupAll');
+            assertTrue(fs.existsSync(owned), 'A successfully released name must no longer carry ownership');
+            owner.cleanupAllTestDirs();
+            otherOwner.cleanupAllTestDirs();
+            assertFalse(fs.existsSync(foreign), 'The other owner can clean its own root');
+            let failPath;
+            let failedOnce = false;
+            const retryOwner = loadOwner((target, options) => {
+                if (target === failPath && !failedOnce) {
+                    failedOnce = true;
+                    throw new Error('synthetic transient cleanup error');
+                }
+                return fs.rmSync(target, options);
+            });
+            failPath = retryOwner.createTempDir();
+            const nextRoot = retryOwner.createTempDir();
+            retryOwner.cleanupAllTestDirs();
+            assertTrue(fs.existsSync(failPath), 'Failed removal retains its root for retry');
+            assertFalse(fs.existsSync(nextRoot), 'One failure must not prevent cleaning another owned root');
+            retryOwner.cleanupAllTestDirs();
+            assertFalse(fs.existsSync(failPath), 'A subsequent cleanup must retry retained ownership');
+        } finally {
+            fs.rmSync(sandboxRoot, { recursive: true, force: true });
+        }
+    });
+    return group;
+}
+
 async function main() {
     console.log('╔════════════════════════════════════════════════════════════════╗');
     console.log('║          Shared Utilities Test Suite                           ║');
@@ -268,6 +334,7 @@ async function main() {
     suite.addGroup(await testStdinParser(suite));
     suite.addGroup(await testHookRunner(suite));
     suite.addGroup(await testIntegration(suite));
+    suite.addGroup(await testTempOwnership());
 
     // Run tests and get results
     const { passed, failed } = await suite.run(VERBOSE);

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using Easy.Platform.Application.Cqrs.Events;
 using Easy.Platform.Application.RequestContext;
@@ -7,7 +8,9 @@ using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
+using Easy.Platform.Application.MessageBus.Store;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers;
@@ -51,13 +54,25 @@ public abstract class PlatformCqrsEventBusMessageProducer<TEvent, TMessage>
 
     // Outbox messages must be inserted in the same transaction as the entity change.
     // MustRunHandlerInSameCurrentActiveUow ensures same scope/DbContext/UoW as the parent.
-    protected override bool MustRunHandlerInSameCurrentActiveUow => ApplicationBusMessageProducer.HasOutboxMessageSupport();
+    protected override bool MustRunHandlerInSameCurrentActiveUow => HasOutboxMessageSupport();
+
+    /// <summary>
+    /// Gets the logical message-bus store selected by this producer. The default retains the legacy path;
+    /// module-specific producers can override it without changing command or event callers.
+    /// </summary>
+    protected virtual PlatformMessageBusStoreKey MessageBusStoreKey => PlatformMessageBusStoreKey.Default;
+
+    /// <summary>
+    /// Gets the optional application-lane identity selected by this producer. A null value requires the selected
+    /// descriptor to contain one lane, which preserves single-store compatibility and rejects ambiguity in strict hosts.
+    /// </summary>
+    protected virtual string MessageBusApplicationName => null;
 
     protected abstract TMessage BuildMessage(TEvent @event);
 
     protected override bool AllowHandleInBackgroundThread(TEvent @event)
     {
-        return base.AllowHandleInBackgroundThread(@event) && !ApplicationBusMessageProducer.HasOutboxMessageSupport();
+        return base.AllowHandleInBackgroundThread(@event) && !HasOutboxMessageSupport();
     }
 
     protected override async Task HandleAsync(
@@ -99,11 +114,64 @@ public abstract class PlatformCqrsEventBusMessageProducer<TEvent, TMessage>
 
     protected virtual async Task SendMessage(TEvent @event, CancellationToken cancellationToken)
     {
-        await ApplicationBusMessageProducer.SendAsync(
-            BuildMessage(@event),
-            forceUseDefaultRoutingKey: !SendByMessageSelfRoutingKey(),
-            sourceOutboxUowId: @event.As<IPlatformUowEvent>()?.SourceUowId,
-            cancellationToken: cancellationToken);
+        var message = BuildMessage(@event);
+        var forceUseDefaultRoutingKey = !SendByMessageSelfRoutingKey();
+        var sourceOutboxUowId = @event.As<IPlatformUowEvent>()?.SourceUowId;
+
+        if (KeyedProducer != null)
+        {
+            await KeyedProducer.SendAsync(
+                MessageBusStoreKey,
+                message,
+                applicationName: MessageBusApplicationName,
+                forceUseDefaultRoutingKey: forceUseDefaultRoutingKey,
+                sourceOutboxUowId: sourceOutboxUowId,
+                cancellationToken: cancellationToken);
+        }
+        else
+        {
+            WarnOnceIfDeclaredStoreRouteIgnored();
+
+            await ApplicationBusMessageProducer.SendAsync(
+                message,
+                forceUseDefaultRoutingKey: forceUseDefaultRoutingKey,
+                sourceOutboxUowId: sourceOutboxUowId,
+                cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// The keyed capability of the injected producer, or null for legacy-only producers (decorators, service test doubles).
+    /// </summary>
+    private IPlatformKeyedApplicationBusMessageProducer KeyedProducer =>
+        ApplicationBusMessageProducer as IPlatformKeyedApplicationBusMessageProducer;
+
+    /// <summary>
+    /// A legacy-only producer cannot honour a declared non-Default store key or lane, so the message silently uses the
+    /// unqualified path. Warn once per producer type (not per send) so a misrouted module is visible without log floods.
+    /// Never throw: service test doubles and decorators legitimately implement only the legacy interface.
+    /// </summary>
+    private void WarnOnceIfDeclaredStoreRouteIgnored()
+    {
+        if (MessageBusStoreKey.IsDefault && MessageBusApplicationName.IsNullOrEmpty())
+            return;
+
+        if (!PlatformCqrsEventBusMessageProducerIgnoredRouteWarnings.TryMarkWarned(GetType()))
+            return;
+
+        // Without runtime store composition the declared key is meaningless for every producer (legacy path by design),
+        // so the ignored route is not a misconfiguration worth reporting.
+        if (RootServiceProvider.GetService<IPlatformMessageBusStoreRegistry>()?.HasRuntimeStoreComposition != true)
+            return;
+
+        CreateLogger(LoggerFactory)
+            .LogWarning(
+                "[PlatformCqrsEventBusMessageProducer] {ProducerType} declares message-bus store '{StoreKey}' / application lane '{ApplicationName}', but the injected {ApplicationBusMessageProducerType} does not implement {KeyedProducerType}. The declared route is ignored and the message is sent through the unqualified producer path.",
+                GetType().FullName,
+                MessageBusStoreKey,
+                MessageBusApplicationName,
+                ApplicationBusMessageProducer.GetType().FullName,
+                nameof(IPlatformKeyedApplicationBusMessageProducer));
     }
 
     /// <summary>
@@ -123,5 +191,25 @@ public abstract class PlatformCqrsEventBusMessageProducer<TEvent, TMessage>
             RequestId = eventRequestContext.RequestId(),
             UserName = eventRequestContext.UserName()
         };
+    }
+
+    private bool HasOutboxMessageSupport()
+    {
+        return KeyedProducer?.HasOutboxMessageSupport(MessageBusStoreKey, MessageBusApplicationName)
+               ?? ApplicationBusMessageProducer.HasOutboxMessageSupport();
+    }
+}
+
+/// <summary>
+/// Process-wide record of producer types already warned about an ignored store route, kept outside the generic producer
+/// so the warning fires once per producer type rather than once per closed generic instantiation.
+/// </summary>
+internal static class PlatformCqrsEventBusMessageProducerIgnoredRouteWarnings
+{
+    private static readonly ConcurrentDictionary<Type, byte> WarnedProducerTypes = [];
+
+    public static bool TryMarkWarned(Type producerType)
+    {
+        return WarnedProducerTypes.TryAdd(producerType, 0);
     }
 }

@@ -2,24 +2,37 @@
 
 This directory contains shared utilities used across multiple skills.
 
+## Contents
+
+- [API Key Helper](#api-key-helper)
+- [Usage in Skills](#usage-in-skills)
+- [API Key Lookup Order](#api-key-lookup-order)
+- [Vertex AI Support](#vertex-ai-support)
+- [Using get_client() Helper](#using-get_client-helper)
+- [Using get_vertex_config() Helper](#using-get_vertex_config-helper)
+- [Error Handling](#error-handling)
+
 ## API Key Helper
 
-`api_key_helper.py` provides standardized configuration for all Gemini-based skills, supporting both Google AI Studio and Vertex AI endpoints.
+`api_key_helper.py` supplies key lookup and client configuration for its callers, supporting both Google AI Studio and Vertex AI endpoints. Other helpers retain their own configuration policy.
 
 ### Usage in Skills
+
+For a script under `<skill>/scripts/`, derive and pass its skill directory explicitly. The helper's omitted-directory default is relative to the helper file; it does not discover the calling skill. Scripts at another depth must supply their actual skill directory.
 
 ```python
 import sys
 from pathlib import Path
 
 # Add common directory to path
-common_dir = Path(__file__).parent.parent.parent / 'common'
+skill_dir = Path(__file__).resolve().parent.parent
+common_dir = skill_dir.parent / 'common'
 sys.path.insert(0, str(common_dir))
 
 from api_key_helper import get_api_key_or_exit
 
 # Get API key with automatic error handling
-api_key = get_api_key_or_exit()
+api_key = get_api_key_or_exit(skill_dir)
 ```
 
 ### API Key Lookup Order
@@ -71,13 +84,13 @@ VERTEX_LOCATION=us-central1
 
 ### Using get_client() Helper
 
-For automatic client selection (AI Studio or Vertex AI):
+For automatic client selection (AI Studio or Vertex AI), reuse `skill_dir` and the import setup above:
 
 ```python
 from api_key_helper import get_client
 
 # Get appropriate client based on configuration
-client_info = get_client()
+client_info = get_client(skill_dir)
 
 if client_info['type'] == 'vertex':
     # Using Vertex AI
@@ -95,12 +108,12 @@ else:
 
 ### Using get_vertex_config() Helper
 
-For checking Vertex AI configuration:
+For checking Vertex AI configuration, reuse `skill_dir` and the import setup above:
 
 ```python
 from api_key_helper import get_vertex_config
 
-vertex_config = get_vertex_config()
+vertex_config = get_vertex_config(skill_dir)
 if vertex_config['use_vertex']:
     print(f"Using Vertex AI")
     print(f"Project: {vertex_config['project_id']}")

@@ -1,0 +1,11 @@
+{
+  "paths": {
+    "docs": "documentation",
+    "plans": "ck-legacy-plans"
+  },
+  "portability": {
+    "enabled": true,
+    "projectConfigPath": "docs/project-config.json",
+    "docsIndexPath": "documentation/reference/docs-index-reference.md"
+  }
+}

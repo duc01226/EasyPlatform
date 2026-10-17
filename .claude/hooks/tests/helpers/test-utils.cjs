@@ -89,30 +89,24 @@ function assertLessThan(actual, expected, msg = '') {
 // ============================================================================
 
 const TEST_TEMP_PREFIX = 'claude-hooks-test-';
+const ownedTempDirs = new Set();
 
 function createTempDir() {
-  const dir = path.join(os.tmpdir(), `${TEST_TEMP_PREFIX}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
-  fs.mkdirSync(dir, { recursive: true });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), TEST_TEMP_PREFIX));
+  ownedTempDirs.add(dir);
   return dir;
 }
 
 function cleanupTempDir(dir) {
-  if (dir && dir.includes(TEST_TEMP_PREFIX) && fs.existsSync(dir)) {
-    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
-  }
+  if (!ownedTempDirs.has(dir)) return;
+  fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  ownedTempDirs.delete(dir);
 }
 
 function cleanupAllTestDirs() {
-  const tmpDir = os.tmpdir();
-  try {
-    const entries = fs.readdirSync(tmpDir);
-    for (const entry of entries) {
-      if (entry.startsWith(TEST_TEMP_PREFIX)) {
-        const fullPath = path.join(tmpDir, entry);
-        fs.rmSync(fullPath, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
-      }
-    }
-  } catch (e) { /* ignore */ }
+  for (const dir of ownedTempDirs) {
+    try { cleanupTempDir(dir); } catch (e) { /* retain ownership for retry */ }
+  }
 }
 
 // ============================================================================
@@ -377,17 +371,17 @@ class TestGroup {
   }
 
   test(name, fn) {
-    this.tests.push({ name, fn, async: fn.constructor.name === 'AsyncFunction' });
+    this.tests.push({ name, fn });
   }
 
   async run(verbose = false) {
     console.log(`\n▶ ${this.name}`);
 
-    for (const { name, fn, async: isAsync } of this.tests) {
+    for (const { name, fn } of this.tests) {
       try {
         if (this.beforeEachFn) await this.beforeEachFn();
-        if (isAsync) await fn();
-        else fn();
+        // Always await: a plain fn may RETURN a promise; not awaiting it counted a pass early.
+        await fn();
         if (this.afterEachFn) await this.afterEachFn();
         this.passed++;
         console.log(`  ✓ ${name}`);

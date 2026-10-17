@@ -114,17 +114,44 @@ public class PlatformRequestIdGeneratorMiddleware : PlatformMiddleware
         // This allows other components to access the request ID without direct HTTP context access
         applicationRequestContextAccessor.Current.SetValue(context.TraceIdentifier, PlatformApplicationCommonRequestContextKeys.RequestIdContextKey);
 
+        // Capture the request ID by value NOW, while the HttpContext is guaranteed to be alive.
+        // The OnStarting callback below must NOT read it back off the context: Kestrel pools HttpContext per
+        // connection, so by the time the callback runs the context may already have been recycled for the next
+        // request. Reading context.TraceIdentifier there would either throw ObjectDisposedException
+        // ("IFeatureCollection has been disposed") or emit the WRONG request's ID into the header.
+        var requestId = context.TraceIdentifier;
+
         // Register a callback to include the request ID in the response headers
         // This enables clients to correlate requests and responses for debugging and tracking
         // Add the request ID to the response header for client-side tracking
-        context.Response.OnStarting(async () =>
+        //
+        // Runs SYNCHRONOUSLY on the request-processing thread — deliberately NOT wrapped in Task.Run.
+        // Appending a header is pure in-memory work, so offloading it buys nothing while breaking correctness:
+        // the thread-pool hop lets the request finish (or abort) and its pooled HttpContext be uninitialized
+        // before the queued work item touches Response.Headers, which Kestrel surfaces as an
+        // EventId-13 "An unhandled exception was thrown by the application" error.
+        context.Response.OnStarting(() =>
         {
-            await Task.Run(() =>
+            try
             {
                 // Only add the header if it's not already present to avoid duplicates
                 if (!context.Response.Headers.ContainsKey(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId))
-                    context.Response.Headers.Append(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId, new[] { context.TraceIdentifier });
-            });
+                    context.Response.Headers.Append(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId, requestId);
+            }
+            // Defense in depth. Touching a recycled/reset pooled HttpContext is inherently racy — the guard and the
+            // read cannot be atomic with respect to Kestrel tearing the context down — so it surfaces
+            // non-deterministically as any of these three, exactly as documented on
+            // PlatformAspNetApplicationRequestContext.RecordDeadHttpContextRead:
+            //   - ObjectDisposedException   — IFeatureCollection has been disposed
+            //   - NullReferenceException    — FeatureReferences<T>.UpdateCached dereferencing a nulled Collection
+            //   - InvalidOperationException — feature collection mutated mid-read
+            // This header is best-effort by contract, so a failed write means "no header", never a crash.
+            catch (Exception e) when (e is ObjectDisposedException or NullReferenceException or InvalidOperationException)
+            {
+                // Intentionally swallowed — see above.
+            }
+
+            return Task.CompletedTask;
         });
 
         // Continue processing through the middleware pipeline

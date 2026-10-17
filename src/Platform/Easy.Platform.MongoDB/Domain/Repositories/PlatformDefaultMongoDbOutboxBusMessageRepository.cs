@@ -4,7 +4,9 @@ using Easy.Platform.Domain.UnitOfWork;
 namespace Easy.Platform.MongoDB.Domain.Repositories;
 
 public class PlatformDefaultMongoDbOutboxBusMessageRepository<TDbContext>
-    : PlatformMongoDbRootRepository<PlatformOutboxBusMessage, string, TDbContext>, IPlatformOutboxBusMessageRepository
+    : PlatformMongoDbRootRepository<PlatformOutboxBusMessage, string, TDbContext>,
+        IPlatformOutboxBusMessageRepository,
+        IPlatformOutboxBusMessageRepository<TDbContext>
     where TDbContext : PlatformMongoDbContext<TDbContext>
 {
     public PlatformDefaultMongoDbOutboxBusMessageRepository(IServiceProvider serviceProvider) : base(

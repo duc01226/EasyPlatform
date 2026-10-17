@@ -1,0 +1,641 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "1.2.0",
+  "cases": [
+    {
+      "id": "activation-positive",
+      "kind": "activation",
+      "skills": [
+        "knowledge-synthesis"
+      ],
+      "expectedActivation": "knowledge-synthesis",
+      "prompt": "Synthesize the supplied research evidence into the required report.",
+      "fixture": "Synthetic source map and evidence base with two independent sources per factual finding.",
+      "assertions": [
+        "Select knowledge-synthesis for this synthesis request.",
+        "Preserve provenance and report unresolved gaps.",
+        "On a cold standalone synthesis route, read the canonical Knowledge Work Rules section without loading unrelated source-discovery procedures; preserve all seven research rules."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-negative",
+      "kind": "activation",
+      "skills": [
+        "knowledge-synthesis"
+      ],
+      "expectedActivation": null,
+      "prompt": "Correct one spelling error in this supplied sentence.",
+      "fixture": "One sentence with a spelling error; no research evidence or synthesis task.",
+      "assertions": [
+        "Do not activate knowledge-synthesis for a spelling-only request.",
+        "Make only the requested spelling correction."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-ambiguous",
+      "kind": "activation",
+      "skills": [
+        "tech-stack-research"
+      ],
+      "expectedActivation": null,
+      "prompt": "Make it faster.",
+      "fixture": "No product, current stack, slow path or workload has been supplied.",
+      "assertions": [
+        "Ask for the missing target and evidence before prescribing a stack.",
+        "Do not activate stack research solely from an ambiguous speed request."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "activation-architecture-review",
+      "kind": "activation",
+      "skills": [
+        "architecture",
+        "changes-review",
+        "why-review"
+      ],
+      "expectedActivation": "architecture",
+      "prompt": "Check whether the new notification service follows our layering rules, and grade how it copes with ten times the tenants.",
+      "fixture": "Synthetic service with a module map, documented layering rules and a tenant-growth profile; the working tree has no uncommitted changes.",
+      "assertions": [
+        "Select architecture for a compliance and scalability review of a design.",
+        "Do not select changes-review when there is no diff to review."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-feature-implement-idea",
+      "kind": "activation",
+      "skills": [
+        "feature-implement",
+        "plan",
+        "fix"
+      ],
+      "expectedActivation": "feature-implement",
+      "prompt": "Add CSV export to the orders list. There is no plan for it yet.",
+      "fixture": "Synthetic orders module with a list endpoint, its tests and no plan file for the export.",
+      "assertions": [
+        "Select feature-implement for a feature described as an idea with no plan file.",
+        "Get a plan approved before the first source edit."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-feature-implement-existing-plan",
+      "kind": "activation",
+      "skills": [
+        "feature-implement",
+        "plan"
+      ],
+      "expectedActivation": "plan",
+      "prompt": "Implement the approved plan saved in the plans folder for the orders export.",
+      "fixture": "Synthetic orders module plus an approved plan file with two phases and their tests named.",
+      "assertions": [
+        "Select plan in execute mode when an approved plan file already exists.",
+        "Do not plan the feature a second time through feature-implement."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-plan-request",
+      "kind": "activation",
+      "skills": [
+        "plan",
+        "feature-implement",
+        "architecture"
+      ],
+      "expectedActivation": "plan",
+      "prompt": "Write an implementation plan for moving session storage to the shared cache. Do not change any code yet.",
+      "fixture": "Synthetic session module with an in-memory store, a cache client and their tests.",
+      "assertions": [
+        "Select plan for an explicit planning request.",
+        "Make no source edits while planning."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-spec-author",
+      "kind": "activation",
+      "skills": [
+        "spec",
+        "plan",
+        "feature-implement"
+      ],
+      "expectedActivation": "spec",
+      "prompt": "Write the canonical feature spec and its test scenarios for password reset from these confirmed decisions.",
+      "fixture": "Synthetic decision list for password reset with five confirmed rules and no existing spec file.",
+      "assertions": [
+        "Select spec for authoring a canonical feature spec with test scenarios.",
+        "Do not produce an implementation plan in place of the spec."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-design-skills-trivial-edit",
+      "kind": "activation",
+      "skills": [
+        "architecture",
+        "feature-implement",
+        "plan",
+        "spec"
+      ],
+      "expectedActivation": null,
+      "prompt": "Rename the local variable tmp to total in this function.",
+      "fixture": "One ten-line function that uses a local variable named tmp; no behavior change is requested.",
+      "assertions": [
+        "Do not activate an architecture, planning, spec or feature skill for a one-line rename.",
+        "Make only the requested rename."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-workflow-e2e-update",
+      "kind": "activation",
+      "skills": [
+        "workflow-e2e",
+        "integration-test",
+        "fix"
+      ],
+      "expectedActivation": "workflow-e2e",
+      "prompt": "The checkout flow changed. Update its end-to-end tests and get them passing.",
+      "fixture": "Synthetic checkout pages, one outdated browser user-flow test and a configured end-to-end runner.",
+      "assertions": [
+        "Select workflow-e2e when end-to-end tests must be updated and verified.",
+        "Do not select integration-test for a browser user-flow test."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-integration-test-service-level",
+      "kind": "activation",
+      "skills": [
+        "workflow-e2e",
+        "integration-test"
+      ],
+      "expectedActivation": "integration-test",
+      "prompt": "Add an integration test for the order total calculation in the pricing service.",
+      "fixture": "Synthetic pricing service with a total-calculation function, its data access and an integration test folder; no browser flow is involved.",
+      "assertions": [
+        "Select integration-test for a service-level test with no browser flow.",
+        "Do not start the end-to-end workflow for a test below the user interface."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-workflow-end-finished",
+      "kind": "activation",
+      "skills": [
+        "workflow-end",
+        "commit",
+        "start-workflow"
+      ],
+      "expectedActivation": "workflow-end",
+      "prompt": "Every step of the feature workflow is done. Close it.",
+      "fixture": "Synthetic workflow state with all steps completed, recorded outcome evidence and committed changes.",
+      "assertions": [
+        "Select workflow-end to close a workflow whose steps are finished.",
+        "Check the recorded outcome evidence before closing."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-workflow-end-mid-run",
+      "kind": "activation",
+      "skills": [
+        "workflow-end",
+        "start-workflow"
+      ],
+      "expectedActivation": null,
+      "prompt": "Step three of five just finished. Carry on with the next step.",
+      "fixture": "Synthetic workflow state with three of five steps completed and the fourth step named.",
+      "assertions": [
+        "Do not close a workflow that still has steps to run.",
+        "Continue with the next declared step."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-workflow-review-changes-risky",
+      "kind": "activation",
+      "skills": [
+        "workflow-review-changes",
+        "changes-review"
+      ],
+      "expectedActivation": "workflow-review-changes",
+      "prompt": "Review my uncommitted changes. They touch the authorization middleware, the billing module and a shared contract type.",
+      "fixture": "Synthetic uncommitted diff across three modules, including an authorization check and a contract type two modules read.",
+      "assertions": [
+        "Select workflow-review-changes for a risky cross-module uncommitted change.",
+        "Do not settle for a single-pass changes-review."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "activation-changes-review-small-diff",
+      "kind": "activation",
+      "skills": [
+        "workflow-review-changes",
+        "changes-review"
+      ],
+      "expectedActivation": "changes-review",
+      "prompt": "Review my staged change: one typo fix in a README.",
+      "fixture": "Synthetic staged diff with a single corrected word in one documentation file.",
+      "assertions": [
+        "Select changes-review for a small single-file diff.",
+        "Do not start the specialist review workflow for a low-risk change."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "repair-evidence-rejection",
+      "kind": "repair",
+      "skills": [
+        "knowledge-synthesis",
+        "workflow-research"
+      ],
+      "expectedActivation": "workflow-research",
+      "prompt": "The synthesis is written; knowledge review returned REVISE for a missing section. Repair it quickly and close.",
+      "fixture": "This run has _sources-topic.md and _evidence-topic.md; another run has similarly named evidence. Review has not approved closure.",
+      "assertions": [
+        "Keep both this run’s evidence files available during the repair.",
+        "Rerun the synthesis owner using existing inputs and re-review.",
+        "Do not clean either run on REVISE or failed closure."
+      ],
+      "pressures": [
+        "time",
+        "just-this-once"
+      ]
+    },
+    {
+      "id": "repair-evidence-acceptance",
+      "kind": "repair",
+      "skills": [
+        "knowledge-synthesis",
+        "workflow-research"
+      ],
+      "expectedActivation": "workflow-research",
+      "prompt": "Finish housekeeping after accepted review and closure.",
+      "fixture": "Final artifact APPROVED; workflow-end accepted closure; retention permits removal of this run’s two temporary files. Another run’s inputs exist.",
+      "assertions": [
+        "Record acceptance and exact cleanup paths.",
+        "Remove only this run’s permitted files; preserve the other run."
+      ],
+      "pressures": []
+    },
+    {
+      "id": "repair-knowledge-scope",
+      "kind": "repair",
+      "skills": [
+        "knowledge-review"
+      ],
+      "expectedActivation": "knowledge-review",
+      "prompt": "Review this research-only report; the team wants a stronger architecture.",
+      "fixture": "Report cites two independent sources per fact; consuming project has no application classes or linter configuration.",
+      "assertions": [
+        "Review completeness, evidence and confidence.",
+        "Do not demand empty base classes or unrelated lint configuration.",
+        "Keep review read-only and route artifact repairs to their owner."
+      ],
+      "pressures": [
+        "authority"
+      ]
+    },
+    {
+      "id": "repair-cli-stack",
+      "kind": "repair",
+      "skills": [
+        "tech-stack-research"
+      ],
+      "expectedActivation": "tech-stack-research",
+      "prompt": "Research a stack for an offline CLI library; use a broad technology comparison so nothing is missed.",
+      "fixture": "Confirmed constraints: existing runtime fixed; no UI, hosted service, persistence, broker or identity flow; one unresolved packaging choice.",
+      "assertions": [
+        "Record absent and fixed layers as evidence-backed N/A or FIXED.",
+        "Compare only the unresolved required choice and avoid invented components.",
+        "Record a total query cap and stop at sufficient evidence or expose uncertainty."
+      ],
+      "pressures": [
+        "exhaustion"
+      ]
+    },
+    {
+      "id": "repair-query-equivalence",
+      "kind": "repair",
+      "skills": [
+        "performance-review"
+      ],
+      "expectedActivation": "performance-review",
+      "prompt": "Speed up lower(name) = lower(parameter); try a short list of uppercase and lowercase values.",
+      "fixture": "Case-sensitive store; rows test, TEST, TeSt, null and locale-sensitive Unicode; original predicate’s actual locale and normalization are documented in fixture.",
+      "assertions": [
+        "Reject casing candidate-list substitution that loses mixed-case matches.",
+        "Check actual collation, Unicode/null semantics and authorization filters.",
+        "Prove equivalent result sets separately from query-plan improvement."
+      ],
+      "pressures": [
+        "sunk-cost"
+      ]
+    },
+    {
+      "id": "repair-spec-correspondence",
+      "kind": "repair",
+      "skills": [
+        "watzup"
+      ],
+      "expectedActivation": "watzup",
+      "prompt": "Wrap up; specs were committed yesterday so mark them maintained.",
+      "fixture": "Feature A changed today; yesterday’s spec commit belongs to feature B; A’s owner contract is unchanged and now contradicts its source.",
+      "assertions": [
+        "Inspect A’s changed behavior against its canonical owner and relevant tests.",
+        "Report specific DRIFT rather than infer freshness from B’s commit age."
+      ],
+      "pressures": [
+        "authority"
+      ]
+    },
+    {
+      "id": "repair-uncommitted-spec",
+      "kind": "repair",
+      "skills": [
+        "watzup"
+      ],
+      "expectedActivation": "watzup",
+      "prompt": "Wrap up; the spec has no recent commit, flag it stale.",
+      "fixture": "Feature A source and matching canonical spec were correctly updated in this working tree; owner/test correspondence is inspectable.",
+      "assertions": [
+        "Count the correct uncommitted owner update as current evidence.",
+        "Report MATCH with inspected locations; age remains metadata only."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-domain-handler-scope",
+      "kind": "repair",
+      "skills": [
+        "domain-analysis"
+      ],
+      "expectedActivation": "domain-analysis",
+      "prompt": "Review only the changed order-import handler for domain correctness.",
+      "fixture": "Synthetic diff changes the handler to bypass a quantity invariant; the unchanged functional domain module enforces quantity > 0 on the normal creation path. No entity file is edited.",
+      "assertions": [
+        "Trace the changed feeder to the unchanged invariant owner and report the bypass with source evidence.",
+        "Do not return clean merely because no entity filename changed; keep the scope on affected behavior."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-domain-absent-surface",
+      "kind": "repair",
+      "skills": [
+        "domain-analysis"
+      ],
+      "expectedActivation": "domain-analysis",
+      "prompt": "Review this changed CLI output formatter for domain concerns.",
+      "fixture": "Synthetic diff only aligns terminal columns; no business model, mutation, persistence, load or event path exists.",
+      "assertions": [
+        "Inspect the changed path and record evidence-backed domain N/A.",
+        "Do not invent a model or scan unrelated modules to fill a checklist."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-learn-list-scope",
+      "kind": "repair",
+      "skills": [
+        "learn"
+      ],
+      "expectedActivation": "learn",
+      "prompt": "List the saved lessons.",
+      "fixture": "Synthetic existing lesson/reference files and tool traces; no lesson candidate or save/update request, no linked work item.",
+      "assertions": [
+        "Read and display existing guidance without changing durable files.",
+        "Return after listing; do not critique a nonexistent new lesson or start persistence review/enhancement."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-harness-fixture-fit",
+      "kind": "repair",
+      "skills": [
+        "harness-setup"
+      ],
+      "expectedActivation": "harness-setup",
+      "prompt": "Define the integration-fixture policy for this native harness.",
+      "fixture": "Synthetic harness supports isolated run-owned temp stores cleaned after evidence, plus separate immutable shared reference data; a persistent additive suite forbids reset.",
+      "assertions": [
+        "Preserve the native run-owned ephemeral cleanup policy after evidence capture.",
+        "Keep shared/user-owned and persistent/additive data protected; preserve required no-reset repeat proof."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-performance-cpu-fit",
+      "kind": "repair",
+      "skills": [
+        "performance-review"
+      ],
+      "expectedActivation": "performance-review",
+      "prompt": "Review the quadratic parser loop in this offline library.",
+      "fixture": "Synthetic local CPU-only parser with input-size bounds, timings at representative/worst N, profiler samples and a local regression budget. No service, tenant, region, database, container, queue or seeder.",
+      "assertions": [
+        "Judge CPU complexity/timing/input evidence; record absent dimensions as evidence-backed N/A.",
+        "Do not require endpoint/tenant/region segmentation, load-generator profiles, database seeding or service configuration.",
+        "Keep static risks distinct from measured performance and preserve result-equivalence checks."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-security-enforcement-fit",
+      "kind": "repair",
+      "skills": [
+        "security-audit"
+      ],
+      "expectedActivation": "security-audit",
+      "prompt": "Audit the access control on these two Node endpoints.",
+      "fixture": "Synthetic server has an actual central identity/policy guard with permitted/refused actor traces on endpoint A; endpoint B bypasses it and exposes private data. No attribute framework or backend reference applies.",
+      "assertions": [
+        "Trace and accept endpoint A’s real enforcement mechanism without demanding attributes.",
+        "Report endpoint B’s reachable missing enforcement and retain negative-path proof.",
+        "Do not load an N/A backend guide or invent tenant scope where absent."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-ui-platform-fit",
+      "kind": "repair",
+      "skills": [
+        "ui-design"
+      ],
+      "expectedActivation": "ui-design",
+      "prompt": "Design the focus and action states for this keyboard-operated native panel.",
+      "fixture": "Synthetic accepted platform standard and project tokens specify four type roles, a 6-unit spacing scale and focus/active/disabled states. Mouse hover and touch input are absent; explicit contrast targets and labels are supplied.",
+      "assertions": [
+        "Use the declared platform/input modes, type/spacing system and contrast requirements.",
+        "Do not impose six type steps, a 4/8px grid, hover, web pixel minima or touch-target placement.",
+        "Preserve supported focus states and measure the authoritative contrast targets."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-abstraction-ownership",
+      "kind": "repair",
+      "skills": [
+        "prompt-enhance"
+      ],
+      "expectedActivation": "prompt-enhance",
+      "prompt": "Improve these simplification instructions so they follow our ownership conventions.",
+      "fixture": "Synthetic instructions review three textually similar independently owned policies plus two callers sharing one volatile invariant. Project convention selects evidence-based ownership and rejects count-only extraction.",
+      "assertions": [
+        "Preserve separate policies with independent reasons to change.",
+        "Permit a justified shared owner for two real consumers without a three-occurrence minimum.",
+        "Do not introduce mandatory abstractions, structural findings or method/depth limits based only on counts."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-simple-tracking-scope",
+      "kind": "repair",
+      "skills": [
+        "custom-prompt"
+      ],
+      "expectedActivation": "custom-prompt",
+      "prompt": "List the saved project prompts.",
+      "fixture": "Synthetic prompt index with two entries and separate bodies; complete input, no mutation or missing fact.",
+      "assertions": [
+        "Read the index and list its entries without loading bodies.",
+        "Keep proportional tracking and finish without asking whether to skip ordinary task tracking."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-workflow-native-closure",
+      "kind": "repair",
+      "skills": [
+        "workflow-end"
+      ],
+      "expectedActivation": "workflow-end",
+      "prompt": "Close this completed behavior-change workflow; the last spec-sync receipt is stale.",
+      "fixture": "Synthetic valid native contract with owner-qualified CASE identifiers/variants and YAML proof carriers; no Section8 or TestSpec. All other outcome evidence is current. The canonical sync tool can return inspected assertion/results, unknown coverage or malformed profile errors.",
+      "assertions": [
+        "Reconcile the selected native owner/case/variant and proof carriers without inventing default TC headings or a shadow registry.",
+        "Keep unknown coverage, malformed/unresolved profiles and unadjudicated drift open; do not turn helper success into evidence.",
+        "Preserve the fresh-evidence and no-behavior-change skip paths; absent profile still uses the strict default."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-native-authoring-consumers",
+      "kind": "repair",
+      "skills": [
+        "feature-implement"
+      ],
+      "expectedActivation": "feature-implement",
+      "prompt": "Implement the specified enhancement using the supplied canonical case contract.",
+      "fixture": "Synthetic valid native Behavior/Interface/Cases contract, MUST-/CHECK-/CASE- identifiers and declared carriers; no default module README or Section8. Alternate absent/malformed config fixtures are provided.",
+      "assertions": [
+        "Preserve the selected native owner/roles/IDs/carrier/cardinality in spec, plan and test mapping; create no shadow TC registry.",
+        "Use strict defaults only when neither config nor required references declares a native contract; malformed/unresolved stays BLOCKED."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-ai-feature-test-seam",
+      "kind": "repair",
+      "skills": [
+        "feature-implement"
+      ],
+      "expectedActivation": "feature-implement",
+      "prompt": "Implement the planned deterministic parser around this model client.",
+      "fixture": "Synthetic approved AI feature with a designated mock-model seam and integration fixtures; default CI forbids live paid calls.",
+      "assertions": [
+        "Test deterministic parser/router/guards with the model doubled at the approved seam.",
+        "Exercise owned integration behavior through real paths and meaningful assertions; no live paid default-CI calls."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-brainstorm-selected-techniques",
+      "kind": "repair",
+      "skills": [
+        "brainstorm"
+      ],
+      "expectedActivation": "brainstorm",
+      "prompt": "Help solve this known-user onboarding problem.",
+      "fixture": "Synthetic confirmed problem-solving scenario with POV/root cause/HMW/SCAMPER/RICE/hypothesis/RAT route; no differentiation, product-market-fit or release-scoping need.",
+      "assertions": [
+        "Keep the ordered problem/solution divergence-convergence and selected-route outcomes.",
+        "Do not require JTBD/ERRC/Canvas/Crazy8s/Kano/MoSCoW artifacts solely because the catalog lists them; record unselected template fields N/A.",
+        "Preserve the separate multi-opportunity scored-map and user-selection contract."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-greenfield-foundation-fit",
+      "kind": "repair",
+      "skills": [
+        "workflow-greenfield-init"
+      ],
+      "expectedActivation": "workflow-greenfield-init",
+      "prompt": "Continue the approved foundation phase.",
+      "fixture": "Synthetic approved plan requires an integration boundary; an unrelated utility already exists. Alternate fixtures cover all planned owners reusable and a prototype with no abstract layer selected.",
+      "assertions": [
+        "Scaffold missing/unsuitable planned owners despite the unrelated utility.",
+        "Skip only when every applicable planned requirement is covered; do not impose interfaces/base classes absent from the plan.",
+        "Preserve harness/linter ownership and approval/review/verify gates."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    },
+    {
+      "id": "repair-ai-review-no-surface",
+      "kind": "repair",
+      "skills": [
+        "ai-engineering-review"
+      ],
+      "expectedActivation": "ai-engineering-review",
+      "prompt": "Review this changed plain-text formatter for AI concerns.",
+      "fixture": "Synthetic complete changed-file scan returns clean with no prompt/model/tool/retrieval/eval surface. Alternate unknown scan and actual AI fixtures are supplied.",
+      "assertions": [
+        "Confirm scope/surface before AI-only manual loads and return the documented no-AI skip on complete clean evidence.",
+        "Unknown/inconclusive detection preserves fallback and required review; actual AI retains every applicable pass.",
+        "Return supported recommendations without a routine standalone next-step choice question."
+      ],
+      "pressures": [
+        "simplicity"
+      ]
+    }
+  ]
+}

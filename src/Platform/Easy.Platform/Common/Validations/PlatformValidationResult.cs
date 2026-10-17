@@ -416,7 +416,7 @@ public class PlatformValidationResult<TValue> : ValidationResult
     /// <br />
     /// If the current validation result (this) is invalid (!IsValid), it short-circuits the validation chain and returns the current result. If the current result is valid, it proceeds to execute the next validation operation (nextValidation(Value)), passing the current value (Value) to it.
     /// <br />
-    /// This method is useful in scenarios where multiple validation checks need to be performed in sequence, and each check depends on the validity of the previous ones. For example, in the ValidateCanBeSavedAsync method of AttendanceRequest and LeaveRequest classes, multiple validation operations are chained using the AndAsync method. If any validation operation fails, the subsequent ones are not executed, which can save computational resources and time.
+    /// This method is useful in scenarios where multiple validation checks need to be performed in sequence, and each check depends on the validity of the previous ones. For example, an entity's ValidateCanBeSavedAsync may chain several validation operations with AndAsync. If any validation operation fails, the subsequent ones are not executed, which can save computational resources and time.
     /// </summary>
     public async Task<PlatformValidationResult<TValue>> AndAsync(
         Func<TValue, Task<PlatformValidationResult<TValue>>> nextValidation)

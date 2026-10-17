@@ -20,7 +20,9 @@ public interface IWebDriverManager
     /// <summary>
     /// Create choosing default web driver (Currently is Chrome Driver)
     /// </summary>
-    public IWebDriver CreateLocalMachineWebDriver(string version = "Latest", Architecture architecture = Architecture.Auto);
+    public IWebDriver CreateLocalMachineWebDriver(
+        string version = VersionResolveStrategy.MatchingBrowser,
+        Architecture architecture = Architecture.Auto);
 
     public IWebDriver CreateLocalMachineWebDriver(IDriverConfig config, string version = "Latest", Architecture architecture = Architecture.Auto);
 }
@@ -60,13 +62,18 @@ public class WebDriverManager : IWebDriverManager
             commandTimeout: TimeSpan.FromSeconds(Settings.RemoteWebDriverCommandTimeoutSeconds)).Pipe(DefaultConfigDriver);
     }
 
-    public IWebDriver CreateLocalMachineWebDriver(string version = "Latest", Architecture architecture = Architecture.Auto)
+    public IWebDriver CreateLocalMachineWebDriver(
+        string version = VersionResolveStrategy.MatchingBrowser,
+        Architecture architecture = Architecture.Auto)
     {
         return CreateLocalMachineWebDriver(config: BuildDefaultDriverConfig(Settings), version, architecture);
     }
 
     public IWebDriver CreateLocalMachineWebDriver(IDriverConfig config, string version = "Latest", Architecture architecture = Architecture.Auto)
     {
+        if (config is ChromeConfig && version == VersionResolveStrategy.MatchingBrowser)
+            return new ChromeDriver(options: BuildChromeDriverOptions(Settings)).Pipe(DefaultConfigDriver);
+
         new DriverManager().SetUpDriver(config, version, architecture);
         return new ChromeDriver(options: BuildChromeDriverOptions(Settings)).Pipe(DefaultConfigDriver);
     }

@@ -1,123 +1,122 @@
 ---
 name: investigate
-description: '[Fix & Debug] Use when you need to investigate and explain how existing features or logic work. Flag: --mode=explain produces a one-way developer-narrative explanation (Purpose → How → Why → Impact) tuned by coding level; use /understand for the standalone prompt-driven explainer.'
+description: '[Fix & Debug] Use when a workflow step or the user asks for read-only code-flow investigation. --mode=debug finds bug root causes; --mode=explain narrates purpose, flow and impact. Plans/decisions: understand.'
 ---
 
 > Codex compatibility note:
->
-> - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
-> - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
-> - User-question prompts mean to ask the user directly in Codex.
-> - Ignore Claude-specific mode-switch instructions when they appear.
-> - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Invoke `$skill-name`: load the registered `.agents/skills/<name>/SKILL.md` and execute it with Codex tools; no separate `Skill` tool or Claude mode switch is needed. Author `.claude/**`; mirrors are generated.
+> - Track steps before execution and keep progress/evidence current. Explicit skill requests execute their protocol. Use the native question tool for required questions.
+> - Map foreign tool names to available host capabilities. A name mismatch needs no approval; an actually unavailable required capability stops with its step/evidence and a user question before adaptation.
 > - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.
-> - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
-> - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
-> - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
+> - Preserve protocol order unless the user approves a deviation. Workflows use `$start-workflow`: gates stay fixed; other steps may flex with logged reasons and evidence.
+> **[BLOCKING] Mode routing — detect FIRST.** Explicit `--mode=debug` or `--mode=explain` selects that mode; no mode is the default read-only code-flow investigation (everything below, unchanged). `$investigate --mode=debug <bug>` is the former `/debug-investigate` (root-cause investigation of a bug).
 
-<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->
-
-## Codex Project-Reference Loading (No Hooks)
-
-Codex uses static project-reference loading instead of runtime-injected project docs.
-When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.
-
-**Always read:**
-
-- `docs/project-config.json` (project-specific paths, commands, modules, and workflow/test settings)
-- `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
-- `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
-
-**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-
-**Situation-based docs:**
-
-- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
-- Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
-- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
-- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
-- Integration test implementation/review: `integration-test-reference.md`
-- E2E test implementation/review: `e2e-test-reference.md`
-- Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
-
-Do not read all docs blindly. Start from `docs-index-reference.md`, then open only relevant files for the task.
-
-<!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
+> **[BLOCKING]** Execute phases in declared order. NEVER skip, reorder, or merge without explicit user approval.
+> **[BLOCKING]** Before each phase or skill call, update todo tracking; mark `in_progress` at start and `completed` after evidence.
+> **[BLOCKING]** Record evidence for each completed/skipped phase; if task tools are unavailable, maintain an equivalent tracker.
+> **[BLOCKING]** Investigation stays READ-ONLY; report findings, never patch source.
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
 ## Quick Summary
 
-**Goal:** Produce an evidence-backed understanding of how existing code works through READ-ONLY exploration with zero changes — every claim traced to `file:line` or explicitly marked "inferred" — so the next decision or change rests on verified system flow, never assumption.
+**Goal:** Explain existing code through READ-ONLY, evidence-backed exploration so every finding maps to `file:line` (or "inferred"), system flow is verified, and follow-up decisions rest on evidence without changing source.
 
 **Summary:**
 
-- **Purpose:** read-only, evidence-backed map of how existing code works — the next decision/fix rests on verified flow, never assumption.
-- **Main steps (run in order):** Phase 0 Classify (quick / deep / debug / recommendation) → Discovery (Entities > Commands > Events > Controllers) → Graph Expand (2-3 key files, main agent only) → Knowledge Graph (per-file doc) → Flow Mapping (entry → exit + side effects) → Analysis (business rules / validation / authz / error paths) → Synthesis (deep scope → analysis file) → Present (structured findings + deeper-dive offer).
-- Classify scope FIRST (Phase 0: quick / deep / debug / recommendation) — depth and deliverables (analysis file, validation chain) flow from this, so never skip straight to grepping.
-- Graph is MANDATORY, not optional: the main agent MUST run at least one `code_graph` command on 2-3 key files before concluding — graph surfaces callers, bus consumers, and importers that grep alone misses (sub-agents cannot use graph).
-- Stay strictly READ-ONLY and cite `file:line` for every claim; unverified statements MUST be marked "inferred", and recommending any code change forces the full validation chain (all impls/registrations/usages/cross-service impact + confidence declaration).
-- `--mode=explain` only changes the deliverable (one-way developer narrative → git-ignored `tmp/understand/{branch}.md` ledger) — the same evidence gate, graph rule, and READ-ONLY constraint still bind; deep scope writes to `.ai/workspace/analysis/[feature]-investigation.md` and must be re-read in full before presenting.
+- **Purpose:** map behavior from trigger to exit, including transformations, side effects, validation, authz, errors, and cross-service paths; stop at findings.
+- **Ordered work:** (0) classify `quick|deep|debug|recommendation|explain` → (1) discover `Entities → Commands/Queries → EventHandlers → Controllers → Consumers → Components` → (2) optional graph hint on high-risk key files (a stale-able hint, never required) → (3) document the per-file knowledge graph → (4) map entry→exit flow → (5) analyze rules/validation/authz/errors/edge cases → (6) synthesize (deep writes/re-reads analysis file; explain writes ledger) → (7) present cited findings.
+- **Gates:** stay READ-ONLY; cite `file:line` and mark unknowns `inferred`; recommendation scope requires the full validation chain and confidence; cross-service scope scans producers, consumers, sagas, and contracts.
 
 **Workflow:**
 
-1. **Phase 0: Classify** — Determine scope (quick / deep / debug / recommendation) before acting
-2. **Discovery** — Search codebase for related files (Entities > Commands > Events > Controllers)
-3. **Graph Expand** — Run graph queries on 2-3 key files (MANDATORY, main agent only)
-4. **Knowledge Graph** — Read + document purpose, symbols, dependencies per file
-5. **Flow Mapping** — Trace entry points through pipeline to exit points
-6. **Analysis** — Extract business rules, validation, authorization, error handling
-7. **Synthesis** — Write executive summary to `.ai/workspace/analysis/[feature]-investigation.md`
-8. **Present** — Deliver structured findings, offer deeper dives
+1. **Phase 0: Classify** — MUST ATTENTION determine scope (quick / deep / debug / recommendation / explain) before acting
+2. **Discovery** — MUST ATTENTION search codebase for related files (Entities > Commands/Queries > EventHandlers > Controllers > Consumers > Components)
+3. **Graph Hint (optional)** — when the blast radius looks high-risk and grep alone may miss it, run graph queries on 2-3 key files (main agent only); a hint that may be stale, verified by reading
+4. **Knowledge Graph** — MUST ATTENTION read + document purpose, symbols, dependencies per file
+5. **Flow Mapping** — MUST ATTENTION trace entry points through pipeline to exit points
+6. **Analysis** — MUST ATTENTION extract business rules, validation, authorization, error handling
+7. **Synthesis** — MUST ATTENTION for deep scope, write and re-read `tmp/analysis/[feature]-investigation.md`; explain scope writes its ledger; quick scope skips the analysis file
+8. **Present** — MUST ATTENTION deliver structured findings, offer deeper dives
 
 **Modes:**
 
-- **Default (analysis)** — investigate for an engineer audience: structured findings + analysis file. Everything below applies.
-- **`--mode=explain`** (developer narrative) — same READ-ONLY evidence gate, but the deliverable is a one-way developer explanation (Purpose → How → Why → Impact), tuned by coding level, written to a git-ignored ledger. See [Mode: Explain](#mode-explain-developer-narrative). Use `$understand [target]` when you want the standalone prompt-driven explainer instead of a full investigation run.
+- **Default (analysis)** — MUST ATTENTION deliver engineer-facing structured findings + analysis file; quick scope may skip the file.
+- **`--mode=explain`** (developer narrative) — MUST ATTENTION keep the same READ-ONLY and evidence gates (the graph stays optional advice); deliver a one-way Purpose → How → Why → Impact explanation in a git-ignored ledger. See [Mode: Explain](#mode-explain-developer-narrative). Use `$understand [target]` for the standalone explainer.
+- **`--mode=debug`** (root-cause investigation of a bug) — MUST ATTENTION read `references/mode-debug.md` in full FIRST: reproduce → hypothesize → end-to-start trace → confirm → `$why-review` validation → report, then `$fix`. Investigation-ONLY. See [Mode Dispatch](#mode-dispatch).
 
 **Key Rules:**
 
-- Strictly READ-ONLY — NEVER make code changes
-- Every claim needs `file:line` proof — mark unverified as "inferred"
-- MUST ATTENTION run at least ONE graph command on key files before concluding
-- MUST ATTENTION Plan ToDo Task to READ `project-structure-reference.md` (if not found, search: project documentation, coding standards, architecture docs)
+- Strictly READ-ONLY — NEVER make code, plan, or spec changes
+- Every claim/finding needs `file:line` proof — mark unverified as "inferred"
+- Optional: the code graph can hint at callers/dependents for a high-risk blast radius grep may miss; it can be stale, so verify by reading — never required
+- MUST ATTENTION plan a task to READ `project-structure-reference.md`; if missing, search project documentation, coding standards, and architecture docs
+
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Mode Dispatch](#mode-dispatch)
+- [Phase 0: Scope Classification](#phase-0-scope-classification)
+- [Investigation Mindset (NON-NEGOTIABLE)](#investigation-mindset-non-negotiable)
+- [Workflow](#workflow)
+- [Investigation Techniques](#investigation-techniques)
+- [Evidence Collection](#evidence-collection)
+- [Related Skills](#related-skills)
+- [Mode: Explain (Developer Narrative)](#mode-explain-developer-narrative)
+- [Investigation & Recommendation Protocol](#investigation--recommendation-protocol)
+- [Closing Reminders](#closing-reminders)
+
+## Mode Dispatch
+
+Detect the mode from the invocation arguments before any other work; do not load a mode file the invocation did not select.
+
+| Mode | Purpose | Read in full FIRST |
+| --- | --- | --- |
+| _(none)_ | Default read-only code-flow investigation — this file | — |
+| `--mode=debug [bug description]` | Root-cause investigation of a bug: reproduce, trace end-to-start, hypothesis matrix, pinpoint the owning layer, `$why-review` validation; never patches code (`$fix` applies the fix). Formerly `/debug-investigate` | `references/mode-debug.md` |
+| `--mode=explain [target]` | One-way developer narrative (Purpose → How → Why → Impact) — [Mode: Explain](#mode-explain-developer-narrative) below | `references/investigate-skill-explain.md` |
+
+- **[BLOCKING]** When `--mode=debug`, read `references/mode-debug.md` in full FIRST; it replaces the default Phase 0 classification, Workflow and Output Format for the invocation (Phase 0 bug-type routing, reproduce, end-to-start trace, the `$why-review` Root Cause Validation gate, `$fix` hand-off). Workflow invocation (for example `workflow-bugfix`) returns the validated root cause to the parent; standalone ends with the `ask user question tool` next-step choice.
+- `--mode=debug` and the default flow are separate invocations; the default flow never chains into the debug gate, and debug mode never relaxes the READ-ONLY or `file:line` evidence rules.
 
 ## Phase 0: Scope Classification
 
-**Classify before acting** — route to correct depth:
+**Classify before acting** — MUST ATTENTION route to the required depth:
 
-| Scope              | Signals                                        | Depth                                                                                                                                                           |
-| ------------------ | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Quick**          | Single feature/function, clear entry point     | grep → trace → answer (no analysis file needed)                                                                                                                 |
-| **Deep**           | Multi-service, cross-boundary, ambiguous scope | Full workflow + knowledge graph template + analysis file                                                                                                        |
-| **Debug**          | Error/crash/unexpected behavior                | Root-cause-debugging protocol above                                                                                                                             |
-| **Recommendation** | Code change suggested (removal, refactor)      | Validation chain protocol below — MANDATORY                                                                                                                     |
-| **Explain**        | `--mode=explain` flag                          | Investigation-local developer narrative — see [Mode: Explain](#mode-explain-developer-narrative). Use `$understand` for the standalone prompt-driven explainer. |
+| Scope              | Signals                                        | Depth                                                    |
+| ------------------ | ---------------------------------------------- | -------------------------------------------------------- |
+| **Quick**          | Single feature/function, clear entry point     | grep → trace → answer (no analysis file needed)          |
+| **Deep**           | Multi-service, cross-boundary, ambiguous scope | Full workflow + knowledge graph template + analysis file |
+| **Debug**          | Error/crash/unexpected behavior                | Root-cause-debugging protocol above; a full root-cause hunt is `--mode=debug` (see [Mode Dispatch](#mode-dispatch)) |
+| **Recommendation** | Code change suggested (removal, refactor)      | Validation chain protocol below — MANDATORY              |
+| **Explain**        | `--mode=explain` flag | Investigation-local developer narrative — see [Mode: Explain](#mode-explain-developer-narrative). Use `$understand` for the standalone prompt-driven explainer. |
 
-Quick scope: Skip knowledge graph template + analysis file. Grep → graph trace → present findings.
-Deep scope: MUST ATTENTION write to `.ai/workspace/analysis/[feature]-investigation.md`.
-Explain scope: same READ-ONLY evidence gate; deliverable is an in-chat developer narrative + a git-ignored ledger (NOT the analysis file).
+Quick scope: MUST ATTENTION run grep → present (optional graph hint for a high-risk blast radius); skip knowledge-graph template + analysis file.
+Deep scope: MUST ATTENTION write to `tmp/analysis/[feature]-investigation.md`.
+Explain scope: MUST ATTENTION keep the same READ-ONLY evidence gate; deliver in-chat narrative + git-ignored ledger, NOT the analysis file.
 
 ## Investigation Mindset (NON-NEGOTIABLE)
 
-**Skeptical. Every claim needs `file:line` traced proof. Confidence >80% to act.**
-
-- NEVER assume code works as named — verify by reading actual implementations
-- MUST ATTENTION include `file:line` for every finding; unproven claims MUST ATTENTION be marked "inferred"
-- ALWAYS grep related usages, consumers, cross-service references — NEVER assume completeness
+**Skeptical. Every claim needs `file:line` proof; confidence >80% to act.**
+- NEVER assume names describe behavior — verify actual implementations
+- MUST ATTENTION cite `file:line` for every finding; mark unproven claims "inferred"
+- ALWAYS grep usages, consumers, and cross-service references — NEVER assume completeness
 - ALWAYS trace actual call paths with evidence — NEVER rely on signatures alone
 
 ### Logical-ID Extraction & Business-Intent Rule (M3/M5)
 
-See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. When extracting operations, business rules, or events into findings:
+> **AI-SDD Artifact Contract** — Shared SDD rules keep reusable guidance in `.claude`, require the `spec → plan → tasks → implement → verify → update spec/docs` cycle, traceability, explicit unknowns, and intent-guarding tests. Project-specific paths and commands come from project docs.
+> Extracted rules use logical IDs and separate abstract source anchors; findings state business intent, not only implementation behavior.
 
-- Assign each extracted operation/rule/event a logical ID (FR-/BR- for operations and rules) as the PRIMARY identifier. Keep the `[Source: namespace/service/id]` abstract-anchor evidence (never physical code coordinates or repository-root paths — those live only in the provenance sidecar) as a SEPARATE carrier — never fold the source link into the rule statement itself (M3).
-- For every rule, explain **WHY** it exists (the business intent / invariant it protects), not only **WHAT** the code does. State the rule in tech-agnostic business terms so the finding is reusable by a rebuild team on any stack (M5).
+MUST ATTENTION READ `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria before extracting operations, business rules, or events into findings:
+
+- Assign each extracted operation/rule/event a logical ID (FR-/BR- for operations/rules) as PRIMARY. Keep `[Source: namespace/service/id]` as a separate abstract-anchor carrier; never use physical coordinates/repository paths in the rule statement (M3).
+- For every rule, explain **WHY** it exists (business intent/invariant), not only **WHAT** code does; state it in tech-agnostic terms reusable on any stack (M5).
 
 ## Workflow
 
-1. **Discovery** — Search for all related files. Priority: Entities > Commands/Queries > EventHandlers > Controllers > Consumers > Components.
-2. **Graph Expand (MANDATORY — DO NOT SKIP)** — **YOU (main agent) MUST ATTENTION run graph queries YOURSELF** on key files from Step 1. Sub-agents CANNOT use graph — only you can. Pick 2-3 key files (entities, commands, bus messages):
+1. **Discovery** — MUST ATTENTION search all related files. Priority: Entities > Commands/Queries > EventHandlers > Controllers > Consumers > Components.
+2. **Graph Hint (OPTIONAL)** — Optional: when grep and reading files alone may not reveal a high-risk blast radius (shared contract, many callers, cross-module/cross-service flow, public API), the code graph (`.code-graph/graph.db`) can add callers, dependents and impacted tests. Treat it as a hint, NOT proof: the graph can be stale or incomplete (it lags uncommitted edits and unindexed paths) — verify anything that matters by reading the files/grep. Skip it for low-risk or local changes; an absent or stale graph is never a finding. The main agent runs it (sub-agents do not). Pick 2-3 key files (entities, commands, bus messages):
     ```bash
     python .claude/scripts/code_graph connections <key_file> --json
     python .claude/scripts/code_graph query callers_of <FunctionName> --json
@@ -129,56 +128,57 @@ See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7
     # Filter by service, limit results
     python .claude/scripts/code_graph query callers_of <name> --limit 5 --filter "ServiceName" --json
     ```
-    Graph reveals complete dependency network (callers, importers, tests, inheritance) grep alone misses. Also run `$graph-connect-api` for frontend-to-backend API mapping.
-3. **Knowledge Graph** — Read + analyze each file (from grep + graph results). Document purpose, symbols, dependencies, data flow. Batch in groups of 10; update progress after each batch. Per-file template:
+    The graph may surface callers, importers, tests, inheritance, and other edges grep misses. `$graph-code --mode=connect-api` can hint at frontend-to-backend API mapping.
 
-4. **Flow Mapping** — Trace entry points through processing pipeline to exit points. Map data transformations, persistence, side effects, cross-service boundaries.
-5. **Analysis** — Extract business rules, validation, authorization, error handling. Document happy path AND edge cases.
-6. **Synthesis** — Executive summary answering original question. Key files, patterns used, text-based flow diagrams.
-7. **Present** — Structured output (see Output Format). Offer deeper dives on subtopics.
+**Post-Grep Graph Hint (optional):** when discovery surfaces an important high-risk entry file — entity, command/query, handler, controller, bus message/consumer, component, store, or API service — a graph trace (`py -3 .claude/scripts/code_graph trace <key-entry-file> --direction both --json`; macOS/Linux: `python3` instead of `py -3`) can hint at callers, consumers, bus messages, event chains, and tests grep may not reveal. It can be stale or incomplete — verify by reading the files. **Pattern: grep → optional graph hint → grep verify.**
+3. **Knowledge Graph** — MUST ATTENTION read + analyze each file from grep + graph results; document purpose, symbols, dependencies, and data flow. Batch in groups of 10 and update progress after each batch. Use the per-file template:
+4. **Flow Mapping** — MUST ATTENTION trace entry → exit; map transformations, persistence, side effects, and cross-service boundaries.
+5. **Analysis** — MUST ATTENTION extract business rules, validation, authorization, errors, happy path, and edge cases.
+6. **Synthesis** — Answer the original question with an executive summary, key files, patterns, and text flow diagrams.
+7. **Present** — Use Output Format; offer deeper dives.
 
-**If preceded by `$scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files.
+**If a prior discovery pass supplies a numbered file list:** use those confirmed paths, skip redundant discovery, and prioritize highest relevance.
 
-### Parallel Investigation Threads (Discovery → ONE wave → Graph Expand)
+### Parallel Investigation Threads (Discovery → ONE wave → optional Graph Hint)
 
-Investigation is strictly READ-ONLY, so no two threads can ever share a write target — this is the single most parallelizable activity in the framework, and reading thread-by-thread is the default defect, not a safe choice. Once Step 1 names the surface, decompose the target into independent threads BEFORE reading anything deeply:
+Investigation is strictly READ-ONLY; parallelize independent threads with disjoint write targets. Once Step 1 names the surface, decompose it BEFORE deep reads:
 
-| Decomposition axis | One thread per…                                    | Use when                                                                          |
-| ------------------ | -------------------------------------------------- | --------------------------------------------------------------------------------- |
-| **Per-module**     | module / bounded context the target spans          | the feature crosses several modules                                               |
-| **Per-layer**      | backend · frontend · data/persistence              | a full-stack flow — each layer reads a disjoint file set                          |
-| **Per-question**   | one hypothesis, or one "how does X work?" question | Phase 0 classified `debug`, or the prompt carries several independent questions   |
-| **Per-service**    | each service that produces/consumes the flow       | cross-service / event-driven target (pairs with the Cross-Service Check protocol) |
+| Decomposition axis | One thread per…                                   | Use when                                                                              |
+| ------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Per-module**     | module / bounded context the target spans          | the feature crosses several modules                                                   |
+| **Per-layer**      | backend · frontend · data/persistence              | a full-stack flow — each layer reads a disjoint file set                              |
+| **Per-question**   | one hypothesis, or one "how does X work?" question | Phase 0 classified `debug`, or the prompt carries several independent questions       |
+| **Per-service**    | each service that produces/consumes the flow       | cross-service / event-driven target (pairs with the Cross-Service Check protocol)     |
 
 Dispatch rules specific to this skill:
 
-1. **Declare, then spawn in ONE message** — `Parallel plan: wave 1 = [thread A, thread B, …] · SEQ = [Graph Expand, Flow Mapping, Analysis, Synthesis] (each consumes the whole wave)`.
-2. **Route per thread** — file/symbol landscape threads → `scout` (`scout-external` under `--ext`); root-cause / hypothesis threads → `debugger`. Never a generic reviewer for either.
-3. **Own scope + own report path per thread** — each brief names its exact files/questions AND its own write target (`.ai/workspace/analysis/[feature]-{thread}.md`, or `plans/reports/…`); two threads NEVER write the same file, and each persists incrementally rather than returning a transcript.
-4. **Graph Expand stays SEQ on YOU** — run Step 2's `code_graph` commands yourself AFTER the barrier, on 2-3 key files the wave surfaced. It is the step that reconciles independent threads into one dependency network, and it is why the barrier cannot be skipped.
-5. **Synthesize from the returned reports, not from memory** — re-read each thread's analysis file, then write Steps 4-6 (Flow Mapping → Analysis → Synthesis) yourself.
+1. **Declare, then spawn in ONE message** — `Parallel plan: wave 1 = [thread A, thread B, …] · SEQ = [optional Graph Hint, Flow Mapping, Analysis, Synthesis] (each consumes the whole wave)`.
+2. **Route per thread** — file/symbol landscape → `researcher`; root-cause/hypothesis → `debugger`; never a generic reviewer. The main `investigate` pass owns any optional graph hint after the read-only barrier.
+3. **Own scope + report path** — each brief names exact files/questions and its own target (`tmp/analysis/[feature]-{thread}.md` or `tmp/reports/…`); threads NEVER share files and persist incrementally, not as transcripts.
+4. **An optional Graph Hint stays SEQ on YOU** — after the barrier, Step 2's commands can be run on 2–3 surfaced high-risk key files to reconcile the independent threads into one dependency network; skip when the blast radius is low-risk.
+5. **Synthesize from reports, not memory** — re-read each thread report, then write Steps 4–6 (Flow Mapping → Analysis → Synthesis) yourself.
 
-**The SEQ boundary — name it explicitly:** a thread whose STARTING POINT is another thread's finding is SEQ, not PAR. "Trace the consumers of the published event" cannot start until "which event is published" returns — put it in wave 2 and name the finding it waits on. Threads that merely share a topic (same feature, different layer) are still PAR.
+**SEQ boundary:** a thread starting from another thread's finding is SEQ, not PAR. Example: consumer tracing waits for the published-event finding, so place it in wave 2 and name that dependency. Threads sharing only a topic (same feature, different layer) remain PAR.
 
 ## Investigation Techniques
 
 ### Discovery Search Patterns
 
-Grep `{FeatureName}` combined with: `EventHandler`, `BackgroundJob`, `Consumer`, `Service`, `Component`.
+Grep `{FeatureName}` with: `EventHandler`, `BackgroundJob`, `Consumer`, `Service`, `Component`.
 
-**Priority order (stack-neutral strategy):** (1) Domain model (entities/aggregates) → (2) Use-cases (commands/queries) → (3) Event handlers (side-effect logic) → (4) Entry points (controllers/API/route handlers) → (5) Cross-service consumers (message/event subscribers) → (6) Background jobs/schedulers → (7) UI components/stores → (8) Services/helpers. _Concrete locators (folder names, file globs, framework markers) vary by stack — discover them from the project's structure reference + project config._
+**Priority order (stack-neutral):** (1) Domain model (entities/aggregates) → (2) Use-cases (commands/queries) → (3) Event handlers (side effects) → (4) Entry points (controllers/API/routes) → (5) Cross-service consumers → (6) Background jobs/schedulers → (7) UI components/stores → (8) Services/helpers. _Folder names, globs, and framework markers vary; discover them from the project's structure reference + project config._
 
 ### Dependency Tracing
 
-**Backend (trace these relationships — locator syntax per stack):** method/function callers (grep backend source files), dependency injectors (grep the interface/type in constructors or DI wiring), domain-event subscribers (the framework's domain-event handler type), cross-service message handlers (the cross-service message/event contract across services), repository/data-access usage (the repository/data-access interface).
+**Backend (stack-specific locators):** method/function callers (grep backend source); dependency injectors (interface/type in constructors or DI wiring); domain-event subscribers (framework handler type); cross-service message handlers (message/event contract); repository/data-access usage (repository/data-access interface).
 
-**Frontend:** component users (grep the component selector in templates), service importers (grep the class in source files), store/state chains (state-effect → API call → response handler → state), routes (grep the component in routing files). _Concrete file globs and framework primitives: see the project's frontend reference + config._
+**Frontend:** component users (grep selector in templates); service importers (grep class in source); store/state chains (`state-effect → API call → response handler → state`); routes (grep component in routing files). _Find globs and framework primitives in the project's frontend reference + config._
 
 ### Data Flow Mapping
 
 Document as: `[Entry] → [Validation] → [Processing] → [Persistence] → [Side Effects]`
 
-**MUST ATTENTION trace:** (1) Entry points, (2) Processing pipeline, (3) Data transformations, (4) Persistence points, (5) Exit points/responses, (6) Cross-service message bus boundaries.
+**MUST ATTENTION trace:** (1) entry points, (2) processing pipeline, (3) transformations, (4) persistence, (5) exits/responses, (6) cross-service message-bus boundaries.
 
 ### Common Investigation Scenarios
 
@@ -191,35 +191,39 @@ Document as: `[Entry] → [Validation] → [Processing] → [Persistence] → [S
 
 ### Project Pattern Recognition
 
-**Backend** (search for `backend-patterns-reference` in docs/): CQRS commands/queries, entity event handlers, message bus consumers, repository extensions, validation fluent API, authorization attributes.
+**Backend** (search `backend-patterns-reference` in docs/): CQRS commands/queries, entity event handlers, message-bus consumers, repository extensions, fluent validation, authorization attributes.
 
-**Frontend** (search for `frontend-patterns-reference` in docs/): component base classes, view-model/state store base, reactive data-fetch effects with loading/error state handling, API service base class.
+**Frontend** (search `frontend-patterns-reference` in docs/): component base classes, view-model/state-store base, reactive data-fetch effects with loading/error states, API service base class.
 
-### Graph Intelligence (MANDATORY when graph.db exists)
+### Graph Intelligence (optional advice)
 
-**MUST ATTENTION orchestrate grep → graph → grep dynamically:** (1) Grep key terms to find entry files, (2) Use `connections`/`batch-query`/`trace --direction both` to expand dependency network, (3) Grep again to verify content. `trace` follows ALL edge types including MESSAGE_BUS and TRIGGERS_EVENT.
+**When used, orchestrate grep → graph → grep:** (1) Grep key terms to find entry files, (2) `connections`/`batch-query`/`trace --direction both` can expand the dependency network, (3) Grep again to verify content. `trace` follows ALL edge types including MESSAGE_BUS and TRIGGERS_EVENT; results are hints that may be stale.
 
 ```bash
-python .claude/scripts/code_graph connections <file> --json     # Full picture
-python .claude/scripts/code_graph query callers_of <name> --json
-python .claude/scripts/code_graph query importers_of <file> --json
 python .claude/scripts/code_graph query tests_for <name> --json
 python .claude/scripts/code_graph batch-query <f1> <f2> --json
 ```
 
 ## Evidence Collection
 
-**Deep scope — MANDATORY:** Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`. MUST ATTENTION re-read ENTIRE file before presenting findings.
+**Deep scope — MANDATORY:** Write analysis to `tmp/analysis/[feature-name]-investigation.md`; MUST ATTENTION re-read it ENTIRELY before presenting.
 
-Structure: Metadata (original question) → Progress → File List → Knowledge Graph (per-file entries per SYNC:knowledge-graph-template) → End-to-Start Debugger Trace (when bug/fix/behavior-changing) → Data Flow → Findings.
+Structure: Metadata (original question) → Progress → File List → Knowledge Graph (per-file entries per SYNC:knowledge-graph-template) → End-to-Start Debugger Trace (bug/fix/behavior-changing) → Data Flow → Findings.
 
-**Rule:** Every 10 files → MUST ATTENTION update progress, re-check alignment with original question.
+**Rule:** Every 10 files, MUST ATTENTION update progress and re-check alignment with the original question.
 
 ### Analysis Phases
 
-**Comprehensive:** (1) Happy path, (2) Error paths, (3) Edge cases, (4) Authorization checks, (5) Validation per layer. Extract: core business rules, state transitions, side effects.
+**Comprehensive:** Run one focused pass per applicable dimension; for each, ask what it protects, what fails if weak, and what evidence proves the answer:
+- **Happy path** — trace expected input → processing → result.
+- **Error paths** — trace failures, handling, and observable outputs.
+- **Edge cases** — trace boundary, empty, duplicate, retry, and alternate paths found in code.
+- **Authorization** — trace actors, permissions, ownership, and denial paths.
+- **Validation per layer** — trace where each invariant enters, is enforced, and can be bypassed.
 
-**Synthesis:** Executive summary (1-para answer, top 5-10 key files, patterns used) + step-by-step walkthrough with `file:line` references + flow diagrams.
+Extract core business rules, state transitions, side effects, and evidence for each dimension.
+
+**Synthesis:** Executive summary (1-para answer, top 5-10 key files, patterns) + step-by-step `file:line` walkthrough + flow diagrams.
 
 ### Output Format
 
@@ -238,110 +242,36 @@ For bug, failed-verification, or behavior-changing investigations, MUST ATTENTIO
 
 ### Hypothesis Matrix
 
-| RC  | Hypothesis | Evidence for | Evidence against | Status | Verification |
-| --- | ---------- | ------------ | ---------------- | ------ | ------------ |
+| RC | Hypothesis | Evidence for | Evidence against | Status | Verification |
+| --- | --- | --- | --- | --- | --- |
 ```
 
 ### Guidelines
 
 - **Evidence-based** — every claim needs code evidence; MUST ATTENTION mark unverified as "inferred"
-- **Question-focused** — ALWAYS tie findings back to original question
+- **Question-focused** — ALWAYS tie findings back to the original question
 - **Read-only** — NEVER suggest changes unless explicitly asked
-- **Layered** — Start simple, offer deeper detail on request
+- **Layered** — start simple, offer deeper detail on request
 
 ## Related Skills
 
-`scout` (pre-discovery) | `workflow-feature` (implementation) | `debug-investigate` (debugging) | `graph-query` (natural language queries)
+`researcher` (delegated landscape research) | `workflow-feature` (implementation) | `investigate --mode=debug` (bug root cause) | `fix` (applies the fix) | `graph-code --mode=query` (natural language queries)
 
 ---
 
 ## Mode: Explain (Developer Narrative)
 
-**Trigger:** `$investigate --mode=explain [target]`. Manual-only — never auto-inserted into workflows. Use `$understand [target]` for the standalone prompt-driven explainer.
-
-**What changes vs default investigate:** ONLY the deliverable's audience, shape, and write target. The evidence gate is **identical and NON-NEGOTIABLE** — strictly READ-ONLY on code & plans, every concrete claim cites `file:line`, at least ONE graph command runs on key files before concluding, confidence >80% to assert. Explain mode NEVER relaxes any of these. If a narrative point lacks `file:line` proof, mark it "inferred" exactly as in default mode.
-
-**Goal:** make the **developer** understand the work via a clear, detailed, **one-way** explanation of **WHAT** it is, its **PURPOSE** (why it exists), **HOW** it works (mechanics), and **WHY this way** (trade-offs + rejected alternatives). AI derives WHAT to explain from the prompt. No fixed agenda; scope flexes to whatever is named.
-
-### Contract (read first)
-
-- **DERIVE SCOPE FROM THE PROMPT.** No target named → default to the **current working context**: active tasks (the current task list) + working-tree changes (`git diff --name-only` + untracked via `git ls-files --others --exclude-standard`) + active plan / latest `$watzup` summary if present.
-- **NEVER ASK THE USER A QUESTION.** Strictly one-way: no teach-back, no quiz, no ask the user directly, no ambiguity question, no comprehension gate. Infer the most likely target, state the assumption in one line, proceed. (The pre-skill workflow-detection gate is a separate concern, already exempt when the developer explicitly invokes the skill.)
-- **OPT-IN, NEVER BLOCKS.** Explain and end. Never traps the developer in a loop; never gates commit/implementation/workflow progress.
-- **ALWAYS EXPLAIN IN FULL — REGARDLESS OF CODING LEVEL.** Always cover purpose + how + why. Coding level only tunes vocabulary/analogy density (ELI5 ↔ terse-for-experts) — it NEVER decides _whether_ to explain and NEVER trims the three sections.
-- **EXPLAIN THE WHOLE SCOPE, LEAD WITH THE NON-OBVIOUS.** Cover everything in scope, but order by leverage — open with highest-blast-radius / highest-future-change-cost / most-surprising parts; treat boilerplate/CRUD briefly. Nothing silently omitted.
-- **WRITES ONLY to a project-root temp folder.** Never edits source or plan files; never writes the `.ai/workspace/analysis/...` analysis file. Its only write target is the ledger at `tmp/understand/{branch}.md` (see Step E3).
-
-### Step E0 — Resolve scope & read the style dial
-
-1. **Derive scope from the prompt:**
-
-    | Prompt signal                                          | Scope to explain                                                                                             |
-    | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-    | Bare invocation, no target named                       | **Default: current working context** — active tasks + working-tree changes + active plan / latest `$watzup`. |
-    | Names a change set / PR / "what I just did"            | The diff and its rationale.                                                                                  |
-    | Names a plan / "the approach" / "before we build"      | The active plan: problem, approach, rejected alternatives, risks, phase order.                               |
-    | Names a subsystem / file / feature / "how does X work" | That code path — read files, run a graph trace, explain the flow.                                            |
-    | Names a single decision / "why X over Y"               | That decision and its trade-offs.                                                                            |
-    | Names a concept / bug / error                          | That concept or root cause.                                                                                  |
-    | Ambiguous / multiple plausible targets                 | **Do NOT ask.** Infer most likely (default current context), state the assumption in one line, proceed.      |
-
-    State the resolved scope in one line before continuing (e.g. `Explaining: current working changes (3 files) + active task #42`).
-
-2. **Read the style dial (NOT a skip gate).** Resolve coding level (first found wins): env `CK_CODING_LEVEL` → `.claude/.ck.json` `codingLevel` → default `3`. Level tunes how the explanation reads only — it NEVER drops purpose/how/why. `5/-1` God Mode (terse, lead with the non-obvious trade-off) · `4` Tech Lead (concise, design trade-offs) · `3` Senior (balanced) · `2` Mid (fuller mechanics) · `1` Junior (WHY before HOW, step-by-step) · `0` ELI5 (one concept at a time, analogies). Note the level in one line, then explain. Do not offer a skip; do not ask anything.
-
-### Step E1 — Gather the material (proportional to scope)
-
-- **Current working context:** the current task list; `git diff --name-only` (+ untracked); active plan + latest `$watzup`. Extract: what's being worked on, what changed, why, new behavior.
-- **A plan:** read `plan.md` + `phase-*.md`. Extract: problem, chosen approach, rejected alternatives, design decisions, risks, phase order.
-- **A subsystem / "how does X work":** read the files; run `python .claude/scripts/code_graph trace <file> --direction both --json`. Extract: entry points, data flow, key invariants.
-- **A single decision:** the relevant code + rationale (comments, git blame, the plan's alternatives section).
-
-Don't read the whole repo to explain one decision.
-
-### Step E2 — Order topics by leverage
-
-Cover the whole scope; use this only to ORDER. **Blast radius** (run `$graph-blast-radius` or graph trace on key files — high reach → explain first, deepest) · **Future-change-cost** (schema, public contract, cross-service message, shared/framework layer → high priority) · **Surprise** (anything a competent engineer would NOT guess — call out explicitly). Boilerplate/generated/mechanical renames get a one-line mention.
-
-### Step E3 — Maintain the understanding ledger
-
-> **[HARD RULE] Write the ledger ONLY to a project-root temp folder — NEVER inside `.claude/`, the source tree, or any tracked path.**
->
-> Path: `tmp/understand/{branch}.md` (use `temp/understand/{branch}.md` if the project already uses `temp/`). Create the `understand/` subdir if absent. `{branch}` = current git branch with `/` → `-`. Ensure the temp folder is git-ignored.
->
-> **[ANNOUNCE — the chat is the deliverable]** The understanding lives in the **in-chat explanation**, not the file. Whenever you write/append the ledger, state its path inline (`Understanding ledger updated → tmp/understand/{branch}.md`). NEVER let the explanation exist only inside the temp file.
-
-Append (never overwrite) a checklist with three groups: **Problem** (why it exists, prior limitation, the branches) · **Solution** (design, business logic, edge cases, why this over alternatives) · **Impact** (what/who changes, blast radius, follow-ups).
-
-### Step E4 — Explain: Purpose → How → Why (the deliverable)
-
-Deliver in-chat, in this order, for **every** level (depth/vocabulary tuned per E0; all sections always present). Cite `file:line` for every concrete claim.
-
-1. **WHAT** — one-line orientation: name the thing and where it lives.
-2. **PURPOSE (why-it-exists)** — what problem it solves; the prior limitation / alternative branch that made it necessary. Lead here.
-3. **HOW (mechanics)** — walk the flow: entry points, data flow, key invariants, what calls what (use the graph trace). Show code paths + business logic + handled edge cases.
-4. **WHY-this-way (trade-offs)** — why this over the obvious alternative(s); what it cost, what it bought, what is now expensive to reverse. Surface non-obvious decisions explicitly ("we did X instead of Y because Z").
-5. **IMPACT (blast radius & follow-ups)** — what/who changes, upstream/downstream reach, open follow-ups.
-
-Proactively offer a simpler restatement/analogy for any dense point. Responding to a developer's `eli5`/`elii` follow-up is fine — what's forbidden is _you_ posing questions to them.
-
-### Step E5 — Recap & close (no quiz, no loop)
-
-Mark ledger items `explained`. Close with a 2–3 line recap (purpose in one sentence, key mechanic in one, highest-leverage trade-off / blast-radius note in one). End there. Do NOT quiz, do NOT ask the developer to restate, do NOT loop, NEVER block the next step.
-
-**NOT for:** investigation/docs/design/research where nothing was built or planned to understand; forcing comprehension as a hard gate; reviewing code quality (use `$code-review`, `$changes-review`).
-
-**Anti-Rationalization:** "Senior dev, skip it" → NEVER skip by level. · "I'll quiz them" → one-way only, never ask. · "Ambiguous — I'll ask which" → infer + state assumption, proceed. · "Dump everything" → derive scope first, order by leverage. · "Skip trade-offs" → WHY-this-way is mandatory. · "Drop ledger by the skill" → only `tmp/understand/{branch}.md`. · "Write the doc and move on silently" → the chat is the deliverable; announce the ledger path.
+**[BLOCKING]** When `--mode=explain`, read `references/investigate-skill-explain.md` in full FIRST. It owns scope inference, the temp-only append ledger, and the full one-way WHAT → PURPOSE → HOW → WHY → IMPACT narrative. Stay READ-ONLY; preserve evidence, never ask questions or gate another task. Use `$understand` for the standalone explainer.
 
 ---
 
 ## Investigation & Recommendation Protocol
 
-Applies when recommending code changes (removal, refactoring, replacement). MUST ATTENTION complete full validation chain.
+Applies only when recommending code changes (removal, refactoring, replacement). MUST ATTENTION complete the full validation chain.
 
 ### Validation Chain (NEVER skip steps)
 
-**NEVER recommend code changes without completing ALL steps:**
+**NEVER recommend code changes before completing ALL steps:**
 
 1. Interface/API identified → 2. ALL implementations found → 3. ALL registrations traced → 4. ALL usage sites verified → 5. Cross-service impact (ALL services) → 6. Impact assessment → 7. Confidence declaration → **ONLY THEN** output recommendation.
 
@@ -357,18 +287,18 @@ Applies when recommending code changes (removal, refactoring, replacement). MUST
 
 ### Removal Checklist (ALL MUST ATTENTION pass)
 
-- [ ] No static references (`rg "ClassName" {configured-source-roots}` returns no live references)
-- [ ] No string literals / dynamic invocations (reflection, factory, message bus)
-- [ ] No DI registrations (`services.Add*<ClassName>`)
-- [ ] No config references (appsettings, env vars)
-- [ ] No test dependencies
-- [ ] Cross-service impact checked (ALL microservices)
+- MUST ATTENTION verify no static references (`rg "ClassName" {configured-source-roots}` returns no live references)
+- MUST ATTENTION verify no string literals/dynamic invocations (reflection, factory, message bus)
+- MUST ATTENTION verify no DI registrations (`services.Add*<ClassName>`)
+- MUST ATTENTION verify no config references (appsettings, env vars)
+- MUST ATTENTION verify no test dependencies
+- MUST ATTENTION verify cross-service impact (ALL microservices)
 
-**Incomplete checklist → state:** `Confidence: <90% — did not verify [missing items]`
+**Incomplete checklist → state:** `Confidence: <90% — did not verify [missing items]`.
 
 ### Evidence Hierarchy
 
-(1) Code evidence (grep/read) → (2) Test evidence → (3) Documentation → (4) Inference. Recommendations based on inference alone FORBIDDEN — MUST ATTENTION upgrade to code evidence.
+(1) Code evidence (grep/read) → (2) test evidence → (3) documentation → (4) inference. Recommendations based on inference alone are FORBIDDEN; MUST ATTENTION upgrade to code evidence.
 
 ### Confidence Levels
 
@@ -378,244 +308,55 @@ Applies when recommending code changes (removal, refactoring, replacement). MUST
 
 ### Service Comparison Pattern
 
-Find working reference → compare implementations → identify differences → verify WHY each difference exists → recommend based on proven pattern, NEVER assumptions.
+Find working reference → compare implementations → identify differences → verify WHY each exists → recommend from proven pattern, NEVER assumptions.
 
 ---
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+> **[IMPORTANT]** Use todo tracking to break ALL work into small tasks BEFORE starting; this prevents long-file context loss. Keep task depth proportional to the work.
 
-- `docs/project-reference/domain-entities-reference.md` — domain entity catalog, relationships, cross-service sync (when task involves business entities/models).
+- `domain-entities-reference.md` in the reference-docs root (default `docs/project-reference`; a `docsRoots.projectReference.path` entry in `docs/project-config.json` overrides the path) — domain entity catalog, relationships, cross-service sync (when task involves business entities/models).
 
-<!-- SYNC:end-to-start-debugger-trace -->
+<!-- PROTOCOL-GUIDES:START -->
 
-> **End-to-Start Debugger Trace** — For non-trivial bugs, failed verification, regression fixes, behavior-changing code, or unclear code flow, start from the observed final state and walk backward before proposing a fix.
->
-> 1. **Frame 0: observed end state** — Name the exact user-visible output, failing assertion, log line, persisted value, API response, rendered UI, or aggregate bucket. Record the reader/query/renderer that produced it with `file:line` evidence.
-> 2. **Walk backward one hop at a time** — Trace final reader -> projection/cache/storage -> writer -> consumer/handler/job -> producer/caller -> original trigger. At every hop record: input, transformation, output, owner, and evidence.
-> 3. **Enumerate all feeder paths** — Find every upstream producer/caller/event/job that can write into the final path, including retry, async, cache, background, and alternate UI/API paths. Mark each path verified, ruled out, or still unknown.
-> 4. **Build the hypothesis matrix** — For each plausible cause, list evidence for, evidence against, how to reproduce/verify, blast radius, and status (`primary`, `contributing`, `ruled out`, `latent`). Do not fix until competing causes are explicitly resolved or bounded.
-> 5. **Choose the owning fix layer** — Identify the invariant owner and the lowest shared point that protects all downstream consumers. A fix at the symptom site is rejected unless the symptom site owns the invariant.
-> 6. **Prove convergence forward** — After choosing the fix, walk start -> end again and show how the corrected state reaches the observed final output. Map each root cause to a fix part and each fix part to a test/proof.
->
-> **BLOCKED until:** final state named · backward trace written · all feeder paths enumerated · hypothesis matrix completed · owning fix layer justified · forward convergence proof mapped to tests.
->
-> **NEVER:** Start at the first suspicious code path. Collapse multiple producers into one "flow". Treat duplicate symptoms as duplicate records without proving the read model. Skip ruled-out hypotheses.
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
-<!-- /SYNC:end-to-start-debugger-trace -->
+- `cross-service-check` — Scan producers, consumers, sagas and shared contracts for cross-service impact; concluding an investigation, plan or spec in a service-based system → .claude/skills/shared/protocols/cross-service-check.md
+- `end-to-start-debugger-trace` — Walk backward from the observed end state through every feeder path before fixing; investigating non-trivial bugs or failed verification, changing code behavior, or tracing unclear code flow → .claude/skills/shared/protocols/end-to-start-debugger-trace.md
+- `environment-fault-hypothesis` — Weigh the environment as a competing cause, with a named discriminator; judging a bug report, failing test, error or unexpected output → .claude/skills/shared/protocols/environment-fault-hypothesis.md
+- `fix-layer-accountability` — Fix at the component that owns the violated contract, not at the crash site; choosing where to apply a fix → .claude/skills/shared/protocols/fix-layer-accountability.md
+- `graph-assisted-investigation` — Optional hint: a code-graph query can add callers and dependents when grep may miss a high-risk blast radius, and it can be stale; a high-risk change where grep and reading alone may miss the blast radius → .claude/skills/shared/protocols/graph-assisted-investigation.md
+- `knowledge-graph-template` — Per-file analysis record: type, pattern, symbols, dependencies and evidence; documenting analyzed files during an investigation → .claude/skills/shared/protocols/knowledge-graph-template.md
+- `root-cause-debugging` — Systematic root-cause debugging, never guess-and-check; debugging a failure → .claude/skills/shared/protocols/root-cause-debugging.md
+- `sequential-thinking-protocol` — Structured multi-step reasoning with revision, branch and hypothesis markers; planning, debugging or reviewing complex or ambiguous work → .claude/skills/shared/protocols/sequential-thinking-protocol.md
+- `source-test-drift-check` — When source behavior changes, reconcile the affected tests from evidence; code, fix, test or review work changes behavior → .claude/skills/shared/protocols/source-test-drift-check.md
+- `task-tracking-external-report` — Task breakdown before the work and report files written incrementally; starting any multi-step skill, plan or review → .claude/skills/shared/protocols/task-tracking-external-report.md
+- `understand-code-first` — Read and trace the target and existing patterns before changing code; planning or editing code → .claude/skills/shared/protocols/understand-code-first.md
 
-<!-- SYNC:knowledge-graph-template -->
-
-    > **Knowledge Graph Template** — For each analyzed file, document: filePath, type (entity, command, query, event handler, controller, consumer, component, store, service, or repository-specific equivalent), architecturalPattern, content summary, symbols, dependencies, businessContext, referenceFiles, relevanceScore (1-10), evidenceLevel (verified/inferred), abstractions, and moduleContext. Investigation fields: entryPoints, outputPoints, dataTransformations, errorScenarios. Messaging fields: messageName, messageProducers, crossBoundaryIntegration. UI fields: componentHierarchy, stateManagementStores, dataBindingPatterns, validationStrategies.
-
-<!-- /SYNC:knowledge-graph-template -->
-
-<!-- SYNC:root-cause-debugging -->
-
-> **Root Cause Debugging** — Systematic approach, never guess-and-check.
->
-> 1. **Reproduce** — Confirm the issue exists with evidence (error message, stack trace, screenshot)
-> 2. **Isolate** — Narrow to specific file/function/line using binary search + graph trace
-> 3. **Trace** — Follow data flow from input to failure point. Read actual code, don't infer.
-> 4. **Hypothesize** — Form theory with confidence %. State what evidence supports/contradicts it
-> 5. **Verify** — Test hypothesis with targeted grep/read. One variable at a time.
-> 6. **Fix** — Address root cause, not symptoms. Verify fix doesn't break callers via graph `connections`
->
-> **NEVER:** Guess without evidence. Fix symptoms instead of cause. Skip reproduction step.
-
-<!-- /SYNC:root-cause-debugging -->
-
-<!-- SYNC:nested-task-creation -->
-
-> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
->
-> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
-> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
-> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
-> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
-> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
-> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
->
-> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
-
-<!-- /SYNC:nested-task-creation -->
-
-<!-- SYNC:project-reference-docs-guide -->
-
-> **Project Reference Docs Gate** — Run after task-tracking bootstrap and before target/source file reads, grep, edits, or analysis. Project docs override generic framework assumptions.
->
-> 1. Identify scope: file types, domain area, and operation.
-> 2. **Read `docs/project-config.json` first — the project's machine-readable map.** It is the single source of truth for THIS repo (modules/paths, framework + search keywords, test/E2E/integration run-commands, design system, architecture rules, workflow patterns); ground exact paths, run-commands, and conventions on it **before investigating, planning, or coding** — never assume framework defaults (`CLAUDE.md` + reference docs are derived from it). If it — or the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any required reference doc — is missing or stale, auto-run `$project-init` or the narrow route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) first; if Codex mirrors or `AGENTS.md` are stale, ask the user to run `$sync-codex` (never auto-run it).
-> 3. Required docs by trigger: always `docs/project-reference/lessons.md`; doc lookup `docs-index-reference.md`; review `code-review-rules.md`; backend/CQRS/API `backend-patterns-reference.md`; domain/entity `domain-entities-reference.md`; frontend/UI `frontend-patterns-reference.md`; styles/design `scss-styling-guide.md` + `design-system/design-system-canonical.md`; integration tests `integration-test-reference.md`; E2E `e2e-test-reference.md`; feature docs/specs `feature-spec-reference.md` + `spec-system-reference.md` + `spec-principles.md`; behavior/public-contract/spec-test-code sync `workflow-spec-test-code-cycle-reference.md`; derived spec index/ERD/reimplementation guides `spec-system-reference.md` + source Feature Specs under `docs/specs/`; architecture/new area `project-structure-reference.md`.
-> 4. Read every required doc, then before target work state: `Reference docs read: ... | Not applicable: ...`.
->
-> **Ready when:** scope evaluated, `docs/project-config.json` consulted, required docs checked/read or setup route completed, `lessons.md` confirmed, citation emitted.
-
-<!-- /SYNC:project-reference-docs-guide -->
-
-<!-- SYNC:task-tracking-external-report -->
-
-> **Task Tracking & External Report Persistence** — Bootstrap this before execution; then run project-reference doc prefetch before target/source work.
->
-> 1. Create a small task breakdown before target file reads, grep, edits, or analysis. On context loss, inspect the current task list first.
-> 2. Mark one task `in_progress` before work and `completed` immediately after evidence; never batch transitions.
-> 3. For plan/review work, create `plans/reports/{skill}-{YYMMDD}-{HHmm}-{slug}.md` before first finding.
-> 4. Append findings after each file/section/decision and synthesize from the report file at the end.
-> 5. Final output cites `Full report: plans/reports/{filename}`.
->
-> **Blocked until:** task breakdown exists, report path declared for plan/review work, first finding persisted before the next finding.
-
-<!-- /SYNC:task-tracking-external-report -->
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:sequential-thinking-protocol -->
-
-> **Sequential Thinking Protocol** — Structured multi-step reasoning for complex/ambiguous work. Use when planning, reviewing, debugging, or refining ideas where one-shot reasoning is unsafe.
->
-> **Trigger when:** complex problem decomposition · adaptive plans needing revision · analysis with course correction · unclear/emerging scope · multi-step solutions · hypothesis-driven debugging · cross-cutting trade-off evaluation.
->
-> **Format (explicit mode — visible thought trail):**
->
-> 1. `Thought N/M: [aspect]` — one aspect per thought, state assumptions/uncertainty
-> 2. `Thought N/M [REVISION of Thought K]: ...` — when prior reasoning invalidated; state Original / Why revised / Impact
-> 3. `Thought N/M [BRANCH A from Thought K]: ...` — explore alternative; converge with decision rationale
-> 4. `Thought N/M [HYPOTHESIS]: ...` then `[VERIFICATION]: ...` — test before acting
-> 5. `Thought N/N [FINAL]` — only when verified, all critical aspects addressed, confidence >80%
->
-> **Mandatory closers:** Confidence % stated · Assumptions listed · Open questions surfaced · Next action concrete.
->
-> **Stop conditions:** confidence <80% on any critical decision → escalate by asking the user directly · ≥3 revisions on same thought → re-frame the problem · branch count >3 → split into sub-task.
->
-> **Implicit mode:** apply methodology internally without visible markers when adding markers would clutter the response (routine work where reasoning aids accuracy).
->
-> **Deep-dive:** see `$sequential-thinking` skill (`.claude/skills/sequential-thinking/SKILL.md`) for worked examples (API design, debugging, architecture), advanced techniques (spiral refinement, hypothesis testing, convergence), and meta-strategies (uncertainty handling, revision cascades).
-
-<!-- /SYNC:sequential-thinking-protocol -->
-
-<!-- SYNC:understand-code-first -->
-
-> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
->
-> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
-> 2. Read existing files in target area — understand structure, base classes, conventions
-> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
-> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
-> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone. — why: long context drifts from the file; the file is ground truth
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation. — why: divergent patterns fragment the codebase and slow every future reader
->
-> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
-
-<!-- /SYNC:understand-code-first -->
-
-<!-- SYNC:graph-assisted-investigation -->
-
-> **Graph-Assisted Investigation** — MANDATORY when `.code-graph/graph.db` exists.
->
-> **HARD-GATE:** MUST ATTENTION run at least ONE graph command on key files before concluding any investigation.
->
-> **Pattern:** Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details
->
-> | Task                | Minimum Graph Action                         |
-> | ------------------- | -------------------------------------------- |
-> | Investigation/Scout | `trace --direction both` on 2-3 entry files  |
-> | Fix/Debug           | `callers_of` on buggy function + `tests_for` |
-> | Feature/Enhancement | `connections` on files to be modified        |
-> | Code Review         | `tests_for` on changed functions             |
-> | Blast Radius        | `trace --direction downstream`               |
->
-> **CLI:** `python .claude/scripts/code_graph {command} --json`. Use `--node-mode file` first (10-30x less noise), then `--node-mode function` for detail.
-
-<!-- /SYNC:graph-assisted-investigation -->
-
-<!-- SYNC:cross-service-check -->
-
-> **Cross-Service Check** — Microservices/event-driven: MANDATORY before concluding investigation, plan, spec, or feature doc. Missing downstream consumer = silent regression.
->
-> | Boundary            | Grep terms                                                                      |
-> | ------------------- | ------------------------------------------------------------------------------- |
-> | Event producers     | `Publish`, `Dispatch`, `Send`, `emit`, `EventBus`, `outbox`, `IntegrationEvent` |
-> | Event consumers     | `Consumer`, `EventHandler`, `Subscribe`, `@EventListener`, `inbox`              |
-> | Sagas/orchestration | `Saga`, `ProcessManager`, `Choreography`, `Workflow`, `Orchestrator`            |
-> | Sync service calls  | HTTP/gRPC calls to/from other services                                          |
-> | Shared contracts    | OpenAPI spec, proto, shared DTO — flag breaking changes                         |
-> | Data ownership      | Other service reads/writes same table/collection → Shared-DB anti-pattern       |
->
-> **Per touchpoint:** owner service · message name · consumers · risk (NONE / ADDITIVE / BREAKING).
->
-> **BLOCKED until:** Producers scanned · Consumers scanned · Sagas checked · Contracts reviewed · Breaking-change risk flagged
-
-<!-- /SYNC:cross-service-check -->
-
-<!-- SYNC:fix-layer-accountability -->
-
-> **Fix-Layer Accountability** — NEVER fix at the crash site. Trace the full flow, fix at the owning layer.
->
-> AI default behavior: see error at Place A → fix Place A. This is WRONG. The crash site is a SYMPTOM, not the cause.
->
-> **MANDATORY before ANY fix:**
->
-> 1. **Trace full data flow** — Map the complete path from data origin to crash site across ALL layers (storage → backend → API → frontend → UI). Identify where the bad state ENTERS, not where it CRASHES.
-> 2. **Identify the invariant owner** — Which layer's contract guarantees this value is valid? That layer is responsible. Fix at the LOWEST layer that owns the invariant — not the highest layer that consumes it.
-> 3. **One fix, maximum protection** — Ask: "If I fix here, does it protect ALL downstream consumers with ONE change?" If fix requires touching 3+ files with defensive checks, you are at the wrong layer — go lower.
-> 4. **Verify no bypass paths** — Confirm all data flows through the fix point. Check for: direct construction skipping factories, clone/spread without re-validation, raw data not wrapped in domain models, mutations outside the model layer.
->
-> **BLOCKED until:** `- [ ]` Full data flow traced (origin → crash) `- [ ]` Invariant owner identified with `file:line` evidence `- [ ]` All access sites audited (grep count) `- [ ]` Fix layer justified (lowest layer that protects most consumers)
->
-> **Anti-patterns (REJECT these):**
->
-> - "Fix it where it crashes" — Crash site ≠ cause site. Trace upstream.
-> - "Add defensive checks at every consumer" — Scattered defense = wrong layer. One authoritative fix > many scattered guards.
-> - "Both fix is safer" — Pick ONE authoritative layer. Redundant checks across layers send mixed signals about who owns the invariant.
-
-<!-- /SYNC:fix-layer-accountability -->
-
-<!-- SYNC:source-test-drift-check -->
-
-> **Source/test drift check.** For coding, fix, debug, investigation, test, or review work: when source behavior changes, inspect affected unit/integration/E2E tests and decide from evidence whether tests should change to match intended behavior or the source change is an unintended bug to fix. Do not write tests for migration code; schema/data migrations are one-time execution paths, not core application logic.
-
-<!-- /SYNC:source-test-drift-check -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
-
-<!-- /SYNC:ai-mistake-prevention -->
+<!-- PROTOCOL-GUIDES:END -->
 
 <!-- SYNC:understand-code-first:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
+**IMPORTANT MUST ATTENTION** for code work, read the target and relevant conventions before planning or editing; seek 3+ fitting examples when available and record fewer/none. Do not impose code discovery on work with no code surface. The code graph is optional, stale-able advice for high-risk impact, never a requirement.
+
+<!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:graph-assisted-investigation:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** run at least ONE graph command on key files when graph.db exists. Pattern: grep → graph trace → grep verify.
-  <!-- /SYNC:graph-assisted-investigation:reminder -->
+**Optional advice:** the code graph (`.code-graph/graph.db`) can hint at a high-risk blast radius grep misses; it can be stale, so verify by reading files. Never required.
+
+<!-- /SYNC:graph-assisted-investigation:reminder -->
 
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim; never speculate. Confidence >80% to act, <60% = do NOT recommend; "not enough evidence" is valid output.
+
+<!-- /SYNC:evidence-based-reasoning:reminder -->
 
 <!-- SYNC:knowledge-graph-template:reminder -->
 
 - **MANDATORY IMPORTANT MUST ATTENTION** document per-file: type, pattern, symbols, dependencies, relevanceScore, evidenceLevel.
-  <!-- /SYNC:knowledge-graph-template:reminder -->
+
+<!-- /SYNC:knowledge-graph-template:reminder -->
 
 <!-- SYNC:fix-layer-accountability:reminder -->
 
@@ -623,240 +364,62 @@ Find working reference → compare implementations → identify differences → 
 
 <!-- /SYNC:fix-layer-accountability:reminder -->
 
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
 <!-- SYNC:sequential-thinking-protocol:reminder -->
 
-**MUST ATTENTION** apply sequential-thinking — multi-step Thought N/M, REVISION/BRANCH/HYPOTHESIS markers, confidence % closer; see `$sequential-thinking` skill.
+**MUST ATTENTION** use structured reasoning for complex or ambiguous work, implicitly when visible markers would clutter. Verify hypotheses, revise assumptions, and close with confidence, assumptions, open questions and a concrete next action.
 
 <!-- /SYNC:sequential-thinking-protocol:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
 
 <!-- SYNC:task-tracking-external-report:reminder -->
 
 - **MANDATORY** Bootstrap task tracking before target work; transition one task at a time.
-- **MANDATORY** Persist plan/review findings to `plans/reports/` incrementally and synthesize from disk.
+- **MANDATORY** Persist plan/review findings to `tmp/reports/` incrementally and synthesize from disk.
 
 <!-- /SYNC:task-tracking-external-report:reminder -->
 
-<!-- SYNC:project-reference-docs-guide:reminder -->
-
-- **MANDATORY** Before investigating, planning, or coding, read `docs/project-config.json` (the project map: modules/paths, run-commands, conventions, architecture/workflow rules) + the required project-reference docs, and cite `Reference docs read: ...`.
-- **MANDATORY** Always include `lessons.md`; project config + conventions override generic framework defaults.
-- **MANDATORY** If project config, root instruction files, or any required reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
-
-<!-- /SYNC:project-reference-docs-guide:reminder -->
-
 <!-- SYNC:end-to-start-debugger-trace:reminder -->
 
-**IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
+**IMPORTANT MUST ATTENTION** for non-trivial bugs, failed verification, regression fixes, behavior-changing code or unclear code flow, trace backward from the observed output through every feeder path before fixing. Establish hypotheses, the authoritative invariant owner and forward proof; retain validation at untrusted boundaries. Ordinary artifact review or graph lookup alone does not trigger a debugging workflow.
 
 <!-- /SYNC:end-to-start-debugger-trace:reminder -->
 
-<!-- SYNC:nested-task-creation:reminder -->
 
-- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
-- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
+<!-- SYNC:environment-fault-hypothesis:reminder -->
 
-<!-- /SYNC:nested-task-creation:reminder -->
+**MUST ATTENTION** environment-fault gate: a bug, failed test, error, or odd output is NOT proof of a code defect. Sweep environment preconditions (versions, deps/install state, config & env vars, services, ports/network/clock, permissions, leftover state) and resource/transience suspects (RAM, CPU, disk, handles, network, timeouts) as a competing hypothesis, cite the discriminator you ran, and fix an environment cause in the environment — never by editing code or weakening a test. "Flaky" is a symptom, not a verdict.
 
-<!-- SYNC:parallel-subagent-dispatch -->
-
-> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
->
-> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
-> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
-> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
-> 4. **Spawn each wave in ONE message** — every `spawn_agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
-> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
-> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
-> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
->
-> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a skill or workflow explicitly fixes · gates awaiting user approval.
->
-> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
-
-<!-- /SYNC:parallel-subagent-dispatch -->
-
-<!-- SYNC:parallel-subagent-dispatch:reminder -->
-
-- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
-- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
-
-<!-- /SYNC:parallel-subagent-dispatch:reminder -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
+<!-- /SYNC:environment-fault-hypothesis:reminder -->
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Produce evidence-backed understanding of how existing code works — strictly READ-ONLY, every claim traced to `file:line` or explicitly marked "inferred" — so the next decision or change rests on verified system flow, never assumption.
+**IMPORTANT MUST ATTENTION Goal:** Explain existing code through READ-ONLY, evidence-backed exploration so every finding maps to `file:line` (or "inferred"), system flow is verified, and follow-up decisions rest on evidence without changing source.
 
-**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries; each line is a signpost — the canonical body above binds):**
+**IMPORTANT MUST ATTENTION — Main steps:** run in order: (0) classify `quick|deep|debug|recommendation|explain` → (1) discover all related files (`Entities → Commands/Queries → EventHandlers → Controllers → Consumers → Components`) → (2) optional graph hint on high-risk key files → (3) build the per-file knowledge graph → (4) map entry→exit flow and side effects → (5) analyze rules, validation, authz, errors, and edge cases → (6) synthesize (deep analysis file; explain ledger) → (7) present cited findings.
 
-- **End-to-Start Debugger Trace:** start at observed end state, trace backward, build hypothesis matrix before fixing.
-- **Knowledge Graph Template:** document per-file type, pattern, symbols, dependencies, relevance, evidence level.
-- **Root Cause Debugging:** reproduce, isolate, trace, hypothesize, verify, fix cause — never guess-and-check.
-- **Nested Task Creation:** expand child phase tasks; link parent workflow row when nested.
-- **Project Reference Docs Guide:** read required project docs first; conventions override generic defaults.
-- **Task Tracking & External Report:** bootstrap task breakdown; persist plan/review findings incrementally to disk.
-- **Critical Thinking:** trace every claim, confidence >80% to act, never present guess as fact.
-- **Sequential Thinking:** multi-step Thought N/M with revision/branch/hypothesis markers and confidence closer.
-- **Understand Code First:** MUST ATTENTION read code and grep 3+ patterns before writing, planning, or fixing.
-- **Graph-Assisted Investigation:** run one graph command on key files when graph.db exists.
-- **Cross-Service Check:** scan producers, consumers, sagas, contracts — missing consumer is silent regression.
-- **Fix-Layer Accountability:** trace full data flow, fix at owning layer, not crash site.
-- **Source/Test Drift Check:** when source behavior changes, inspect affected tests for intended-behavior alignment.
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Parallel Sub-Agent Dispatch:** Tag tasks PAR/SEQ, group PAR into disjoint-write-set waves, spawn each wave in ONE message, barrier before advancing.
+**IMPORTANT MUST ATTENTION — Modes/gates:** `--mode=debug` → read `references/mode-debug.md` in full FIRST (root-cause investigation; `$why-review` gate; never patches); Default analysis returns structured findings; quick skips the knowledge-graph template and analysis file; deep writes/re-reads `tmp/analysis/[feature]-investigation.md`; `--mode=explain` writes only `tmp/understand/{branch}.md` and delivers one-way WHAT → PURPOSE → HOW → WHY → IMPACT, never questions or loops. Stay READ-ONLY; cite `file:line` or mark "inferred"; the code graph is optional advice (a stale-able hint; never required); recommendation scope requires the full validation chain; cross-service scope scans producers, consumers, sagas, and contracts; bug/behavior-changing scope runs end-to-start tracing plus a hypothesis matrix.
 
-**IMPORTANT MUST ATTENTION** stay strictly READ-ONLY — NEVER edit code, plans, or specs during investigation; deliver findings only — why: investigation that mutates state stops being investigation and corrupts the baseline the next step trusts.
-**IMPORTANT MUST ATTENTION** cite `file:line` for every claim; mark unverified statements "inferred" — confidence >80% to act, <60% DO NOT recommend — why: an unmarked guess reads as fact and propagates into the next decision.
-**IMPORTANT MUST ATTENTION** run at least ONE `code_graph` command on 2-3 key files before concluding — graph surfaces callers, bus consumers, importers grep alone misses (sub-agents cannot use graph — only the main agent) — why: grep sees text, not the call/event/import edges that define real reach.
+**Protocols in force (SYNC bodies above are canonical):**
 
-- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting; mark one `in_progress`, complete each immediately after its evidence lands.
-- **MANDATORY IMPORTANT MUST ATTENTION** Phase 0: classify scope (quick / deep / debug / recommendation) before acting — depth, analysis file, and validation chain all flow from this; DECLARE scope before skipping any step.
-- **MANDATORY IMPORTANT MUST ATTENTION** run the main steps in order — Classify → Discovery → Graph Expand → Knowledge Graph → Flow Mapping → Analysis → Synthesis → Present; quick scope may skip the analysis file but NEVER the graph command — why: each step feeds the next, and skipping graph leaves the call/event/import edges unmapped.
-- **MANDATORY IMPORTANT MUST ATTENTION** `--mode=explain` → deliver a one-way developer narrative (WHAT → PURPOSE → HOW → WHY-this-way → IMPACT), tuned by coding level, written to git-ignored `tmp/understand/{branch}.md` (the chat is the deliverable — announce the ledger path); NEVER ask the user a question, NEVER skip by coding level, NEVER relax the evidence/graph/READ-ONLY gate — why: explain mode changes only the deliverable shape, not the proof discipline.
-- **MANDATORY IMPORTANT MUST ATTENTION** read required project docs first (always `lessons.md`; `project-structure-reference.md` for architecture) — project conventions override generic framework assumptions — why: local patterns differ from framework defaults and silently invalidate generic reasoning.
-- **MANDATORY IMPORTANT MUST ATTENTION** grep 3+ similar patterns and read the actual implementations before concluding — NEVER assume code works as named; verify by reading — why: a name promises behavior the body may not deliver.
-- **MANDATORY IMPORTANT MUST ATTENTION** evaluate pattern FIT before reusing a nearby example — confirm the new context shares the same base classes, scope, lifetime, and preconditions — why: closest example ≠ matching constraints.
-- **MANDATORY IMPORTANT MUST ATTENTION** deep scope → write analysis to `.ai/workspace/analysis/[feature]-investigation.md`; re-read the ENTIRE file before presenting (never work from memory after a long context).
-- **MANDATORY IMPORTANT MUST ATTENTION** recommendation scope → complete ALL validation chain steps (impls → registrations → usages → cross-service impact → confidence) before any code-change suggestion; ANY step incomplete → STOP and state "Insufficient evidence to recommend."
-- **MANDATORY IMPORTANT MUST ATTENTION** microservices/event-driven → scan producers, consumers, sagas, and shared contracts in scope — a missed downstream consumer is a silent regression.
-- **MANDATORY IMPORTANT MUST ATTENTION** bug/behavior-changing investigation → run the End-to-Start Debugger Trace (observed final state → backward hops → feeder paths → hypothesis matrix → owning fix layer) before concluding cause; ask "whose responsibility?" and locate the invariant owner, not the crash site.
+- **End-to-Start + Root Cause:** start at observed end state; reproduce, isolate, trace, hypothesize, verify; fix only at the owning layer.
+- **Knowledge Graph + Evidence:** document per-file type/pattern/symbols/dependencies/relevance/evidence level; cite every claim and confidence.
+- **Project Docs + Task Tracking:** read required docs first; create/advance tasks one at a time; persist deep findings incrementally.
+- **Critical/Sequential Thinking:** use Thought N/M with revisions/branches/hypotheses when needed; never present guesses as facts.
+- **Cross-Service + Source/Test Drift:** scan producers, consumers, sagas, contracts; reconcile affected tests when source behavior changes.
+- **Parallel Dispatch:** tag PAR/SEQ, use disjoint write-set waves, spawn each wave in one message, honor the all-return barrier.
+- **Nested Tasks + Fix Layer:** expand child phases when nested; trace origin → crash and protect all consumers at the lowest invariant-owning layer.
 
-**Anti-Rationalization:**
+**IMPORTANT MUST ATTENTION** stay READ-ONLY — NEVER edit code, plans, or specs during investigation; deliver findings only — why: mutation corrupts the baseline the next step trusts.
+**IMPORTANT MUST ATTENTION** cite `file:line` for every claim; mark unverified statements "inferred"; confidence >80% to act, <60% DO NOT recommend — why: an unmarked guess propagates as fact.
+**Optional advice:** for a high-risk blast radius grep may miss, `code_graph` (and `$graph-code --mode=connect-api` for frontend-to-backend mapping) can add hints — they may be stale; verify by reading. Never required.
+**MANDATORY IMPORTANT MUST ATTENTION** create tasks before work, keep one `in_progress`, and complete each after evidence; if nested, expand/link child phases.
+**MANDATORY IMPORTANT MUST ATTENTION** read required project docs first, including `lessons.md` and `project-structure-reference.md` for architecture; local conventions override generic assumptions.
+**MANDATORY IMPORTANT MUST ATTENTION** grep 3+ patterns and read implementations before concluding; evaluate fit before copying a nearby pattern.
+**MANDATORY IMPORTANT MUST ATTENTION** deep scope → write/re-read `tmp/analysis/[feature]-investigation.md`; recommendation scope → complete implementations → registrations → usages → cross-service impact → confidence or state "Insufficient evidence to recommend."
+**MANDATORY IMPORTANT MUST ATTENTION** bug/behavior-changing scope → trace end-to-start, enumerate feeder paths, build the hypothesis matrix, identify the owning layer, and prove forward convergence before any fix recommendation.
 
-| Evasion                                            | Rebuttal                                                                       |
-| -------------------------------------------------- | ------------------------------------------------------------------------------ |
-| "Simple investigation, skip graph"                 | Graph reveals callers + bus consumers grep misses. Run it anyway.              |
-| "Already grepped, enough evidence"                 | Show `file:line` proof. No citation = no evidence; unverified = mark inferred. |
-| "Quick task, skip task tracking"                   | Still need tracking. Create tasks, mark done immediately.                      |
-| "Recommendation is obvious, skip validation chain" | Risk matrix applies regardless of confidence. Complete ALL steps or STOP.      |
-| "Deep scope wastes time for this"                  | Classify first. If quick, fine — but DECLARE scope before skipping steps.      |
-| "Nearby example is close enough, copy it"          | Closest ≠ matching preconditions. Verify base class, scope, lifetime first.    |
-| "I'll just fix what I found while here"            | READ-ONLY. Investigation never mutates; hand findings to the fix step.         |
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
+**[TASK-PLANNING]** Before acting, analyze scope and break work into small tasks/subtasks with todo tracking.
 
-**IMPORTANT MUST ATTENTION** READ-ONLY always · cite `file:line` or mark "inferred" · run ONE graph command before concluding — these three bind every scope and mode.
-
-<!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
-
-## Hookless Prompt Protocol Mirror (Auto-Synced)
-
-Source: `.claude/.ck.json` + `.claude/skills/shared/sync-inline-versions.md` (`:full` blocks) + `.claude/scripts/lib/hookless-prompt-protocol.cjs`
-
-## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
-
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
-
-1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
-2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
-3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
-4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
-5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
-6. **PARALLELIZE:** Before executing the task list, tag each task `PAR` (independent inputs + write set disjoint from every other `PAR` task) or `SEQ` (name the blocking dependency), group `PAR` tasks into waves, declare the wave plan, and spawn each wave's sub-agents in ONE message — all-return barrier per wave, fan-out one level deep unless a sub-agent's own definition authorizes further fan-out. Sequential-by-default is a defect when tasks are independent; do not parallelize shared write targets, output-consuming tasks, trivial single-file work, ordering a skill or workflow explicitly fixes, or user-approval gates.
-7. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
-
-## Shared AI-SDD Protocol Markers
-
-Source: `.claude/skills/shared/sync-inline-versions.md`
-
-## SYNC:ai-sdd-artifact-contract
-
-> **AI-SDD Artifact Contract** — Shared spec-driven development rules stay portable and source-owned.
->
-> 1. Keep reusable AI-SDD principles in `.claude`; put repository-specific paths, commands, owners, products, and formats in project config/reference docs.
-> 2. Preserve cycle: `spec -> plan -> tasks -> implement -> verify -> update spec/docs`.
-> 3. Trace every requirement or invariant through decision, task, TC/test, source evidence, and docs/spec update.
-> 4. Treat code-to-spec extraction as reference-only until accepted by the canonical spec owner.
-> 5. Any supported AI tool may plan, implement, review, or verify with synced context; using multiple tools is optional.
-> 6. Update `.claude` source first, then sync generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`. — why: mirrors are generated artifacts; hand-edits are overwritten on the next sync
-> 7. If `docs/project-config.json`, root instruction files, or a required project-reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
->
-> **Active reference:** `shared/sdd-artifact-contract.md` in the active skills root.
-
----
-
-## SYNC:ai-sdd-artifact-contract:reminder
-
-- **MANDATORY** Apply `shared/sdd-artifact-contract.md`; keep reusable AI-SDD in `.claude` and local rules in project docs.
-- **MANDATORY** Code-to-spec extraction is reference-only until canonical acceptance; any supported AI tool may execute with synced context.
-- **MANDATORY** Update `.claude` source before syncing generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`.
-- **MANDATORY** Missing or stale project config, root instruction files, or required reference docs route project-specific work through `$project-init` or the narrow setup route automatically.
-  **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
-
-## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
-
-Break work into small tasks (task tracking) before starting. Add final task: "Analyze AI mistakes & lessons learned".
-
-**Extract lessons — ROOT CAUSE ONLY, not symptom fixes:**
-
-1. Name the FAILURE MODE (reasoning/assumption failure), not symptom — "assumed API existed without reading source" not "used wrong enum value".
-2. Generality test: does this failure mode apply to ≥3 contexts/codebases? If not, abstract one level up.
-3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
-4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
-5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
-7. BOTH gates pass → ask user to run `$learn`.
-   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
-   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
-
-## Common AI Mistake Prevention (System Lessons)
-
-- **Re-read files after context compaction.** Edit requires prior Read in same context; compaction wipes read state. Re-read before editing.
-- **Grep for old terms after bulk replacements.** AI over-trusts find/replace completeness. Grep full repo after bulk edits for missed refs in docs/configs/catalogs.
-- **Check downstream references before deleting.** Deletions cascade doc/code staleness. Map referencing files before removal.
-- **After memory loss, check existing state before creating new.** Compaction wipes prior-work memory. Query current state to resume — never blindly duplicate.
-- **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, method signatures. Grep to confirm existence before documenting/referencing.
-- **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Trace the full chain.
-- **When renaming, grep ALL consumer file types.** Some file types silently ignore missing refs (no compile error). Search code, templates, configs, generated files.
-- **Trace ALL code paths when verifying correctness.** Code existing ≠ code executing. Trace early exits, error branches, conditional skips — not just happy path.
-- **Update docs that embed canonical data when source changes.** Docs inlining derived data (workflows, schemas, configs) go stale silently. Update all embedding docs alongside source.
-- **Verify sub-agent results after context recovery.** Background agents may finish while parent compacted — grep-verify output, don't trust assumed completion.
-- **Cross-check full target list against sub-agent assignments.** Parallel sub-agents by category miss boundary items. Reconcile union of assignments against target list before proceeding.
-- **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
-- **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
-- **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
-- **Test failure → record a provisional verdict before trace/edit, then investigate.** Use the full five-way taxonomy: SOURCE-WRONG (production violates intent), TEST-WRONG (assertion/setup is stale), TEST-NOT-OPTIMAL (valid but fragile or low-signal test), ENVIRONMENT-BLOCKED (external state prevents a verdict), or AMBIGUOUS (intent/evidence cannot choose safely). Then trace root cause and triangulate against the governing spec (`docs/specs/**` if one exists) AND source. NEVER weaken an assertion, add a skip, relax a timeout, or change source merely to force green.
-- **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
-- **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
-- **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
-- **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
-- **Surgical changes — apply the diff test (context-aware).** Two modes: (1) Bug fix → every line traces to the bug; no restyling; orphan cleanup only for imports YOUR changes made unused. (2) Review/enhancement → implement improvements AND announce as "Enhancement beyond main request: [what]". Never silently scope-creep. Diff test: "Would this line exist if I wasn't asked to do X?" — if no, delete or announce.
-- **Surface ambiguity before coding — don't pick silently.** Multiple valid interpretations → present each with effort: "[Request] could mean (1) [N h], (2) [N h]. Which matters?" List scope/format/volume/constraints assumptions first. If simpler path exists, say so. Never silently pick.
-- **[MANDATORY FIRST ACTION] ALWAYS activate a suitable skill or workflow BEFORE responding.** Match task against workflow catalog + skill list; invoke via skill invocation or `$start-workflow <workflowId>`. NEVER answer or write code before checking. Skip = protocol violation.
-- **Why-Review adversarial mindset — apply when reviewing any plan, decision, or design.** Default SKEPTIC not VALIDATOR: steel-man a rejected alternative, invert each stated reason ("what does it sacrifice?"), stress-test top 2-3 assumptions, run pre-mortem ("ships, fails in 3 months — what breaks?"), surface 1-2 alternatives author missed. Section presence ≠ quality; quality = causal reasoning + concrete mitigations + evidence, not "it's better" or "monitor closely".
-- **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
-- **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
-- **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
-- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
-- **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
-
-<!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->
+**IMPORTANT MUST ATTENTION** READ-ONLY always; cite `file:line` or mark "inferred".
+**IMPORTANT MUST ATTENTION** classify and run the ordered phases; complete the required validation gates before concluding.
+**IMPORTANT MUST ATTENTION** these three rules bind every scope and mode; the code graph is optional advice, never a gate.

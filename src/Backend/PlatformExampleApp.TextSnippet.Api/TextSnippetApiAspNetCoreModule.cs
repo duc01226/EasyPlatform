@@ -1,7 +1,9 @@
 using System.Text.Json;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.AspNetCore;
 using Easy.Platform.Common.JsonSerialization;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using PlatformExampleApp.TextSnippet.Api.Context.RequestContext;
 using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Infrastructure;
@@ -51,6 +53,22 @@ public class TextSnippetApiAspNetCoreModule : PlatformAspNetCoreModule
     protected override string[] GetAllowCorsOrigins(IConfiguration configuration)
     {
         return Configuration["AllowCorsOrigins"]!.Split(";");
+    }
+
+    protected override void InternalRegister(IServiceCollection serviceCollection)
+    {
+        base.InternalRegister(serviceCollection);
+
+        // Only the Mongo persistence module opts in to a keyed message store. The EF Core variants contribute no store,
+        // so the host keeps the legacy unqualified inbox/outbox path and must not bind a key that has no store.
+        if (Configuration.GetSection("UseDbType").Get<string>() == "MongoDb")
+        {
+            serviceCollection.AddSingleton(
+                new PlatformMessageBusStoreBinding(
+                    new PlatformMessageBusStoreKey(TextSnippetApplicationModule.MessageBusStoreKeyValue),
+                    typeof(TextSnippetApplicationModule),
+                    typeof(TextSnippetMongoPersistenceModule)));
+        }
     }
 
     protected override Type RequestContextKeyToClaimTypeMapperType()

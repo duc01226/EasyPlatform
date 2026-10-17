@@ -3,26 +3,32 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
-// Prose-only semantic anchor for the advancement+barrier rule, shared (case-insensitively) by
-// every wording across static carriers (Codex context note):
+const require = createRequire(import.meta.url);
+const { resolveWorkflowManifest, resolveAllWorkflowManifests } = require("../lib/workflow-manifest.cjs");
+const { resolveProjectRoot, isInvokedAsScript } = require("../lib/project-root.cjs");
+const { buildWorkflowPointerCatalog } = require("../lib/workflow-skills-catalog.cjs");
+const { checkWorkflowSkillContract } = require("../lib/workflow-skill-contract.cjs");
+
+// Prose-only semantic anchor for the advancement+barrier rule in the runtime routing payload:
 // "advance only after ALL/EVERY member(s) return". Deliberately
 // NOT a substring of the rendered barrier token "[parallel ⇉ all-return barrier: …]" — so this
-// clause-presence check (W5(c)) proves the rule PROSE reached the carrier independently of the
+// clause-presence check (W5(c)) proves the rule PROSE reached the payload independently of the
 // token-parity check below. (Earlier "all-return barrier" was a token substring, making the check
-// near-vacuous for the two token-bearing mirrors; this semantic phrase closes that blind spot.)
-const ADVANCEMENT_CLAUSE_PATTERN = /advance only after (?:all|every) member/i;
+// near-vacuous for token-bearing output; this semantic phrase closes that blind spot.)
+const ADVANCEMENT_CLAUSE_PATTERN = /advance only after (?:all|every)(?: members?)? return/i;
 const ADVANCEMENT_CLAUSE_LABEL = 'advance only after ALL/EVERY member(s) return';
 
-// Optional generated mirror surfaces that carry the rendered barrier token. Absent file ⇒
-// that tool's mirror is not enabled in this project (skip, do not fail) — keeps the verifier
-// portable across single-tool checkouts of the framework.
-const CODEX_CARRIER = "AGENTS.md";
+// Owner of both runtime route outputs; the hook entries `workflow-route-inject.cjs` and
+// `workflow-catalog-inject.cjs` only call its `runHook`.
+const RUNTIME_ROUTE_DELIVERY = path.join(".claude", "hooks", "lib", "workflow-route-delivery.cjs");
 
 const TARGET_WORKFLOW_IDS = [
   "workflow-big-feature",
   "workflow-bugfix",
   "workflow-feature",
+  "workflow-implement-spec",
   "workflow-spec-sync",
 ];
 
@@ -43,6 +49,7 @@ const REVIEW_GATE_WORKFLOW_IDS = new Set([
   "workflow-big-feature",
   "workflow-bugfix",
   "workflow-feature",
+  "workflow-implement-spec",
   "workflow-spec-sync",
 ]);
 
@@ -50,6 +57,7 @@ const IMPLEMENTATION_WORKFLOW_IDS = new Set([
   "workflow-big-feature",
   "workflow-bugfix",
   "workflow-feature",
+  "workflow-implement-spec",
 ]);
 
 const DOMAIN_ENTITY_REFERENCE_REFRESH_WORKFLOW_IDS = new Set([
@@ -57,9 +65,26 @@ const DOMAIN_ENTITY_REFERENCE_REFRESH_WORKFLOW_IDS = new Set([
   "workflow-bugfix",
   "workflow-feature",
 ]);
+
+// A parent workflow that runs `workflow-review-changes` INLINE delegates the nested review gates
+// to it: that workflow owns the specialist reviewers (notably `integration-test --mode=review`) and the
+// terminal `scan --target=domain-entities` reference refresh. It also owns `docs-manager --mode=update` — but ONLY
+// when the nested review is the parent's last docs-mutating step: if a canonical spec step still
+// runs AFTER the nested review, that mutation lands after the nested `docs-manager --mode=update`, so the parent
+// owes its own terminal docs-manager --mode=update (see the positional `docsClosureSatisfied` guard below). The
+// gate is NOT dropped for a workflow that runs no nested review: `delegatesNestedReview` is false
+// there and each explicit requirement still applies.
+const NESTED_REVIEW_WORKFLOW_ID = "workflow-review-changes";
+function delegatesNestedReview(sequence) {
+  return Array.isArray(sequence) && sequence.includes(NESTED_REVIEW_WORKFLOW_ID);
+}
+// The domain-entity refresh is anchored on the step it must follow. That anchor is derived from the
+// workflow's own sequence rather than hard-coded, because not every delivery workflow ends its
+// verification with the same step: `workflow-bugfix` runs no standalone `test` step (its regression
+// evidence is the test-first `integration-test` regression written before the fix, proven by `integration-test --mode=verify` and its mutation check after it). The prose anchor
+// skips conditional neighbours, so the injectContext names the last step that ALWAYS runs.
 const DOMAIN_ENTITY_REFERENCE_REFRESH_CONTEXT_TERMS = [
-  "after /test",
-  "before /docs-update",
+  "before /docs-manager --mode=update",
   "run /scan --target=domain-entities",
   "when the final diff",
   "final diff",
@@ -71,7 +96,7 @@ const DOMAIN_ENTITY_REFERENCE_REFRESH_CONTEXT_TERMS = [
   "cited skip reason",
 ];
 
-const IMPLEMENTATION_STEPS = new Set(["feature-implement", "fix", "plan-execute"]);
+const IMPLEMENTATION_STEPS = new Set(["feature-implement", "fix", "plan --mode=execute"]);
 const CANONICAL_SPEC_BEFORE_FIRST_PLAN_WORKFLOW_IDS = new Set([
   "workflow-bugfix",
   "workflow-feature",
@@ -99,7 +124,7 @@ const STEP_ALIASES = new Map([
 // Targeted skills must carry the goal-contract lifecycle: resolve the active goal before work,
 // append iteration evidence after execution, and (for review/workflow surfaces) emit a Goal
 // Satisfaction matrix before reporting PASS. These checks scan the `.claude/skills` root ONLY:
-// `.agents/**` is a generated mirror refreshed by `npm run codex:sync`, so it is legitimately
+// `.agents/**` is a generated mirror refreshed by the standalone runner (`.claude/skills/sync-codex/scripts/run-codex-sync.mjs`), so it is legitimately
 // stale between a source edit and the next sync — gating on it would make source-first edits
 // unverifiable. Mirror parity is owned by the sync tooling, not this verifier.
 const GOAL_CONTRACT_MARKER = "SYNC:goal-contract-satisfaction-loop";
@@ -111,34 +136,43 @@ const GOAL_CONTRACT_SKILL_IDS = [
   "plan", // creates {plan-dir}/goal.md during plan bootstrap
   "start-workflow", // resolves the active goal before child task creation
   "feature-implement", // reads the goal contract before implementation
-  "plan-execute", // reads the goal during analysis/task extraction
   "feature", // maps success validation to saved criteria
   "fix", // active-goal read before root-cause work (ci/issue/logs/test/ui are --target branches)
-  "prove-fix", // goal satisfaction update after fix verdict
 ];
 
 // Review gates: must additionally emit Goal Satisfaction status before PASS.
 const GOAL_CONTRACT_REVIEW_SKILL_IDS = [
   "changes-review",
   "why-review",
-  "plan-review",
-  "code-review",
+  "code-quality-review",
+];
+
+// Review gates that live in a skill's mode reference rather than in a SKILL.md of their own:
+// the same Goal Satisfaction requirement applies (`/plan --mode=review`, `/integration-test --mode=verify`
+// — the verification evidence that feeds the Goal Satisfaction matrix).
+const GOAL_CONTRACT_REVIEW_REFERENCE_PATHS = [
+  ".claude/skills/plan/references/mode-review.md",
+  ".claude/skills/integration-test/references/mode-verify.md",
+];
+
+// Implementation surfaces that live in a skill's mode reference: must resolve + read the active goal
+// before work (`/plan --mode=execute`).
+const GOAL_CONTRACT_ENTRY_REFERENCE_PATHS = [
+  ".claude/skills/plan/references/mode-execute.md",
 ];
 
 // Workflow wrappers + verification/audit surfaces (Phases 05-06). The planned
 // workflow-verification / workflow-quality-audit / workflow-tdd-feature / workflow-test-verify
 // wrappers do not exist as files; their intent maps to: test (verification evidence),
-// quality-gate (audit goal status), workflow-feature (covers TDD/test-first), and
-// integration-test-verify (test verification evidence).
+// workflow-feature (covers TDD/test-first), and `integration-test --mode=verify` (test
+// verification evidence; its body is GOAL_CONTRACT_REVIEW_REFERENCE_PATHS).
 const GOAL_CONTRACT_WORKFLOW_SKILL_IDS = [
   "workflow-feature",
   "workflow-bugfix",
   "workflow-review-changes",
-  "workflow-write-integration-test",
+  "workflow-integration-test",
   "workflow-code-to-spec",
   "test",
-  "quality-gate",
-  "integration-test-verify",
 ];
 
 // Required structure of a Goal Contract file (see .claude/templates/goal-contract-template.md).
@@ -154,7 +188,7 @@ const GOAL_CONTRACT_FILE_REQUIRED_SECTIONS = [
 
 // --- workflow-review-changes inline-in-main-session execution policy -----------------------------
 // workflow-review-changes is the documented EXCEPTION to "nested workflow -> sub-agent": its Step 0
-// `/goal` gate binds the session Stop hook and its step-15 re-review is inline by design, so a
+// `/goal` gate binds the session Stop hook and its post-fix re-review is inline by design, so a
 // sub-agent cannot host it without silently dropping the unabandonable review->fix->re-review loop.
 // These checks assert the canonical `.claude` surfaces DECLARE the inline mandate and carry NO
 // residual whole-workflow sub-agent mandate. `.agents/**` mirrors are owned by the sync tooling
@@ -193,10 +227,10 @@ const REVIEW_CHANGES_INLINE_SURFACES = [
     ],
   },
   {
-    rel: ".claude/skills/claude-md-init/references/claude-md-template.md",
+    rel: ".claude/skills/shared/protocols/workflow-step-advancement.md",
     require: [
       {
-        label: "§3 workflow-review-changes inline-in-main-session exception",
+        label: "workflow-step-advancement: workflow-review-changes inline-in-main-session exception",
         re: /workflow-review-changes[^\n]*inline\s+in\s+the\s+main\s+(?:current\s+)?session/i,
       },
     ],
@@ -204,8 +238,8 @@ const REVIEW_CHANGES_INLINE_SURFACES = [
   },
 ];
 
-// The static workflow catalog is a fast route-selection surface, not the complete execution
-// contract. start-workflow must always load the selected canonical entry before TaskCreate so a
+// The optional runtime workflow catalog is a fast route-selection surface, not the complete
+// execution contract. start-workflow must always load the selected canonical entry before TaskCreate so a
 // workflow's pre-actions (including conditional run/skip rules) reach the concrete task.
 const START_WORKFLOW_PREACTION_SURFACE = ".claude/skills/start-workflow/SKILL.md";
 const START_WORKFLOW_PREACTION_REQUIREMENTS = [
@@ -214,8 +248,12 @@ const START_WORKFLOW_PREACTION_REQUIREMENTS = [
     re: /Tier 2[^.\n]*required[^.\n]*before[^.\n]*TaskCreate/i,
   },
   {
-    label: "three-workflow policy scope",
-    re: /workflow-big-feature[^.\n]*workflow-bugfix[^.\n]*workflow-feature/i,
+    label: "all-standard-workflow policy scope",
+    re: /every standard workflow/i,
+  },
+  {
+    label: "required non-empty inject-context contract",
+    re: /non-empty `?preActions\.injectContext`?/i,
   },
   {
     label: "JSON-aware complete canonical-entry read",
@@ -226,8 +264,8 @@ const START_WORKFLOW_PREACTION_REQUIREMENTS = [
     re: /preActions\.injectContext/i,
   },
   {
-    label: "static catalog route-selection boundary",
-    re: /static catalog is a route-selection aid/i,
+    label: "runtime catalog route-selection boundary",
+    re: /runtime catalog[^.\n]*route selection only/i,
   },
   {
     label: "conditional task run/skip propagation",
@@ -239,7 +277,7 @@ const START_WORKFLOW_PREACTION_REQUIREMENTS = [
   },
   {
     label: "Tier-1 non-execution boundary",
-    re: /Do NOT parse a static catalog sequence/i,
+    re: /Do NOT parse the runtime catalog sequence/i,
   },
   {
     label: "host-neutral step invocation guidance",
@@ -247,7 +285,7 @@ const START_WORKFLOW_PREACTION_REQUIREMENTS = [
   },
   {
     label: "conditional completion exception",
-    re: /conditional(?:ly)? skipped task[^.\n]*without invoking(?: its)? `?Skill`? tool/i,
+    re: /conditional(?:ly)? skipped task[^.\n]*without (?:invoking(?: its)? `?Skill`? tool|skill execution)/i,
   },
 ];
 const START_WORKFLOW_PREACTION_FORBIDDEN = [
@@ -272,11 +310,23 @@ const START_WORKFLOW_PREACTION_FORBIDDEN = [
     label: "slash-form task activity template",
     re: /activeForm="Executing \/\{step-name\}"/i,
   },
+];
+
+// Workflow wrappers follow the guided step contract that start-workflow owns (BR-GWF-13/16): `gate`
+// steps are fixed, other steps may flex with a logged reason. A blanket no-deviation banner in a
+// wrapper contradicts that contract; non-workflow skills keep it for their own internal steps.
+const WORKFLOW_WRAPPER_FORBIDDEN_BANNERS = [
   {
-    label: "unapproved all-standard-workflow Tier-2 expansion",
-    re: /before every standard-workflow TaskCreate/i,
+    label: "blanket no-skip/reorder/merge banner (steps follow the guided contract in start-workflow)",
+    re: /NEVER skip, reorder, or merge steps without explicit user approval/i,
   },
 ];
+
+export function checkWorkflowWrapperStepContract(rel, content) {
+  return WORKFLOW_WRAPPER_FORBIDDEN_BANNERS.filter(({ re }) => re.test(content)).map(
+    ({ label }) => `Workflow wrapper step-contract violation (${rel}): ${label}`
+  );
+}
 
 export function checkStartWorkflowPreActionPolicy(rel, content) {
   if (rel !== START_WORKFLOW_PREACTION_SURFACE) return [];
@@ -295,6 +345,78 @@ export function checkStartWorkflowPreActionPolicy(rel, content) {
     }
   }
   return failures;
+}
+
+export function checkWorkflowInjectContextCoverage(workflows) {
+  const failures = [];
+  for (const [workflowId, workflow] of Object.entries(workflows ?? {})) {
+    const hasLegacySequence = Array.isArray(workflow?.sequence) && workflow.sequence.length > 0;
+    const hasVariantSequence =
+      workflow?.variants &&
+      typeof workflow.variants === "object" &&
+      !Array.isArray(workflow.variants) &&
+      Object.values(workflow.variants).some(
+        (variant) => Array.isArray(variant?.sequence) && variant.sequence.length > 0
+      );
+    if (!hasLegacySequence && !hasVariantSequence) {
+      failures.push(`Workflow ${workflowId} has no executable sequence`);
+      continue;
+    }
+    const injectContext = workflow?.preActions?.injectContext;
+    if (typeof injectContext !== "string" || injectContext.trim().length === 0) {
+      failures.push(
+        `Workflow ${workflowId} is missing required non-empty preActions.injectContext`
+      );
+    }
+  }
+  return failures;
+}
+
+/**
+ * Resolve every executable workflow mode for the cycle verifier.  The verifier deliberately
+ * consumes the same manifest producer as activation and the static catalog; it never re-parses
+ * variant objects or invents a default when a mode is unknown. Isolated fixtures may supply an
+ * explicit availableSkills override; otherwise every declared skill must exist on disk.
+ */
+export function resolveWorkflowManifestsForVerification(
+  workflowsDoc,
+  workflowId,
+  { rootDir = process.cwd(), mode, availableSkills } = {}
+) {
+  const registry = workflowsDoc?.workflows ?? {};
+  if (!Object.hasOwn(registry, workflowId)) throw new Error(`Unknown workflow ID: ${workflowId}`);
+  const resolverOptions = {
+    rootDir,
+    ...(availableSkills !== undefined ? { availableSkills: new Set(availableSkills) } : {}),
+  };
+  if (mode !== undefined) {
+    return [resolveWorkflowManifest(workflowsDoc, workflowId, { ...resolverOptions, mode })];
+  }
+  return resolveAllWorkflowManifests(workflowsDoc, workflowId, resolverOptions);
+}
+
+// Variant-bearing entries may retain a legacy `sequence` preview for older wrapper text.  The
+// canonical resolver intentionally rejects string steps when `variants` is present, so resolve
+// that compatibility preview through an isolated legacy projection instead of interpreting it a
+// second time in the verifier.  This keeps wrapper parity backwards-compatible while all selected
+// variants continue to use the real manifest above.  The projection drops `outcomeGates`: gates
+// are proven against every real mode, and a gate satisfied only by a variant step would otherwise
+// fail against the legacy preview.
+export function resolveCompatibilityWorkflowManifest(workflowsDoc, workflowId, rootDir) {
+  const workflow = workflowsDoc.workflows[workflowId];
+  if (!Array.isArray(workflow?.sequence) || workflow.sequence.length === 0) return null;
+  if (!workflow.variants) {
+    return resolveWorkflowManifestsForVerification(workflowsDoc, workflowId, { rootDir })[0] ?? null;
+  }
+  const legacyEntry = { ...workflow };
+  delete legacyEntry.variants;
+  delete legacyEntry.defaultMode;
+  delete legacyEntry.outcomeGates;
+  const legacyDoc = {
+    ...workflowsDoc,
+    workflows: { ...workflowsDoc.workflows, [workflowId]: legacyEntry },
+  };
+  return resolveWorkflowManifestsForVerification(legacyDoc, workflowId, { rootDir })[0] ?? null;
 }
 
 async function checkStartWorkflowPreActionCoverage(rootDir, failures) {
@@ -387,6 +509,12 @@ export function checkGoalContractFileLifecycle(content) {
   return failures;
 }
 
+// `.claude/skills/<owner>/references/<file>.md` -> `<owner>` (the skill whose SKILL.md ships the mode reference).
+function referenceOwnerSkill(rel) {
+  const match = /^\.claude\/skills\/([^/]+)\/references\//.exec(rel);
+  return match ? match[1] : null;
+}
+
 async function checkGoalContractSkillCoverage(rootDir, failures) {
   const claudeSkillsRoot = path.join(rootDir, ".claude", "skills");
   const targets = [
@@ -394,13 +522,28 @@ async function checkGoalContractSkillCoverage(rootDir, failures) {
     ...GOAL_CONTRACT_REVIEW_SKILL_IDS.map((id) => ({ id, requireSatisfaction: true })),
     ...GOAL_CONTRACT_WORKFLOW_SKILL_IDS.map((id) => ({ id, requireSatisfaction: true })),
   ];
+  for (const rel of GOAL_CONTRACT_REVIEW_REFERENCE_PATHS) {
+    targets.push({ id: rel, requireSatisfaction: true, filePath: path.join(rootDir, ...rel.split("/")), ownerSkill: referenceOwnerSkill(rel) });
+  }
+  for (const rel of GOAL_CONTRACT_ENTRY_REFERENCE_PATHS) {
+    targets.push({ id: rel, requireSatisfaction: false, filePath: path.join(rootDir, ...rel.split("/")), ownerSkill: referenceOwnerSkill(rel) });
+  }
   let checkedCount = 0;
   for (const target of targets) {
-    const skillPath = path.join(claudeSkillsRoot, target.id, "SKILL.md");
-    // Absent skill ⇒ this framework checkout does not ship that skill (skip, do not fail) —
-    // same portability rule as the optional mirror carriers above. In the canonical repo all
-    // targeted skills exist, so removals surface through the normal review/diff path.
-    if (!(await exists(skillPath))) continue;
+    const skillPath = target.filePath ?? path.join(claudeSkillsRoot, target.id, "SKILL.md");
+    if (!(await exists(skillPath))) {
+      // A mode reference whose owner skill ships is part of that skill: its goal-contract lifecycle
+      // cannot be checked when the file is gone, so that is a failure, never a silent skip.
+      if (target.ownerSkill && (await exists(path.join(claudeSkillsRoot, target.ownerSkill, "SKILL.md")))) {
+        failures.push(
+          `Goal-contract violation (${target.id}): the mode reference is missing although its owner skill '${target.ownerSkill}' ships — its goal-contract lifecycle cannot be verified`
+        );
+      }
+      // Absent skill ⇒ this framework checkout does not ship that skill (skip, do not fail) —
+      // same portability rule as the optional mirror carriers above. In the canonical repo all
+      // targeted skills exist, so removals surface through the normal review/diff path.
+      continue;
+    }
     const content = await fs.readFile(skillPath, "utf8");
     failures.push(
       ...checkGoalContractSkillCompliance(target.id, content, {
@@ -446,9 +589,17 @@ function parseStepsFromSkill(content) {
     .find(Boolean);
   if (!matchedLine) return [];
 
-  return matchedLine
+  // Variant-aware wrappers often explain the resolver before showing the default sequence, e.g.
+  // "resolve ... (default: /investigate -> /web-research -> /workflow-end)".  Extract the
+  // parenthesized/default list before splitting arrows so prose and trailing punctuation cannot
+  // become synthetic step IDs.  Plain legacy lines continue through unchanged.
+  const defaultList = matchedLine.match(/\bdefault\s*:\s*([^)]*)\)?\s*\.?\s*$/i)?.[1];
+  const source = defaultList || matchedLine;
+
+  return source
     .split(/\s*->\s*/)
     .map((token) => normalizeSkillStepToken(token))
+    .map((token) => token.replace(/[).,;:]+$/g, "").trim())
     .filter(Boolean);
 }
 
@@ -512,8 +663,11 @@ function findFirstIndex(sequence, predicate) {
   return -1;
 }
 
+// `spec [mode=discovery|clarify|index]` read specs, gate decisions or derive aids; they never author or
+// sync the canonical artifact, so they cannot stand in for the canonical spec step.
+const NON_CANONICAL_SPEC_MODE = /\[mode=(?:discovery|clarify|index)\]/;
 function isCanonicalSpecStep(step) {
-  return step === "spec" || step.startsWith("spec ");
+  return (step === "spec" || step.startsWith("spec ")) && !NON_CANONICAL_SPEC_MODE.test(step);
 }
 
 export function checkWorkflowDebuggerTracePolicy(workflowId, workflow) {
@@ -530,48 +684,119 @@ export function checkWorkflowDebuggerTracePolicy(workflowId, workflow) {
   return `Workflow policy violation (${workflowId}): missing end-to-start debugger trace metadata term(s): ${missing.join(", ")}`;
 }
 
-function ensureWorkflowPolicy(workflowId, workflow, sequence, failures) {
-  if (
-    !hasOrderedSubsequence(sequence, [
+// The nested review's `--tests={prove|defer}` mode flag (SYNC:verify-last-order) selects when its test
+// run happens, not which step it is: the policy identifies it by skill name.
+const REVIEW_TESTS_MODE_FLAG = /^workflow-review-changes\s+--tests=(?:prove|defer)$/;
+
+// `integration-test` and `e2e-test` serve several roles through their `--mode` flag; the policy identifies
+// the role (review / verify), not the flag set that accompanies it (`--report-only`, `--fix-loop`, ...).
+const MODE_ROLE_STEP = /^(integration-test|e2e-test)\s+(?:\S+\s+)*--mode=(review|verify)(?:\s|$)/;
+function modeRoleStep(step) {
+  const match = MODE_ROLE_STEP.exec(step);
+  return match ? `${match[1]} --mode=${match[2]}` : step;
+}
+const REVIEW_DEFERS_TESTS_FLAG = /^workflow-review-changes\s+--tests=defer$/;
+
+function ensureWorkflowPolicy(workflowId, workflow, rawPolicySequence, failures) {
+  const sequence = rawPolicySequence.map((step) => modeRoleStep(REVIEW_TESTS_MODE_FLAG.test(step) ? NESTED_REVIEW_WORKFLOW_ID : step));
+  const nestedReview = delegatesNestedReview(sequence);
+  const nestedReviewIndex = sequence.indexOf(NESTED_REVIEW_WORKFLOW_ID);
+  const integrationIndex = sequence.indexOf("integration-test");
+  const integrationVerifyIndex = sequence.indexOf("integration-test --mode=verify");
+  // A delegated review stands in for `integration-test --mode=review` ONLY when it runs AFTER the
+  // integration test it is meant to review. A position-blind `includes` let `workflow-spec-sync`
+  // pass the gate with a nested review that executes BEFORE the integration test — the review
+  // reviewed the wrong state. Mirror the positional `docsClosure` guard below.
+  const nestedReviewAfterIntegration =
+    nestedReviewIndex >= 0 && integrationIndex >= 0 && nestedReviewIndex > integrationIndex;
+  const integrationGateSatisfied =
+    hasOrderedSubsequence(sequence, [
       "integration-test",
-      "integration-test-review",
-      "integration-test-verify",
-    ])
-  ) {
+      "integration-test --mode=review",
+      "integration-test --mode=verify",
+    ]) ||
+    (nestedReview && nestedReviewAfterIntegration &&
+      hasOrderedSubsequence(sequence, ["integration-test", "integration-test --mode=verify"]));
+  if (!integrationGateSatisfied) {
     failures.push(
-      `Workflow policy violation (${workflowId}): missing ordered integration gate integration-test -> integration-test-review -> integration-test-verify`
+      `Workflow policy violation (${workflowId}): missing ordered integration gate integration-test -> integration-test --mode=review -> integration-test --mode=verify (a nested workflow-review-changes occurrence satisfies integration-test --mode=review)`
     );
   }
 
-  if (!hasOrderedSubsequence(sequence, ["docs-update", "workflow-end"])) {
+  // Delegated docs closure is only valid when the nested review observes the SETTLED docs state: if
+  // the parent still runs a canonical spec step AFTER the nested review, that mutation lands after
+  // the nested `docs-manager --mode=update`, so the parent owes its own terminal docs-manager --mode=update. Without this
+  // positional guard a workflow could place `workflow-review-changes` first, mutate specs
+  // afterwards, and still pass the closure check with no docs sync over its own changes.
+  const specStepsAfterNestedReview =
+    nestedReviewIndex >= 0 &&
+    sequence.slice(nestedReviewIndex + 1).some((step) => isCanonicalSpecStep(step));
+  const docsClosureSatisfied =
+    hasOrderedSubsequence(sequence, ["docs-manager --mode=update", "workflow-end"]) ||
+    (nestedReview && sequence.includes("workflow-end") && !specStepsAfterNestedReview);
+  if (!docsClosureSatisfied) {
     failures.push(
-      `Workflow policy violation (${workflowId}): missing ordered closure docs-update -> workflow-end`
+      `Workflow policy violation (${workflowId}): missing ordered closure docs-manager --mode=update -> workflow-end (a nested workflow-review-changes occurrence satisfies docs-manager --mode=update only when no canonical spec step runs after it)`
     );
   }
 
-  if (DOMAIN_ENTITY_REFERENCE_REFRESH_WORKFLOW_IDS.has(workflowId)) {
+  // The terminal domain-entity reference refresh is owned by the nested workflow-review-changes ONLY
+  // when that review runs after the parent's terminal verification (i.e. it observes the settled
+  // state). A nested review placed before verification must not absorb the requirement.
+  // Verify-last order (SYNC:verify-last-order): a review that defers its tests (`--tests=defer`) runs
+  // BEFORE the verify by design, but the protocol re-runs it after any edit the verify step makes
+  // (verify-last-order step 5; `workflow-end` reads the review receipt or a cited report), so its final
+  // run still observes the settled state. A deferring review with no verify step after it would leave its
+  // own fixes unverified, so that shape fails below.
+  const nestedReviewDefersTests = rawPolicySequence.some((step) => REVIEW_DEFERS_TESTS_FLAG.test(step));
+  if (nestedReviewDefersTests) {
+    const verifySteps = new Set(["integration-test --mode=verify", "test", "e2e-test --mode=verify"]);
+    if (!sequence.slice(nestedReviewIndex + 1).some((step) => verifySteps.has(step))) {
+      failures.push(
+        `Workflow policy violation (${workflowId}): workflow-review-changes --tests=defer needs a verify step (integration-test --mode=verify|test|e2e-test --mode=verify) after it — its fixes would otherwise never run under tests`
+      );
+    }
+  }
+  const nestedReviewCoversTerminalState =
+    nestedReviewIndex >= 0 &&
+    (integrationVerifyIndex < 0 || nestedReviewIndex > integrationVerifyIndex || nestedReviewDefersTests);
+  if (DOMAIN_ENTITY_REFERENCE_REFRESH_WORKFLOW_IDS.has(workflowId) && !nestedReviewCoversTerminalState) {
     const domainEntityScanStep = "scan --target=domain-entities";
     const scanCount = sequence.filter((step) => step === domainEntityScanStep).length;
     const scanIndex = sequence.indexOf(domainEntityScanStep);
     const hasTerminalDomainEntityRefresh =
-      scanCount === 1 &&
-      scanIndex > 0 &&
-      sequence[scanIndex - 1] === "test" &&
-      sequence[scanIndex + 1] === "docs-update";
+      scanCount === 1 && scanIndex > 0 && sequence[scanIndex + 1] === "docs-manager --mode=update";
     if (scanCount !== 1) {
       failures.push(
-        `Workflow policy violation (${workflowId}): requires exactly one terminal domain-entity reference refresh test -> scan --target=domain-entities -> docs-update (found ${scanCount})`
+        `Workflow policy violation (${workflowId}): requires exactly one terminal domain-entity reference refresh <verification step> -> scan --target=domain-entities -> docs-manager --mode=update (found ${scanCount})`
       );
     } else if (!hasTerminalDomainEntityRefresh) {
       failures.push(
-        `Workflow policy violation (${workflowId}): missing terminal domain-entity reference refresh test -> scan --target=domain-entities -> docs-update`
+        `Workflow policy violation (${workflowId}): missing terminal domain-entity reference refresh <verification step> -> scan --target=domain-entities -> docs-manager --mode=update`
       );
     }
 
-    const workflowContext = normalizeWhitespace(workflow?.preActions?.injectContext ?? "").toLowerCase();
-    const missingContextTerms = DOMAIN_ENTITY_REFERENCE_REFRESH_CONTEXT_TERMS.filter(
-      (term) => !workflowContext.includes(term)
+    // The prose anchor is the last step before the scan that ALWAYS runs: a conditional neighbour
+    // (e.g. an opt-in E2E handoff) is skipped by default, so naming it would tell the reader to
+    // sequence the refresh after a step that usually never executes.
+    const conditionalSteps = new Set(
+      (Array.isArray(workflow?.sequence) ? workflow.sequence : [])
+        .filter((step) => step && typeof step === "object" && step.applicability)
+        .map((step) => normalizeWhitespace(`${step.skill ?? ""}`).replace(/^[/$]+/, "").trim())
+        .filter(Boolean)
     );
+    let anchorIndex = scanIndex - 1;
+    while (anchorIndex > 0 && conditionalSteps.has(sequence[anchorIndex].split(" ")[0])) {
+      anchorIndex -= 1;
+    }
+    const anchorTerm =
+      anchorIndex >= 0 ? `after /${sequence[anchorIndex].split(" ")[0]}` : "after /test";
+
+    const workflowContext = normalizeWhitespace(workflow?.preActions?.injectContext ?? "").toLowerCase();
+    const missingContextTerms = [
+      anchorTerm,
+      ...DOMAIN_ENTITY_REFERENCE_REFRESH_CONTEXT_TERMS,
+    ].filter((term) => !workflowContext.includes(term));
     if (missingContextTerms.length > 0) {
       failures.push(
         `Workflow policy violation (${workflowId}): missing conditional domain-entity reference refresh context term(s): ${missingContextTerms.join(", ")}`
@@ -580,9 +805,9 @@ function ensureWorkflowPolicy(workflowId, workflow, sequence, failures) {
   }
 
   if (TDD_WORKFLOW_IDS.has(workflowId)) {
-    if (!hasOrderedSubsequence(sequence, ["spec [mode=tests]", "artifact-review --type=spec-tests"])) {
+    if (!hasOrderedSubsequence(sequence, ["spec [mode=tests]", "work-item --mode=review --type=spec-tests"])) {
       failures.push(
-        `Workflow policy violation (${workflowId}): missing ordered spec [mode=tests] -> artifact-review --type=spec-tests`
+        `Workflow policy violation (${workflowId}): missing ordered spec [mode=tests] -> work-item --mode=review --type=spec-tests`
       );
     }
     if (!sequence.includes("spec [mode=sync]")) {
@@ -602,7 +827,7 @@ function ensureWorkflowPolicy(workflowId, workflow, sequence, failures) {
     const hasImplementationStep = sequence.some((step) => IMPLEMENTATION_STEPS.has(step));
     if (!hasImplementationStep) {
       failures.push(
-        `Workflow policy violation (${workflowId}): missing implementation step (feature-implement|fix|plan-execute)`
+        `Workflow policy violation (${workflowId}): missing implementation step (feature-implement|fix|plan --mode=execute)`
       );
     }
   }
@@ -648,28 +873,41 @@ function ensureSddWorkflowPolicy(workflowId, sequence, failures) {
 
   const implementationTail = sequence.slice(implementationIndex);
   const implementationStep = sequence[implementationIndex];
-  if (
-    !hasOrderedSubsequence(implementationTail, [
+  const nestedReview = delegatesNestedReview(sequence);
+  const implementationVerified =
+    hasOrderedSubsequence(implementationTail, [
       implementationStep,
       "integration-test",
-      "integration-test-review",
-      "integration-test-verify",
-    ])
-  ) {
+      "integration-test --mode=review",
+      "integration-test --mode=verify",
+    ]) ||
+    (nestedReview &&
+      hasOrderedSubsequence(implementationTail, [
+        implementationStep,
+        "integration-test",
+        "integration-test --mode=verify",
+      ])) ||
+    // Test-first regression: the reproducing test is written BEFORE the change (a bug fix) and the
+    // verify after the change proves it red without the fix and green with it.
+    (nestedReview &&
+      hasOrderedSubsequence(sequence, ["integration-test", implementationStep, "integration-test --mode=verify"]));
+  if (!implementationVerified) {
     failures.push(
-      `Workflow policy violation (${workflowId}): implementation must be verified by integration-test -> integration-test-review -> integration-test-verify after '${implementationStep}'`
+      `Workflow policy violation (${workflowId}): implementation must be verified by integration-test -> integration-test --mode=review -> integration-test --mode=verify after '${implementationStep}' (a nested workflow-review-changes occurrence satisfies integration-test --mode=review; a test written before '${implementationStep}' counts when the verify runs after it)`
     );
   }
 
-  if (
-    !hasOrderedSubsequence(implementationTail, [
+  const specSyncBeforeDocs =
+    hasOrderedSubsequence(implementationTail, [
       implementationStep,
       "spec [mode=sync]",
-      "docs-update",
-    ])
-  ) {
+      "docs-manager --mode=update",
+    ]) ||
+    (nestedReview &&
+      hasOrderedSubsequence(implementationTail, [implementationStep, "spec [mode=sync]"]));
+  if (!specSyncBeforeDocs) {
     failures.push(
-      `Workflow policy violation (${workflowId}): implementation must be followed by spec [mode=sync] before docs-update`
+      `Workflow policy violation (${workflowId}): implementation must be followed by spec [mode=sync] before docs-manager --mode=update (a nested workflow-review-changes occurrence satisfies docs-manager --mode=update)`
     );
   }
 }
@@ -691,8 +929,8 @@ function getWorkflowSkillName(workflowId) {
   return WORKFLOW_SKILL_NAME_OVERRIDES.get(workflowId) ?? workflowId;
 }
 
-// Inline twin of renderBarrierToken in sync-context-workflows.mjs.
-// MUST stay byte-identical to that renderer — this is the oracle the cross-mirror parity asserts
+// Inline twin of the runtime catalog renderer's barrier token.
+// MUST stay byte-identical to that renderer — this is the oracle the runtime parity check asserts
 // against, so any future format change to the renderer without updating this fails the verifier.
 function renderExpectedBarrierToken(group) {
   const members = Array.isArray(group?.members) ? group.members : [];
@@ -719,8 +957,8 @@ function checkParallelGroupsStructure(workflowId, workflow, rawSequence, failure
   const seenGroupIds = new Set();
   for (const group of groups) {
     const groupId = group?.id ?? "(unnamed)";
-    // id is structurally load-bearing: the Codex mirror renderer dedups groups by id, so a
-    // missing or duplicate id silently drops a group's barrier token from the rendered mirror. Require
+    // id is structurally load-bearing: the runtime catalog renderer dedups groups by id, so a
+    // missing or duplicate id silently drops a group's barrier token from the rendered payload. Require
     // a non-empty, unique string id so the validator rejects what the renderer would mis-emit.
     if (typeof group?.id !== "string" || group.id.trim() === "") {
       failures.push(`parallelGroups violation (${workflowId}/${groupId}): group must have a non-empty string id`);
@@ -755,48 +993,166 @@ function checkParallelGroupsStructure(workflowId, workflow, rawSequence, failure
   }
 }
 
-// W5(b)+(c) — cross-mirror proof. (b) the expected barrier token is present in the rendered Codex
-// mirror; (c) the advancement clause reached the enabled static carrier. Reads the carrier once.
-// Mirror file is optional (portability).
-async function checkParallelGroupsMirrorParity(workflows, rootDir, failures) {
+// W5(a) for a resolved manifest.  The resolver has already normalized barrier members to stable
+// occurrence IDs; this second, consumer-side oracle proves the cycle checker actually consumes
+// those IDs (rather than silently falling back to a legacy command string) and that every declared
+// group remains a contiguous all-return wave in the selected mode.
+export function checkResolvedParallelGroupsStructure(workflowId, manifest, failures, { mode } = {}) {
+  const label = mode ? `${workflowId}/${mode}` : workflowId;
+  const occurrences = Array.isArray(manifest?.occurrences) ? manifest.occurrences : [];
+  const sequenceIds = occurrences.map((occurrence) => occurrence?.id);
+  const sequenceIndex = new Map(sequenceIds.map((id, index) => [id, index]));
+  const groups = Array.isArray(manifest?.parallelGroups) ? manifest.parallelGroups : [];
+  const owners = new Map();
+  const groupIds = new Set();
+
+  for (const group of groups) {
+    const groupId = group?.id ?? "(unnamed)";
+    if (typeof group?.id !== "string" || group.id.trim() === "") {
+      failures.push(`resolved parallelGroups violation (${label}/${groupId}): group needs a non-empty id`);
+    } else if (groupIds.has(group.id)) {
+      failures.push(`resolved parallelGroups violation (${label}/${groupId}): duplicate group id`);
+    } else {
+      groupIds.add(group.id);
+    }
+    if (group?.barrier !== true) {
+      failures.push(`resolved parallelGroups violation (${label}/${groupId}): barrier must be true`);
+    }
+    const members = Array.isArray(group?.members) ? group.members : [];
+    if (members.length < 2) {
+      failures.push(`resolved parallelGroups violation (${label}/${groupId}): a group needs >=2 occurrence IDs`);
+    }
+    const positions = [];
+    for (const member of members) {
+      if (!sequenceIndex.has(member)) {
+        failures.push(`resolved parallelGroups violation (${label}/${groupId}): unknown occurrence '${member}'`);
+        continue;
+      }
+      if (owners.has(member)) {
+        failures.push(
+          `resolved parallelGroups violation (${label}/${groupId}): occurrence '${member}' already belongs to '${owners.get(member)}'`
+        );
+      } else {
+        owners.set(member, groupId);
+      }
+      positions.push(sequenceIndex.get(member));
+      const occurrence = occurrences[sequenceIndex.get(member)];
+      if (occurrence?.barrier !== groupId) {
+        failures.push(
+          `resolved parallelGroups violation (${label}/${groupId}): occurrence '${member}' does not carry its barrier owner`
+        );
+      }
+    }
+    const sorted = positions.slice().sort((a, b) => a - b);
+    if (sorted.some((position, index) => position !== sorted[0] + index)) {
+      failures.push(`resolved parallelGroups violation (${label}/${groupId}): members must be contiguous`);
+    }
+    const conditional = Array.isArray(group?.conditionalMembers) ? group.conditionalMembers : [];
+    for (const member of conditional) {
+      if (!members.includes(member)) {
+        failures.push(
+          `resolved parallelGroups violation (${label}/${groupId}): conditional occurrence '${member}' is outside members`
+        );
+      }
+      if (!sequenceIndex.has(member)) {
+        failures.push(
+          `resolved parallelGroups violation (${label}/${groupId}): conditional occurrence '${member}' is unknown`
+        );
+      }
+    }
+  }
+  return failures;
+}
+
+// Catalog forms the runtime catalog output can take (lib/workflow-route-delivery.cjs
+// buildCatalogInjection, delivered by workflow-catalog-inject.cjs). The
+// compact catalog and the index with parallel-phase marks carry every barrier token per workflow
+// row; the tiers-only index and the pointer-only form omit them by design (`start-workflow <id>`
+// loads a workflow's phases).
+const RUNTIME_CATALOG_FORMS = Object.freeze({
+  CATALOG: "catalog",
+  INDEX_MARKED: "index-marked",
+  INDEX_TIERS: "index-tiers",
+  POINTER_ONLY: "pointer-only",
+});
+
+// Identify a pointer form by the exact body the shared catalog builder renders for this root, so no
+// header text is duplicated here. The pointer-only body is a prefix of both index bodies, so the
+// marked index is tested first. A payload that matches no pointer body (the compact catalog, the
+// full catalog, or an unrecognised one) is reported as `catalog` and stays under the parity check.
+export function runtimeCatalogForm(runtimeText, rootDir) {
+  const rendered = (rows) => {
+    try {
+      return buildWorkflowPointerCatalog({ rootDir, rows });
+    } catch {
+      return "";
+    }
+  };
+  const carries = (body) => typeof body === "string" && body.length > 0 && runtimeText.includes(body);
+  if (carries(rendered("groups"))) return RUNTIME_CATALOG_FORMS.INDEX_MARKED;
+  if (carries(rendered("tiers"))) return RUNTIME_CATALOG_FORMS.INDEX_TIERS;
+  if (carries(rendered("none"))) return RUNTIME_CATALOG_FORMS.POINTER_ONLY;
+  return RUNTIME_CATALOG_FORMS.CATALOG;
+}
+
+// W5(b)+(c) — runtime-payload proof. (b) every expected barrier token is present in the catalog
+// output the runtime prompt hooks emit, when that text is a marked form; (c) the advancement clause reached
+// that payload, in every form. Root and mirror files carry no route text, so the runtime output is the
+// only place either can be checked.
+async function checkParallelGroupsMirrorParity(workflows, rootDir, failures, resolvedByWorkflow = []) {
   const grouped = Object.entries(workflows).filter(
     ([, wf]) => Array.isArray(wf?.parallelGroups) && wf.parallelGroups.length > 0
   );
-  if (grouped.length === 0) return;
+  const resolvedGrouped = (resolvedByWorkflow ?? []).flatMap(({ workflowId, manifests }) =>
+    (manifests ?? [])
+      .filter((manifest) => Array.isArray(manifest?.parallelGroups) && manifest.parallelGroups.length > 0)
+      .map((manifest) => ({ workflowId, manifest }))
+  );
+  if (grouped.length === 0 && resolvedGrouped.length === 0) return;
 
-  const codexPath = path.join(rootDir, CODEX_CARRIER);
-  const codexText = (await exists(codexPath)) ? await fs.readFile(codexPath, "utf8") : null;
-
-  const clauseCarriers = [
-    { label: `Codex context (${CODEX_CARRIER})`, text: codexText },
-  ];
-  for (const carrier of clauseCarriers) {
-    if (carrier.text === null) continue;
-    if (!ADVANCEMENT_CLAUSE_PATTERN.test(carrier.text)) {
-      failures.push(`parallelGroups carrier check: advancement clause "${ADVANCEMENT_CLAUSE_LABEL}" missing from ${carrier.label}`);
-    }
+  const deliveryPath = path.join(rootDir, RUNTIME_ROUTE_DELIVERY);
+  if (!(await exists(deliveryPath))) {
+    failures.push(`parallelGroups runtime check: missing route delivery module ${RUNTIME_ROUTE_DELIVERY}`);
+    return;
+  }
+  let runtimeText;
+  try {
+    // The catalog rides its own hook output; the route output (gate + protocol) carries no rows.
+    const { buildCatalogInjection } = require(deliveryPath);
+    runtimeText = buildCatalogInjection(rootDir);
+  } catch (error) {
+    failures.push(`parallelGroups runtime check: could not build ${RUNTIME_ROUTE_DELIVERY} payload (${error?.message || error})`);
+    return;
   }
 
-  const tokenMirrors = [
-    { label: `Codex (${CODEX_CARRIER})`, text: codexText },
-  ];
+  if (!ADVANCEMENT_CLAUSE_PATTERN.test(runtimeText)) {
+    failures.push(`parallelGroups runtime check: advancement clause "${ADVANCEMENT_CLAUSE_LABEL}" missing from ${RUNTIME_ROUTE_DELIVERY} payload`);
+  }
+  // The runtime catalog intentionally shows human-readable route summaries rather than the
+  // resolver's internal occurrence IDs. Structural checks above own exact membership and
+  // barriers; this boundary check proves every grouped workflow still exposes parallel notation
+  // in the marked forms. The tiers-only index skips it; the pointer-only form renders no rows, so
+  // a grouped row that still appears there is checked.
+  const form = runtimeCatalogForm(runtimeText, rootDir);
   for (const [workflowId, workflow] of grouped) {
-    for (const group of workflow.parallelGroups) {
-      const expected = renderExpectedBarrierToken(group);
-      for (const mirror of tokenMirrors) {
-        if (mirror.text === null) continue;
-        if (!mirror.text.includes(expected)) {
-          failures.push(
-            `parallelGroups parity (${workflowId}/${group?.id ?? "(unnamed)"}): expected barrier token absent from ${mirror.label} — regenerate mirrors (npm run codex:sync). Expected: ${expected}`
-          );
-        }
-      }
+    const row = runtimeText.split(/\r?\n/).find(line => line.startsWith(`| \`${workflowId}\` |`));
+    if (form === RUNTIME_CATALOG_FORMS.INDEX_TIERS || (form === RUNTIME_CATALOG_FORMS.POINTER_ONLY && !row)) continue;
+    const renderedGroups = (row?.match(/\[[^\]]*∥[^\]]*\]/g) || []).length;
+    const expectedGroups = workflow.parallelGroups.length;
+    if (renderedGroups < expectedGroups) {
+      failures.push(
+        `parallelGroups runtime parity (${workflowId}): expected ${expectedGroups} parallel group(s), found ${renderedGroups} in ${RUNTIME_ROUTE_DELIVERY} payload`
+      );
     }
   }
 }
 
 async function main() {
-  const rootDir = process.cwd();
+  const rootDir = resolveProjectRoot({
+    cwd: process.cwd(),
+    scriptPath: fileURLToPath(import.meta.url),
+    env: process.env,
+  }).rootDir;
   const workflowsPath = path.join(rootDir, ".claude", "workflows.json");
   const skillRoots = [
     { label: ".claude", path: path.join(rootDir, ".claude", "skills") },
@@ -814,6 +1170,9 @@ async function main() {
   const stepAliases = STEP_ALIASES;
 
   const workflowIds = Object.keys(workflows).sort();
+  const resolvedByWorkflow = [];
+
+  failures.push(...checkWorkflowInjectContextCoverage(workflows));
 
   for (const workflowId of workflowIds) {
     const workflow = workflows?.[workflowId];
@@ -822,18 +1181,44 @@ async function main() {
       continue;
     }
 
-    const workflowSequence = Array.isArray(workflow.sequence) ? workflow.sequence : [];
+    let manifests;
+    try {
+      manifests = resolveWorkflowManifestsForVerification(workflowsDoc, workflowId, { rootDir });
+    } catch (error) {
+      failures.push(`Workflow manifest violation (${workflowId}): ${error.message}`);
+      continue;
+    }
+    resolvedByWorkflow.push({ workflowId, workflow, manifests });
+
+    // A legacy `sequence` remains the compatibility preview consumed by existing wrapper prose;
+    // when a workflow is variant-only, use its selected default mode as that preview.  Every mode
+    // is still resolved and structurally checked below, so the preview can never hide a malformed
+    // or duplicate variant occurrence.
+    let compatibilityManifest;
+    try {
+      compatibilityManifest =
+        resolveCompatibilityWorkflowManifest(workflowsDoc, workflowId, rootDir) ?? manifests[0];
+    } catch (error) {
+      failures.push(`Workflow compatibility-sequence violation (${workflowId}): ${error.message}`);
+      continue;
+    }
+    const workflowSequence = compatibilityManifest?.sequence ?? [];
     if (workflowSequence.length === 0) {
       failures.push(`Workflow has empty sequence: ${workflowId}`);
       continue;
     }
 
     const expectedSteps = normalizeSequence(workflowSequence, stepAliases);
-    if (TARGET_WORKFLOW_IDS.includes(workflowId)) {
-      ensureWorkflowPolicy(workflowId, workflow, expectedSteps, failures);
+    // Run policy checks for every resolved mode.  This is intentionally independent of wrapper
+    // text: a mode-specific sequence can add/remove gates, and a default-only check would miss the
+    // defect.  Legacy workflows have one `default` manifest and preserve the prior behavior.
+    for (const manifest of manifests) {
+      const modeSteps = normalizeSequence(manifest.sequence, stepAliases);
+      if (TARGET_WORKFLOW_IDS.includes(workflowId)) {
+        ensureWorkflowPolicy(workflowId, workflow, modeSteps, failures);
+      }
+      checkResolvedParallelGroupsStructure(workflowId, manifest, failures, { mode: manifest.mode });
     }
-
-    checkParallelGroupsStructure(workflowId, workflow, workflowSequence, failures);
 
     const workflowSkillName = getWorkflowSkillName(workflowId);
     for (const skillRoot of skillRoots) {
@@ -844,6 +1229,13 @@ async function main() {
       }
 
       const skillContent = await fs.readFile(skillPath, "utf8");
+      failures.push(...checkWorkflowSkillContract(workflowId, workflow, manifests, skillContent, {
+        dialect: skillRoot.label === ".agents" ? "$" : "/",
+      }));
+      // Source wrappers only: the mirrors are regenerated from them.
+      if (skillRoot.label === ".claude") {
+        failures.push(...checkWorkflowWrapperStepContract(normalizePath(skillPath, rootDir), skillContent));
+      }
       const rawSkillSteps = parseStepsFromSkill(skillContent);
       if (rawSkillSteps.length === 0) {
         if (!workflowSkillName.startsWith("workflow-")) {
@@ -912,7 +1304,7 @@ async function main() {
     }
   }
 
-  await checkParallelGroupsMirrorParity(workflows, rootDir, failures);
+  await checkParallelGroupsMirrorParity(workflows, rootDir, failures, resolvedByWorkflow);
 
   const goalContractCheckedCount = await checkGoalContractSkillCoverage(rootDir, failures);
 
@@ -944,7 +1336,7 @@ async function main() {
 }
 
 const isEntrypoint =
-  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+  isInvokedAsScript(process.argv[1], fileURLToPath(import.meta.url));
 
 if (isEntrypoint) {
   await main();
@@ -962,6 +1354,7 @@ export {
   WORKFLOW_SKILL_NAME_OVERRIDES,
   getWorkflowSkillName,
   hasOrderedSubsequence,
+  isCanonicalSpecStep,
   ensureWorkflowPolicy,
   normalizeSequence,
   parseStepsFromSkill,
@@ -972,10 +1365,13 @@ export {
   renderExpectedBarrierToken,
   checkParallelGroupsStructure,
   checkParallelGroupsMirrorParity,
+  RUNTIME_CATALOG_FORMS,
   REVIEW_CHANGES_INLINE_SURFACES,
   GOAL_CONTRACT_MARKER,
   GOAL_CONTRACT_SKILL_IDS,
   GOAL_CONTRACT_REVIEW_SKILL_IDS,
+  GOAL_CONTRACT_REVIEW_REFERENCE_PATHS,
+  GOAL_CONTRACT_ENTRY_REFERENCE_PATHS,
   GOAL_CONTRACT_WORKFLOW_SKILL_IDS,
   GOAL_CONTRACT_FILE_REQUIRED_SECTIONS,
 };

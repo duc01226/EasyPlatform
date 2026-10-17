@@ -16,7 +16,7 @@ namespace Easy.Platform.Common.Cqrs;
 /// <remarks>
 /// All commands, queries, and events in the Platform CQRS framework implement this interface.
 /// Provides standardized audit information tracking and cache key building capabilities.
-/// Used extensively in Growth, Employee, and Permission Provider services.
+/// Used extensively across every consuming service.
 /// </remarks>
 public interface IPlatformCqrsRequest : IPlatformDto<IPlatformCqrsRequest>, ICloneable
 {
@@ -75,17 +75,11 @@ public interface IPlatformCqrsRequest : IPlatformDto<IPlatformCqrsRequest>, IClo
     /// Cache key structure: ["RequestType=ClassName", "serialized_request_json", ...additional_parts]
     /// Audit info is excluded from serialization to ensure consistent cache keys.
     /// Used by PlatformCacheRepository for automatic cache management.
-    /// Essential for query caching in Growth, Employee, and Permission Provider services.
+    /// Essential for query caching in every consuming service.
     /// </remarks>
     /// <example>
-    /// Cache key for GetEmployeeQuery with EmployeeId=123:
-    /// ["RequestType=GetEmployeeQuery", "{\"EmployeeId\":123}", "Department"]
-    /// </example>
-    /// Essential for query caching in Growth, Employee, and Permission Provider services.
-    /// </remarks>
-    /// <example>
-    /// Cache key for GetEmployeeQuery with EmployeeId=123:
-    /// ["RequestType=GetEmployeeQuery", "{\"EmployeeId\":123}", "Department"]
+    /// Cache key for GetEntityQuery with EntityId=123:
+    /// ["RequestType=GetEntityQuery", "{\"EntityId\":123}", "Category"]
     /// </example>
     public static string[] BuildCacheRequestKeyParts<TRequest>(TRequest request, params string[] otherRequestKeyParts) where TRequest : class, IPlatformCqrsRequest
     {
@@ -101,7 +95,7 @@ public interface IPlatformCqrsRequest : IPlatformDto<IPlatformCqrsRequest>, IClo
 /// <remarks>
 /// Serves as the foundation for all commands, queries, and events in the Platform CQRS framework.
 /// Provides standardized implementation of validation, audit information management, and object cloning.
-/// Used extensively across Growth, Employee, Talents, and Permission Provider services.
+/// Used extensively across every consuming service.
 /// </remarks>
 public class PlatformCqrsRequest : IPlatformCqrsRequest
 {
@@ -228,7 +222,7 @@ public class PlatformCqrsRequest : IPlatformCqrsRequest
 /// <remarks>
 /// Essential for compliance, debugging, and audit trail generation across all Platform services.
 /// Implemented by PlatformCqrsRequestAuditInfo with automatic timestamp and ULID generation.
-/// Used extensively in Growth, Employee, Talents, and Permission Provider services for request tracking.
+/// Used extensively across every consuming service for request tracking.
 /// </remarks>
 public interface IPlatformCqrsRequestAuditInfo
 {

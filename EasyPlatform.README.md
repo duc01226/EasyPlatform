@@ -7,6 +7,29 @@
 
 > **Easy.Platform** is a comprehensive framework for building enterprise applications with **.NET 9 backend** and **Angular 19 frontend**, featuring Clean Architecture, CQRS, Domain-Driven Design, and event-driven patterns.
 
+## Contents
+
+- [🎯 Quick Navigation](#-quick-navigation)
+- [🏗️ Platform Architecture](#-platform-architecture)
+- [⚡ Quick Setup (5 Minutes)](#-quick-setup-5-minutes)
+- [🏗️ Frontend Architecture Overview](#-frontend-architecture-overview)
+- [🏗️ Frontend Development Patterns](#-frontend-development-patterns)
+- [🚀 Nx Workspace Best Practices](#-nx-workspace-best-practices)
+- [🏗️ Framework Usage Guide](#-framework-usage-guide)
+- [📊 Advanced Platform Features](#-advanced-platform-features)
+- [🤖 AI Agent Quick Reference](#-ai-agent-quick-reference)
+- [🏗️ Multi-Database Support](#-multi-database-support)
+- [🔧 Advanced Validation Patterns](#-advanced-validation-patterns)
+- [🎯 Performance Optimization](#-performance-optimization)
+- [🔒 Security & Authorization](#-security--authorization)
+- [🧪 Testing Framework](#-testing-framework)
+- [📚 Learning Paths](#-learning-paths)
+- [🔧 Troubleshooting Guide](#-troubleshooting-guide)
+- [📊 Performance Guidelines](#-performance-guidelines)
+- [📚 Technical Documentation](#-technical-documentation)
+- [🔗 External Resources](#-external-resources)
+- [📞 Support & Contribution](#-support--contribution)
+
 ## 🎯 Quick Navigation
 
 | **👤 I am a...**    | **🚀 Get Started**                          | **📚 Learn More**                           |
@@ -22,11 +45,11 @@
 
 Easy.Platform implements **Clean Architecture** with these core principles:
 
-- **Domain-Driven Design**: Rich domain models with business logic
-- **CQRS**: Command Query Responsibility Segregation with MediatR
-- **Event-Driven Architecture**: Domain events and cross-service messaging
-- **Multi-Database Support**: Entity Framework Core, MongoDB, PostgreSQL
-- **Microservices Ready**: Modular design for distributed systems
+-   **Domain-Driven Design**: Rich domain models with business logic
+-   **CQRS**: Command Query Responsibility Segregation with MediatR
+-   **Event-Driven Architecture**: Domain events and cross-service messaging
+-   **Multi-Database Support**: Entity Framework Core, MongoDB, PostgreSQL
+-   **Modular Monolith + Microservices Ready**: Explicit module boundaries support one-host composition today and service extraction later
 
 ### 🎯 System Architecture
 
@@ -1358,7 +1381,75 @@ This is a single funnel: the only three production call sites are `PlatformMessa
 
 **If you are adding a consumer or a log line on this path:** log identity, correlation and shape (counts, ids, type names). Never the payload, never a field lifted out of it. The content is not lost — for a trackable message the `TrackingId` addresses the full payload in the outbox/inbox store, which is access-controlled and reachable by right-to-erasure in a way a log sink is not. That is the whole design: the log carries the handle, the store keeps the data.
 
-**Guarded by** `Easy.Platform.Tests.Unit/Infrastructures/MessageBus/PlatformMessageBusConsumerLogErrorTests.cs`, which asserts on log **state** rather than formatted text, carries an explicit mutation-killer (`ReferenceEquals(kv.Value, message)` — a re-added destructure fails it), and covers the non-trackable path. Introduced 2026-08-07; recorded here rather than in a feature spec because it binds the framework and therefore every consumer in every service, not one feature.
+**Guarded by** `src/Platform/Easy.Platform.Tests.Unit/Infrastructures/MessageBus/PlatformMessageBusConsumerLogErrorTests.cs`, which asserts on log **state** rather than formatted text, carries an explicit mutation-killer (`ReferenceEquals(kv.Value, message)` — a re-added destructure fails it), and covers the non-trackable path. Introduced 2026-08-07; recorded here rather than in a feature spec because it binds the framework and therefore every consumer in every service, not one feature.
+
+#### 🧩 Modular composition and event-delivery boundaries
+
+An application module is a vertical boundary: its domain owns invariants, its application project owns use cases and event handlers, its persistence project owns the typed context/repositories, and its API project owns controllers. A host composes those boundaries explicitly. The host is responsible for:
+
+-   registering each module's application and persistence modules;
+-   mapping each application module to a logical `PlatformMessageBusStoreKey` and its typed persistence descriptor;
+-   opting controller assemblies into MVC discovery; and
+-   registering process-wide providers such as RabbitMQ or Redis only once.
+
+The platform registry supports more than one keyed store in one ASP.NET Core process. Strict composition validation rejects an ambiguous legacy/default store path, while keyed message-bus producers and consumers, CQRS event handlers, inbox workers, and outbox workers select the descriptor that owns their application lane. See the working proof in `src/PlatformExampleApp/PlatformExampleApp.ModularMonolith.Api/` and `src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/`.
+
+The application-to-persistence binding is explicit. Module registration is idempotent per module type and service collection, including dependency diamonds; the ASP.NET Core root validates the final composition before dependent initialization, and initialization failures identify the lifecycle stage that failed.
+
+Persistence placement is a host/module choice. Two module contexts may point to the same physical database while retaining separate typed repositories and namespaced platform system collections, or a module may require its own connection/database. This does not create a distributed transaction: a composite host must not claim atomicity across two physical databases.
+
+#### 🔌 Adopting module composition (opt-in; existing hosts need no change)
+
+Composition is **off by default**, so an existing single-store or multi-persistence host keeps the legacy unqualified inbox/outbox path byte-for-byte:
+
+-   `PlatformPersistenceModule.EnableMessageBusStoreContribution` defaults to **`false`**. A persistence module contributes a runtime message-bus store only when it overrides this to `true`, so a host that opts nothing in has no store composition and every producer, consumer, CQRS event handler, inbox/outbox worker and cleaner resolves the unqualified repository exactly as before — even when it registers several persistence modules.
+-   Strict composition validation is likewise **off by default**. Turn it on with the configuration key `Platform:MessageBusStores:StrictCompositionValidation` or by overriding `PlatformAspNetCoreModule.EnableStrictCompositionValidation`. Only strict mode enforces "every lane is explicitly bound" and "every runtime store is bound"; structural errors (duplicate lanes, conflicting contracts under one key) always fail.
+-   A message-bus component keeps `PlatformMessageBusStoreKey.Default` unless it overrides `MessageBusStoreKey`, and infrastructure-selected routes use `ConfigureMessageBusStoreRoute`.
+-   A module's data seeders default to the concrete seeder types found in its own service-scanning assemblies (`GetApplicationDataSeederTypes`). A seeder registered from another assembly is **not** owned by the module and is skipped unless the module declares it explicitly.
+
+To compose two modules into one host: override `EnableMessageBusStoreContribution => true` and `MessageBusStoreKey` on each participating persistence module, give each application module a distinct lane identity (`MessageBusApplicationName`, which defaults to the host's configured `IPlatformApplicationSettingContext.ApplicationName`), register one `PlatformMessageBusStoreBinding` per application/persistence pair in the composition root, and select controller assemblies explicitly. `src/PlatformExampleApp/PlatformExampleApp.ModularMonolith.Api/` is the worked example.
+
+#### 📬 What the event pipeline guarantees
+
+The framework's guarantees are deliberately local and at-least-once:
+
+1. When a business write and its outbox record execute in the same platform unit of work, a provider-supported local transaction can commit them together. The outbox write is not an atomic transaction with RabbitMQ; a message is sent only after it is durably staged, and dispatch/retry can deliver more than once.
+2. Inbox-backed consumers persist the received message before managed processing and retry failed handling. A crash, broker redelivery, or retry can invoke a consumer again, so handlers and projections must be idempotent. Deterministic business identities and upsert operations are the preferred guard.
+3. Retry and recovery are configurable. RabbitMQ deliveries that cannot be deserialized for every selected consumer are retained in a bounded durable parking queue before the original delivery is acknowledged. Parking requires manual inspection/replay; it does not provide a general dead-letter queue (DLQ) or automatic replay.
+4. Exactly-once delivery is not a platform guarantee. If a workflow needs stronger business semantics, implement an idempotency key/unique constraint and an explicit recovery or reconciliation process at the owning module boundary.
+
+An active aggregated unit of work with no initialized persistence providers waits for `SaveChanges`; it does not
+qualify as a pseudo-transaction. Once providers are initialized, immediate side effects are allowed only when every
+participating provider is pseudo-transactional.
+
+Processed inbox records use `PlatformInboxConfig.DeleteProcessedMessageInSeconds` for deduplication retention
+(14 days by default), measured from successful consumption. Legacy records without a completion timestamp use
+creation time. Inbox cleanup ignores the legacy `MaxStoreProcessedMessageCount` setting, so message volume cannot
+shorten this window. Choose a window longer than the maximum expected redelivery/retry horizon and allow storage
+for the messages received during it. Explicit immediate-delete consumers still opt out of this retention.
+
+Outbox workers yield to their timed trigger when a selected page claims no messages, even if blocked subqueue
+followers remain eligible. Other selected groups are checked before yielding; predecessor order is preserved.
+Outbox persistence failures with an active source UoW escape immediately so the operation owner can abandon/retry
+with a fresh scope. Independent persistence and post-save/background delivery retain their resilient retry policy.
+
+Unreadable RabbitMQ deliveries (including JSON `null`) run no consumers and are copied, with original queue,
+exchange, routing key and message properties, to `[Platform]-malformed-<SHA256 of source queue>`. The recovery
+publisher uses persistent messages, mandatory routing and tracked publisher confirmations before acknowledging
+the original. Parking clears active message expiration/publishing-user fields and retains their original values
+in `platform-recovery-*` headers. It never logs raw malformed payloads or exception text.
+
+`PlatformRabbitMqOptions` bounds each parking queue to 10,000 messages and 256 MiB of body bytes by default
+(`MalformedMessageQueueMaxMessageCount` / `MalformedMessageQueueMaxLengthBytes`). Overflow rejects new copies
+instead of evicting old ones; failed parking delays then requeues only the original delivery. Recovery has a
+30-second deadline including slot/connection/publish waits (`MalformedMessageRecoveryTimeoutSeconds`, positive
+and at most 300). Shutdown/closed channels leave originals unacknowledged. Original queue TTL still applies
+while parking is unavailable. Changing declared queue budgets requires broker policy management or a safe
+drain/recreation; keep settings consistent across instances. A crash after confirmation but before ACK can
+produce duplicate parking copies; replay must preserve business idempotency. Read `docs/deployment.md` when
+operating recovery queues. These limits are engineering defaults, not a measured capacity guarantee.
+
+Internal domain events stay inside the local application/unit-of-work path. Integration messages cross a message-bus boundary and therefore carry the at-least-once/replay contract above. In a future split deployment, each extracted service keeps its own local transaction and outbox; cross-service consistency requires explicit eventual-consistency design rather than a distributed transaction assumption.
 
 ### 🗄️ Data Migration
 
@@ -1702,6 +1793,14 @@ public class MyMongoPersistenceModule : PlatformMongoDbPersistenceModule<MyDbCon
     }
 }
 ```
+
+**TextSnippet private-search index upgrade:** The example app indexes `CreatedByUserId` before the adjacent `SnippetText`/`FullText` text keys. Every TextSnippet text query must supply explicit creator equality, including `null` for unowned snippets. The shared Platform search API and other collections retain their own index policies. The separate creator/date index still serves blank searches. `TC-MONGO-SEARCH-002` measures native candidate work; ownership and Union behavior are guarded by the existing search integration tests.
+
+Fresh databases create the compound index. Every Mongo app host checks the required index before normal initialization, even when the ordinary index sentinel or another process's migration lease would skip schema work. Existing global indexes are preserved by default and startup reports the required upgrade. Transient readiness failures use the existing database-initialization retry budget; incompatible index/data refusals stop immediately. Custom index definitions/options and non-scalar creator data are rejected before a drop.
+
+For an existing database, schedule an **offline maintenance window**: inventory external/older TextSnippet text callers and update them to supply creator equality; stop **all** API, background and external readers/writers; back up the database and save `getIndexes()` output. Start exactly one upgraded host with configuration `MongoDB:RebuildCreatorTextSearchIndex=true` (environment key `MongoDB__RebuildCreatorTextSearchIndex=true`, supported on Windows, macOS and Linux). This replaces only the known legacy `SnippetText_text_FullText_text` index, preserving documents and other indexes. Mongo permits one text index per collection, so search is unavailable during the rebuild; this is **not** a rolling or zero-downtime upgrade. Verify the scoped index and startup completion, remove the flag, then start the remaining upgraded hosts. Keep serving traffic stopped if startup fails; a subsequent start retries a missing index and leaves an already completed target intact. Concurrent maintenance hosts are unsupported.
+
+Rollback requires the same offline window: stop hosts, save current metadata, drop only `CreatedByUserId_1_SnippetText_text_FullText_text`, and recreate `{SnippetText: "text", FullText: "text"}` with the saved legacy options before starting the old binaries. Use the backup if data preflight requires an independently reviewed repair; this upgrade does not rewrite creator values. Native text-plan improvements do not establish authenticated service capacity or remove hot-owner count/prefix costs.
 
 ### Repository Implementation
 
@@ -2174,67 +2273,67 @@ describe('EventApiService', () => {
 
 **Day 1-2: Platform Exploration**
 
-- ✅ Complete [Quick Setup](#-quick-setup-5-minutes)
-- ✅ Run `src/PlatformExampleApp` and explore all features
-- ✅ Study the four-layer Clean Architecture structure
+-   ✅ Complete [Quick Setup](#-quick-setup-5-minutes)
+-   ✅ Run `src/PlatformExampleApp` and explore all features
+-   ✅ Study the four-layer Clean Architecture structure
 
 **Day 3-4: Core Concepts**
 
-- 📖 Understanding CQRS with command/query handlers
-- 📖 Domain entities and business logic placement
-- 📖 Repository pattern and data access
+-   📖 Understanding CQRS with command/query handlers
+-   📖 Domain entities and business logic placement
+-   📖 Repository pattern and data access
 
 **Day 5-7: First Implementation**
 
-- 🔧 Create a simple CRUD operation using platform patterns
-- 🎨 Build corresponding frontend component with store
-- 📝 Add validation and error handling
+-   🔧 Create a simple CRUD operation using platform patterns
+-   🎨 Build corresponding frontend component with store
+-   📝 Add validation and error handling
 
 ### 🔧 Backend Developer Path
 
 **Foundation (Week 1)**
 
-- 🏗️ Clean Architecture layers and responsibilities
-- 📡 CQRS implementation with MediatR
-- 🗄️ Repository pattern and data access
-- ✅ Validation patterns and error handling
+-   🏗️ Clean Architecture layers and responsibilities
+-   📡 CQRS implementation with MediatR
+-   🗄️ Repository pattern and data access
+-   ✅ Validation patterns and error handling
 
 **Advanced (Week 2-3)**
 
-- 🔄 Event-driven architecture and messaging
-- ⏰ Background jobs and scheduled tasks
-- 🔄 Data migration and seeding patterns
-- 🧪 Testing strategies and best practices
+-   🔄 Event-driven architecture and messaging
+-   ⏰ Background jobs and scheduled tasks
+-   🔄 Data migration and seeding patterns
+-   🧪 Testing strategies and best practices
 
 **Mastery (Week 4+)**
 
-- 🏛️ Domain-driven design implementation
-- 📊 Performance optimization techniques
-- 🔒 Security and authorization patterns
-- 🚀 Multi-database and scaling strategies
+-   🏛️ Domain-driven design implementation
+-   📊 Performance optimization techniques
+-   🔒 Security and authorization patterns
+-   🚀 Multi-database and scaling strategies
 
 ### 🎨 Frontend Developer Path
 
 **Foundation (Week 1)**
 
-- 🏗️ Component hierarchy and inheritance
-- 🔄 State management with Platform stores
-- 📝 Reactive forms and validation
-- 🌐 API service patterns
+-   🏗️ Component hierarchy and inheritance
+-   🔄 State management with Platform stores
+-   📝 Reactive forms and validation
+-   🌐 API service patterns
 
 **Advanced (Week 2-3)**
 
-- 🎯 Advanced state management patterns
-- 🔧 Custom validators and form builders
-- 📱 Responsive design and accessibility
-- 🧪 Component and service testing
+-   🎯 Advanced state management patterns
+-   🔧 Custom validators and form builders
+-   📱 Responsive design and accessibility
+-   🧪 Component and service testing
 
 **Mastery (Week 4+)**
 
-- ⚡ Performance optimization techniques
-- 🎨 Advanced UI patterns and animations
-- 🔧 Build optimization and deployment
-- 📊 Monitoring and error tracking
+-   ⚡ Performance optimization techniques
+-   🎨 Advanced UI patterns and animations
+-   🔧 Build optimization and deployment
+-   📊 Monitoring and error tracking
 
 ---
 
@@ -2361,47 +2460,47 @@ export class MyComponent extends PlatformComponent {
 
 #### Clean Architecture Implementation
 
-- **Domain Layer**: Business entities, value objects, domain services
-- **Application Layer**: Use cases, CQRS handlers, application services
-- **Infrastructure Layer**: External concerns (databases, messaging, file storage)
-- **Presentation Layer**: API controllers, web endpoints
+-   **Domain Layer**: Business entities, value objects, domain services
+-   **Application Layer**: Use cases, CQRS handlers, application services
+-   **Infrastructure Layer**: External concerns (databases, messaging, file storage)
+-   **Presentation Layer**: API controllers, web endpoints
 
 #### CQRS with MediatR
 
-- **Commands**: Write operations that modify state
-- **Queries**: Read operations that return data
-- **Handlers**: Process commands and queries
-- **Events**: Domain and integration events
+-   **Commands**: Write operations that modify state
+-   **Queries**: Read operations that return data
+-   **Handlers**: Process commands and queries
+-   **Events**: Domain and integration events
 
 #### Repository Pattern
 
-- **Generic repositories**: Platform base implementations
-- **Specific repositories**: Domain-specific interfaces
-- **Unit of Work**: Transaction management
-- **Expression-based queries**: Type-safe query building
+-   **Generic repositories**: Platform base implementations
+-   **Specific repositories**: Domain-specific interfaces
+-   **Unit of Work**: Transaction management
+-   **Expression-based queries**: Type-safe query building
 
 ### 🎓 Best Practices
 
 #### Code Organization
 
-- Follow consistent naming conventions
-- Use dependency injection properly
-- Implement proper error handling
-- Write comprehensive tests
+-   Follow consistent naming conventions
+-   Use dependency injection properly
+-   Implement proper error handling
+-   Write comprehensive tests
 
 #### Performance Optimization
 
-- Use async/await consistently
-- Implement caching strategies
-- Optimize database queries
-- Monitor application performance
+-   Use async/await consistently
+-   Implement caching strategies
+-   Optimize database queries
+-   Monitor application performance
 
 #### Security Considerations
 
-- Validate all input data
-- Implement proper authorization
-- Use secure communication protocols
-- Follow security best practices
+-   Validate all input data
+-   Implement proper authorization
+-   Use secure communication protocols
+-   Follow security best practices
 
 ---
 
@@ -2409,24 +2508,24 @@ export class MyComponent extends PlatformComponent {
 
 ### Official Documentation
 
-- [ASP.NET Core Documentation](https://docs.microsoft.com/en-us/aspnet/core/)
-- [Angular Documentation](https://angular.dev/docs)
-- [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
-- [MongoDB Driver for .NET](https://docs.mongodb.com/drivers/csharp/)
+-   [ASP.NET Core Documentation](https://docs.microsoft.com/en-us/aspnet/core/)
+-   [Angular Documentation](https://angular.dev/docs)
+-   [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
+-   [MongoDB Driver for .NET](https://docs.mongodb.com/drivers/csharp/)
 
 ### Learning Resources
 
-- [Clean Architecture Guide](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- [CQRS Pattern](https://martinfowler.com/bliki/CQRS.html)
-- [Domain-Driven Design](https://domainlanguage.com/ddd/)
-- [Angular Architecture Guide](https://angular.dev/guide/architecture)
+-   [Clean Architecture Guide](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+-   [CQRS Pattern](https://martinfowler.com/bliki/CQRS.html)
+-   [Domain-Driven Design](https://domainlanguage.com/ddd/)
+-   [Angular Architecture Guide](https://angular.dev/guide/architecture)
 
 ### Community Resources
 
-- [Stack Overflow](https://stackoverflow.com/)
-- [GitHub Discussions](https://github.com/)
-- [Reddit Development Communities](https://reddit.com/r/dotnet)
-- [Angular Community](https://community.angular.io/)
+-   [Stack Overflow](https://stackoverflow.com/)
+-   [GitHub Discussions](https://github.com/)
+-   [Reddit Development Communities](https://reddit.com/r/dotnet)
+-   [Angular Community](https://community.angular.io/)
 
 ---
 
@@ -2448,11 +2547,11 @@ export class MyComponent extends PlatformComponent {
 
 ### 📋 Version Information
 
-- **Platform Version**: Easy.Platform 1.0
-- **Backend Framework**: .NET 9
-- **Frontend Framework**: Angular 19
-- **Last Updated**: March 2026
-- **Maintainers**: Platform Development Team
+-   **Platform Version**: Easy.Platform 1.0
+-   **Backend Framework**: .NET 9
+-   **Frontend Framework**: Angular 19
+-   **Last Updated**: March 2026
+-   **Maintainers**: Platform Development Team
 
 ---
 

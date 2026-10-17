@@ -1,3 +1,4 @@
+using System.Globalization;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Tests.Unit.Base;
 using FluentAssertions;
@@ -17,7 +18,7 @@ public class NumberExtensionTests : PlatformUnitTestBase
     [InlineData(0.0, "0")]
     public void ToCompactDecimalString_WholeNumber_ReturnsIntegerString(double value, string expected)
     {
-        value.ToCompactDecimalString().Should().Be(expected);
+        AssertCompactDecimal(value, expected);
     }
 
     [Theory]
@@ -26,7 +27,7 @@ public class NumberExtensionTests : PlatformUnitTestBase
     [InlineData(2.00100, "2")]
     public void ToCompactDecimalString_TrailingZeros_TrimsTrailingZeros(double value, string expected)
     {
-        value.ToCompactDecimalString().Should().Be(expected);
+        AssertCompactDecimal(value, expected);
     }
 
     [Theory]
@@ -35,22 +36,41 @@ public class NumberExtensionTests : PlatformUnitTestBase
     [InlineData(99.99, "99.99")]
     public void ToCompactDecimalString_NormalDecimal_ReturnsTrimmedString(double value, string expected)
     {
-        value.ToCompactDecimalString().Should().Be(expected);
+        AssertCompactDecimal(value, expected);
     }
 
     [Fact]
     public void ToCompactDecimalString_ManyDecimalPlaces_TruncatesToTwoPlaces()
     {
-        var result = 1.23456.ToCompactDecimalString();
-
-        result.Should().Be("1.23");
+        AssertCompactDecimal(1.23456, "1.23");
     }
 
     [Fact]
     public void ToCompactDecimalString_NegativeValue_FormatsCorrectly()
     {
-        var result = (-5.5).ToCompactDecimalString();
+        AssertCompactDecimal(-5.5, "-5.5");
+    }
 
-        result.Should().Be("-5.5");
+    [Theory]
+    [InlineData("en-US", "3.5")]
+    [InlineData("fr-FR", "3,5")]
+    [InlineData("vi-VN", "3,5")]
+    public void ToCompactDecimalString_UsesCurrentCultureWithoutTrailingZeros(string cultureName, string expected)
+    {
+        AssertCompactDecimal(3.50, expected, cultureName);
+    }
+
+    private static void AssertCompactDecimal(double value, string expected, string cultureName = "en-US")
+    {
+        var originalCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = new CultureInfo(cultureName);
+            value.ToCompactDecimalString().Should().Be(expected);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = originalCulture;
+        }
     }
 }

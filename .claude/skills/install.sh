@@ -420,40 +420,23 @@ install_node_deps() {
     # Install local npm packages for skills
     print_info "Installing local npm packages for skills..."
 
-    # sequential-thinking
-    if [ -d "$SCRIPT_DIR/sequential-thinking" ] && [ -f "$SCRIPT_DIR/sequential-thinking/package.json" ]; then
-        print_info "Installing sequential-thinking dependencies..."
-        (cd "$SCRIPT_DIR/sequential-thinking" && npm install --quiet)
-        print_success "sequential-thinking dependencies installed"
-    fi
+    # pdf-convert (to-pdf: md-to-pdf, gray-matter; to-markdown: @opendocsg/pdf2md)
+    for direction in to-pdf to-markdown; do
+        if [ -d "$SCRIPT_DIR/pdf-convert/$direction" ] && [ -f "$SCRIPT_DIR/pdf-convert/$direction/package.json" ]; then
+            print_info "Installing pdf-convert/$direction dependencies..."
+            (cd "$SCRIPT_DIR/pdf-convert/$direction" && npm install --quiet)
+            print_success "pdf-convert/$direction dependencies installed"
+        fi
+    done
 
-    # markdown-to-pdf (md-to-pdf, gray-matter)
-    if [ -d "$SCRIPT_DIR/markdown-to-pdf" ] && [ -f "$SCRIPT_DIR/markdown-to-pdf/package.json" ]; then
-        print_info "Installing markdown-to-pdf dependencies..."
-        (cd "$SCRIPT_DIR/markdown-to-pdf" && npm install --quiet)
-        print_success "markdown-to-pdf dependencies installed"
-    fi
-
-    # markdown-to-docx (markdown-docx, gray-matter)
-    if [ -d "$SCRIPT_DIR/markdown-to-docx" ] && [ -f "$SCRIPT_DIR/markdown-to-docx/package.json" ]; then
-        print_info "Installing markdown-to-docx dependencies..."
-        (cd "$SCRIPT_DIR/markdown-to-docx" && npm install --quiet)
-        print_success "markdown-to-docx dependencies installed"
-    fi
-
-    # docx-to-markdown (mammoth, turndown, turndown-plugin-gfm)
-    if [ -d "$SCRIPT_DIR/docx-to-markdown" ] && [ -f "$SCRIPT_DIR/docx-to-markdown/package.json" ]; then
-        print_info "Installing docx-to-markdown dependencies..."
-        (cd "$SCRIPT_DIR/docx-to-markdown" && npm install --quiet)
-        print_success "docx-to-markdown dependencies installed"
-    fi
-
-    # pdf-to-markdown (@opendocsg/pdf2md)
-    if [ -d "$SCRIPT_DIR/pdf-to-markdown" ] && [ -f "$SCRIPT_DIR/pdf-to-markdown/package.json" ]; then
-        print_info "Installing pdf-to-markdown dependencies..."
-        (cd "$SCRIPT_DIR/pdf-to-markdown" && npm install --quiet)
-        print_success "pdf-to-markdown dependencies installed"
-    fi
+    # docx-convert (to-docx: markdown-docx, gray-matter; to-markdown: mammoth, turndown, turndown-plugin-gfm)
+    for direction in to-docx to-markdown; do
+        if [ -d "$SCRIPT_DIR/docx-convert/$direction" ] && [ -f "$SCRIPT_DIR/docx-convert/$direction/package.json" ]; then
+            print_info "Installing docx-convert/$direction dependencies..."
+            (cd "$SCRIPT_DIR/docx-convert/$direction" && npm install --quiet)
+            print_success "docx-convert/$direction dependencies installed"
+        fi
+    done
 
     # Optional: Shopify CLI (ask user unless auto-confirming)
     if [ -d "$SCRIPT_DIR/shopify" ]; then

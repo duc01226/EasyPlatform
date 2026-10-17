@@ -202,6 +202,10 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
 
         if (!ForCrossDbMigrationOnly || serviceCollection.All(p => p.ServiceType != typeof(IPlatformFullTextSearchPersistenceService)))
             serviceCollection.Register<IPlatformFullTextSearchPersistenceService>(FullTextSearchPersistenceServiceProvider);
+
+        RegisterMessageBusStoreContribution(
+            serviceCollection,
+            ForCrossDbMigrationOnly ? null : typeof(IPlatformMongoDbPersistenceUnitOfWork<TDbContext>));
     }
 
     /// <summary>
@@ -275,6 +279,7 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
         {
             serviceCollection.RegisterAllForImplementation<PlatformDefaultMongoDbInboxBusMessageRepository<TDbContext>>();
             serviceCollection.Register<IPlatformInboxBusMessageRepository, PlatformDefaultMongoDbInboxBusMessageRepository<TDbContext>>();
+            serviceCollection.Register<IPlatformInboxBusMessageRepository<TDbContext>, PlatformDefaultMongoDbInboxBusMessageRepository<TDbContext>>();
         }
 
         // Register Default MongoInboxBusMessageClassMapping if not existed custom inherited PlatformMongoInboxBusMessageClassMapping in assembly
@@ -294,6 +299,7 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
         {
             serviceCollection.RegisterAllForImplementation<PlatformDefaultMongoDbOutboxBusMessageRepository<TDbContext>>();
             serviceCollection.Register<IPlatformOutboxBusMessageRepository, PlatformDefaultMongoDbOutboxBusMessageRepository<TDbContext>>();
+            serviceCollection.Register<IPlatformOutboxBusMessageRepository<TDbContext>, PlatformDefaultMongoDbOutboxBusMessageRepository<TDbContext>>();
         }
 
         // Register Default MongoOutboxBusMessageClassMapping if not existed custom inherited PlatformMongoOutboxBusMessageClassMapping in assembly

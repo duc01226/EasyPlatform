@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Two-slide export fixture</title>
+<!--
+  Test input for html-export --to=pdf (tests/to-pdf.test.cjs). It is not a user-facing surface,
+  so the UI/UX and design-distinctiveness gates are skipped on purpose.
+  Shape it exercises:
+  - two section.slide[data-slide-id] items stacked vertically, each one viewport tall;
+  - an ArrowRight/ArrowLeft/Home handler that scrolls to the next item (keys navigation);
+  - fixed controls that print CSS hides and slides mode must not capture;
+  - print CSS with one slide per page and NO @page size, so --page decides the page size;
+  - one distinct link per slide, which the test reads back from each PDF page's link annotations.
+-->
+<style>
+  html, body { margin: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; }
+  .controls { position: fixed; top: 0; right: 0; padding: 8px; background: #ffffff; }
+  .slide { box-sizing: border-box; height: 100vh; padding: 64px; }
+  .slide--alpha { background: #1d4e89; color: #ffffff; }
+  .slide--beta { background: #f2c14e; color: #1a1a1a; }
+  .slide a { color: inherit; }
+  @media print {
+    .controls { display: none; }
+    .slide { height: auto; break-after: page; }
+    .slide:last-of-type { break-after: auto; }
+  }
+</style>
+</head>
+<body>
+<nav class="controls"><a href="https://example.invalid/deck-controls">Deck controls</a></nav>
+<section class="slide slide--alpha" data-slide-id="alpha">
+  <h1>Alpha slide</h1>
+  <p><a href="https://example.invalid/slide-alpha">Alpha details</a></p>
+</section>
+<section class="slide slide--beta" data-slide-id="beta">
+  <h1>Beta slide</h1>
+  <p><a href="https://example.invalid/slide-beta">Beta details</a></p>
+</section>
+<script>
+  (function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll('section.slide'));
+    var index = 0;
+    function show(next) {
+      index = Math.max(0, Math.min(slides.length - 1, next));
+      slides[index].scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowRight') show(index + 1);
+      else if (event.key === 'ArrowLeft') show(index - 1);
+      else if (event.key === 'Home') show(0);
+    });
+  })();
+</script>
+</body>
+</html>

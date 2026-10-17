@@ -43,20 +43,6 @@ function setupMockConfig(tmpDir, config) {
 }
 
 /**
- * Setup mock todo state file
- * @param {string} tmpDir - Temp directory path
- * @param {object} state - Todo state object
- * @returns {string} Path to the state file
- */
-function setupTodoState(tmpDir, state) {
-  const claudeDir = path.join(tmpDir, '.claude');
-  fs.mkdirSync(claudeDir, { recursive: true });
-  const stateFile = path.join(claudeDir, '.todo-state.json');
-  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
-  return stateFile;
-}
-
-/**
  * Setup mock checkpoint file
  * @param {string} tmpDir - Temp directory path
  * @param {object} data - Checkpoint data
@@ -112,20 +98,6 @@ function createMockFile(tmpDir, relativePath, content = '') {
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(filePath, content);
   return filePath;
-}
-
-/**
- * Read a state file from temp directory
- * @param {string} tmpDir - Temp directory path
- * @param {string} stateFileName - State file name (e.g., '.todo-state.json')
- * @returns {object|null} Parsed state object or null if not found
- */
-function readStateFile(tmpDir, stateFileName) {
-  const stateFile = path.join(tmpDir, '.claude', stateFileName);
-  if (fs.existsSync(stateFile)) {
-    return JSON.parse(fs.readFileSync(stateFile, 'utf8'));
-  }
-  return null;
 }
 
 /**
@@ -261,20 +233,6 @@ function createTimestamp(hoursAgo = 0) {
 }
 
 /**
- * Setup mock workflow state for testing
- * @param {string} tmpDir - Temp directory path
- * @param {object} state - Workflow state object
- * @returns {string} Path to the state file
- */
-function setupWorkflowState(tmpDir, state) {
-  const claudeDir = path.join(tmpDir, '.claude');
-  fs.mkdirSync(claudeDir, { recursive: true });
-  const stateFile = path.join(claudeDir, '.workflow-state.json');
-  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
-  return stateFile;
-}
-
-/**
  * Setup mock workflow config for testing
  * @param {string} tmpDir - Temp directory path
  * @param {object} config - Workflow config object
@@ -330,12 +288,10 @@ module.exports = {
   createTempDir,
   cleanupTempDir,
   setupMockConfig,
-  setupTodoState,
   setupCheckpoint,
   setupAceLessons,
   setupCkIgnore,
   createMockFile,
-  readStateFile,
   fileExists,
   createEnvSaver,
   setupClaudeEnvFile,
@@ -344,7 +300,6 @@ module.exports = {
   getHooksDir,
   getTestsDir,
   createTimestamp,
-  setupWorkflowState,
   setupWorkflowConfig,
   setupMetrics,
   readMetrics,

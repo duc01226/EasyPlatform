@@ -1,7 +1,7 @@
-# Windows notification script for Claude Code
+# Windows notification script for AI agent sessions
 # Called by notifications/providers/desktop.cjs with parameters: -Title "title" -Message "message" [-ShowDialog]
 param(
-    [string]$Title = "Claude Code",
+    [string]$Title = "AI Agent",
     [string]$Message = "Waiting for your input",
     [switch]$ShowDialog = $false
 )
@@ -57,7 +57,7 @@ if ($ShowDialog) {
     [System.Windows.Forms.MessageBox]::Show($form, $Message, $Title, [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
     $form.Close()
 
-    # Restore focus to original window (likely Claude terminal)
+    # Restore focus to original window (likely the AI agent host terminal)
     if ($previousWindow -ne [IntPtr]::Zero) {
         [FocusHelper]::SetForegroundWindow($previousWindow) | Out-Null
     }

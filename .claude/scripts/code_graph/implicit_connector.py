@@ -11,15 +11,26 @@ Example connections: entity CRUD -> event handler, producer -> consumer.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
+from .api_connector import _SKIP_DIRS
 from .graph import GraphStore
 from .models import EdgeInfo
 
 logger = logging.getLogger(__name__)
+
+# Extra directories pruned during the implicit scan (on top of _SKIP_DIRS).
+# Project-specific build dirs belong in graphSettings.scanSkipDirs, not here.
+_EXTRA_SKIP_DIRS = frozenset({
+    ".turbo", ".vercel", "tmp", "temp", "storybook-static",
+    ".cache", ".parcel-cache",
+})
+# Skip very large files — a content join never needs them and they dominate cost.
+_MAX_FILE_BYTES = 2_000_000
 
 
 # ---------------------------------------------------------------------------
@@ -28,10 +39,19 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SideConfig:
-    """One side (source or target) of an implicit connection rule."""
+    """One side (source or target) of an implicit connection rule.
+
+    A side extracts a key either from file CONTENT (``content_pattern``) or
+    from the file's repo-relative PATH (``path_pattern``). Path extraction
+    lets rules join on filename-encoded keys (e.g. spec ids in
+    ``specs/<domain>/<NNN>-<slug>.md``) that never appear in the file body.
+    """
     file_pattern: str      # glob pattern, e.g. "**/UseCaseEvents/**/*.cs"
-    content_pattern: str   # regex with capture group for the key
-    key_group: int         # which capture group holds the key (1-based)
+    content_pattern: str = ""   # regex with capture group for the key
+    key_group: int = 1          # which capture group holds the key (1-based)
+    path_pattern: str = ""      # regex over repo-relative path (alternative)
+    file_patterns: list[str] = field(default_factory=list)  # multi-glob form
+    paths: list[str] = field(default_factory=list)  # per-side scan scope
 
 
 @dataclass
@@ -62,10 +82,12 @@ class ImplicitConnector:
     """Scans files for implicit connections and creates graph edges."""
 
     def __init__(self, store: GraphStore, root: Path,
-                 rules: list[ImplicitConnectionRule]):
+                 rules: list[ImplicitConnectionRule],
+                 extra_skip_dirs: Optional[list[str]] = None):
         self._store = store
         self._root = root
         self._rules = rules
+        self._extra_skip_dirs = frozenset(extra_skip_dirs or [])
 
     def connect(self) -> dict[str, Any]:
         """Process all rules and create edges. Returns summary."""
@@ -108,32 +130,59 @@ class ImplicitConnector:
 
     def _scan_side(self, side: SideConfig,
                    paths: list[str]) -> list[ExtractedKey]:
-        """Scan files matching side config and extract keys."""
-        pattern = re.compile(side.content_pattern)
+        """Scan files matching side config and extract keys.
+
+        Uses ``path_pattern`` against the repo-relative POSIX path when set,
+        otherwise ``content_pattern`` against each line of the file.
+        """
+        key_re = None
+        if side.path_pattern:
+            key_re = re.compile(side.path_pattern)
+        elif side.content_pattern:
+            key_re = re.compile(side.content_pattern)
+        if key_re is None:
+            return []
+
+        patterns = [p for p in ([side.file_pattern] + list(side.file_patterns)) if p]
         results: list[ExtractedKey] = []
-        scan_roots = ([self._root / p for p in paths]
-                      if paths else [self._root])
+        scan_bases = side.paths or paths
+        scan_roots = ([self._root / p for p in scan_bases]
+                      if scan_bases else [self._root])
+        seen_files: set[str] = set()
 
         for scan_root in scan_roots:
             if not scan_root.is_dir():
                 continue
-            for file_path in scan_root.rglob(side.file_pattern):
-                if not file_path.is_file() or file_path.is_symlink():
+            for file_path in _iter_matching_files(scan_root, patterns, self._extra_skip_dirs):
+                file_key = str(file_path)
+                if file_key in seen_files:
                     continue
+                seen_files.add(file_key)
+
+                if side.path_pattern:
+                    rel = _rel_posix(file_path, self._root)
+                    for m in key_re.finditer(rel):
+                        key = _group_or_whole(m, side.key_group)
+                        if key:
+                            results.append(ExtractedKey(
+                                file_path=file_key, line=1, key=key,
+                            ))
+                    continue
+
                 try:
+                    if file_path.stat().st_size > _MAX_FILE_BYTES:
+                        continue
                     content = file_path.read_text(errors="replace")
                 except (OSError, PermissionError):
                     continue
-                for line_num, line in enumerate(content.splitlines(), 1):
-                    for m in pattern.finditer(line):
-                        if m.lastindex and m.lastindex >= side.key_group:
-                            key = m.group(side.key_group)
-                            if key:
-                                results.append(ExtractedKey(
-                                    file_path=str(file_path),
-                                    line=line_num,
-                                    key=key,
-                                ))
+                for m in key_re.finditer(content):
+                    key = _group_or_whole(m, side.key_group)
+                    if key:
+                        results.append(ExtractedKey(
+                            file_path=file_key,
+                            line=content.count("\n", 0, m.start()) + 1,
+                            key=key,
+                        ))
         return results
 
     def _match_keys(self, sources: list[ExtractedKey],
@@ -203,11 +252,93 @@ class ImplicitConnector:
 
 def _parse_side(data: dict) -> SideConfig:
     """Parse a source/target config dict into SideConfig."""
+    raw_pattern = data.get("filePattern", "")
+    if isinstance(raw_pattern, list):
+        file_pattern = raw_pattern[0] if raw_pattern else ""
+        file_patterns = [p for p in raw_pattern[1:] if isinstance(p, str)]
+    else:
+        file_pattern = raw_pattern
+        file_patterns = [p for p in data.get("filePatterns", []) if isinstance(p, str)]
     return SideConfig(
-        file_pattern=data["filePattern"],
-        content_pattern=data["contentPattern"],
+        file_pattern=file_pattern,
+        content_pattern=data.get("contentPattern", ""),
         key_group=data.get("keyGroup", 1),
+        path_pattern=data.get("pathPattern", ""),
+        file_patterns=file_patterns,
+        paths=[p for p in data.get("paths", []) if isinstance(p, str)],
     )
+
+
+def _glob_to_regex(pattern: str) -> "re.Pattern":
+    """Translate a glob (``**``, ``*``, ``?``) into a compiled regex.
+
+    ``**/`` matches zero or more directories; ``*`` stays within a segment.
+    """
+    out: list[str] = []
+    i = 0
+    n = len(pattern)
+    while i < n:
+        ch = pattern[i]
+        if ch == "*":
+            if i + 1 < n and pattern[i + 1] == "*":
+                i += 2
+                if i < n and pattern[i] == "/":
+                    out.append("(?:.*/)?")
+                    i += 1
+                else:
+                    out.append(".*")
+                continue
+            out.append("[^/]*")
+        elif ch == "?":
+            out.append("[^/]")
+        else:
+            out.append(re.escape(ch))
+        i += 1
+    return re.compile("^" + "".join(out) + "$")
+
+
+def _iter_matching_files(root: Path, patterns: list[str],
+                         extra_skip_dirs: frozenset[str] = frozenset()):
+    """Yield files matching any glob pattern.
+
+    Uses ``os.walk`` with directory pruning (never descends into
+    ``node_modules``/build output) so the scan stays bounded on large repos,
+    rather than ``rglob`` which enumerates excluded trees first.
+    ``extra_skip_dirs`` carries project-specific build dirs from
+    ``graphSettings.scanSkipDirs``.
+    """
+    regexes = [_glob_to_regex(p) for p in patterns]
+    skip = _SKIP_DIRS | _EXTRA_SKIP_DIRS | extra_skip_dirs
+    for dirpath, dirnames, filenames in os.walk(str(root)):
+        dirnames[:] = [d for d in dirnames if d not in skip]
+        for fname in filenames:
+            full = Path(dirpath) / fname
+            if full.is_symlink():
+                continue
+            rel = _rel_posix(full, root)
+            if fname in skip:
+                continue
+            if any(r.match(rel) or r.match(fname) for r in regexes):
+                yield full
+
+
+def _rel_posix(path: Path, root: Path) -> str:
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except (OSError, ValueError):
+        return path.as_posix()
+
+
+def _group_or_whole(match: "re.Match", group: int) -> Optional[str]:
+    """Return a capture group, or None when the pattern captured nothing.
+
+    A pattern without a capture group is a config error for a key-join rule:
+    returning the whole match would emit an arbitrary line as a key, so the
+    match is skipped instead.
+    """
+    if match.lastindex and match.lastindex >= group:
+        return match.group(group)
+    return None
 
 
 def _parse_rules(config: dict) -> list[ImplicitConnectionRule]:
@@ -241,5 +372,6 @@ def connect_implicit(
     if not rules:
         return {"status": "skipped", "reason": "no implicitConnections rules"}
 
-    connector = ImplicitConnector(store, root, rules)
+    scan_skip_dirs = config.get("graphSettings", {}).get("scanSkipDirs", [])
+    connector = ImplicitConnector(store, root, rules, extra_skip_dirs=scan_skip_dirs)
     return connector.connect()

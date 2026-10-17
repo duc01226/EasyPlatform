@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal, ViewEncapsulation } from '@angular/core';
 
-import { PlatformCoreModule, PlatformHighlightSearchTextPipe } from '@libs/platform-core';
-import { AppBaseVmStoreComponent } from './shared/base';
+import { PlatformCoreModule, PlatformHighlightSearchTextPipe, PlatformVmStoreComponent } from '@libs/platform-core';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -56,7 +55,7 @@ import { TaskListComponent } from './shared/components/task-list';
     ],
     providers: []
 })
-export class AppComponent extends AppBaseVmStoreComponent<AppVm, AppStore> {
+export class AppComponent extends PlatformVmStoreComponent<AppVm, AppStore> {
     public title = 'Platform Example App';
     public textSnippetsItemGridDisplayedColumns = ['SnippetText', 'FullText'];
 

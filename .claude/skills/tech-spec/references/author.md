@@ -2,24 +2,41 @@
 >
 > **`{TechRoot}` = `docs/project-config.json` → `specRoots.technical.path`.** Resolve it at run time. NEVER hardcode a root. `{Service}` and `{Component}` are **patterns**, never literal names.
 
+## Contents
+
+- [Profile and generator applicability](#profile-and-generator-applicability)
+- [Mode: Generate the DERIVED Technical View](#mode-generate-the-derived-technical-view)
+- [The Determinism Contract — read before emitting anything](#the-determinism-contract--read-before-emitting-anything)
+- [Step G1 — Derive the Use Case Inventory](#step-g1--derive-the-use-case-inventory)
+- [Step G2 — Derive the TC ↔ Test Map](#step-g2--derive-the-tc--test-map)
+- [Step G3 — Derive the Cross-Service Topology](#step-g3--derive-the-cross-service-topology)
+- [Step G4 — The Technical Coverage Report (derived, reported — never a gate on the business tree)](#step-g4--the-technical-coverage-report-derived-reported--never-a-gate-on-the-business-tree)
+- [Step G5 — The Harvest Candidate Report (REPORT ONLY — C9)](#step-g5--the-harvest-candidate-report-report-only--c9)
+- [The Emit Template — fixed sections, declared order](#the-emit-template--fixed-sections-declared-order)
+- [Mode: Audit](#mode-audit)
+
+## Profile and generator applicability
+
+Resolve `specArtifacts`, `techSpecScan`, and the generator's supported annotation contract before deriving anything. This reference applies only to the annotation-derived `TestSpec` / `TechnicalSpec` view. If a native artifact profile applies, return `UNSUPPORTED` for native technical-view generation before invoking the generator; do not translate native scenarios into duplicate TC annotations or emit an empty view. With no native profile, preserve the strict §8/TC default for annotation adopters. An absent `techSpecScan` is `NOT CONFIGURED`, never a successful zero-case map.
+
 # Mode: Generate the DERIVED Technical View
 
 ## The Determinism Contract — read before emitting anything
 
 **The tree's flagship oracle is C6: regenerate over unchanged source ⇒ empty diff.** An LLM is not naturally deterministic, so determinism here is **structural, not aspirational** — it is a consequence of never judging (C8) and never composing (below).
 
-| Layer                                        | Determinism           | Mechanism                                                                                                                |
-| -------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **File set** (which `{Component}.md` exist)  | **Deterministic**     | Derived from a grep over the code tree — same code, same set                                                             |
-| **Section structure + order + headings**     | **Deterministic**     | The fixed template below. No run may add, drop, or reorder a section                                                     |
-| **Anchors + IDs + banner + regenerate line** | **Deterministic**     | Mechanical: `[Source:]` anchors, TC IDs, `{TestProject}::{TestClass}::{TestMethodName}` links                            |
-| **Tables**                                   | **Deterministic**     | Grepped facts in the **declared sort order** below — an undeclared sort is a non-determinism source disguised as a table |
-| **Free-form prose**                          | **NOT deterministic** | ⚠️ **The residual — which is why there is none. See the rule below**                                                     |
+| Layer                                                | Determinism         | Mechanism                                                                                                   |
+| ---------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **File set** (which `{Component}.md` exist)          | **Deterministic**   | Derived from a grep over the code tree — same code, same set                                                |
+| **Section structure + order + headings**             | **Deterministic**   | The fixed template below. No run may add, drop, or reorder a section                                        |
+| **Anchors + IDs + banner + regenerate line**         | **Deterministic**   | Mechanical: `[Source:]` anchors, TC IDs, `{TestProject}::{TestClass}::{TestMethodName}` links               |
+| **Tables**                                           | **Deterministic**   | Grepped facts in the **declared sort order** below — an undeclared sort is a non-determinism source disguised as a table |
+| **Free-form prose**                                  | **NOT deterministic** | ⚠️ **The residual — which is why there is none. See the rule below**                                       |
 
 > **[BLOCKING] The templated-prose rule.** Every emitted sentence is a **template instantiated with mechanically-derived values** — never free narration. **A fact that cannot be templated is emitted in a table, never in a sentence.**
 >
 > - ✅ `` `{Component}` handles {N} write operations, {M} read operations, {K} event-driven operations, and {J} background jobs. ``
-> - ❌ _"This component is the heart of the ordering flow and is fairly complex, so take care when modifying the retry path."_
+> - ❌ *"This component is the heart of the ordering flow and is fairly complex, so take care when modifying the retry path."*
 >
 > **Why this rule is load-bearing twice over:** (1) it is what makes C6 achievable — composed prose drifts between runs and turns the oracle into a coin flip; (2) **it is the secret-safety control** — a generator that instantiates fixed templates over named, grepped fields **cannot** incidentally paste a connection string, token, or customer datum it happened to read in config, a seeder, or a fixture. An un-templated narrator can. Determinism and secret-safety share one mechanism.
 >
@@ -27,14 +44,14 @@
 
 **Declared sort keys (pinned — a table without its declared sort is non-deterministic):**
 
-| Table                    | Sort key                                                                                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Use Case Inventory       | `Layer` ascending (lexical)                                                                                                              |
-| Operation catalog        | `Kind` (Write, Read, Event, Background — in that fixed order), then `Operation` ascending (lexical)                                      |
-| TC ↔ test map            | `TC ID` ascending (lexical)                                                                                                              |
+| Table                    | Sort key                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| Use Case Inventory       | `Layer` ascending (lexical)                                                    |
+| Operation catalog        | `Kind` (Write, Read, Event, Background — in that fixed order), then `Operation` ascending (lexical) |
+| TC ↔ test map            | `TC ID` ascending (lexical)                                                    |
 | Cross-service topology   | `Boundary` (Producers, Consumers, Sagas, Sync calls, Shared contracts, Data ownership — fixed order), then `Message` ascending (lexical) |
-| Coverage report          | Row order fixed by the template (never re-sorted)                                                                                        |
-| Harvest candidate report | `[Source:]` anchor ascending (lexical)                                                                                                   |
+| Coverage report          | Row order fixed by the template (never re-sorted)                              |
+| Harvest candidate report | `[Source:]` anchor ascending (lexical)                                         |
 
 ---
 
@@ -68,7 +85,7 @@ grep -r "{role-and-permission-enum-markers}" {module-source-root}/ --include="{b
 grep -r "{route-guard-markers}" {frontend-root}/ --include="{frontend-source-glob}" -l 2>/dev/null | grep -i {module} | head -5
 ```
 
-> **The roles this grep yields are architecture-derived** (authorization attributes and guards). They are emitted here as a **derived technical count**. **A role is a business noun; a permission attribute is not** — the _business_ actor list lives in the Feature Spec and is owned by `/spec`. This skill never sources a business actor list, and never lets an auth attribute mint a business TC count.
+> **The roles this grep yields are architecture-derived** (authorization attributes and guards). They are emitted here as a **derived technical count**. **A role is a business noun; a permission attribute is not** — the *business* actor list lives in the Feature Spec and is owned by `/spec`. This skill never sources a business actor list, and never lets an auth attribute mint a business TC count.
 
 **Use Case Inventory Output:**
 
@@ -85,10 +102,10 @@ grep -r "{route-guard-markers}" {frontend-root}/ --include="{frontend-source-glo
 
 > **⚠️ Both floor shapes exist and are NOT interchangeable — do not normalize them.**
 >
-> | Shape       | Includes                                     | Where it applies                                                      |
-> | ----------- | -------------------------------------------- | --------------------------------------------------------------------- |
+> | Shape       | Includes                                    | Where it applies                                                     |
+> | ----------- | ------------------------------------------- | -------------------------------------------------------------------- |
 > | **N+M+K+J** | write + read + event-driven + **background** | The Use Case Inventory total above, and the technical coverage report |
-> | **N+M+K**   | write + read + event-driven (**no `J`**)     | The §8 TC-authoring floor shape used by the business tree             |
+> | **N+M+K**   | write + read + event-driven (**no `J`**)     | The §8 TC-authoring floor shape used by the business tree            |
 >
 > **Emit the shape the section declares. Never merge them into one number**, and never silently add `J` to an `N+M+K` context — the two shapes count different populations, and collapsing them makes a coverage claim false in one of the two places it is read.
 
@@ -119,13 +136,13 @@ Execute the host SKILL.md's `SYNC:cross-service-check` scan over `{module-source
 
 Emit the component's technical coverage against its own inventory. **These are technical coverage obligations over architecture-derived counts** — the technical tree counts handlers, and it must not stop counting them.
 
-| Check                    | Required                            | Actual | Status    |
-| ------------------------ | ----------------------------------- | ------ | --------- |
-| CRUD/Core covered        | ≥ Write Ops (N) from inventory      | {n}    | PASS/FAIL |
-| Read/View covered        | ≥ Read Ops with filters (M)         | {n}    | PASS/FAIL |
-| Event/Background covered | ≥ Event-Driven (K) + Background (J) | {n}    | PASS/FAIL |
-| Permission paths covered | ≥ derived actor-role count × 2      | {n}    | PASS/FAIL |
-| **Total**                | ≥ Grand Total (N+M+K+J)             | {n}    | PASS/FAIL |
+| Check                        | Required                                       | Actual | Status    |
+| ---------------------------- | ---------------------------------------------- | ------ | --------- |
+| CRUD/Core covered            | ≥ Write Ops (N) from inventory                 | {n}    | PASS/FAIL |
+| Read/View covered            | ≥ Read Ops with filters (M)                    | {n}    | PASS/FAIL |
+| Event/Background covered     | ≥ Event-Driven (K) + Background (J)            | {n}    | PASS/FAIL |
+| Permission paths covered     | ≥ derived actor-role count × 2                 | {n}    | PASS/FAIL |
+| **Total**                    | ≥ Grand Total (N+M+K+J)                        | {n}    | PASS/FAIL |
 
 Plus the per-operation coverage checks:
 
@@ -138,10 +155,10 @@ Plus the per-operation coverage checks:
 > **[BLOCKING] What this report is, and is NOT.**
 >
 > - It **IS** a derived count of technical coverage against grepped architecture, emitted in the technical tree where architecture-bound counting is correct.
-> - It **IS NOT** a mandate that mints business test cases. **A FAIL here NEVER instructs `/spec` to author a TC**, and this skill never writes §8. A gap routes to `/integration-test` (a missing _test_), or is simply reported.
+> - It **IS NOT** a mandate that mints business test cases. **A FAIL here NEVER instructs `/spec` to author a TC**, and this skill never writes §8. A gap routes to `/integration-test` (a missing *test*), or is simply reported.
 > - **Grand Total is a count the generator emits because it counted** — not a floor imposed on any business artifact. The business tree's §8 floor is business-sourced and is owned by `/spec`; this number has no authority over it.
 >
-> **Why the distinction is the point:** an architecture-derived number driving a _business_ TC count is what made an auth attribute able to move a business floor. Counting handlers is correct **here** and wrong **there**. This is a re-homing, not an amnesty — the count survives, at the address where it is legitimate.
+> **Why the distinction is the point:** an architecture-derived number driving a *business* TC count is what made an auth attribute able to move a business floor. Counting handlers is correct **here** and wrong **there**. This is a re-homing, not an amnesty — the count survives, at the address where it is legitimate.
 
 ---
 
@@ -149,8 +166,8 @@ Plus the per-operation coverage checks:
 
 When the derivation surfaces an invariant **enforced at ≥2 points with no business rule citing it**, emit it to the candidate report:
 
-| Candidate | Enforcement sites (`[Source:]` anchors) | Observable rule | Route                 |
-| --------- | --------------------------------------- | --------------- | --------------------- |
+| Candidate | Enforcement sites (`[Source:]` anchors) | Observable rule | Route |
+| --------- | --------------------------------------- | --------------- | ----- |
 | {id}      | {≥2 anchors}                            | {templated}     | `/spec [mode=update]` |
 
 > **[BLOCKING — C9]** This report **never gates**. It is **exit 0**, never an `error`, never a build gate, never a precondition on regeneration. It **routes**; it never writes a rule.
@@ -163,7 +180,7 @@ When the derivation surfaces an invariant **enforced at ≥2 points with no busi
 
 Emit exactly these sections, in exactly this order. No run may add, drop, or reorder.
 
-```markdown
+````markdown
 > **DERIVED — regenerate with the tech-spec skill; do NOT hand-edit.** Source of truth: the code and tests under `[Source: {namespace}/{service}]`. Regenerated: {YYYY-MM-DD}.
 
 # {Service} / {Component} — Technical View
@@ -200,7 +217,7 @@ Emit exactly these sections, in exactly this order. No run may add, drop, or reo
 
 | Candidate | Enforcement sites | Observable rule | Route |
 | --------- | ----------------- | --------------- | ----- |
-```
+````
 
 > **[BLOCKING]** Write each file immediately after instantiating it; do NOT accumulate large outputs in context (**C4**).
 > **[BLOCKING]** The banner is literal: `> DERIVED — regenerate with the tech-spec skill; do NOT hand-edit`. A file missing it is a build failure.
@@ -214,6 +231,8 @@ Report which derived views lag their source. **Never mutates.**
 
 1. For each `{TechRoot}/{Service}/{Component}.md`, read its regenerate date / compare against the mtime or git log of its `[Source:]` anchors.
 2. Emit a stale-list: `{Component}` · regenerate date · newest source change · verdict (FRESH / STALE).
-3. Route: `→ run /tech-spec [mode=generate] --scope={Service}/{Component}` for each STALE row.
+3. Route: `→ run /tech-spec [mode=generate]` for the configured technical root, then verify the
+   regenerated view for each STALE component. The standalone generator intentionally owns one
+   full-root generation contract; do not invent unsupported `--scope` or `--all` arguments.
 
 > Audit reports staleness; it does not regenerate. A STALE view is not a defect in the view — it is the expected state of a projection whose source moved. **Regenerate; never patch.**

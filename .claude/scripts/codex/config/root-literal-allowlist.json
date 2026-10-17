@@ -1,0 +1,122 @@
+{
+  "$schema": "per-file suppression list for verify-configurable-root-literals.mjs",
+  "$contract": [
+    "FRAMEWORK PLANE ONLY. This file ships inside the portable .claude bundle and is copied",
+    "verbatim into every adopting project, so it must contain NO path belonging to one particular",
+    "project — such an entry would carry that project's suppressions into the next repository that",
+    "copies the bundle. Entries here are `.claude/**` plus root-level filenames that exist in every",
+    "project (CLAUDE.md).",
+    "An adopting project's OWN reference-doc prose belongs in the project plane instead, at",
+    "<docsRoots.projectReference.path>/root-literal-allowlist.json — discovered automatically,",
+    "optional, and absent in this repository.",
+    "SUPPRESSION ONLY — never the source of truth for what remains. The verifier recomputes the",
+    "live per-file residue on every run; a file that gets converted simply stops appearing in the",
+    "residue report and needs NO edit here.",
+    "Every entry requires a non-empty `reason` naming the phase that owns its conversion — a bare",
+    "path list decays into permanent suppression.",
+    "WRITE SET: phase 03 (seeds) and phase 18 (cleans). No other phase writes this file.",
+    "An entry whose file has zero remaining occurrences is a WARNING under the default",
+    "--migrating mode and an ERROR under --strict (phase 18 onward)."
+  ],
+  "files": {
+    ".claude/.ck.json": {
+      "reason": "permanent — config DEFAULT VALUES with live consumers (codeReview.rulesPath, portability.docsIndexPath), not documentation prose"
+    },
+    ".claude/.todo-state.json": {
+      "reason": "permanent — generated runtime state, not authored prose"
+    },
+    ".claude/hooks/config/doc-sync-gate.json": {
+      "reason": "permanent — per-project hook config; the advisory gate never blocks and .md already fast-exits by extension"
+    },
+    ".claude/hooks/lib/__tests__/ck-config-utils.test.cjs": {
+      "reason": "permanent — fixture: the literal is the normalizer's test input"
+    },
+    ".claude/hooks/lib/ck-config-loader.cjs": {
+      "reason": "permanent — DEFAULT_PORTABILITY is the single definition of the default docs-index path"
+    },
+    ".claude/hooks/lib/ck-config-schema.cjs": {
+      "reason": "permanent — citation of this repo's own spec document"
+    },
+    ".claude/hooks/lib/ck-path-utils.cjs": {
+      "reason": "permanent — worked counter-examples that justify isPathWithinRoot / joinRoot"
+    },
+    ".claude/hooks/lib/file-conventions.cjs": {
+      "reason": "permanent — provenance pointer to a historical plan directory"
+    },
+    ".claude/hooks/lib/project-config-loader.cjs": {
+      "reason": "permanent — PORTABILITY_TOKENS is the single definition of all 8 defaults"
+    },
+    ".claude/hooks/lib/project-config-schema.cjs": {
+      "reason": "permanent — schema describe: strings declaring each root's default; file cannot gain a top-level require (vm sandbox at experience-config.test.cjs:189)"
+    },
+    ".claude/hooks/lib/prompt-ledger-store.cjs": {
+      "reason": "permanent — citation of this repo's own spec document"
+    },
+    ".claude/hooks/lib/session-init-helpers.cjs": {
+      "reason": "permanent — illustrative list in the greenfield-detection docblock"
+    },
+    ".claude/hooks/lib/test-fixture-generator.cjs": {
+      "reason": "permanent — deterministic test-fixture fallback"
+    },
+    ".claude/hooks/prompt-ledger.cjs": {
+      "reason": "permanent — citation of this repo's own spec document"
+    },
+    ".claude/scripts/affirmative_triage.py": {
+      "reason": "permanent — CLI usage examples; the path is the user's chosen output location"
+    },
+    ".claude/scripts/ck-help.py": {
+      "reason": "permanent — the literal is the worked example of the normalization rule being printed"
+    },
+    ".claude/scripts/code_graph/graph.py": {
+      "reason": "permanent — path-recognition heuristic alongside non-configurable src/ docs/ scripts/"
+    },
+    ".claude/scripts/codex/read-workflow-entry.mjs": {
+      "reason": "permanent — R8 lockstep defaults-only duplicate"
+    },
+    ".claude/scripts/codex/verify-configurable-root-literals.mjs": {
+      "reason": "verifier self-reference — permanent (phase 03)"
+    },
+    ".claude/scripts/codex/verify-no-project-residue.mjs": {
+      "reason": "permanent — comment citing the denylist's source doc"
+    },
+    ".claude/scripts/codex/verify-sdd-semantic-compliance.mjs": {
+      "reason": "permanent — defaults table plus the docblock that DEFINES the form-(b) idiom (:81) and its worked examples"
+    },
+    ".claude/scripts/codex/verify-skill-protocol-compliance.mjs": {
+      "reason": "permanent — terse user-facing failure message"
+    },
+    ".claude/scripts/doc-impact-map.cjs": {
+      "reason": "permanent — comments framed \"at DEFAULTS\"; the docs-tree root and the specRoots exclusion are both config-resolved"
+    },
+    ".claude/scripts/inject_task_tracking_sync.py": {
+      "reason": "permanent — comment naming the default tree as its example"
+    },
+    ".claude/scripts/lib/workflow-skills-catalog.cjs": {
+      "reason": "permanent — R8 lockstep defaults-only duplicate; deduplicating renders literal {SPEC_ROOT} into CLAUDE.md"
+    },
+    ".claude/scripts/set-active-plan.cjs": {
+      "reason": "permanent — one-line CLI usage example"
+    },
+    ".claude/scripts/skill-gc.cjs": {
+      "reason": "permanent — ADR citation + a fail-safe grep exclude; .claude/scripts ships without .claude/hooks/lib in a stripped tree"
+    },
+    ".claude/scripts/tests/convention-config.test.cjs": {
+      "reason": "permanent — test comment naming an optional project file"
+    },
+    ".claude/scripts/tests/experience-config.test.cjs": {
+      "reason": "permanent — fixtures asserting zero-config default behaviour"
+    },
+    ".claude/scripts/tests/project-root.test.mjs": {
+      "reason": "permanent — fixture stubbing the default docs-index path"
+    },
+    ".claude/skills/ai-context-refresh/scripts/section-builders.cjs": {
+      "reason": "permanent — DEFAULT_REF_DOCS_ROOT / DEFAULT_SPEC_ROOT are the single definition of the defaults the config overrides"
+    },
+    ".claude/skills/git-developer-performance/scripts/git-developer-performance.cjs": {
+      "reason": "permanent — code default literal"
+    },
+    "CLAUDE.md": {
+      "reason": "permanent — marker-managed regions regenerated by generate-claude-md.cjs from section-builders.cjs, which already resolves each root from config; these literals are THIS repo's resolved defaults, not hardcoded paths"
+    }
+  }
+}

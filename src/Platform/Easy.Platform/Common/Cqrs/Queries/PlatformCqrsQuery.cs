@@ -23,10 +23,10 @@ namespace Easy.Platform.Common.Cqrs.Queries;
 /// - Support for paging and filtering
 /// 
 /// Used extensively across platform services:
-/// - Growth service: Employee data, leave requests, attendance records
-/// - Employee service: Payroll information, employee profiles
-/// - Talents service: Candidate data, hiring workflows
-/// - Permission Provider: Subscription and usage data
+/// - Read models over a consuming service's own entities
+/// - Cross-service reads over data a peer service owns
+/// - Reporting, list, and detail projections
+/// - Subscription and usage data
 /// 
 /// All queries should implement cache key building for performance optimization.
 /// Integrates with platform caching system for automatic cache management.
@@ -88,10 +88,10 @@ public interface IPlatformCqrsQuery<out TResult> : IPlatformCqrsQuery, IRequest<
 /// 4. Register handler with dependency injection
 /// 
 /// Examples from codebase:
-/// - GetEmployeeByIdQuery in Employee service
-/// - GetLeaveRequestsQuery in Growth service
-/// - GetPayrollRecordsQuery in Talents service
-/// - GetSubscriptionDetailsQuery in Permission Provider
+/// - GetEntityByIdQuery in a consuming service
+/// - GetRelatedRecordsQuery in a consuming service
+/// - GetHistoryQuery in a consuming service
+/// - GetSubscriptionDetailsQuery in a consuming service
 /// 
 /// All queries should consider caching strategy for optimal performance.
 /// </remarks>
@@ -131,9 +131,9 @@ public abstract class PlatformCqrsQuery<TResult> : PlatformCqrsRequest, IPlatfor
 /// Result should include total count and paging metadata for client-side handling.
 /// 
 /// Examples from codebase:
-/// - GetPagedEmployeesQuery in Employee service
-/// - GetPagedLeaveRequestsQuery in Growth service
-/// - GetPagedPayrollRecordsQuery in Talents service
+/// - GetPagedEntitiesQuery in a consuming service
+/// - GetPagedRelatedRecordsQuery in a consuming service
+/// - GetPagedHistoryQuery in a consuming service
 /// </remarks>
 public abstract class PlatformCqrsPagedQuery<TResult, TItem> : PlatformCqrsQuery<TResult>, IPlatformPagedRequest
     where TResult : PlatformCqrsQueryPagedResult<TItem>

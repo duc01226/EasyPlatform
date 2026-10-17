@@ -25,10 +25,10 @@ namespace Easy.Platform.Common.Cqrs.Commands;
 /// - Workflow and business process automation
 /// 
 /// Used across platform services for command execution notifications:
-/// - Growth service: Leave request processing events
-/// - Employee service: Payroll operation events
-/// - Talents service: Talent management workflow events
-/// - Permission Provider: Subscription management events
+/// - Request/approval processing events
+/// - Batch operation events
+/// - Business workflow events
+/// - Subscription management events
 /// </remarks>
 public abstract class PlatformCqrsCommandEvent : PlatformCqrsEvent
 {
@@ -138,7 +138,7 @@ public class PlatformCqrsCommandEvent<TCommand, TCommandResult> : PlatformCqrsCo
     /// Provides specific identification of which command was executed.
     /// </summary>
     /// <value>
-    /// Command type name (e.g., "CreateEmployeeCommand", "ProcessPayrollCommand").
+    /// Command type name (e.g., "CreateEntityCommand", "ProcessBatchCommand").
     /// Used for specific event identification and handler routing.
     /// </value>
     /// <remarks>

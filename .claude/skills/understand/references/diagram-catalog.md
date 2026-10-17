@@ -4,20 +4,30 @@
 >
 > Mermaid only — it renders inline in the report with no dependency and no build step.
 
+## Contents
+
+- [The diagram set](#the-diagram-set)
+- [Per-diagram specs](#per-diagram-specs)
+- [Derivation ladder](#derivation-ladder)
+- [Provenance marking](#provenance-marking)
+- [Size discipline](#size-discipline)
+- [Redaction](#redaction)
+- [Target forms](#target-forms)
+
 ## The diagram set
 
-**Mandatory** means _always attempted_, for every target. An underivable mandatory diagram degrades to a **stated blocker** (see the ladder below) — never to silence. The Status column answers **"is this diagram owed?"**, never "which section renders it" — D5 is owed on every report and renders in §4, not §2.
+**Mandatory** means *always attempted*, for every target. An underivable mandatory diagram degrades to a **stated blocker** (see the ladder below) — never to silence. The Status column answers **"is this diagram owed?"**, never "which section renders it" — D5 is owed on every report and renders in §4, not §2.
 
-| ID     | Diagram                               | Status                                 | Fires when                                                                                                                                                                                                                                                                                                       |
-| ------ | ------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **D1** | System / component `flowchart`        | **MANDATORY**                          | Always                                                                                                                                                                                                                                                                                                           |
-| **D2** | Domain `erDiagram`                    | **MANDATORY**                          | Always                                                                                                                                                                                                                                                                                                           |
-| **D3** | `sequenceDiagram` — one per main flow | **MANDATORY**                          | Always (one per main flow — every one, no maximum)                                                                                                                                                                                                                                                               |
-| D4     | `stateDiagram-v2`                     | Conditional                            | An in-scope entity has a `status` / `state` / `phase` / `stage` field, an enum of lifecycle values, or a transition guard                                                                                                                                                                                        |
-| **D5** | Review-path `flowchart`               | **MANDATORY** — rendered in §4, not §2 | Always. The reading order: which group of files to open first, then next. **Fully owned by `references/review-path.md`** — purpose, derivation, skeleton, labelling and failure modes all live there, so D5 has no spec below. WRONG when duplicated into §2: §2 shows _what the system is_, §4 _how to read it_ |
-| D6     | Phase / milestone `flowchart`         | Conditional                            | The target is a **plan**, roadmap, or multi-phase sequence                                                                                                                                                                                                                                                       |
-| **D7** | Story-map `flowchart`                 | **MANDATORY**                          | Always. Renders the §3 stories and the §4 route as ONE picture — the bridge between what the change is _for_ and where you start reading                                                                                                                                                                         |
-| **D8** | Group-map `flowchart`                 | Conditional                            | The run decomposed the target into **≥2 understanding groups** (observable in the group ledger). Renders ONCE, in the report's **spine region** — the header region above the first `# G{n}` block — never inside a group block                                                                                  |
+| ID | Diagram | Status | Fires when |
+| --- | --- | --- | --- |
+| **D1** | System / component `flowchart` | **MANDATORY** | Always |
+| **D2** | Domain `erDiagram` | **MANDATORY** | Always |
+| **D3** | `sequenceDiagram` — one per main flow | **MANDATORY** | Always (one per main flow — every one, no maximum) |
+| D4 | `stateDiagram-v2` | Conditional | An in-scope entity has a `status` / `state` / `phase` / `stage` field, an enum of lifecycle values, or a transition guard |
+| **D5** | Review-path `flowchart` | **MANDATORY** — rendered in §4, not §2 | Always. The reading order: which group of files to open first, then next. **Fully owned by `references/review-path.md`** — purpose, derivation, skeleton, labelling and failure modes all live there, so D5 has no spec below. WRONG when duplicated into §2: §2 shows *what the system is*, §4 *how to read it* |
+| D6 | Phase / milestone `flowchart` | Conditional | The target is a **plan**, roadmap, or multi-phase sequence |
+| **D7** | Story-map `flowchart` | **MANDATORY** | Always. Renders the §3 stories and the §4 route as ONE picture — the bridge between what the change is *for* and where you start reading |
+| **D8** | Group-map `flowchart` | Conditional | The run decomposed the target into **≥2 understanding groups** (observable in the group ledger). Renders ONCE, in the report's **spine region** — the header region above the first `# G{n}` block — never inside a group block |
 
 **Trigger discipline.** A conditional diagram fires on something **observable in the code or artifact** — a field, an enum, a file type. Never on "it would be useful here". A `stateDiagram` for a change with no state machine is noise that costs the reader attention and costs you credibility.
 
@@ -31,7 +41,7 @@ Each spec has the same five fields: **purpose · derivation source · skeleton �
 
 - **Purpose:** the one picture that orients a reviewer before they open any file — what talks to what, and where the change landed.
 - **Derivation source:** `code_graph trace <file> --direction both --node-mode file --json` → grep+read of imports/references → the diff's own file list grouped by directory.
-- **Labelling:** reuse `graph-export`'s vocabulary — nodes are files/classes/functions, edges are labelled with the relationship (`-->|calls|`, `-->|imports|`), and layer grouping uses `subgraph`. Mark changed nodes so the reader sees the blast site at a glance.
+- **Labelling:** reuse `graph-code --mode=export`'s vocabulary — nodes are files/classes/functions, edges are labelled with the relationship (`-->|calls|`, `-->|imports|`), and layer grouping uses `subgraph`. Mark changed nodes so the reader sees the blast site at a glance.
 - **Skeleton:**
 
 ```mermaid
@@ -57,7 +67,7 @@ flowchart TD
 
 - **Purpose:** the nouns and their relationships — what data the feature owns and how it connects.
 - **Derivation source:** an existing spec §5 `erDiagram` (**lift it verbatim** — cheapest correct source) → entity/model class fields read from source → migration or schema files.
-- **Labelling:** match the repo standard exactly (`spec/references/author.md:744-760`, `domain-analysis/SKILL.md:708-720`): **tech-agnostic types only** — `string`, `number`, `boolean`, `date`, `list`, `map`. Mark `PK` / `FK`. Cardinality carries a quoted label. Cross-service references are ID-only, annotated as such.
+- **Labelling:** match the repo standard exactly (`spec/references/author.md` → "Domain Model ERD" ERD rules, `domain-analysis/SKILL.md` → "Step 6: Generate ERD"): **tech-agnostic types only** — `string`, `number`, `boolean`, `date`, `list`, `map`. Mark `PK` / `FK`. Cardinality carries a quoted label. Cross-service references are ID-only, annotated as such.
 - **Skeleton:**
 
 ```mermaid
@@ -144,7 +154,7 @@ flowchart LR
 
 ### D7 — Story map (MANDATORY)
 
-- **Purpose:** the single picture that answers _"what is this **for**, and where do I start?"_ — it puts each user story next to the business rule it protects, the test that proves it, and the review stage where the reviewer will actually meet it. It is the bridge between §3 and §4, and it is the diagram a reviewer looks at first.
+- **Purpose:** the single picture that answers *"what is this **for**, and where do I start?"* — it puts each user story next to the business rule it protects, the test that proves it, and the review stage where the reviewer will actually meet it. It is the bridge between §3 and §4, and it is the diagram a reviewer looks at first.
 - **Derivation source:** §3 and §4, which are both already derived — D7 introduces **no new claim**. Every story node restates a §3 story, every rule node restates a §3 invariant with its `file:line`, every stage node restates a §4 stage. If a story/rule/stage is not in §3 or §4, it does not belong in D7; if D7 seems to need one that is missing, the defect is in §3/§4 and is fixed there.
 - **Labelling:** a story with **no** covering test carries the node label `⚠ no test` — the same coverage gap §3 records, made visible. **Never** invent a `TC-*` ID to fill a node (`[ANTI-HALLUCINATION]`).
 - **Skeleton:**
@@ -169,13 +179,13 @@ flowchart LR
     R2 -.->|"⚠ no test"| G1
 ```
 
-- **WRONG when:** it invents a story the spec does not carry, cites a test ID that does not exist, or shows stories with no edge into the route — a story the reviewer never _meets_ while reading is a story the route failed to cover, and that is a §4 defect D7 exists to expose.
-- **Form note:** for a target with no user-facing story (F6), D7 maps **invariants** instead, with node labels saying _"invariant, not story"_ — see Table 3 of 3 in `references/report-template.md`. The picture is still owed; only its left-hand column changes.
+- **WRONG when:** it invents a story the spec does not carry, cites a test ID that does not exist, or shows stories with no edge into the route — a story the reviewer never *meets* while reading is a story the route failed to cover, and that is a §4 defect D7 exists to expose.
+- **Form note:** for a target with no user-facing story (F6), D7 maps **invariants** instead, with node labels saying *"invariant, not story"* — see Table 3 of 3 in `references/report-template.md`. The picture is still owed; only its left-hand column changes.
 
 ### D8 — Group map (conditional — multi-group targets only)
 
 - **Purpose:** the one picture that makes a large target navigable — what the **understanding groups** are, how they depend on each other, and where the reader enters. Without it a 60-file or whole-project report is a wall; with it the reader sees the whole shape in seconds and knows which block to open.
-- **Derivation source:** the group registry (`references/scale-protocol.md` §1 — IDs, names, scopes, depends-on) → cross-group edges traced with `code_graph trace <group entry> --direction both --node-mode file --json` → grep of imports/references **across group boundaries**. An edge means _"this group consumes something that group owns"_ — never mere adjacency, never shared directory.
+- **Derivation source:** the group registry (`references/scale-protocol.md` §1 — IDs, names, scopes, depends-on) → cross-group edges traced with `code_graph trace <group entry> --direction both --node-mode file --json` → grep of imports/references **across group boundaries**. An edge means *"this group consumes something that group owns"* — never mere adjacency, never shared directory.
 - **Labelling:** one node per group carrying `G{n}` plus the group name in domain words — never a path. Edges are labelled with what crosses the boundary (`-->|consumes invariant|`, `-->|subscribes event|`). Mark the entry group — the one §4's group route opens with. At S4, wrap groups in a `subgraph` per bounded context.
 - **Skeleton:**
 
@@ -201,7 +211,7 @@ flowchart TD
 
 Walk it top-down per diagram. Stop at the first rung that yields verified nodes.
 
-1. **Graph trace** — `python .claude/scripts/code_graph trace <file> --direction both --json` (Windows: `py -3`). Highest confidence; edges are traced.
+1. **Graph trace (optional, when available)** — `python .claude/scripts/code_graph trace <file> --direction both --json` (Windows: `py -3`; macOS/Linux: `python3`). Edges are traced but the graph can be stale — confirm key edges by reading.
 2. **Grep + read** — find the references, open the files, record what you actually read. Edges from a read call site are traced; edges from a name match alone are **inferred**.
 3. **Spec / plan text** — an existing `erDiagram` or a declared dependency list. Traced, because the artifact asserts it.
 4. **STATE THE BLOCKER.** Emit the diagram with **only the nodes you verified**, and one line beneath naming what you could not derive and why.
@@ -210,11 +220,11 @@ Walk it top-down per diagram. Stop at the first rung that yields verified nodes.
 
 ## Provenance marking
 
-| Rendering            | Means                                                                                                | Rule                                                                                                |
-| -------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Solid edge (`-->`)   | **Traced** — you followed a graph edge or read the call site                                         | Default. No annotation needed                                                                       |
-| Dashed edge (`-.->`) | **Inferred** — naming, convention, or a framework contract implies it, but you did not read the call | MUST also be listed beneath the diagram: _"Inferred: H ⇢ B — publishes via convention, not traced"_ |
-| Neither              | **Fabricated**                                                                                       | Not a rendering choice. A fabricated edge is a **failed section**                                   |
+| Rendering | Means | Rule |
+| --- | --- | --- |
+| Solid edge (`-->`) | **Traced** — you followed a graph edge or read the call site | Default. No annotation needed |
+| Dashed edge (`-.->`) | **Inferred** — naming, convention, or a framework contract implies it, but you did not read the call | MUST also be listed beneath the diagram: *"Inferred: H ⇢ B — publishes via convention, not traced"* |
+| Neither | **Fabricated** | Not a rendering choice. A fabricated edge is a **failed section** |
 
 Every diagram carries a one-line legend when it contains any dashed edge.
 
@@ -235,6 +245,6 @@ Diagrams are generated from real source into a report. **No secret value ever en
 
 ## Target forms
 
-**This file defines which diagrams are owed and how each is derived; it does NOT define the target forms.** What each diagram _shows_ for a given form is **Table 3 of 3 in `references/report-template.md`**. Read it there.
+**This file defines which diagrams are owed and how each is derived; it does NOT define the target forms.** What each diagram *shows* for a given form is **Table 3 of 3 in `references/report-template.md`**. Read it there.
 
 Every form gets every mandatory diagram, in the form that target actually has. **Never write a form list here** — the registry and all three per-form tables live together in `report-template.md` precisely so a form cannot be added to one and forgotten in another.

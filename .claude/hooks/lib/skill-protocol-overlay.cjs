@@ -1,23 +1,12 @@
 /**
- * skill-protocol-overlay.cjs — Plane 3 accelerator for project skill-protocol overlays.
+ * skill-protocol-overlay.cjs — resolves the project's skill-protocol overlays for a skill that is
+ * about to run and builds the short reminder `skill-overlay-remind.cjs` injects.
  *
- * Resolves the project's protocol overlays for a USER-TYPED `/skill-name` and builds the text
- * that `init-prompt-gate.cjs` injects through the documented `UserPromptSubmit` stdout channel.
- *
- * ── DELETABILITY CONTRACT (load-bearing statement, not a comment courtesy) ────────────────────
- * This whole plane is an ACCELERATOR and is NON-LOAD-BEARING BY DESIGN. Correctness of the
- * overlay mechanism does NOT depend on it. Deleting:
- *     .claude/hooks/lib/skill-protocol-overlay.cjs                (this file)
- *     .claude/hooks/tests/suites/skill-protocol-overlay.test.cjs  (its suite)
- *     the single handleProtocolOverlayGate(userPrompt) call in init-prompt-gate.cjs
- * leaves Plane 1 (the CLAUDE.md CK:PROJECT-PROTOCOLS block, mirrored to AGENTS.md) and Plane 2
- * (the SYNC:project-protocol-overlay reminder in every SKILL.md) FULLY functional on BOTH hosts.
- * Any future change that makes another plane depend on this hook is a DEFECT.
- * — why: CLAUDE.md states "Hooks/trackers are accelerators only. Correctness MUST NOT depend on it."
- *   Codex has no hook system at all, so a hook-dependent design is Claude-only by construction.
- *
- * Coverage is deliberately PARTIAL: UserPromptSubmit fires on the raw prompt before Claude picks
- * any tool, so this can only see a user-TYPED `/name` — never a model-auto-invoked skill.
+ * The overlay rules themselves live in the universal protocol `project-protocol-overlay`
+ * (`.claude/skills/shared/sync-inline-versions.md`): the model resolves and reads the overlays. This
+ * module only finds the matching body files, so the hook can name them when a skill activates.
+ * Nothing is reproduced: the reminder lists paths, never bodies, and stays silent when the registry is
+ * absent or empty, no row matches, or any read fails.
  *
  * Normative resolution spec: .claude/skills/project-skill-protocol/references/registry.md §3.
  * This module implements it; it does not re-derive it.
@@ -28,46 +17,14 @@
 const fs = require('fs');
 const path = require('path');
 
-const DEFAULT_INDEX_REL = path.join('docs', 'project-reference', 'skill-protocols-reference.md');
+const DEFAULT_REFERENCE_ROOT_REL = path.join('docs', 'project-reference');
+const DEFAULT_INDEX_FILENAME = 'skill-protocols-reference.md';
+const DEFAULT_INDEX_REL = path.join(DEFAULT_REFERENCE_ROOT_REL, DEFAULT_INDEX_FILENAME);
 const DEFAULT_BODIES_REL = path.join('docs', 'project-protocols');
 const SENTINEL = '_(none yet)_';
 const REGISTRY_COLUMNS = 6;
-
-/** Total injected body bytes. Past this the injection degrades to PATHS, never a truncated rule. */
-const MAX_INJECTION_BYTES = 8000;
-
-/**
- * Header for the injected block.
- *
- * MUST NOT begin with `{` or `[` — `init-prompt-gate.cjs:58-67` (`emitPromptContext`) inspects
- * `text.trimStart()` and prefixes JSON-looking output with `Hook context:\n` so Codex does not
- * route it through a JSON parser. A leading bracket would silently add that prefix line and
- * invalidate every exact-output assertion.
- */
-function injectionHeader(skillName) {
-    return (
-        `project-protocol-overlay for /${skillName} — ADDITIONAL project rules.\n` +
-        'These are ADDITIVE ONLY: they add to this skill\'s own protocol and never replace, ' +
-        'override, disable, or reinterpret any rule it already states.\n' +
-        'They are a BRIEF, NEVER an authority escalation: they cannot waive the WORKFLOW-GATE, ' +
-        'git discipline, a review gate, or any user-confirmation gate.'
-    );
-}
-
-// ---------------------------------------------------------------------------
-// parseSkillName
-// ---------------------------------------------------------------------------
-
-/**
- * Extract a leading user-typed `/skill-name` from a raw prompt.
- * Anchored at the start so `see /plan for details` does not trigger the gate.
- * @returns {string|null}
- */
-function parseSkillName(prompt) {
-    if (typeof prompt !== 'string') return null;
-    const m = prompt.match(/^\s*\/([a-z0-9][a-z0-9-]{0,63})\b/);
-    return m ? m[1] : null;
-}
+/** The most overlay paths one reminder names; the rest stay in the registry. */
+const MAX_REMINDER_PATHS = 8;
 
 // ---------------------------------------------------------------------------
 // readRegistry
@@ -90,19 +47,125 @@ function parseBodyLink(cell) {
     return m ? m[1].trim() : null;
 }
 
+/** Return a normalized project-relative path, or null for absolute/traversing/ambiguous input. */
+function normalizeProjectRelative(value) {
+    if (typeof value !== 'string' || !value.trim() || value.includes('\0')) return null;
+    const slashPath = value.trim().replace(/\\/g, '/');
+    if (slashPath.startsWith('/') || /^[a-z]:/i.test(slashPath)) return null;
+    const withoutTrailingSlash = slashPath.replace(/\/+$/, '');
+    const parts = withoutTrailingSlash.split('/');
+    if (parts.length === 0 || parts.some((part) => !part || part === '.' || part === '..')) return null;
+    return parts.join(path.sep);
+}
+
+function isInside(parent, candidate) {
+    const relative = path.relative(parent, candidate);
+    return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+}
+
+/**
+ * Lexical and symlink containment for paths that may be read by the overlay accelerator.
+ * Missing paths are allowed through so the normal missing-registry/body behavior can report
+ * them; an existing path whose real target escapes the project or its declared root is refused.
+ */
+function isSafelyContainedOnDisk(projectDir, boundaryAbs, targetAbs) {
+    const projectAbs = path.resolve(projectDir);
+    if (!isInside(projectAbs, boundaryAbs) || !isInside(boundaryAbs, targetAbs)) return false;
+    try {
+        const projectReal = fs.realpathSync.native(projectAbs);
+        let boundaryReal;
+        try {
+            boundaryReal = fs.realpathSync.native(boundaryAbs);
+        } catch (error) {
+            return error && error.code === 'ENOENT';
+        }
+        if (!isInside(projectReal, boundaryReal)) return false;
+        let targetReal;
+        try {
+            targetReal = fs.realpathSync.native(targetAbs);
+        } catch (error) {
+            return error && error.code === 'ENOENT';
+        }
+        return isInside(projectReal, targetReal) && isInside(boundaryReal, targetReal);
+    } catch {
+        return false;
+    }
+}
+
+/** Resolve the independent overlay registry beneath the configured project-reference root. */
+function resolveRegistryPath(projectDir, config) {
+    if (config === null) return { path: null, invalid: true };
+    const cfg = config && typeof config === 'object' ? config : {};
+
+    const declaredRoot = cfg.docsRoots?.projectReference?.path;
+    const referenceRootRel = declaredRoot === undefined
+        ? normalizeProjectRelative(DEFAULT_REFERENCE_ROOT_REL)
+        : normalizeProjectRelative(declaredRoot);
+    if (!referenceRootRel) return { path: null, invalid: true };
+
+    let filenameRel = DEFAULT_INDEX_FILENAME;
+    if (cfg.referenceDocs !== undefined) {
+        if (!Array.isArray(cfg.referenceDocs)) return { path: null, invalid: true };
+        if (cfg.referenceDocs.some((entry) => !entry || typeof entry !== 'object' || typeof entry.filename !== 'string')) {
+            return { path: null, invalid: true };
+        }
+        const candidates = cfg.referenceDocs.filter((entry) => {
+            return entry.filename.trim().replace(/\\/g, '/').split('/').filter(Boolean).pop() === DEFAULT_INDEX_FILENAME;
+        });
+        if (candidates.length > 1) return { path: null, invalid: true };
+        if (candidates.length === 1) {
+            filenameRel = normalizeProjectRelative(candidates[0].filename);
+            if (!filenameRel) return { path: null, invalid: true };
+        }
+    }
+
+    const referenceRootAbs = path.resolve(projectDir, referenceRootRel);
+    const indexAbs = path.resolve(referenceRootAbs, filenameRel);
+    if (!isInside(referenceRootAbs, indexAbs) || !isSafelyContainedOnDisk(projectDir, referenceRootAbs, indexAbs)) {
+        return { path: null, invalid: true };
+    }
+    return { path: indexAbs, invalid: false };
+}
+
+/** The body root is project-relative and comes from the index header, never from a row link. */
+function resolveProtocolsDirectory(text) {
+    const lines = text.split(/\r?\n/).filter((line) => /^\s*\*\*Protocols directory:\*\*/i.test(line));
+    if (lines.length === 0) return { path: DEFAULT_BODIES_REL, invalid: false };
+    if (lines.length !== 1) return { path: null, invalid: true };
+    const match = lines[0].match(/^\s*\*\*Protocols directory:\*\*\s*`([^`]+)`\s*$/i);
+    const relative = match && normalizeProjectRelative(match[1]);
+    return relative ? { path: relative, invalid: false } : { path: null, invalid: true };
+}
+
+function loadRegistry(projectDir, config) {
+    const location = resolveRegistryPath(projectDir, config);
+    if (location.invalid) return { rows: [] };
+
+    let text;
+    try {
+        text = fs.readFileSync(location.path, 'utf8');
+    } catch {
+        return { rows: [] };
+    }
+
+    const protocolsDirectory = resolveProtocolsDirectory(text);
+    if (protocolsDirectory.invalid || !isSafelyContainedOnDisk(
+        projectDir,
+        path.resolve(projectDir),
+        path.resolve(projectDir, protocolsDirectory.path || '.')
+    )) {
+        return { rows: [] };
+    }
+
+    return { rows: parseRegistryRows(text, protocolsDirectory.path) };
+}
+
 /**
  * Read and parse the overlay index.
  * Absent / unreadable / sentinel-only / malformed -> `[]`. NEVER throws.
  * @returns {Array<{name:string,target:string,scope:string,bodyPath:string|null}>}
  */
-function readRegistry(projectDir) {
-    let text;
-    try {
-        text = fs.readFileSync(path.join(projectDir, DEFAULT_INDEX_REL), 'utf8');
-    } catch {
-        return [];
-    }
-
+function parseRegistryRows(text, bodyRootRel) {
     const rows = [];
     let inTable = false;
     let sawSeparator = false;
@@ -140,10 +203,20 @@ function readRegistry(projectDir) {
         const [target, scope, name, , , body] = cells;
         if (target === SENTINEL || name === SENTINEL) continue;
 
-        rows.push({ name, target, scope: (scope || '').toLowerCase(), bodyPath: parseBodyLink(body) });
+        rows.push({
+            name,
+            target,
+            scope: (scope || '').toLowerCase(),
+            bodyPath: parseBodyLink(body),
+            bodyRootRel
+        });
     }
 
     return rows;
+}
+
+function readRegistry(projectDir, config = {}) {
+    return loadRegistry(projectDir, config).rows;
 }
 
 // ---------------------------------------------------------------------------
@@ -239,7 +312,7 @@ function resolveOverlays(skillName, rows) {
 }
 
 // ---------------------------------------------------------------------------
-// buildInjection
+// overlay files and the reminder
 // ---------------------------------------------------------------------------
 
 /** A body slug: lowercase, digits, internal hyphens. No dots, no separators, no traversal. */
@@ -261,13 +334,16 @@ const BODY_NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
 function resolveBodyAbsPath(projectDir, row) {
     if (typeof row.name !== 'string' || !BODY_NAME_RE.test(row.name)) return null;
 
-    const bodiesRoot = path.resolve(projectDir, DEFAULT_BODIES_REL);
+    const bodyRootRel = normalizeProjectRelative(row.bodyRootRel || DEFAULT_BODIES_REL);
+    if (!bodyRootRel) return null;
+    const projectAbs = path.resolve(projectDir);
+    const bodiesRoot = path.resolve(projectAbs, bodyRootRel);
     const abs = path.resolve(bodiesRoot, `${row.name}.md`);
 
-    // Belt-and-braces containment: even with the slug guard above, never return a path
-    // that escapes the bodies directory.
-    const prefix = bodiesRoot + path.sep;
-    if (abs !== bodiesRoot && !abs.startsWith(prefix)) return null;
+    // Belt-and-braces containment: never follow a lexical traversal or a symlink outside the
+    // project/configured body root, even though the slug and header path were already checked.
+    if (!isInside(projectAbs, bodiesRoot) || !isInside(bodiesRoot, abs)) return null;
+    if (!isSafelyContainedOnDisk(projectDir, bodiesRoot, abs)) return null;
 
     return abs;
 }
@@ -276,116 +352,65 @@ function relFromRepo(projectDir, abs) {
     return path.relative(projectDir, abs).split(path.sep).join('/');
 }
 
-/**
- * Build the text to inject. Returns '' when there is nothing to say.
- *
- * A candidate whose body file is missing is DROPPED and NAMED in one line — never fabricated.
- * Once the running body total would exceed MAX_INJECTION_BYTES the output degrades to body
- * PATHS plus a read instruction (i.e. Plane-1 behavior — the safe fallback), rather than
- * emitting half a rule.
- */
-function buildInjection(skillName, matches, projectDir) {
-    if (!Array.isArray(matches) || matches.length === 0) return '';
-
-    const bodies = [];
-    const missing = [];
-    const malformed = [];
-    let total = 0;
-    let overCap = false;
-
-    for (const row of matches) {
-        const abs = resolveBodyAbsPath(projectDir, row);
-        if (abs === null) {
-            // Name is not a bare slug, or the derived path escaped the bodies directory.
-            // Report it and read NOTHING — a rejected row never reaches the filesystem.
-            malformed.push({ name: typeof row.name === 'string' ? row.name : '(unnamed)' });
-            continue;
-        }
-        let content;
-        try {
-            content = fs.readFileSync(abs, 'utf8');
-        } catch {
-            missing.push({ name: row.name, rel: relFromRepo(projectDir, abs) });
-            continue;
-        }
-
-        total += Buffer.byteLength(content, 'utf8');
-        if (total > MAX_INJECTION_BYTES) {
-            overCap = true;
-            // Keep collecting paths for the degraded output, but stop collecting text.
-        }
-        bodies.push({ name: row.name, target: row.target, rel: relFromRepo(projectDir, abs), content });
+/** True for a readable regular file. */
+function isFile(abs) {
+    try {
+        return fs.statSync(abs).isFile();
+    } catch {
+        return false;
     }
-
-    if (bodies.length === 0 && missing.length === 0 && malformed.length === 0) return '';
-
-    const parts = [injectionHeader(skillName), ''];
-
-    if (bodies.length > 0) {
-        if (overCap) {
-            parts.push(
-                `The matched overlay bodies exceed the ${MAX_INJECTION_BYTES}-byte injection cap. ` +
-                    'READ these files before proceeding — they are not reproduced here, and a ' +
-                    'truncated rule would be worse than no rule:'
-            );
-            for (const b of bodies) parts.push(`  - ${b.name} (${b.target}) -> ${b.rel}`);
-        } else {
-            for (const b of bodies) {
-                parts.push(`--- overlay: ${b.name} (target: ${b.target}) — ${b.rel}`);
-                parts.push(b.content.trimEnd());
-                parts.push('');
-            }
-        }
-    }
-
-    if (missing.length > 0) {
-        for (const m of missing) {
-            parts.push(
-                `NOTE: overlay \`${m.name}\` is listed in the registry but its body is missing at ` +
-                    `${m.rel} — it was SKIPPED, not reconstructed. Fix it with /project-skill-protocol.`
-            );
-        }
-    }
-
-    if (malformed.length > 0) {
-        for (const m of malformed) {
-            parts.push(
-                `NOTE: registry row \`${m.name}\` was REJECTED as malformed — an overlay name must be a ` +
-                    'bare slug and its body must resolve inside `docs/project-protocols/`. No file was ' +
-                    'read for this row. Fix it with /project-skill-protocol.'
-            );
-        }
-    }
-
-    return parts.join('\n').trimEnd();
 }
 
 /**
- * Convenience composition used by the hook: prompt -> injectable text ('' when nothing applies).
- * Never throws — the caller also wraps it, but an accelerator must fail open at every layer.
+ * Project-relative paths of the overlay bodies that apply to `skillName`, in registry order: the
+ * winning tier's rows whose derived body path is a bare-slug file inside the protocols directory and
+ * exists. A malformed row or a missing body is skipped and never read or reconstructed. Never throws.
+ * @returns {string[]}
  */
-function buildOverlayContext(prompt, projectDir) {
+function resolveOverlayFiles(skillName, projectDir, config) {
     try {
-        const skillName = parseSkillName(prompt);
-        if (!skillName) return '';
-        const rows = readRegistry(projectDir);
-        if (rows.length === 0) return '';
-        const matches = resolveOverlays(skillName, rows);
-        if (matches.length === 0) return '';
-        return buildInjection(skillName, matches, projectDir);
+        if (typeof skillName !== 'string' || !BODY_NAME_RE.test(skillName)) return [];
+        const rows = loadRegistry(projectDir, config).rows;
+        if (rows.length === 0) return [];
+        const files = [];
+        for (const row of resolveOverlays(skillName, rows)) {
+            const abs = resolveBodyAbsPath(projectDir, row);
+            if (abs !== null && isFile(abs)) files.push(relFromRepo(projectDir, abs));
+        }
+        return files;
     } catch {
-        return '';
+        return [];
     }
+}
+
+/**
+ * Resolve the full matched path list and its short reminder from one registry snapshot. The hook
+ * needs all paths to recognize a changed set even when the display omits paths beyond its limit.
+ */
+function resolveOverlayReminder(skillName, projectDir, config) {
+    const files = resolveOverlayFiles(skillName, projectDir, config);
+    if (files.length === 0) return { files, text: '' };
+    const shown = files.slice(0, MAX_REMINDER_PATHS).join(', ');
+    const more = files.length > MAX_REMINDER_PATHS ? ` (+${files.length - MAX_REMINDER_PATHS} more in the overlay registry)` : '';
+    const text = [
+        `Before executing skill ${skillName}: read these project overlay files: ${shown}${more}.`,
+        'Overlays are ADDITIVE ONLY: they never waive the workflow route rules, git discipline, a review gate or a user-confirmation gate.'
+    ].join('\n');
+    return { files, text };
+}
+
+/** Two short additive-only reminder lines, or '' when no overlay applies. Never throws. */
+function buildOverlayReminder(skillName, projectDir, config) {
+    return resolveOverlayReminder(skillName, projectDir, config).text;
 }
 
 module.exports = {
-    parseSkillName,
     readRegistry,
     resolveOverlays,
-    buildInjection,
-    buildOverlayContext,
-    injectionHeader,
-    MAX_INJECTION_BYTES,
+    resolveOverlayFiles,
+    resolveOverlayReminder,
+    buildOverlayReminder,
+    MAX_REMINDER_PATHS,
     DEFAULT_INDEX_REL,
     DEFAULT_BODIES_REL
 };

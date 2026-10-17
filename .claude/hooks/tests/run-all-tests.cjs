@@ -11,10 +11,11 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 // Ensure CLAUDE_PROJECT_DIR is set BEFORE any suite/library is required.
-// Suite-load-time code (test-fixture-generator, dedup-constants) reads project
+// Suite-load-time code (test-fixture-generator) reads project
 // config from this env var; without it they fall back to generic paths and
 // stale dedup windows that diverge from the hook subprocess (which receives
 // the env), producing false-negative test failures (e.g. fixture path doesn't
@@ -47,6 +48,19 @@ const SYMBOLS = {
   bullet: process.platform === 'win32' ? '*' : '•'
 };
 
+// Failure-log hygiene: what the persisted failure log may contain, and how long
+// it survives. In tests/lib rather than inline here so the suite that asserts
+// those rules can require them without requiring this runner mid-run.
+const {
+  redact,
+  pruneFailureLogs,
+  MAX_LOGGED_FAILURES,
+  MAX_ERROR_CHARS,
+  MAX_STACK_CHARS,
+  RETAINED_FAILURE_LOGS,
+  buildRedactionPatterns
+} = require('./lib/failure-log.cjs');
+
 // Parse CLI arguments
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -54,7 +68,6 @@ function parseArgs() {
     help: args.includes('--help') || args.includes('-h'),
     verbose: args.includes('--verbose') || args.includes('-v'),
     filter: args.find(a => a.startsWith('--filter='))?.split('=')[1] || null,
-    parallel: args.includes('--parallel'),
     bail: args.includes('--bail'),
     list: args.includes('--list')
   };
@@ -72,7 +85,6 @@ ${COLORS.cyan}Options:${COLORS.reset}
   --help, -h      Show this help message
   --verbose, -v   Show detailed test output
   --filter=X      Only run suites whose name matches X (each runs in full)
-  --parallel      Run test suites in parallel
   --bail          Stop on first test failure
   --list          List available test suites without running
 
@@ -109,11 +121,9 @@ async function runTest(test, verbose) {
   const start = Date.now();
 
   try {
-    if (test.fn.constructor.name === 'AsyncFunction') {
-      await test.fn();
-    } else {
-      test.fn();
-    }
+    // Always await: a plain function may RETURN a promise (fn: () => withFixture(...)); not
+    // awaiting it recorded a pass before its assertions ran (runner-await-contract suite).
+    await test.fn();
     const duration = Date.now() - start;
     return {
       name: test.name,
@@ -330,6 +340,84 @@ async function main() {
   // Exit with error code if any tests failed
   const hasFailures = allResults.some(r => r.failed > 0);
 
+  // Persist a failure log. This suite is INTERMITTENTLY flaky under load — a
+  // review observed 1 failure in 6 identical runs — and the failing test's
+  // identity was lost because the only record was terminal scrollback that a
+  // background run or CI step discards. A flaky gate whose failures cannot be
+  // named trains everyone to re-run until green, and a real regression then
+  // reads as "just the flake". Naming the test is the prerequisite for fixing
+  // it, so the log is written before any attribution is attempted.
+  //
+  // The log is diagnostic only: it never changes the pass/fail verdict, and a
+  // failure to write it is reported without becoming a second failure.
+  if (hasFailures) {
+    const failures = allResults.flatMap(suite => {
+      // A suite that fails to LOAD contributes failed:1 with an EMPTY tests
+      // array, so aggregating only per-test records wrote `"failures": []`
+      // alongside a non-zero failure count — silent in exactly the case this
+      // log exists for. A load error destroys a whole suite's coverage, which
+      // is strictly worse than one failing assertion, so it is named first.
+      if (suite.loadError) {
+        return [{
+          suite: suite.name,
+          test: '(suite failed to load)',
+          durationMs: suite.duration,
+          error: suite.loadError,
+          stack: null
+        }];
+      }
+      return suite.tests
+        .filter(test => !test.passed && !test.skipped)
+        .map(test => ({
+          suite: suite.name,
+          test: test.name,
+          durationMs: test.duration,
+          error: test.error,
+          stack: test.stack
+        }));
+    });
+    // Redaction and bounding are applied to the PERSISTED copy only. The console
+    // list below stays verbatim: it goes to the operator running the suite, who
+    // already has the paths, and truncating what they can see would defeat the
+    // point of naming the failure.
+    const persistedFailures = failures.slice(0, MAX_LOGGED_FAILURES).map(failure => ({
+      ...failure,
+      error: redact(failure.error, MAX_ERROR_CHARS),
+      stack: redact(failure.stack, MAX_STACK_CHARS)
+    }));
+    // `Date.now()` alone collided: concurrent runs finishing in the same
+    // millisecond overwrote each other's log, and nothing bound a file back to the
+    // invocation that produced it — which is the attribution this log exists for.
+    const logDir = path.join(os.tmpdir(), 'ck');
+    const logPath = path.join(logDir, `hook-test-failures-${Date.now()}-${process.pid}.json`);
+    try {
+      fs.mkdirSync(logDir, { recursive: true });
+      fs.writeFileSync(logPath, `${JSON.stringify({
+        startedAt: new Date(start).toISOString(),
+        durationMs: totalDuration,
+        node: process.version,
+        platform: process.platform,
+        pid: process.pid,
+        argv: process.argv.slice(2),
+        // Stated in the file, so a reader never mistakes a redacted or truncated
+        // record for the whole story.
+        redacted: buildRedactionPatterns().length > 0,
+        failureCount: failures.length,
+        recordedFailures: persistedFailures.length,
+        failures: persistedFailures
+      }, null, 2)}\n`);
+      pruneFailureLogs(logDir, RETAINED_FAILURE_LOGS);
+      console.log(`${COLORS.yellow}Failure log:${COLORS.reset} ${logPath}`);
+    } catch (error) {
+      console.log(`${COLORS.yellow}Failure log could not be written:${COLORS.reset} ${error.message}`);
+    }
+    console.log(`${COLORS.red}Failing tests:${COLORS.reset}`);
+    for (const failure of failures) {
+      console.log(`  ${COLORS.red}${SYMBOLS.fail}${COLORS.reset} [${failure.suite}] ${failure.test} — ${failure.error}`);
+    }
+    console.log('');
+  }
+
   // Aggregate-test count drift guard. Mirrors the primary runner's guard
   // (test-all-hooks.cjs, "Hook-test count drift guard") and lives here for the same
   // reason it lives there rather than in a suite: a counted test cannot see the parent
@@ -362,6 +450,19 @@ async function main() {
         file: path.join(docsDir, 'hooks', 'README.md'),
         label: 'docs/hooks/README.md "Aggregate runner" row',
         pattern: /\|\s*Aggregate runner\s*\|\s*(\d+)\s*\|/
+      },
+      // The framework guide carried the SAME aggregate figure with no guard on it,
+      // and drifted to 300 against a live 523 while the two rows above stayed green.
+      // A count claim nobody asserts is a claim that will be wrong.
+      {
+        file: path.join(docsDir, 'claude-ai-agent-framework-guide.md'),
+        label: 'framework guide "run-all-tests.cjs (full aggregate)" row',
+        pattern: /\|\s*`run-all-tests\.cjs`\s*\(full aggregate\)\s*\|\s*\*\*(\d+)\*\*\s*\|/
+      },
+      {
+        file: path.join(docsDir, 'claude-ai-agent-framework-guide.md'),
+        label: 'framework guide live-verified prose',
+        pattern: /`run-all-tests\.cjs` = (\d+)/
       }
     ];
 
@@ -400,6 +501,10 @@ async function main() {
   process.exit(hasFailures || countGuardFailed ? 1 : 0);
 }
 
+// Exported before main() starts: main() loads the suites synchronously, and a suite that
+// requires this runner (runner-await-contract) must see the real exports, not an empty object.
+module.exports = { runSuite, runTest, discoverSuites };
+
 // Run if executed directly
 if (require.main === module) {
   main().catch(error => {
@@ -407,5 +512,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-
-module.exports = { runSuite, runTest, discoverSuites };

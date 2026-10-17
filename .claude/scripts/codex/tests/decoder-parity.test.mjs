@@ -2,10 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(thisDir, "..", "..", "..", "..");
+const require = createRequire(import.meta.url);
 
 // The YAML-frontmatter scalar decoder is independently reimplemented in THREE scripts. Each renders
 // skill descriptions onto a different surface — CLAUDE.md/AGENTS.md (workflow-skills-catalog.cjs),
@@ -17,13 +19,14 @@ const repoRoot = path.resolve(thisDir, "..", "..", "..", "..");
 // mirror as `a \"quoted\" path`. It went unnoticed because each script was only ever tested through
 // its own output, never against its siblings.
 //
-// None of the three is exported (all are private module-locals, and PORT-001 bars the codex
-// pipeline from importing across the tree anyway), so parity is proven by extracting each function
-// from source and running one shared case table through all of them.
+// `stripQuotes` now lives in the shared `.claude/scripts/lib/agent-frontmatter.mjs` owner, which the
+// Codex migration imports (it previously carried a private copy). All three are still proven by
+// extracting each function from source and running one shared case table through them, so the parity
+// proof keeps testing every decoder through the SAME path rather than trusting an export.
 const DECODERS = [
   ["unquote", path.join(repoRoot, ".claude", "scripts", "lib", "workflow-skills-catalog.cjs")],
   ["unquoteYamlScalar", path.join(repoRoot, ".claude", "scripts", "skill-gc.cjs")],
-  ["stripQuotes", path.join(repoRoot, ".claude", "scripts", "codex", "migrate-claude-to-codex.mjs")],
+  ["stripQuotes", path.join(repoRoot, ".claude", "scripts", "lib", "agent-frontmatter.mjs")],
 ];
 
 function extractDecoder(name, file) {
@@ -81,33 +84,13 @@ test("TC-DEC-002 MUTATION PROBE: the parity check kills a de-wrap-only decoder",
   );
 });
 
-// TC-DEC-003 — the decoders are only half the contract. TC-WSC-007 proves the BUILDER emits no
-// artifact, but it recomputes the catalog in memory; it passes happily while the bytes actually
-// shipped in CLAUDE.md/AGENTS.md still carry the leak. This pins the shipped bytes.
-test("TC-DEC-003 shipped catalog surfaces carry no YAML escape artifacts", () => {
-  const START = "<!-- CK:WORKFLOW-SKILLS -->";
-  const END = "<!-- /CK:WORKFLOW-SKILLS -->";
-  const surfaces = ["CLAUDE.md", "AGENTS.md", path.join(".codex", "CODEX_CONTEXT.md")];
-
-  let checked = 0;
-  for (const rel of surfaces) {
+test("TC-DEC-003 runtime workflow catalog carries no YAML escape artifacts", () => {
+  const { buildWorkflowSkillsCatalog } = require(path.join(repoRoot, ".claude", "scripts", "lib", "workflow-skills-catalog.cjs"));
+  const body = buildWorkflowSkillsCatalog({ rootDir: repoRoot, sections: ["workflows", "skills"] });
+  const offenders = body.split("\n").filter((line) => line.startsWith("| `") && /''|\\"/.test(line));
+  assert.deepEqual(offenders, [], `runtime catalog rows carry YAML escape artifacts:\n${offenders.join("\n")}`);
+  for (const rel of ["CLAUDE.md", "AGENTS.md"]) {
     const abs = path.join(repoRoot, rel);
-    if (!fs.existsSync(abs)) continue;
-    const body = fs.readFileSync(abs, "utf8");
-    const from = body.indexOf(START);
-    const to = body.indexOf(END, from + 1);
-    if (from === -1 || to === -1) continue;
-    checked++;
-    const offenders = body
-      .slice(from, to)
-      .split("\n")
-      .filter((line) => line.startsWith("| `") && /''|\\"/.test(line));
-    assert.deepEqual(
-      offenders,
-      [],
-      `${rel} catalog rows still carry a YAML escape artifact — regenerate via /sync-codex:\n${offenders.join("\n")}`
-    );
+    if (fs.existsSync(abs)) assert.doesNotMatch(fs.readFileSync(abs, "utf8"), /<!-- CK:WORKFLOW-SKILLS -->/);
   }
-  // Tripwire: a guard that quietly stops finding its subject passes by doing nothing.
-  assert.ok(checked >= 2, `expected to check at least 2 catalog surfaces, checked ${checked}`);
 });

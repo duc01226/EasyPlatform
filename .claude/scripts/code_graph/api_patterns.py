@@ -26,8 +26,8 @@ FRONTEND_PATTERNS: dict[str, dict] = {
     "react": {
         "extensions": [".ts", ".tsx", ".js", ".jsx"],
         "patterns": [
-            # fetch('/api/users') — method defaults to GET
-            r"fetch\s*\(\s*['\"]([^\"']+)",
+            # fetch('/api/users') or fetch(`/api/users`) — method defaults to GET
+            r"fetch\s*\(\s*[`'\"]([^`'\"]+)",
             # axios.get('/api/users')
             r"axios\s*\.\s*(get|post|put|delete|patch)\s*\(\s*['\"]([^\"']+)",
             # useSWR('/api/users') or useQuery('/api/users')
@@ -46,7 +46,7 @@ FRONTEND_PATTERNS: dict[str, dict] = {
     "nextjs": {
         "extensions": [".ts", ".tsx", ".js", ".jsx"],
         "patterns": [
-            r"fetch\s*\(\s*['\"]([^\"']+)",
+            r"fetch\s*\(\s*[`'\"]([^`'\"]+)",
             r"axios\s*\.\s*(get|post|put|delete|patch)\s*\(\s*['\"]([^\"']+)",
             # Next.js API routes in pages/api/ or app/api/
             r"(?:useSWR|useQuery)\s*\(\s*['\"]([^\"']+)",
@@ -55,19 +55,26 @@ FRONTEND_PATTERNS: dict[str, dict] = {
     "svelte": {
         "extensions": [".ts", ".js", ".svelte"],
         "patterns": [
-            r"fetch\s*\(\s*['\"]([^\"']+)",
+            r"fetch\s*\(\s*[`'\"]([^`'\"]+)",
         ],
     },
     "generic": {
         "extensions": [".ts", ".js", ".tsx", ".jsx", ".vue", ".svelte"],
         "patterns": [
             r"(?:http|axios|fetch)\s*\.\s*(get|post|put|delete|patch)\s*[(<]\s*['\"]([^\"']+)",
-            r"fetch\s*\(\s*['\"]([^\"']+)",
+            r"fetch\s*\(\s*[`'\"]([^`'\"]+)",
             # Base service pattern (common in Angular/Vue frameworks)
             r"this\.\s*(get|post|put|delete|patch)\s*[<(]\s*['\"]([^\"']+)",
         ],
     },
 }
+
+# Framework aliases: map alternate/short framework names onto a canonical
+# pattern set so project-config can name a framework loosely.
+FRONTEND_PATTERNS["next"] = FRONTEND_PATTERNS["nextjs"]
+FRONTEND_PATTERNS["remix"] = FRONTEND_PATTERNS["react"]
+FRONTEND_PATTERNS["sveltekit"] = FRONTEND_PATTERNS["svelte"]
+FRONTEND_PATTERNS["node"] = FRONTEND_PATTERNS["generic"]
 
 BACKEND_PATTERNS: dict[str, dict] = {
     "dotnet": {

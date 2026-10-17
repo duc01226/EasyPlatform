@@ -7,11 +7,11 @@
  *   A. Pure classifier unit tests (lib/doc-sync-classify.cjs) — no git.
  *   B. Integration tests against an ISOLATED throwaway git repo created in the
  *      OS temp dir, exercising the real hook via stdin/exit-code (mirrors
- *      test-git-commit-block.cjs). The hook's lib resolves config + runs git in
+ *      test-git-statement.cjs). The hook's lib resolves config + runs git in
  *      CLAUDE_PROJECT_DIR, so pointing that at the temp repo fully isolates the
  *      suite from the host project's real index.
  *
- * Covers TC-DOCSYS-041..048.
+ * Covers TC-DOCSYS-041..050.
  *
  * Usage: node .claude/hooks/tests/test-doc-sync-gate.cjs [--verbose]
  */
@@ -44,7 +44,13 @@ function runHook(input, env = {}, cwd) {
       cwd: cwd || process.cwd(),
       env: { ...process.env, ...env },
       stdio: ['pipe', 'pipe', 'pipe'],
-      timeout: 8000
+      // 8s was too tight to be deterministic: the hook shells out to git several
+      // times, and on a loaded Windows host (temp-dir repo + AV scanning) that
+      // overran the limit intermittently. The kill surfaces as `exit null`, which
+      // reads as a real assertion failure — and it moved between tests run to run,
+      // never the same one twice. This bounds the harness, NOT the hook: every
+      // assertion below still checks the real exit code and stderr content.
+      timeout: 60000
     });
     let stdout = '';
     let stderr = '';
@@ -127,6 +133,14 @@ function rimraf(dir) {
 
 const commitInput = (cmd = 'git commit -m "x"') => ({ tool_name: 'Bash', tool_input: { command: cmd } });
 const editInput = file => ({ tool_name: 'Edit', tool_input: { file_path: file, old_string: 'a', new_string: 'b' } });
+// Codex carries the edited path INSIDE the patch body — never as file_path.
+const applyPatchInput = (relFile, cwd) => ({
+  tool_name: 'apply_patch',
+  cwd,
+  tool_input: {
+    command: `*** Begin Patch\n*** Update File: ${relFile}\n@@\n-class Foo{}\n+class Foo{ int x; }\n*** End Patch\n`
+  }
+});
 
 // ===========================================================================
 // A. Classifier unit tests (pure, no git)
@@ -164,13 +178,24 @@ function testClassifier() {
   logResult('no hit: unenforced service .cs', cls.behavioralCodeHit('src/Services/Other/Foo.cs', cfg) === null);
   logResult('no hit: test .cs (fast-exit)', cls.behavioralCodeHit('src/Services/ExampleArea/Example.IntegrationTests/X.cs', cfg) === null);
 
+  // PORTABILITY: `areaForFeatureDoc` resolves the spec root from `specRoots.business.path` via
+  // `getSpecDocsPath()`, so a hardcoded `docs/specs/...` fixture only matches in a repo that leaves
+  // that root at its default. Any adopter relocating it (e.g. to `specs/`) failed here — the test
+  // was asserting the DEFAULT root rather than the classifier's segment-boundary logic. Build both
+  // fixture paths from the module's own `featureSpecDirForArea`, which is the same resolver the
+  // function under test uses, so the assertion travels with the config.
+  const enforcedArea = cfg.enforcedAreas[0];
+  const enforcedDir = cls.featureSpecDirForArea(enforcedArea);
+  const otherDir = cls.featureSpecDirForArea({ name: 'Other' });
   logResult(
     'feature-doc area resolves',
-    !!cls.areaForFeatureDoc('docs/specs/ExampleArea/README.SampleFeature.md', cfg)
+    !!cls.areaForFeatureDoc(`${enforcedDir}README.SampleFeature.md`, cfg),
+    enforcedDir
   );
   logResult(
     'feature-doc area null for other docs',
-    cls.areaForFeatureDoc('docs/specs/Other/README.X.md', cfg) === null
+    cls.areaForFeatureDoc(`${otherDir}README.X.md`, cfg) === null,
+    otherDir
   );
   logResult('toRepoRel strips project root', typeof cls.toRepoRel('foo/bar.cs') === 'string');
 }
@@ -190,7 +215,7 @@ async function testCommitWarnStale() {
     g(['add', '-A']);
     const r = await runHook(commitInput(), { CLAUDE_PROJECT_DIR: dir }, dir);
     logResult('TC-DOCSYS-041 allows with warning (exit 0)', r.code === 0, `exit ${r.code}`);
-    logResult('TC-DOCSYS-041 message actionable', r.stdout.includes('[doc-sync]') && r.stdout.includes('Feature Spec'));
+    logResult('TC-DOCSYS-041 message actionable', r.stderr.includes('[doc-sync]') && r.stderr.includes('Feature Spec'));
   } finally {
     rimraf(dir);
   }
@@ -295,7 +320,57 @@ async function testEditWarnNonBlocking() {
     g(['commit', '-qm', 'baseline (code changed after 2000-01-01)']);
     const r = await runHook(editInput(codeAbs), { CLAUDE_PROJECT_DIR: dir }, dir);
     logResult('TC-DOCSYS-047 never blocks (exit 0)', r.code === 0, `exit ${r.code}`);
-    logResult('TC-DOCSYS-047 emits [doc-sync] warning', r.stdout.includes('[doc-sync]'), r.stdout.slice(0, 80));
+    logResult('TC-DOCSYS-047 emits [doc-sync] warning', r.stderr.includes('[doc-sync]'), r.stderr.slice(0, 80));
+  } finally {
+    rimraf(dir);
+  }
+}
+
+async function testEditWarnTemplateKey() {
+  log('\n--- B9. TC-DOCSYS-049: stale spec stamped with the TEMPLATE key (last_updated) → WARN ---');
+  // Regression pin. The gate originally matched ONLY `last_synced`, but the Feature Spec
+  // template this framework ships (docs/templates/detailed-feature-spec-template.md:8 and
+  // its .claude/ mirror) writes `last_updated`, as does every real spec under docs/specs/.
+  // That mismatch made areaLastSynced() return null for every framework-produced doc and
+  // silently disabled this whole branch — green suite, dead gate, because the fixtures
+  // agreed with the regex instead of with the shipped template.
+  const { dir, g } = makeRepo();
+  try {
+    const codeAbs = writeFile(dir, `${AREA_CODE}Example.Application/Foo.cs`, 'class Foo{}\n');
+    writeFile(dir, `${AREA_DOCS}README.SampleFeature.md`, "---\nlast_updated: '2000-01-01'\n---\n# Goal\n");
+    g(['add', '-A']);
+    g(['commit', '-qm', 'baseline (code changed after 2000-01-01)']);
+    const r = await runHook(editInput(codeAbs), { CLAUDE_PROJECT_DIR: dir }, dir);
+    logResult('TC-DOCSYS-049 never blocks (exit 0)', r.code === 0, `exit ${r.code}`);
+    logResult(
+      'TC-DOCSYS-049 warns on the template key too',
+      r.stderr.includes('[doc-sync]'),
+      r.stderr.slice(0, 120) || '(no warning — last_updated not recognised)'
+    );
+  } finally {
+    rimraf(dir);
+  }
+}
+
+async function testApplyPatchWarns() {
+  log('\n--- B10. TC-DOCSYS-050: Codex apply_patch on stale area code → WARN ---');
+  // Regression pin. The hook is mirrored to Codex with the matcher widened to
+  // `apply_patch`, but handleEdit only read tool_input.file_path/path — neither of
+  // which apply_patch carries. It fired, extracted nothing, and reported success.
+  const { dir, g } = makeRepo();
+  try {
+    const rel = `${AREA_CODE}Example.Application/Foo.cs`;
+    writeFile(dir, rel, 'class Foo{}\n');
+    writeFile(dir, `${AREA_DOCS}README.SampleFeature.md`, "---\nlast_updated: '2000-01-01'\n---\n# Goal\n");
+    g(['add', '-A']);
+    g(['commit', '-qm', 'baseline (code changed after 2000-01-01)']);
+    const r = await runHook(applyPatchInput(rel, dir), { CLAUDE_PROJECT_DIR: dir }, dir);
+    logResult('TC-DOCSYS-050 never blocks (exit 0)', r.code === 0, `exit ${r.code}`);
+    logResult(
+      'TC-DOCSYS-050 extracts the path from the patch body',
+      r.stderr.includes('[doc-sync]'),
+      r.stderr.slice(0, 120) || '(no warning — apply_patch target not extracted)'
+    );
   } finally {
     rimraf(dir);
   }
@@ -321,7 +396,7 @@ async function main() {
   testClassifier();
 
   if (!gitAvailable()) {
-    log('\n[SKIP] git not available — integration tests B1..B8 skipped.');
+    log('\n[SKIP] git not available — integration tests B1..B10 skipped.');
   } else {
     await testCommitWarnStale();
     await testCommitAllowSynced();
@@ -330,6 +405,8 @@ async function main() {
     await testOverrideIndependentOfWorkflow();
     await testAuditedOverride();
     await testEditWarnNonBlocking();
+    await testEditWarnTemplateKey();
+    await testApplyPatchWarns();
     await testRenameNoopAllows();
   }
 

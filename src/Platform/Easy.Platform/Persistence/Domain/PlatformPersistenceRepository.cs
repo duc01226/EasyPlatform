@@ -219,9 +219,10 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             forceOpenUowUsingOnce: true);
     }
 
+    /// <summary>Counts the supplied query through the provider implementation, preserving its filters and cancellation token.</summary>
     public override Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
     {
-        return CountAsync(query, cancellationToken);
+        return CountAsync<TEntity>(query, cancellationToken);
     }
 
     public override Task<bool> AnyAsync(

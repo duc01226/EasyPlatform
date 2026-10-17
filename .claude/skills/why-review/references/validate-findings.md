@@ -1,0 +1,27 @@
+# why-review — Terminal Findings Validation
+
+> Read ONLY in `validate-findings` mode. Do not load full-mode or fix-loop references, prepare source, bind a loop, ask the user or dispatch a sub-agent. The router protocol guides name the full rule sources; read applicable missing text before acting.
+
+## Findings Validation Routine (validate-findings mode body — TERMINAL)
+
+> Executed ONLY in `validate-findings` mode. **TERMINAL: do NOT call `/why-review`, do NOT run gate, do NOT spawn sub-agent, do NOT create closing task.** Validate, emit verdict, return.
+
+Read supplied findings/report (path from `$ARGUMENTS`). For EACH finding, weakness, missing item, adversarial argument, assumption, verify ALL of these checks:
+
+- **Correct** — re-trace cited plan text / `file:line`; finding actually holds (not a misread or stale reference), and names a reachable trigger path — a caller, input or state that reaches the defect in a supported configuration. An unreachable concern is dropped as an observation; unsettled reachability becomes `NOT VERIFIABLE` when the concern would be MEDIUM or higher, an observation otherwise (`SYNC:severity-rubric`).
+- **Proof-backed** — concrete `file:line` or quoted plan/report section present; reject "probably / should be / I think".
+- **Reasonable** — severity/weight proportionate, not inflated; steel-man of opposing view does not dissolve it.
+- **Best-practice** — recommendation reflects project conventions and Easy-to-Change metric (lowers future change cost), not preference or speculative generality.
+- **Trade-off priced** — the finding's recommendation names what it SACRIFICES, carries a WORTH IT / NOT WORTH IT / UNCLEAR verdict, and has its materiality decided (per the published `SYNC:trade-off-interrogation-gate` protocol). A recommendation presented as a pure win, or with `Trade-off: none` and no dimensions-checked justification, is a validation FAIL — flag HAS-ISSUES naming the unpriced recommendation. Apply `SYNC:review-decision-autonomy`: a priced, evidenced, supported reviewer recommendation is not HAS-ISSUES solely because the user did not confirm it. Missing indispensable facts or actual action authority, unsupported risk acceptance and unmet evidence gates remain HAS-ISSUES; name the precise gap for the CALLER (terminal mode assesses, never asks). A valid report does not close its unresolved target findings. NOT WORTH IT → the finding is dropped or its recommendation replaced, never kept as-is. — why: a fix that costs more than the bug it removes is a finding the review should have withdrawn.
+- **Dual-feedback (behavior-changing findings only)** — if ANY finding changes observable behavior, confirm both axes: (1) a spec-drift verdict — CODE-WRONG / SPEC-STALE / AMBIGUOUS / SPEC-SILENT / in-sync (per `SYNC:spec-drift-adjudication`) — AND (2) a test-feedback action mapped through the project's configured profile to an executing assertion/result. For SPEC-SILENT, enrich the configured canonical owner with the missing requirement/invariant and canonical scenario/case, then ensure the actual guarding test is mapped at the declared cardinality. The strict default profile represents this as §4 BR/§3 AC plus a §8 TC via `/spec [update]` + `/spec [mode=tests]`; a configured native profile uses its declared owner, IDs, carrier and mapping. A missing axis is HAS-ISSUES, never clean.
+- **Confidence bar (distinct from the >80% act-gate)** — a finding survives ONLY if its own stated confidence that it is a real issue is **≥85%**. This is a HIGHER bar than the generic >80% act-gate, and a DIFFERENT question: the act-gate asks "may I act on this evidence?"; this bar asks "is this reported finding strong enough to KEEP?". A finding at 80-84% is demoted or dropped, not kept. The ≥85% must rest on the Proof-backed check above (a cited `file:line` + a traced failure path); confidence resting on inference alone caps below the bar.
+- **Premise-neutral (`SYNC:judgement-integrity`)** — when the reviewed report or drafted answer responds to a leading request (a gap/issue hunt, the user's own theory, "is this right?"), each finding or verdict must survive the reverse question: would it still be reported had the requester asked the opposite? A finding that exists only because the request presumed one is dropped; a verdict that simply echoes the requester's premise without the opposite having been tested is HAS-ISSUES, and so is a verdict on external facts (library/tool behavior, versions, standards, best practice) that cites no current source — it stays `Unverified` until web research confirms it. "No material issues found" with the checked scope named is a valid, CLEAN outcome — never pad the list to avoid it, and never invent disagreement to look independent.
+
+Then **sweep for misses** — apply the adversarial techniques once more (steel-man the opposing view, why-NOT, assumption stress test, pre-mortem, pros/cons symmetry, contrarian pass): unexamined alternative, hidden assumption, enhancement opportunity?
+
+**Emit a verdict** to `tmp/reports/why-review-validate-{date}.md`:
+
+- **CLEAN** — every finding passes every check above AND nothing new surfaced.
+- **HAS ISSUES** — list each finding to drop/demote/fix (reason + `file:line`) and each newly surfaced finding/enhancement (`file:line`).
+
+Return verdict path + status. **Caller owns reconciliation and bounded re-do; routine does NOT modify caller report and does NOT loop.**

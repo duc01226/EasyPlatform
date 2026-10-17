@@ -158,10 +158,33 @@ public class PlatformInboxBusMessage : RootEntity<PlatformInboxBusMessage, strin
         double deleteProcessedMessageInSeconds,
         double deleteExpiredIgnoredMessageInSeconds)
     {
+        // A late successful retry needs the full deduplication window. The creation cutoff also keeps legacy rows
+        // with a default LastConsumeDate on creation-age retention and preserves the existing index narrowing.
         return p => (p.CreatedDate <= Clock.UtcNow.AddSeconds(-deleteProcessedMessageInSeconds) &&
+                     p.LastConsumeDate <= Clock.UtcNow.AddSeconds(-deleteProcessedMessageInSeconds) &&
                      p.ConsumeStatus == ConsumeStatuses.Processed) ||
                     (p.CreatedDate <= Clock.UtcNow.AddSeconds(-deleteExpiredIgnoredMessageInSeconds) &&
                      p.ConsumeStatus == ConsumeStatuses.Ignored);
+    }
+
+    /// <summary>
+    /// Builds the expired-message cleanup predicate scoped to an application lane.
+    /// </summary>
+    /// <param name="deleteProcessedMessageInSeconds">The processed-message retention period.</param>
+    /// <param name="deleteExpiredIgnoredMessageInSeconds">The ignored-message retention period.</param>
+    /// <param name="forApplicationName">The application lane that owns the messages.</param>
+    /// <param name="includeUnassignedMessages">
+    /// Whether the lane also owns legacy messages persisted without an application name.
+    /// Exactly one deterministic lane per store should set this to <see langword="true" />.
+    /// </param>
+    public static Expression<Func<PlatformInboxBusMessage, bool>> ToCleanExpiredMessagesExpr(
+        double deleteProcessedMessageInSeconds,
+        double deleteExpiredIgnoredMessageInSeconds,
+        string forApplicationName,
+        bool includeUnassignedMessages)
+    {
+        return ToCleanExpiredMessagesExpr(deleteProcessedMessageInSeconds, deleteExpiredIgnoredMessageInSeconds)
+            .AndAlso(ForApplicationExpr(forApplicationName, includeUnassignedMessages));
     }
 
     public static Expression<Func<PlatformInboxBusMessage, bool>> ToIgnoreFailedExpiredMessagesExpr(
@@ -169,6 +192,38 @@ public class PlatformInboxBusMessage : RootEntity<PlatformInboxBusMessage, strin
     {
         return p => p.ConsumeStatus == ConsumeStatuses.Failed &&
                     p.CreatedDate <= Clock.UtcNow.AddSeconds(-ignoreExpiredFailedMessageInSeconds);
+    }
+
+    /// <summary>
+    /// Builds the expired-failed-message predicate scoped to an application lane.
+    /// </summary>
+    /// <param name="ignoreExpiredFailedMessageInSeconds">The failed-message retention period.</param>
+    /// <param name="forApplicationName">The application lane that owns the messages.</param>
+    /// <param name="includeUnassignedMessages">
+    /// Whether the lane also owns legacy messages persisted without an application name.
+    /// Exactly one deterministic lane per store should set this to <see langword="true" />.
+    /// </param>
+    public static Expression<Func<PlatformInboxBusMessage, bool>> ToIgnoreFailedExpiredMessagesExpr(
+        double ignoreExpiredFailedMessageInSeconds,
+        string forApplicationName,
+        bool includeUnassignedMessages)
+    {
+        return ToIgnoreFailedExpiredMessagesExpr(ignoreExpiredFailedMessageInSeconds)
+            .AndAlso(ForApplicationExpr(forApplicationName, includeUnassignedMessages));
+    }
+
+    /// <summary>
+    /// Builds the ownership predicate used by composed inbox workers and cleaners.
+    /// </summary>
+    /// <param name="forApplicationName">The application lane that owns named messages.</param>
+    /// <param name="includeUnassignedMessages">Whether legacy unassigned messages belong to this lane.</param>
+    public static Expression<Func<PlatformInboxBusMessage, bool>> ForApplicationExpr(
+        string forApplicationName,
+        bool includeUnassignedMessages)
+    {
+        return includeUnassignedMessages
+            ? p => p.ForApplicationName == null || p.ForApplicationName == forApplicationName
+            : p => p.ForApplicationName == forApplicationName;
     }
 
     public static Expression<Func<PlatformInboxBusMessage, bool>> CheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessageExpr(

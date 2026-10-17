@@ -1,10 +1,12 @@
 #region
 
 using Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 #endregion
@@ -20,6 +22,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
 // for SendByMessageSelfRoutingKey in Producer is True
 internal sealed class SaveSnippetTextCommandEventBusMessageConsumer : PlatformCqrsCommandEventBusMessageConsumer<SaveSnippetTextCommand>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public SaveSnippetTextCommandEventBusMessageConsumer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager uowManager,

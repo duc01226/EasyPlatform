@@ -12,10 +12,9 @@ namespace Easy.Platform.Persistence.Services;
 /// across different database technologies including:
 ///
 /// **Supported Database Technologies:**
-/// - PostgreSQL with full-text search capabilities (Growth service)
-/// - MongoDB with text indexes and aggregation framework (Employee, Talents, Surveys services)
-/// - SQL Server with full-text indexing
-/// - Elasticsearch integration for advanced search scenarios
+/// - Relational stores via EF Core — any provider with full-text search capabilities
+/// - Document stores with text indexes and aggregation frameworks
+/// - Dedicated search engines for advanced search scenarios
 ///
 /// **Key Features:**
 /// - Multi-property search with flexible matching strategies
@@ -58,10 +57,8 @@ namespace Easy.Platform.Persistence.Services;
 /// - Designed for high-performance search scenarios
 ///
 /// **Integration Points:**
-/// - Used by Employee service for talent search across skills and experience
-/// - Used by Surveys service for response content analysis
-/// - Used by Growth service for user and company search functionality
-/// - Integrates with Permission Provider for access-controlled search results
+/// - Free-text search over entity text fields, whichever consuming service owns them
+/// - Integrates with the permission provider for access-controlled search results
 /// </remarks>
 public interface IPlatformFullTextSearchPersistenceService : IPersistenceService
 {
@@ -103,10 +100,9 @@ public interface IPlatformFullTextSearchPersistenceService : IPersistenceService
     /// - All terms must be found within the same property (AND logic within property)
     /// - Any property can satisfy the search (OR logic between properties)
     ///
-    /// **Database-Specific Implementations:**
-    /// - **PostgreSQL**: Uses tsvector and tsquery for linguistic search
-    /// - **MongoDB**: Uses $text operator with text indexes
-    /// - **SQL Server**: Uses CONTAINS and FREETEXT functions
+    /// **Database-Specific Implementations** (each lives in its own provider package, never here):
+    /// - **Relational**: uses whatever full-text construct the provider exposes
+    /// - **Document store**: uses its text-index / text-operator equivalent
     /// - **In-Memory**: Falls back to string.Contains operations
     ///
     /// **Performance Optimization:**
@@ -168,23 +164,23 @@ public interface IPlatformFullTextSearchPersistenceService : IPersistenceService
     /// This method enables the platform to automatically select the appropriate search service based on:
     ///
     /// **Query Provider Detection:**
-    /// - Entity Framework Core queries (SQL Server, PostgreSQL, MySQL)
-    /// - MongoDB queries (MongoDB.Driver)
+    /// - Entity Framework Core queries (any relational provider EF Core supports)
+    /// - Document-store queries (via that store's own driver)
     /// - In-memory queries (LINQ to Objects)
     /// - Custom query providers
     ///
     /// **Implementation Examples:**
     /// ```csharp
-    /// // PostgreSQL/Entity Framework implementation
+    /// // Relational (EF Core) implementation
     /// public override bool IsSupportQuery&lt;T&gt;(IQueryable&lt;T&gt; query)
     /// {
     ///     return query.Provider is Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryProvider;
     /// }
     ///
-    /// // MongoDB implementation
+    /// // Document-store implementation
     /// public override bool IsSupportQuery&lt;T&gt;(IQueryable&lt;T&gt; query)
     /// {
-    ///     return query.Provider is MongoDB.Driver.Linq.MongoQueryProvider;
+    ///     return query.Provider is DocumentStoreQueryProvider; // the store driver's own LINQ provider type
     /// }
     /// ```
     ///
@@ -234,24 +230,24 @@ public interface IPlatformFullTextSearchPersistenceService : IPersistenceService
 ///
 /// **Concrete Implementation Examples:**
 /// ```csharp
-/// // PostgreSQL full-text search service
-/// public class PostgreSqlFullTextSearchService : PlatformFullTextSearchPersistenceService
+/// // Relational (EF Core) full-text search service — any provider EF Core supports
+/// public class RelationalFullTextSearchService : PlatformFullTextSearchPersistenceService
 /// {
 ///     public override bool IsSupportQuery&lt;T&gt;(IQueryable&lt;T&gt; query) =>
 ///         query.Provider is EntityQueryProvider;
 ///
 ///     protected override IQueryable&lt;T&gt; DoSearch&lt;T&gt;(...) =>
-///         // PostgreSQL-specific full-text search implementation
+///         // provider-specific full-text search implementation
 /// }
 ///
-/// // MongoDB text search service
-/// public class MongoDbTextSearchService : PlatformFullTextSearchPersistenceService
+/// // Document-store text search service
+/// public class DocumentStoreTextSearchService : PlatformFullTextSearchPersistenceService
 /// {
 ///     public override bool IsSupportQuery&lt;T&gt;(IQueryable&lt;T&gt; query) =>
-///         query.Provider is MongoQueryProvider;
+///         query.Provider is DocumentStoreQueryProvider;
 ///
 ///     protected override IQueryable&lt;T&gt; DoSearch&lt;T&gt;(...) =>
-///         // MongoDB text search implementation
+///         // document-store text search implementation
 /// }
 /// ```
 ///
@@ -329,8 +325,8 @@ public abstract class PlatformFullTextSearchPersistenceService : IPlatformFullTe
     /// **Usage in Polyglot Scenarios:**
     /// ```csharp
     /// // Service automatically routes to appropriate implementation
-    /// var pgResults = searchService.Search(postgresQuery, "search term", props);  // Uses PostgreSQL service
-    /// var mongoResults = searchService.Search(mongoQuery, "search term", props); // Uses MongoDB service
+    /// var sqlResults = searchService.Search(relationalQuery, "search term", props);  // Uses the relational service
+    /// var documentResults = searchService.Search(documentStoreQuery, "search term", props); // Uses the document-store service
     /// var memoryResults = searchService.Search(memoryQuery, "search term", props); // Uses in-memory service
     /// ```
     /// </remarks>
@@ -366,9 +362,9 @@ public abstract class PlatformFullTextSearchPersistenceService : IPlatformFullTe
     /// public override bool IsSupportQuery&lt;T&gt;(IQueryable&lt;T&gt; query) =>
     ///     query.Provider.GetType().Name.Contains("EntityQueryProvider");
     ///
-    /// // MongoDB support
+    /// // Document-store support
     /// public override bool IsSupportQuery&lt;T&gt;(IQueryable&lt;T&gt; query) =>
-    ///     query.Provider is MongoQueryProvider;
+    ///     query.Provider is DocumentStoreQueryProvider;
     ///
     /// // In-memory/LINQ to Objects support
     /// public override bool IsSupportQuery&lt;T&gt;(IQueryable&lt;T&gt; query) =>
@@ -400,25 +396,19 @@ public abstract class PlatformFullTextSearchPersistenceService : IPlatformFullTe
     ///
     /// **Database-Specific Implementations:**
     /// ```csharp
-    /// // PostgreSQL with full-text vectors
+    /// // Relational store, via EF Core
     /// protected override IQueryable&lt;T&gt; DoSearch&lt;T&gt;(...)
     /// {
-    ///     // Use to_tsvector and to_tsquery for advanced search
-    ///     return query.Where(predicate using PostgreSQL full-text functions);
+    ///     // Use the provider's own full-text construct — a text-vector/text-query pair, a
+    ///     // contains/free-text predicate, or whatever else that provider exposes
+    ///     return query.Where(predicate using the provider's full-text search);
     /// }
     ///
-    /// // MongoDB with text search
+    /// // Document store with text search
     /// protected override IQueryable&lt;T&gt; DoSearch&lt;T&gt;(...)
     /// {
-    ///     // Use $text operator with text indexes
-    ///     return query.Where(predicate using MongoDB text search);
-    /// }
-    ///
-    /// // SQL Server with CONTAINS/FREETEXT
-    /// protected override IQueryable&lt;T&gt; DoSearch&lt;T&gt;(...)
-    /// {
-    ///     // Use CONTAINS, FREETEXT, or CONTAINSTABLE functions
-    ///     return query.Where(predicate using SQL Server full-text);
+    ///     // Use the store's text operator against its text indexes
+    ///     return query.Where(predicate using the store's text search);
     /// }
     /// ```
     ///
@@ -466,7 +456,7 @@ public abstract class PlatformFullTextSearchPersistenceService : IPlatformFullTe
     /// - Caches service provider reference for efficiency
     ///
     /// **Use Cases:**
-    /// - Cross-database search scenarios (PostgreSQL + MongoDB)
+    /// - Cross-store search scenarios (a relational store alongside a document store)
     /// - Plugin-based architecture with multiple search providers
     /// - Development/testing scenarios with mixed data sources
     /// - Graceful degradation when primary search service is unavailable
@@ -479,15 +469,15 @@ public abstract class PlatformFullTextSearchPersistenceService : IPlatformFullTe
     ///
     /// **Example Scenario:**
     /// ```csharp
-    /// // PostgreSQL service doesn't support MongoDB query
-    /// var postgresService = new PostgreSqlFullTextSearchService();
-    /// var result = postgresService.Search(mongoQuery, "search term", props);
+    /// // The relational service doesn't support a document-store query
+    /// var relationalService = new RelationalFullTextSearchService();
+    /// var result = relationalService.Search(documentStoreQuery, "search term", props);
     ///
-    /// // Automatically falls back to MongoDB service
-    /// // 1. Detects MongoDB query provider
-    /// // 2. Finds MongoDbTextSearchService in DI container
-    /// // 3. Delegates search to MongoDB service
-    /// // 4. Returns MongoDB search results
+    /// // Automatically falls back to the document-store service
+    /// // 1. Detects the document-store query provider
+    /// // 2. Finds DocumentStoreTextSearchService in DI container
+    /// // 3. Delegates search to the document-store service
+    /// // 4. Returns the document-store search results
     /// ```
     ///
     /// **Error Handling:**

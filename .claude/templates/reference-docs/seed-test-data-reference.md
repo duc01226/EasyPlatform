@@ -2,75 +2,19 @@
 
 <!-- Fill in your project's details below -->
 
-> Project-specific supplement to `/seed-test-data`. Replace placeholders with real paths, config keys, and conventions from your codebase.
+Read when adding or changing reusable seed/fixture loading. Populate only evidence-backed applicable sections; do not infer a DI container, count loop, command layer or persistent store.
 
-## Quick Summary
+## Purpose and Invocation
+Describe the actual loader owner, intended data, entry point and invocation. Replace placeholders with verified owner paths and supported commands.
 
-**Goal:** Document how this project seeds test/dev data safely and idempotently.
+## Safety and Scope
+Record environment, authorization, data boundaries and destructive-operation preconditions from source. Keep secrets and production records out of this guide.
 
-**Key Rules:**
+## Repeatability and Cleanup
+Explain the actual idempotency, convergence or cleanup contract. Preserve actionable thresholds and exceptions; if one-shot behavior is intentional, say when it is permitted.
 
-- Always gate seeding to non-production or explicit config flag
-- Always ensure idempotency (`existing >= target` short-circuit)
-- Prefer command/application-layer dispatch over direct domain writes
-- Use fresh DI/UoW scope per loop iteration when required by your stack
+## Lifecycle and Ownership
+Document transaction/resource scope and registration only where evidenced. Keep a short rationale or example only when it prevents a likely misuse; route detailed implementations to their owner with a read-when trigger.
 
-## Seeder Locations
-
-- Primary folder(s): `TODO`
-- Core seeder class(es): `TODO`
-- Helper/orchestrator class(es): `TODO`
-
-## Config Keys
-
-```json
-{
-    "TODO_EnableSeedFlag": true,
-    "TODO_SeedTargetCount": 0
-}
-```
-
-## Reference Files (fill with real paths)
-
-1. `TODO` - base seeder abstraction
-2. `TODO` - concrete seeder implementation
-3. `TODO` - command/helper used by seeder
-4. `TODO` - DI registration location
-
-## Required Patterns
-
-### Environment Gate
-
-- Config or environment key: `TODO`
-- Guard location: `TODO`
-
-### Idempotency
-
-- Existing-count predicate: `TODO`
-- Target-count source: `TODO`
-- Loop strategy: `TODO`
-
-### DI/UoW Scope Safety
-
-- Required scope strategy: `TODO`
-- Anti-patterns to avoid: `TODO`
-
-## Minimal Template (stack-specific example)
-
-```text
-if (!CanSeed()) return;
-target = ReadTargetCount();
-existing = CountExistingSeededData();
-if (existing >= target) return;
-for i in [existing..target):
-  with fresh scope:
-    dispatch create/update command
-```
-
-## Verification Checklist
-
-- [ ] Seeder runs only in allowed environments
-- [ ] Rerun does not duplicate already-seeded records
-- [ ] Count is configurable and restart-safe
-- [ ] DI/UoW scope pattern is safe for parallel/loop execution
-- [ ] All claims include `file:line` evidence after scan
+## Discovery and Verification
+Name existing sources and tests that prove safety and repeated execution. Keep detailed scan evidence in temporary reports.

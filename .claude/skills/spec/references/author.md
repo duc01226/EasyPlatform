@@ -1,20 +1,68 @@
-> The `spec` skill (`../SKILL.md`) loads this body for `[mode=draft|init|update|audit|amend]` — the Feature Spec authoring + §8-shell modes. The shared M1-M7 contract, SYNC blocks, and prompt-enhance scaffolding live ONCE in the host SKILL.md; this body carries only the authoring procedure.
+> The `spec` skill (`../SKILL.md`) loads this body for `[mode=draft|init|update|audit|amend]`. The host SKILL.md selects the profile and routes to shared semantic gates; this body carries the authoring procedure.
+
+## Contents
+
+- [Native Profile Procedure](#native-profile-procedure)
+- [Strict Default Feature-Spec Procedure](#strict-default-feature-spec-procedure)
+- [Source Resolution (code vs idea) — resolve BEFORE Project Pattern Discovery](#source-resolution-code-vs-idea--resolve-before-project-pattern-discovery)
+- [Project Pattern Discovery](#project-pattern-discovery)
+- [Feature Documentation Generation & Verification](#feature-documentation-generation--verification)
+- [\[CRITICAL\] MANDATORY CODE EVIDENCE RULE](#critical-mandatory-code-evidence-rule)
+- [Output Structure](#output-structure)
+- [MANDATORY 8-SECTION TECH-FREE STRUCTURE](#mandatory-8-section-tech-free-structure)
+- [Step 0 — Mode Detection (MANDATORY FIRST)](#step-0--mode-detection-mandatory-first)
+- [Phase 1: Module Detection & Context Gathering](#phase-1-module-detection--context-gathering)
+- [Phase 1.5: Update Mode (when updating existing docs)](#phase-15-update-mode-when-updating-existing-docs)
+- [Phase 2: Documentation Generation](#phase-2-documentation-generation)
+- [Note: AI Companion Files Deprecated](#note-ai-companion-files-deprecated)
+- [Phase 3: Derived Artifact Refresh Flag](#phase-3-derived-artifact-refresh-flag)
+- [Anti-Hallucination Protocols](#anti-hallucination-protocols)
+- [Phase 3.5: Verification (4 Passes)](#phase-35-verification-4-passes)
+- [Quality Checklist](#quality-checklist)
+- [Standalone Chain](#standalone-chain)
+
+## Native Profile Procedure
+
+Apply this branch when `spec` profile resolution selects a native contract from project config or the required project-reference docs. In that case, do not execute the strict-default procedure below: its eight-section template, TC IDs, Section 8, evidence syntax, numbering, size thresholds, and carrier names are conditional defaults, not additional native requirements.
+
+1. **Resolve the owner and structure.** Read the configured business root and the project docs that name the canonical artifact, section roles, logical identifiers, ownership/lifecycle rules, evidence carriers, and case carriers. Follow any explicit local authority/supersession rules before judging declarations to conflict. Verify the target is hand-authored; a derived technical root stays with its generator. If a conflict remains, the owner is ambiguous, or an expected carrier is unsupported/unreadable, stop with `UNKNOWN`/`BLOCKED`; do not fall back to the default template.
+2. **Read local examples before writing.** Inspect three or more relevant canonical siblings or case-carrier examples when available; if fewer exist, search related siblings and report the limited sample. Preserve accepted section order, identifier spelling, frontmatter, delivery slices and dependency order, lineage, and owner/scenario/variant identity. A configured root or filename does not authorize a new format.
+3. **Draft or initialize through the native owner.** Keep the intent-role content distinct from normative contract details and evidence, following the owner references' rules for each role. Use the profile's requirement/acceptance/scenario identifiers and declared evidence/case fields; do not move contract detail into intent or create a second prose registry. Create a native carrier file only when its configured/local contract permits it. For an idea without implementation, use only the profile's declared draft/provisional mechanism; do not manufacture a default `Evidence: TBD` field unless the native owner defines it.
+4. **Update narrowly.** Trace the changed behavior to its canonical owner; revise only the impacted native sections and cases, preserve stable identifiers and unrelated content, and reconcile lineage/status under the local lifecycle. Do not create a second numbered spec when the local tier rules require amending an owner.
+5. **Amend bugs at the correct scope.** Investigate root cause and distinguish intended behavior from accidental behavior. Preserve the existing healthy contract. Add or change native scenario data only where the active profile owns that behavior; a technical-only fix does not automatically require a business case, and a missing native case is not automatically `N/A`.
+6. **Keep the test contract complete.** Each scenario/case has a concrete expected outcome, owner-qualified identity, and requirement/invariant link. Across the relevant requirements and invariants, retain positive coverage, negative/boundary coverage where applicable, property domains for hard invariants, and preservation coverage for healthy behavior at risk in a bugfix. Apply the mandates that govern this artifact tree, authorship model, and operation; M6 remains a review/gate obligation, not a case-content requirement. Representation choice does not waive applicable semantic obligations.
+7. **Prove traceability without overclaiming.** For every changed row, record the native carrier location and source evidence. For executable coverage, also record the executor, inspected assertion, and selected-runner result. Use manual-QC proof only when the profile explicitly authorizes it; record its approved procedure, observable expected outcome, and observed evidence without labeling it runner-executed. An ID/name match or source mapping alone is `mapped/unverified`, not executed coverage. An aggregate runner result proves only rows whose assertions were inspected and whose result was observed. If no selected execution result was observed, leave the row unverified; unresolved mappings or required unexecuted cases stay `UNKNOWN`/`BLOCKED`, never `PASS`.
+8. **Keep reports disposable.** Put the trace table and extraction notes in the run's `tmp/` report. Never create a new tracked index, case registry, or generated view to make the mapping easier; request owner clarification if no declared carrier can express the contract.
+
+### Native mode-specific behavior
+
+| Mode | Native behavior |
+| --- | --- |
+| `draft` | Draft intent in the native owner format; mark provisional only as that profile specifies. Unknown product decisions remain explicit questions, not invented cases. |
+| `init` | Create the owner using the configured local template/section roles and existing identifier rules; do not import the default eight-section/TC template. |
+| `update` | Patch only impacted native intent/contract/case carriers; preserve identifiers, lineage, variants, and unrelated case data. |
+| `audit` | Read-only report against native owners and carriers; unresolved selection or unsupported data is reported as `UNKNOWN`, not clean. |
+| `amend` | Apply the local lifecycle and native case ownership after root-cause and behavior-scope adjudication; preserve healthy behavior and do not manufacture a TC. |
+
+## Strict Default Feature-Spec Procedure
+
+The rest of this file describes the strict default eight-section/TC representation. Run it only when the host resolved that profile. Its safeguards remain semantic requirements for a native profile only where the configured native contract expresses the corresponding obligation.
 
 ## Source Resolution (code vs idea) — resolve BEFORE Project Pattern Discovery
 
 Every author-mode run sources from ONE of two inputs. Resolve which before any extraction:
 
-| Source                                          | Modes                              | Where §1-7 come from                                        | §8 Evidence                                   | Provisional?                  |
-| ----------------------------------------------- | ---------------------------------- | ----------------------------------------------------------- | --------------------------------------------- | ----------------------------- |
-| **Code** (existing implementation)              | `init`, `update`, `audit`, `amend` | grep/trace the implementation (the extraction phases below) | real `[Source: namespace/service/id]` anchors | no                            |
-| **Idea** (requirement/prompt text, no code yet) | `draft`                            | derive from the requirement/idea text — NO code grep        | `Evidence: TBD` (reference-only)              | **yes** — `provisional: true` |
+| Source | Modes | Where §1-7 come from | §8 Evidence | Provisional? |
+| ------ | ----- | -------------------- | ----------- | ------------ |
+| **Code** (existing implementation) | `init`, `update`, `audit`, `amend` | grep/trace the implementation (the extraction phases below) | real `[Source: namespace/service/id]` anchors | no |
+| **Idea** (requirement/prompt text, no code yet) | `draft` | derive from the requirement/idea text — NO code grep | `Evidence: TBD` (reference-only) | **yes** — `provisional: true` |
 
-**`mode=draft` (idea → provisional spec):** the implementation does not exist yet, so the code-extraction phases (Step 1-INIT.\* greps, graph trace, evidence verification) are **skipped**. Instead:
+**`mode=draft` (idea → provisional spec):** the implementation does not exist yet, so the code-extraction phases (Step 1-INIT.* greps, optional graph hint, evidence verification) are **skipped**. Instead:
 
-1. Derive §1-7 (Overview, Glossary, User Stories & AC, Business Rules, Domain Model, Process Flows & Interaction Surface, Permissions & Roles) from the supplied idea/requirement/prompt — SAME 8-section tech-free template (`docs/templates/detailed-feature-spec-template.md`), SAME M1-M5 + M7 mandate rules, SAME size caps. Draft does NOT get a lighter template — only a lighter evidence obligation. In particular M7 binds a draft exactly as it binds a code-sourced spec: an idea-sourced §8 TC shell is still judged by the demo test, and having no code yet is never a reason to admit a technical case. For a UI-bearing idea, populate §6.2–6.5 (View Inventory, Navigation Map, Key UI States, Per-Story Interaction Flow) per the §6 sub-procedure above from the idea text, and record any companion `design_spec:`/`mockup:` path supplied with the idea in YAML frontmatter; backend-only ideas state the §6 skip reason explicitly.
+1. Derive §1-7 (Overview, Glossary, User Stories & AC, Business Rules, Domain Model, Process Flows & Interaction Surface, Permissions & Roles) from the supplied idea/requirement/prompt — SAME 8-section tech-free template (`detailed-feature-spec-template.md` in the templates root — default `docs/templates/`; a `docsRoots.templates.path` entry in `docs/project-config.json` overrides the path), SAME M1-M5 + M7 mandate rules, SAME size caps. Draft does NOT get a lighter template — only a lighter evidence obligation. In particular M7 binds a draft exactly as it binds a code-sourced spec: an idea-sourced §8 TC shell is still judged by the demo test, and having no code yet is never a reason to admit a technical case. For a UI-bearing idea, populate §6.2–6.5 (View Inventory, Navigation Map, Key UI States, Per-Story Interaction Flow) per the §6 sub-procedure above from the idea text, and record any companion `design_spec:`/`mockup:` path supplied with the idea in YAML frontmatter; backend-only ideas state the §6 skip reason explicitly.
 2. Author §8 TC **shells** in the canonical `tc-format.md` template (Objective, GWT, AC, Test Data, Edge Cases) but set **`Evidence: TBD`** and **`Status: Planned`** — these are reference-only until code lands.
-3. Flag the spec provisional: add `provisional: true` to YAML frontmatter and a header banner `> **DRAFT — provisional spec, unverified until code lands. §8 evidence is TBD.**`.
-4. State the next step explicitly: _"Reconcile against real code via `/spec [mode=update]` once implemented — that run upgrades every `Evidence: TBD` to a real `[Source:]` anchor and clears the provisional flag."_
+3. Flag the spec provisional: add `provisional: true` to YAML frontmatter and a header banner `> **DRAFT — provisional spec, unverified until code lands. §8 evidence is TBD.**`. Preserve the applicable branch metadata alongside the provisional marker. For a large idea, carry the complete `large_idea_decomposition` block; for an ordinary idea, do not add roadmap or milestone placeholders. Provisional means code evidence is pending, not that product scope is undecided.
+4. State the next step explicitly: *"Reconcile against real code via `/spec [mode=update]` once implemented — that run upgrades every `Evidence: TBD` to a real `[Source:]` anchor and clears the provisional flag."*
 
 **Draft → update transition rule (BLOCKING for the first code-backed run):** when `update` (or `init`, if the draft was a scratch file later replaced) runs against a spec carrying `provisional: true`, it MUST (a) replace every §8 `Evidence: TBD` with the verified `[Source: namespace/service/id]` anchor discovered from code, (b) flip each upgraded TC `Status` from `Planned` to `Untested`/`Tested` per `sync`, and (c) remove `provisional: true` + the DRAFT banner. A spec that still has any `Evidence: TBD` MUST keep its provisional flag. `tests`/`sync` need no special-casing beyond this upgrade — a TBD TC is treated as a not-yet-implemented TC.
 
@@ -31,9 +79,9 @@ Before implementation, search codebase for project-specific patterns:
 
 Generate feature docs following project conventions.
 
-**GOLD STANDARD:** Search existing feature docs: `find docs/specs -name "README.*.md" -type f | head -5`
+**GOLD STANDARD:** Search existing feature docs: `find docs/specs -name "README.*.md" -type f | head -5` — `docs/specs` is the DEFAULT spec root; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path (substitute it into the command when configured).
 
-**Template:** `docs/templates/detailed-feature-spec-template.md`
+**Template:** `detailed-feature-spec-template.md` in the templates root — default `docs/templates/`; a `docsRoots.templates.path` entry in `docs/project-config.json` overrides the path.
 
 ---
 
@@ -53,11 +101,11 @@ Namespace ∈ `operation | event | component | schema | requirement | rule | con
 
 ### Valid vs Invalid Evidence
 
-| Valid                                       | Invalid                                 |
-| ------------------------------------------- | --------------------------------------- |
-| `[Source: operation/orders/CreateOrder]`    | physical code coordinates               |
-| `[Source: component/orders/Order]`          | `{namespace}/{service}/{id}` (template) |
-| `[Source: event/accounts/AccountUserSaved]` | "Based on CQRS pattern" (vague)         |
+| Valid                                       | Invalid                                       |
+| ------------------------------------------- | --------------------------------------------- |
+| `[Source: operation/orders/CreateOrder]`    | physical code coordinates                     |
+| `[Source: component/orders/Order]`          | `{namespace}/{service}/{id}` (template)       |
+| `[Source: event/accounts/AccountUserSaved]` | "Based on CQRS pattern" (vague)               |
 
 > **Carrier-field only:** the abstract anchor (and the `CoveredBy` coverage link) appear ONLY inside the `**Evidence**` / `CoveredBy` fields — never in a test case's behavioral description, which stays tech-agnostic (`spec-principles.md §3`). `CoveredBy` is the lone exception that keeps physical `{TestFile}::{MethodName}` link(s), test-filter expressions, or manual-QC coverage — it may list **several** covering tests, since one business TC maps to many tests (operational QA glue; see `tc-format.md` → TC ↔ Test Code Cardinality). Legacy `IntegrationTest:` is accepted only as migration input.
 
@@ -92,8 +140,8 @@ ls -d docs/specs/*/
 
 Map each module code to its folder name and service path. Example pattern:
 
-| Module Code | Folder Name | Service Path                 |
-| ----------- | ----------- | ---------------------------- |
+| Module Code | Folder Name | Service Path              |
+| ----------- | ----------- | ------------------------- |
 | {Module1}   | `{Module1}` | `{services-root}/{Module1}/` |
 | {Module2}   | `{Module2}` | `{services-root}/{Module2}/` |
 
@@ -103,16 +151,16 @@ Map each module code to its folder name and service path. Example pattern:
 
 All feature documentation MUST follow this section order. The doc is **tech-free** — zero technical terms in prose (no API routes, command/handler names, message-bus/event-contract schemas, code, or file paths). Code is the technical source of truth; the doc owns the business truth. Technical sections (Commands, Events-as-contracts, API Reference, Cross-Service, Performance, Troubleshooting) are NOT spec-doc content and are removed.
 
-| #   | Section                             | Audience    |
-| --- | ----------------------------------- | ----------- |
-| 1   | Overview                            | All         |
-| 2   | Glossary                            | All         |
-| 3   | User Stories & Acceptance Criteria  | PO, BA, QA  |
-| 4   | Business Rules                      | BA, Dev, QA |
-| 5   | Domain Model                        | BA, Dev     |
-| 6   | Process Flows & Interaction Surface | BA, QA, UX  |
-| 7   | Permissions & Roles                 | BA, Dev     |
-| 8   | Test Specifications                 | QA, Dev     |
+| #   | Section                              | Audience    |
+| --- | ------------------------------------ | ----------- |
+| 1   | Overview                             | All         |
+| 2   | Glossary                             | All         |
+| 3   | User Stories & Acceptance Criteria   | PO, BA, QA  |
+| 4   | Business Rules                       | BA, Dev, QA |
+| 5   | Domain Model                         | BA, Dev     |
+| 6   | Process Flows & Interaction Surface  | BA, QA, UX  |
+| 7   | Permissions & Roles                  | BA, Dev     |
+| 8   | Test Specifications                  | QA, Dev     |
 
 Plus YAML frontmatter (header/metadata). Domain events appear in Section 5 / Section 6 only as business-meaningful occurrences, never as bus/message schemas.
 
@@ -130,12 +178,12 @@ When a companion `design-spec`/mockup exists, record its path in the spec frontm
 
 ### Stakeholder Quick Navigation
 
-| Audience             | Sections                                                                                                    |
-| -------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Product Owner**    | Overview, User Stories & Acceptance Criteria                                                                |
-| **Business Analyst** | User Stories & Acceptance Criteria, Business Rules, Process Flows, Domain Model                             |
-| **QA/QC**            | Test Specifications, Acceptance Criteria, Business Rules                                                    |
-| **Developer / AI**   | Domain Model, Test Specifications (+ the hidden `[Source:]` carriers); the technical contract lives in code |
+| Audience              | Sections                                                                 |
+| --------------------- | ------------------------------------------------------------------------ |
+| **Product Owner**     | Overview, User Stories & Acceptance Criteria                             |
+| **Business Analyst**  | User Stories & Acceptance Criteria, Business Rules, Process Flows, Domain Model |
+| **QA/QC**             | Test Specifications, Acceptance Criteria, Business Rules                  |
+| **Developer / AI**    | Domain Model, Test Specifications (+ the hidden `[Source:]` carriers); the technical contract lives in code |
 
 ---
 
@@ -143,28 +191,28 @@ When a companion `design-spec`/mockup exists, record its path in the spec frontm
 
 **Before any extraction, detect mode:**
 
-1. Check `docs/specs/{Bucket}/` exists (or `--audit` flag)
-2. If auto-detected module, check entire `docs/specs/` tree
-3. Present detected mode via `AskUserQuestion` before proceeding — NEVER auto-start
+1. Check `<spec root>/{Bucket}/` exists (or `--audit` flag) — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path
+2. If auto-detected module, check the entire `<spec root>/` tree — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path
+3. Present detected mode via `ask user question tool` before proceeding — NEVER auto-start
 
 **Mode routing:**
 
-| Condition                                                                       | Mode                                                                 | Next Step                                                                                                                                      |
-| ------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Source is an idea/requirement/prompt, **no code yet** (explicit `[mode=draft]`) | **DRAFT**                                                            | → Source Resolution (idea branch): author §1-7 from text + §8 shells with `Evidence: TBD` + provisional marker                                 |
-| `docs/specs/{Bucket}/` NOT found AND code exists to source from                 | **INIT**                                                             | → Mode: INIT                                                                                                                                   |
-| `docs/specs/{Bucket}/` exists                                                   | **UPDATE**                                                           | → Phase 1.5 (existing update mode)                                                                                                             |
-| `[mode=amend]` arg (bugfix caller) AND doc exists                               | **AMEND**                                                            | → Mode: AMEND (scoped: regression TC + AC adjust only)                                                                                         |
-| `[mode=amend]` arg (bugfix caller) AND doc does **NOT** exist                   | **INIT** (code exists) / **DRAFT** (no code yet), then seed bug case | → run INIT/DRAFT to create the governing spec, then add the regression `TC-{FC}-NNN` for the bug case to §8 (Status `Untested`). Do NOT no-op. |
-| `--audit` flag OR user requests audit                                           | **AUDIT**                                                            | → Mode: AUDIT                                                                                                                                  |
+| Condition                                    | Mode       | Next Step                          |
+| -------------------------------------------- | ---------- | ---------------------------------- |
+| Source is an idea/requirement/prompt, **no code yet** (explicit `[mode=draft]`) | **DRAFT** | → Source Resolution (idea branch): author §1-7 from text + §8 shells with `Evidence: TBD` + provisional marker |
+| `<spec root>/{Bucket}/` NOT found AND code exists to source from (default `docs/specs`; `specRoots.business.path` in `docs/project-config.json` overrides the root) | **INIT**   | → Mode: INIT                       |
+| `<spec root>/{Bucket}/` exists (default `docs/specs`; `specRoots.business.path` in `docs/project-config.json` overrides the root) | **UPDATE** | → Phase 1.5 (existing update mode) |
+| `[mode=amend]` arg (bugfix caller) AND doc exists | **AMEND** | → Mode: AMEND (scoped: regression TC + AC adjust only) |
+| `[mode=amend]` arg (bugfix caller) AND doc does **NOT** exist | **INIT** (code exists) / **DRAFT** (no code yet), then seed bug case | → run INIT/DRAFT to create the governing spec, then add the regression `TC-{FC}-NNN` for the bug case to §8 (Status `Untested`). Do NOT no-op. |
+| `--audit` flag OR user requests audit        | **AUDIT**  | → Mode: AUDIT                      |
 
 > **Scale gate for INIT mode (workflow context only):** If `workflow-code-to-spec` is the caller AND module_count ≥ 4 → MUST spawn sub-agents (one per module) in ONE message. When `spec` is invoked STANDALONE for a single module, no scale gate applies — single-module init is always single-session.
 
-> **Mode: AMEND (bugfix scope — NOT a re-author).** Triggered by `spec [mode=amend]` from the bugfix workflow (inserted after `debug-investigate`, before `plan`). A bug fix changes a narrow slice of behavior. Do the MINIMUM — touch only the sections the bug touches.
+> **Mode: AMEND (bugfix scope — NOT a re-author).** Triggered by `spec [mode=amend]` from the bugfix workflow (inserted after `investigate --mode=debug`, before `plan`). A bug fix changes a narrow slice of behavior. Do the MINIMUM — touch only the sections the bug touches.
 >
 > ### [GATE — BLOCKING] Business-visibility gate (**mandate M7**) — run BEFORE any other branch
 >
-> **This gate IS mandate M7** (`shared/sdd-artifact-contract.md` → _AI-SDD Mandates_, _Business-Visibility Gate_). Record the verdict with the mandate ID so it is greppable and a reviewer can re-check it: **M7 is enforced at BOTH authoring and review**, and a verdict that names no mandate is one a reviewer cannot audit.
+> **This gate IS mandate M7** (`shared/sdd-artifact-contract.md` → *AI-SDD Mandates*, *Business-Visibility Gate*). Record the verdict with the mandate ID so it is greppable and a reviewer can re-check it: **M7 is enforced at BOTH authoring and review**, and a verdict that names no mandate is one a reviewer cannot audit.
 >
 > **Answer this first, in writing, with evidence:**
 >
@@ -173,35 +221,34 @@ When a companion `design-spec`/mockup exists, record its path in the spec frontm
 > - **NO → TECHNICAL-ONLY. The correct output is a NO-OP on this spec.** Record `M7 TECHNICAL-ONLY — no business behavior changed; no §8 TC added` naming the surface with `file:line` evidence, and **STOP**. Route the regression to the **technical spec tree** and to an integration test, which is where regression protection belongs. **A no-op here is the CORRECT, EXPECTED result — never a coverage failure, never a gap, and never something to apologize for.**
 > - **YES → BUSINESS-VISIBLE.** Continue to the amend/init branch below and author the TC in demo form (actor → flow → observable expectation).
 >
-> **TECHNICAL-ONLY (→ no §8 TC):** a consumer/event-handler/sync-processor not firing; a read-model or projection lag; a serialization, mapping, or round-trip persistence defect; a null-reference/exception; a query/index performance fix; a race or idempotency defect; a DI/config/migration error; a retry/timeout; a UI rendering, CSS, layout, or overflow defect; a data-load or pagination mechanic — **where the business rule, the user-visible outcome, and the business data state are all unchanged.** _(Illustrative, not exhaustive — the test below governs.)_
+> **TECHNICAL-ONLY (→ no §8 TC):** a consumer/event-handler/sync-processor not firing; a read-model or projection lag; a serialization, mapping, or round-trip persistence defect; a null-reference/exception; a query/index performance fix; a race or idempotency defect; a DI/config/migration error; a retry/timeout; a UI rendering, CSS, layout, or overflow defect; a data-load or pagination mechanic — **where the business rule, the user-visible outcome, and the business data state are all unchanged.** *(Illustrative, not exhaustive — the test below governs.)*
 >
 > **BUSINESS-VISIBLE (→ §8 TC required):** the system enforced the wrong business rule; a user saw a wrong value, total, status, or permission decision; a business data state ended up incorrect; a documented AC did not hold.
 >
-> ⚠️ **The test is NOT "can I phrase this without technical words."** Any technical case can be laundered into tech-free prose — _"the system correctly synchronizes the employee record"_ is a technical TC in a business costume, and it is **exactly** the failure this gate exists to stop. **The operative test:**
+> ⚠️ **The test is NOT "can I phrase this without technical words."** Any technical case can be laundered into tech-free prose — *"the system correctly synchronizes the employee record"* is a technical TC in a business costume, and it is **exactly** the failure this gate exists to stop. **The operative test:**
 >
 > > **Could a QC engineer DEMO this as a business outcome, and would a stakeholder recognize the value?** If the only way to observe it is to inspect a queue, a projection, a log, a consumer, or a database row that no user-facing behavior depends on — **it is TECHNICAL-ONLY.**
 >
-> **Most bugfixes are TECHNICAL-ONLY, and that is normal.** The feature was always _supposed_ to work this way; the code failed to deliver it. **When pre-fix and post-fix business behavior are identical — the business rule was already correctly specified — there is no new business rule to state and NO business TC to add.** The spec was not wrong; the code was.
+> **Most bugfixes are TECHNICAL-ONLY, and that is normal.** The feature was always *supposed* to work this way; the code failed to deliver it. **When pre-fix and post-fix business behavior are identical — the business rule was already correctly specified — there is no new business rule to state and NO business TC to add.** The spec was not wrong; the code was.
 >
 > **[HARD] Never manufacture a business TC to satisfy a process.** A spec that gains a TC per bugfix becomes a changelog of defects instead of a statement of intended behavior — un-demoable, and useless for re-implementing the system on a different architecture.
 >
-> **Record the verdict either way, naming the surface with `file:line`.** A bare _"TECHNICAL-ONLY"_ with no named surface is a rubber stamp; the citation is what makes the verdict reviewable.
+> **Record the verdict either way, naming the surface with `file:line`.** A bare *"TECHNICAL-ONLY"* with no named surface is a rubber stamp; the citation is what makes the verdict reviewable.
 >
 > ---
 >
-> **Branch (BUSINESS-VISIBLE only) — amend vs init (mirrors `fix` standalone §3 spec-correctness check).** Before amending, confirm a governing Feature Spec exists for the buggy area under `docs/specs/`:
->
+> **Branch (BUSINESS-VISIBLE only) — amend vs init (mirrors `fix` standalone §3 spec-correctness check).** Before amending, confirm a governing Feature Spec exists for the buggy area under the spec root (default `docs/specs/`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path):
 > - **Governing spec exists** → do the scoped AMEND below.
 > - **No governing spec exists** → do NOT no-op **(this branch is reached only for a BUSINESS-VISIBLE bug — the gate above has already ruled out TECHNICAL-ONLY)**. Route to **INIT** (code exists to source from) or **DRAFT** (no code yet) to create the spec, then add the bug case as a regression `TC-{FC}-NNN` to §8. Record `No governing spec — created via {INIT|DRAFT}, bug case seeded as TC-{FC}-NNN` with `file:line` evidence.
-> - **Governing spec exists, §1-§7 already correct, but NO existing TC covered the bug case** → skip the §4/§3 wording edits and add ONLY the regression `TC-{FC}-NNN` (item 3). The spec was _correct but lacked the bug case_ — never leave a **business-visible** case undocumented.
+> - **Governing spec exists, §1-§7 already correct, but NO existing TC covered the bug case** → skip the §4/§3 wording edits and add ONLY the regression `TC-{FC}-NNN` (item 3). The spec was *correct but lacked the bug case* — never leave a **business-visible** case undocumented.
 >
 > Scoped AMEND steps (governing spec exists):
 >
-> 1. **§4 Business Rules** — if the bug violated or mis-stated a rule, correct ONLY that rule's wording (preserve its `BR-{FC}-NNN` ID verbatim, keep its [HARD]/[SOFT] tag). If the spec documented the _buggy_ behavior (Spec Bug per the bugfix SPEC-BUG GATE), fix the rule to the intended behavior.
+> 1. **§4 Business Rules** — if the bug violated or mis-stated a rule, correct ONLY that rule's wording (preserve its `BR-{FC}-NNN` ID verbatim, keep its [HARD]/[SOFT] tag). If the spec documented the *buggy* behavior (Spec Bug per the bugfix SPEC-BUG GATE), fix the rule to the intended behavior.
 > 2. **§3 Acceptance Criteria** — adjust ONLY the AC the fix changes; add a new `AC-{FC}-NN` if the fix guarantees a new behavior. Preserve existing AC IDs.
 > 3. **§8 Test Specifications** — add the regression `TC-{FC}-NNN` guarding the fix (GIVEN bug repro / WHEN fixed path / THEN correct outcome) + its `CoveredBy: {File}::{Method}` once the regression test exists (Status `Untested` until it lands).
 > 4. **§6 Interaction Surface** — touch ONLY if the fix changed an observable UI behavior the spec records (a view's role, a navigation transition, an observable state, or a per-story click-path); then correct ONLY that affected §6.2–6.5 line, M1-clean. Otherwise leave §6 alone.
-> 5. Do NOT re-extract the domain model, re-scout the whole module, or rewrite §1/§2/§5/§7 (or §6 beyond the scoped line in item 4).
+> 5. Do NOT re-extract the domain model, re-investigate the whole module, or rewrite §1/§2/§5/§7 (or §6 beyond the scoped line in item 4).
 >
 > Scale doc work to change size — full INIT/UPDATE extraction is FORBIDDEN in AMEND.
 
@@ -209,7 +256,7 @@ When a companion `design-spec`/mockup exists, record its path in the spec frontm
 
 ### Mode: INIT (New Feature Doc) — Full Extraction from Zero
 
-When no docs exist, run spec-index-style extraction before folding into the 8-section tech-free Feature Spec.
+When no docs exist, run source-first extraction (entities, rules, flows read from source) before folding into the 8-section tech-free Feature Spec.
 
 > **Resolve the project's layout before extracting.** Read the project's structure reference and project config to discover
 > the module source root, layer/folder conventions, file globs, and framework markers (endpoint attributes, handler types,
@@ -217,7 +264,7 @@ When no docs exist, run spec-index-style extraction before folding into the 8-se
 > trace cross-service flow → fold into the 8 tech-free sections. The `{...}` placeholders and concrete commands shown below
 > are illustrative; substitute the values discovered for the current stack. The emitted Feature Spec stays tech-free regardless (M1).
 
-#### Step 1-INIT.1: Holistic Scout
+#### Step 1-INIT.1: Holistic investigate
 
 Map module's codebase before reading any file in detail:
 
@@ -272,7 +319,7 @@ grep -r "{route-guard-markers}" {frontend-root}/ --include="{frontend-source-glo
 
 **[GATE — BLOCKING before Phase A extraction]:**
 
-- **The minimum Section 8 (Test Specifications) TC count is `business_floor`** — defined below. **It is NOT a function of the operation count.** The enumeration above informs _what to write about_; it MUST NOT set _how many_ business TCs exist.
+- **The minimum Section 8 (Test Specifications) TC count is `business_floor`** — defined below. **It is NOT a function of the operation count.** The enumeration above informs *what to write about*; it MUST NOT set *how many* business TCs exist.
 - If `business_floor` ≥ 20: MUST split extraction into operation groups (≤20 ops each). Create one `TaskCreate` per group before starting any extraction phase.
 - Actor catalog must list ≥1 role or flag as "No roles found — verify §2's actor list manually"
 
@@ -294,7 +341,7 @@ business_floor = (§3 US × AC)
 - **`count(§2 actors)` reads §2's actor list — NEVER a permission-guard grep.** A role is a business noun; a permission attribute is not. Sourcing actors from `{authorization-markers}` would let a new auth attribute move a "business" floor by +2 with zero business change — a technical floor wearing a business name.
 - **Falsifier (the test that matters):** add an authorization attribute naming a new role, **and** add a handler → **`business_floor` MUST NOT move.** If it moves, this gate is architecture-derived regardless of what it is called.
 
-> **Why this floor and not an operation count.** A business spec must be re-implementable on _any_ architecture — the same feature as a monolith or as microservices yields the **same** user stories, acceptance criteria, and TCs. A floor derived from handler/consumer/job counts makes the spec a mirror of one implementation: re-architect, and the "business" TC count changes though no business behavior did. Operation-derived coverage is a **real obligation** — it belongs to the **technical** spec tree, which is architecture-bound by design.
+> **Why this floor and not an operation count.** A business spec must be re-implementable on *any* architecture — the same feature as a monolith or as microservices yields the **same** user stories, acceptance criteria, and TCs. A floor derived from handler/consumer/job counts makes the spec a mirror of one implementation: re-architect, and the "business" TC count changes though no business behavior did. Operation-derived coverage is a **real obligation** — it belongs to the **technical** spec tree, which is architecture-bound by design.
 
 #### Step 1-INIT.2: Domain Model Extraction (Phase A)
 
@@ -312,7 +359,7 @@ For each entity in Entity layer:
 - Tech-agnostic types only: `string`, `number`, `boolean`, `date`, `list`, `map`
 - Mark aggregate roots with `%% [AGGREGATE: ...]`
 - Cross-module references as stubs: `%% [CROSS-REF: module-name]`
-- Save ERD in `.ai/workspace/analysis/{Module}-erd.md` for Section 5
+- Save ERD in `tmp/analysis/{Module}-erd.md` for Section 5
 
 #### Step 1-INIT.3: Business Rules Extraction (Phase B)
 
@@ -339,9 +386,9 @@ Write operation description in business language only — no language/framework 
 
 **Coverage is measured against business capabilities, not against the operation count.** Two handlers serving one user-visible capability are **one** entry, not two; one handler serving two distinct capabilities is **two**. The mapping is deliberately not 1:1 with the architecture — that is what makes the spec survive re-implementation.
 
-#### Step 1-INIT.4.5: Graph Trace for Cross-Service Scope (before Domain Model events)
+#### Step 1-INIT.4.5: Cross-Service Scope Trace (optional graph hint; before Domain Model events)
 
-Before capturing domain events as occurrences, run graph analysis to discover ALL consumers and producers:
+Before capturing domain events as occurrences, discover ALL consumers and producers by grep/read of the project's message/event markers (bus-message, consumer, integration-event types — see the project's message-bus reference). Optional: when the cross-service blast radius is hard to see by grep and `.code-graph/graph.db` exists, graph analysis can add hints (it may be stale — verify by reading):
 
 ```bash
 # Trace cross-service flow from the primary entity/model file
@@ -351,17 +398,17 @@ python .claude/scripts/code_graph trace {path-to-primary-entity-file} --directio
 python .claude/scripts/code_graph connections {path-to-primary-controller-file} --json
 ```
 
-**If `.code-graph/graph.db` is unavailable:** Fall back to grepping for the project's message/event markers (bus-message, consumer, integration-event types — see the project's message-bus reference):
+**Grep for the project's message/event markers** (the primary method; the only one when `.code-graph/graph.db` is unavailable):
 
 ```bash
 grep -rn "{message-bus-and-event-markers}" {module-source-root}/ --include="{backend-source-glob}"
 ```
 
-Use graph output to enumerate: outbound events (produces), inbound events (consumes), cross-service reactions. Feed business-visible findings into **Section 5 (Domain Model)** as business-meaningful occurrences (e.g. "Order Placed" → owner notified, order becomes active) and into **Section 8 (Test Specifications)** only when the case passes M7 as a demoable business outcome. Technical-only publish/consume, payload, retry, idempotency, and projection mechanics belong in the technical spec tree and test code — NEVER as bus/message/payload schemas in the business Feature Spec.
+Use the grep/read results (and any graph hint) to enumerate: outbound events (produces), inbound events (consumes), cross-service reactions. Feed business-visible findings into **Section 5 (Domain Model)** as business-meaningful occurrences (e.g. "Order Placed" → owner notified, order becomes active) and into **Section 8 (Test Specifications)** only when the case passes M7 as a demoable business outcome. Technical-only publish/consume, payload, retry, idempotency, and projection mechanics belong in the technical spec tree and test code — NEVER as bus/message/payload schemas in the business Feature Spec.
 
 #### Step 1-INIT.4.6: Full-Chain Vertical Trace [BLOCKING — the completeness backbone]
 
-**Why this step exists:** Phases A–D enumerate each layer _in isolation_ (entities, rules, operations, events). A spec authored from layer-parallel inventories silently misses behavior that lives only in the _seams_ — a UI action whose handler was never enumerated, a write operation that no screen ever invokes (dead or headless?), a read model populated by an event with no documented producer. **A correct, nothing-missed spec requires tracing the COMPLETE vertical slice front-to-back for every user-facing capability**, not just listing the layers. This is the operative guard for "the spec is correct and nothing is missed."
+**Why this step exists:** Phases A–D enumerate each layer *in isolation* (entities, rules, operations, events). A spec authored from layer-parallel inventories silently misses behavior that lives only in the *seams* — a UI action whose handler was never enumerated, a write operation that no screen ever invokes (dead or headless?), a read model populated by an event with no documented producer. **A correct, nothing-missed spec requires tracing the COMPLETE vertical slice front-to-back for every user-facing capability**, not just listing the layers. This is the operative guard for "the spec is correct and nothing is missed."
 
 **For EACH user-facing capability (and each background/event-driven flow), trace the full chain end-to-end:**
 
@@ -381,15 +428,15 @@ UI view / entry point
 
 **Tooling (use in this order; each link must be evidenced, never inferred):**
 
-1. **Frontend→backend links — `graph-connect-api`** (or grep the UI service/data layer for API call sites): map each view/screen action to the backend route/operation it invokes. This is the seam Phase C (backend-only) and Phase E (UI-only) each see from one side; this step JOINS them.
-2. **Backend flow — `graph-trace`** (`python .claude/scripts/code_graph trace {entry-file} --direction both --json`): from each handler, trace down to entity/rule and outward to events/consumers. Reuse the 1-INIT.4.5 cross-service output for the event tail.
+1. **Frontend→backend links — grep the UI service/data layer for API call sites** (optionally `graph-code --mode=connect-api` as a stale-able hint): map each view/screen action to the backend route/operation it invokes. This is the seam Phase C (backend-only) and Phase E (UI-only) each see from one side; this step JOINS them.
+2. **Backend flow — read the code** (optionally `graph-code --mode=trace`: `python .claude/scripts/code_graph trace {entry-file} --direction both --json`, a stale-able hint): from each handler, trace down to entity/rule and outward to events/consumers. Reuse the 1-INIT.4.5 cross-service output for the event tail.
 3. **Read-side closure:** for every write that emits an event, trace to the projection/read model and to the view that displays it — so the chain returns to the UI, not just to persistence.
 
-**Output — Full-Chain Trace Map** (working note in `.ai/workspace/analysis/{Module}-chain-map.md`; folds into §6 flows + §8 TCs):
+**Output — Full-Chain Trace Map** (working note in `tmp/analysis/{Module}-chain-map.md`; folds into §6 flows + §8 TCs):
 
-| Chain ID    | UI view + action  | API/operation | Handler | Entity + BR enforced | Event(s)     | Consumer/read-model        | UI outcome state      | Status            |
-| ----------- | ----------------- | ------------- | ------- | -------------------- | ------------ | -------------------------- | --------------------- | ----------------- |
-| CH-{MOD}-01 | {view} · {action} | {operation}   | {OP-id} | {entity} · {BR-id}   | {event or —} | {consumer/projection or —} | {success/error state} | COMPLETE / BROKEN |
+| Chain ID | UI view + action | API/operation | Handler | Entity + BR enforced | Event(s) | Consumer/read-model | UI outcome state | Status |
+| -------- | ---------------- | ------------- | ------- | -------------------- | -------- | ------------------- | ---------------- | ------ |
+| CH-{MOD}-01 | {view} · {action} | {operation} | {OP-id} | {entity} · {BR-id} | {event or —} | {consumer/projection or —} | {success/error state} | COMPLETE / BROKEN |
 
 **[GATE — BLOCKING before Phase E / §6 / §8] Chain Reconciliation — flag every unmatched link:**
 
@@ -452,37 +499,37 @@ For each event handler and bus consumer:
 
 #### Step 1-INIT.7: Transform to 8-Section Tech-Free Format
 
-After extraction is complete, fold the extracted content into the 8 business sections. Technical artifacts (commands/handlers, API routes, message/event contracts, UI component names) are the code's responsibility and are NOT written into the doc — they only _inform_ the business sections and test cases below:
+After extraction is complete, fold the extracted content into the 8 business sections. Technical artifacts (commands/handlers, API routes, message/event contracts, UI component names) are the code's responsibility and are NOT written into the doc — they only *inform* the business sections and test cases below:
 
-| Extracted Phase                              | Target Section(s)                                                                                                                                                                                                                                                                                               |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase A entities                             | Section 5 (Domain Model) — relationships + business-meaning columns, plain types + `[Source: component/{service}/{Entity}]`                                                                                                                                                                                     |
-| Phase B rules                                | Section 4 (Business Rules, BR-XX) + Section 3 (the acceptance criteria they constrain)                                                                                                                                                                                                                          |
-| Phase C operations                           | Section 3 (User Stories & AC — the business need behind each operation) + Section 8 (Test Specs) — **NOT** a Commands/API section                                                                                                                                                                               |
-| Phase D events                               | Section 5 (Domain Model — as business-meaningful occurrences) + Section 8 only for demoable business outcomes — **NEVER** as bus/message schemas                                                                                                                                                                |
-| Phase E journeys                             | Section 6 (§6.1 Process Flows) + Section 3 (User Stories & AC) + Section 8 (Test Specs)                                                                                                                                                                                                                         |
+| Extracted Phase    | Target Section(s)                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Phase A entities   | Section 5 (Domain Model) — relationships + business-meaning columns, plain types + `[Source: component/{service}/{Entity}]` |
+| Phase B rules      | Section 4 (Business Rules, BR-XX) + Section 3 (the acceptance criteria they constrain)                         |
+| Phase C operations | Section 3 (User Stories & AC — the business need behind each operation) + Section 8 (Test Specs) — **NOT** a Commands/API section |
+| Phase D events     | Section 5 (Domain Model — as business-meaningful occurrences) + Section 8 only for demoable business outcomes — **NEVER** as bus/message schemas |
+| Phase E journeys   | Section 6 (§6.1 Process Flows) + Section 3 (User Stories & AC) + Section 8 (Test Specs)                        |
 | UI interaction surface (UI-bearing features) | Section 6 (§6.2 View Inventory, §6.3 Navigation Map, §6.4 Key UI States, §6.5 Per-Story Interaction Flow) per the §6 sub-procedure — UX roles + observable states + `US-`/`OP-`/`BR-` cross-refs only; record companion `design_spec:`/`mockup:` frontmatter when present; backend-only specs state the §6 skip |
-| Auth rules                                   | Section 7 (Permissions & Roles — business RBAC matrix, no auth-implementation detail)                                                                                                                                                                                                                           |
+| Auth rules         | Section 7 (Permissions & Roles — business RBAC matrix, no auth-implementation detail)                          |
 
 **[BLOCKING] Section 8 Readiness Gate** — Before writing Section 8 (Test Specifications), verify foundational sections are complete:
 
-| Section                | Required for TC writing?             | Check                                 |
-| ---------------------- | ------------------------------------ | ------------------------------------- |
-| S3 User Stories & AC   | Yes — each TC proves an AC-XX        | ≥1 US-XX with AC-XX present           |
-| S4 Business Rules      | Yes — TCs reference BR-XX            | ≥1 BR-XX with error condition present |
-| S5 Domain Model        | Yes — TCs assert entity/field state  | ≥1 entity with business-meaning cols  |
-| S7 Permissions & Roles | Yes — TCs must include access checks | Role-permission matrix present        |
+| Section                    | Required for TC writing?              | Check                                 |
+| -------------------------- | ------------------------------------- | ------------------------------------- |
+| S3 User Stories & AC       | Yes — each TC proves an AC-XX         | ≥1 US-XX with AC-XX present           |
+| S4 Business Rules          | Yes — TCs reference BR-XX             | ≥1 BR-XX with error condition present |
+| S5 Domain Model            | Yes — TCs assert entity/field state   | ≥1 entity with business-meaning cols  |
+| S7 Permissions & Roles     | Yes — TCs must include access checks  | Role-permission matrix present        |
 
-If 2 or more of these sections are missing or empty → use `AskUserQuestion` to ask user whether to proceed with placeholder TCs or halt and complete foundational sections first.
+If 2 or more of these sections are missing or empty → use `ask user question tool` to ask user whether to proceed with placeholder TCs or halt and complete foundational sections first.
 
 **[BLOCKING] Section 8 Quantity Gate (runs after Readiness Gate):**
 
 Before writing any TCs, verify the planned TC count meets the **business** floor:
 
-| Check          | Required               | Planned | Status    |
-| -------------- | ---------------------- | ------- | --------- |
-| Permission TCs | ≥ count(§2 actors) × 2 | {n}     | PASS/FAIL |
-| **Total**      | ≥ `business_floor`     | {n}     | PASS/FAIL |
+| Check          | Required                  | Planned | Status    |
+| -------------- | ------------------------- | ------- | --------- |
+| Permission TCs | ≥ count(§2 actors) × 2    | {n}     | PASS/FAIL |
+| **Total**      | ≥ `business_floor`        | {n}     | PASS/FAIL |
 
 If any row FAILS or planned count < `business_floor`: split TC generation into operation-group batches (≤20 ops per `TaskCreate`). Do NOT write TCs until all batch tasks are planned and the total is ≥ `business_floor`.
 
@@ -490,7 +537,7 @@ If any row FAILS or planned count < `business_floor`: split TC generation into o
 
 **`count(§2 actors)` reads §2's actor list.** Never source it from a permission-guard grep — see the `business_floor` definition.
 
-**[REQUIRED] TC ID Collision Prevention:**
+**[REQUIRED] TC ID Collision Prevention** — `docs/specs` below is the DEFAULT spec root; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path (substitute it when configured):
 
 ```bash
 grep -n "TC-{FEATURE}-" docs/specs/{Bucket}/README.*.md 2>/dev/null | sort | tail -10
@@ -510,12 +557,12 @@ Note the highest existing ID before assigning new ones. See `.claude/skills/shar
 > ```markdown
 > ## Related Documentation
 >
-> | Type                 | Path                           | Description                                                                                                                           |
-> | -------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-> | Spec Index (derived) | `docs/specs/{Bucket}/INDEX.md` | DERIVED navigation catalog over the Feature Specs (regenerate via /spec-index) — §8 in this doc is the canonical business TC registry |
-> | Integration Tests    | `{configured-test-path}/`      | Test code; linked to TCs by the configured test-spec annotation (key `TestSpec`)                                                      |
-> | Parent Feature       | _(if sub-feature)_             |                                                                                                                                       |
-> | Child Features       | _(if this doc is a parent)_    |                                                                                                                                       |
+> | Type              | Path                                                         | Description                                              |
+> | ----------------- | ------------------------------------------------------------ | -------------------------------------------------------- |
+> | Spec Index (derived) | `<spec root>/{Bucket}/INDEX.md` — default `docs/specs`; `specRoots.business.path` in `docs/project-config.json` overrides the root | DERIVED navigation catalog over the Feature Specs (regenerate via /spec [mode=index]) — §8 in this doc is the canonical business TC registry |
+> | Integration Tests | `{configured-test-path}/` | Test code; linked to TCs by the configured test-spec annotation (key `TestSpec`) |
+> | Parent Feature    | _(if sub-feature)_                                           |                                                          |
+> | Child Features    | _(if this doc is a parent)_                                  |                                                          |
 > ```
 >
 > Fill in `{app-bucket}`, `{system-name}`, `{Module}`, `{ServiceName}` from the current module context.
@@ -528,23 +575,23 @@ Note the highest existing ID before assigning new ones. See `.claude/skills/shar
 
 ### Mode: AUDIT (Staleness Detection)
 
-When audit mode is triggered:
+Audit is read-only for existing docs. Use the root already resolved by `SKILL.md`; the procedure below applies only to the strict default profile. The [native audit branch](#native-mode-specific-behavior) reports against its declared owners/carriers and preserves `UNKNOWN` for unresolved selection or unsupported data.
 
-1. Read `docs/specs/{Bucket}/README.{Feature}.md` frontmatter → `last_updated`
+1. Read `<spec root>/{Bucket}/README.{Feature}.md` frontmatter → `last_updated`
 2. Run `git log --since="{last_updated}" --name-only -- {module-source-root}/`
-3. If changed files found → flag sections using Phase 1.5 impact mapping table — this includes flagging **§6 (Process Flows & Interaction Surface)** STALE when changed UI-affecting source implies a new/changed view, navigation, observable state, or click-path the spec's §6.2–6.5 no longer reflects.
-4. Output `docs/specs/{Bucket}/AUDIT-{date}.md`:
+3. If changed files found → flag sections using [Section Impact Mapping](#step-152-section-impact-mapping), including §6 STALE when UI-affecting changes imply new or changed views, navigation, observable states or click-paths no longer reflected in §6.2–6.5.
+4. Output `<spec root>/{Bucket}/AUDIT-{date}.md`:
 
     ```markdown
     # Feature Doc Audit — {date}
 
     ## {FeatureName}
 
-    | Section                         | Status     | Changed Source Files         | Action                                       |
-    | ------------------------------- | ---------- | ---------------------------- | -------------------------------------------- |
-    | Section 5 (Domain Model)        | ⚠️ STALE   | EntityX (changed 2026-04-18) | Re-extract entities                          |
-    | Section 6 (Interaction Surface) | ⚠️ STALE   | ViewY (changed 2026-04-18)   | Refresh §6.2–6.5 (view/nav/state/click-path) |
-    | Section 4 (Business Rules)      | ✅ Current | —                            | —                                            |
+    | Section                    | Status     | Changed Source Files            | Action              |
+    | -------------------------- | ---------- | ------------------------------- | ------------------- |
+    | Section 5 (Domain Model)   | ⚠️ STALE   | EntityX (changed 2026-04-18)    | Re-extract entities |
+    | Section 6 (Interaction Surface) | ⚠️ STALE | ViewY (changed 2026-04-18)  | Refresh §6.2–6.5 (view/nav/state/click-path) |
+    | Section 4 (Business Rules) | ✅ Current | —                               | —                   |
     ```
 
 ---
@@ -557,7 +604,7 @@ When no module specified, auto-detect from git changes:
 
 1. `git diff --name-only HEAD` (staged + unstaged); if none → `git diff --name-only HEAD~1`
 2. Extract unique module names using Module Mapping table
-3. For each module: check if `docs/specs/{Bucket}/` exists
+3. For each module: check if `<spec root>/{Bucket}/` exists — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path
 4. Docs exist → **Phase 1.5 (Update Mode)**; missing → skip (no scratch creation without user request)
 5. Only `.claude/`, `docs/`, config files changed → report "No business feature docs impacted" and exit
 
@@ -565,10 +612,10 @@ When no module specified, auto-detect from git changes:
 
 Search your codebase to build the path-to-module mapping. Common patterns:
 
-| Changed File Path Pattern                               | Detected Module                   |
-| ------------------------------------------------------- | --------------------------------- |
-| `{services-root}/{Module}/**`                           | {Module}                          |
-| `{frontend-apps-dir}/{app-name}/**`                     | {Module} (map app name to module) |
+| Changed File Path Pattern                           | Detected Module                   |
+| --------------------------------------------------- | --------------------------------- |
+| `{services-root}/{Module}/**`                       | {Module}                          |
+| `{frontend-apps-dir}/{app-name}/**`                 | {Module} (map app name to module) |
 | `{configured-ui-source-root}/{domain-lib}/{feature}/**` | {Module} (map feature to module)  |
 
 Build a project-specific mapping by examining:
@@ -584,9 +631,9 @@ Module source priority: (1) user-specified → (2) domain-implied (grep to verif
 
 ### Step 1.2: Read Existing Documentation
 
-1. `docs/project-reference/feature-spec-reference.md`
-2. `docs/specs/{Bucket}/INDEX.md` (if exists)
-3. Existing `docs/specs/{Bucket}/README.*.md` Feature Specs (if any)
+1. `docs/project-reference/feature-spec-reference.md` — project-reference docs root default `docs/project-reference`; a `docsRoots.projectReference.path` entry in `docs/project-config.json` overrides the path
+2. `<spec root>/{Bucket}/INDEX.md` (if exists) — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path
+3. Existing `<spec root>/{Bucket}/README.*.md` Feature Specs (if any) — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path
 
 ### Step 1.3: Codebase Analysis
 
@@ -600,7 +647,7 @@ Grep evidence from source:
 
 ### Step 1.4: Feature Analysis
 
-Build knowledge model in `.ai/workspace/analysis/[feature-name].md`. Discover: entities/enums, commands/queries/events/jobs, controllers/DTOs, frontend components, cross-service bus messages.
+Build knowledge model in `tmp/analysis/[feature-name].md`. Discover: entities/enums, commands/queries/events/jobs, controllers/DTOs, frontend components, cross-service bus messages.
 
 ---
 
@@ -610,9 +657,9 @@ When UPDATING existing feature docs (not from scratch):
 
 #### Step 1.5.0: Check Derived Spec Artifacts
 
-1. Check the fixed Feature Spec root `docs/specs/{Bucket}/` for the impacted app bucket
+1. Check the configured Feature Spec root at `<spec root>/{Bucket}/` for the impacted app bucket — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path
 2. Note overlapping Feature Specs and derived bucket indexes/ERDs from git diff + spec registry
-3. Flag output: "Derived spec artifact refresh may be required for: {list}" — do NOT trigger spec-index directly (separation of concerns)
+3. Flag output: "Derived spec artifact refresh may be required for: {list}" — do NOT trigger `[mode=index]` directly (separation of concerns)
 
 ### Step 1.5.1: Diff Analysis
 
@@ -622,15 +669,15 @@ When UPDATING existing feature docs (not from scratch):
 
 ### Step 1.5.2: Section Impact Mapping
 
-| Change Type                                                                        | Impacted Sections                                                                                                                                                                                                                             |
-| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| New entity property                                                                | 5 (Domain Model), 4 (Business Rules if it adds a constraint)                                                                                                                                                                                  |
-| New capability/operation                                                           | 3 (User Stories & AC), 4 (Business Rules), 6 (§6.1 Process Flows if a new journey)                                                                                                                                                            |
+| Change Type            | Impacted Sections                                                                |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| New entity property    | 5 (Domain Model), 4 (Business Rules if it adds a constraint)                      |
+| New capability/operation | 3 (User Stories & AC), 4 (Business Rules), 6 (§6.1 Process Flows if a new journey) |
 | UI behavior change (new/changed view, navigation, observable state, or click-path) | 6 (§6.2 View Inventory, §6.3 Navigation Map, §6.4 Key UI States, §6.5 Per-Story Interaction Flow — refresh the affected interaction-surface subsections); refresh companion `design_spec:`/`mockup:` frontmatter if the linked artifact moved |
-| New access/role rule                                                               | 7 (Permissions & Roles)                                                                                                                                                                                                                       |
-| New filter/query                                                                   | 3 (User Stories & AC — a view/search story)                                                                                                                                                                                                   |
-| Any new business-visible functionality                                             | **8 (Test Specifications)** — MANDATORY                                                                                                                                                                                                       |
-| Any change                                                                         | 1 (Overview) — only if scope shifts                                                                                                                                                                                                           |
+| New access/role rule   | 7 (Permissions & Roles)                                                          |
+| New filter/query       | 3 (User Stories & AC — a view/search story)                                      |
+| Any new business-visible functionality | **8 (Test Specifications)** — MANDATORY                                          |
+| Any change             | 1 (Overview) — only if scope shifts                                              |
 
 ### Step 1.5.3: Mandatory Test Coverage (Section 8 — Test Specifications)
 
@@ -640,10 +687,10 @@ When UPDATING existing feature docs (not from scratch):
 
 > **[BLOCKING] TC Format:** Use canonical format in `.claude/skills/shared/tc-format.md`. NEVER use abbreviated flat GIVEN/WHEN/THEN — use full template with all required fields (Objective, Preconditions, GWT steps, Acceptance Criteria, Test Data, Edge Cases, Evidence, CoveredBy, Status). Section 8 owned exclusively by `spec [mode=tests]` — the author modes populate it only during authoring (INIT with real `[Source:]`, DRAFT with `Evidence: TBD`). Existing TCs MUST NOT be overwritten during UPDATE mode (the draft→update run only UPGRADES `Evidence: TBD` → real anchors, never rewrites the TC body).
 
-> **[BLOCKING] TC ID Collision Prevention:** Before assigning new TC IDs, check highest existing ID:
+> **[BLOCKING] TC ID Collision Prevention:** Before assigning new TC IDs, check highest existing ID (`docs/specs` below is the DEFAULT spec root; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path):
 >
 > ```bash
-> grep -n "TC-{FEATURE}-" docs/specs/{Bucket}/README.*.md | sort | tail -5
+> grep -n "TC-{FEATURE}-" docs/specs/{Bucket}/README.*.md | sort | tail -5   # docs/specs = default spec root; specRoots.business.path in docs/project-config.json overrides it
 > ```
 >
 > Assign next sequential ID. See `.claude/skills/shared/tc-format.md` — Decade-Based Numbering section for range rules.
@@ -654,7 +701,7 @@ When UPDATING existing feature docs (not from scratch):
 
 ## Phase 2: Documentation Generation
 
-Generate at `docs/specs/{Bucket}/README.{FeatureName}.md`.
+Generate at `<spec root>/{Bucket}/README.{FeatureName}.md` — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path.
 
 ### Key Format Examples
 
@@ -663,10 +710,10 @@ Generate at `docs/specs/{Bucket}/README.{FeatureName}.md`.
 ```markdown
 #### FR-{MOD}-01: {Requirement Title}
 
-| Aspect          | Details                                |
-| --------------- | -------------------------------------- |
-| **Description** | {What this requirement enables}        |
-| **Scope**       | {Who can use / affected entities}      |
+| Aspect          | Details                           |
+| --------------- | --------------------------------- |
+| **Description** | {What this requirement enables}   |
+| **Scope**       | {Who can use / affected entities} |
 | **Evidence**    | `[Source: {namespace}/{service}/{id}]` |
 ```
 
@@ -758,7 +805,7 @@ erDiagram
     {EntityA} ||--o{ {EntityB} : "contains"
 ```
 
-**ERD rules (same as spec-index standard):**
+**ERD rules (same as the `[mode=index]` standard):**
 
 - Tech-agnostic types only: `string`, `number`, `boolean`, `date`, `list`, `map`
 - No implementation class names or ORM types
@@ -774,8 +821,8 @@ Each rule group MUST include `[Source: rule/{service}/{RuleName}]`:
 ```markdown
 ### BR-{MOD}-01: {Rule Group Name}
 
-| Field/Operation | Rule         | Error Condition | Error Message      | Strength      |
-| --------------- | ------------ | --------------- | ------------------ | ------------- |
+| Field/Operation | Rule         | Error Condition | Error Message      | Strength |
+| --------------- | ------------ | --------------- | ------------------ | -------- |
 | {field}         | {constraint} | {when violated} | {message constant} | [HARD]/[SOFT] |
 
 **Invariant (universal form):** for ALL {inputs in domain}, {the rule holds} — e.g. "for ALL line items, amount ≥ 0".
@@ -783,40 +830,40 @@ Each rule group MUST include `[Source: rule/{service}/{RuleName}]`:
 [Source: rule/{service}/{RuleName}]
 ```
 
-> **[Universal-quantification — author rules as properties, not just rows]** The field→rule→error table records a rule at a _point_ (one field, one violation). For every **[HARD]** rule, ALSO state it once in universal form — "for ALL {inputs in domain}, {invariant} holds" — directly under the table. This is not ceremony: the §8 Invariant/Property TC (`spec [mode=tests]`) and the Pattern 9 property test (`integration-test`) are derived **verbatim** from this universal statement (it becomes the TC's `inputDomain` + `invariant`). A rule with no universal form forces the test author to re-derive it (or skip it), which is exactly how a [HARD] rule ends up guarded by two hand-picked examples instead of a property.
+> **[Universal-quantification — author rules as properties, not just rows]** The field→rule→error table records a rule at a *point* (one field, one violation). For every **[HARD]** rule, ALSO state it once in universal form — "for ALL {inputs in domain}, {invariant} holds" — directly under the table. This is not ceremony: the §8 Invariant/Property TC (`spec [mode=tests]`) and the Pattern 9 property test (`integration-test`) are derived **verbatim** from this universal statement (it becomes the TC's `inputDomain` + `invariant`). A rule with no universal form forces the test author to re-derive it (or skip it), which is exactly how a [HARD] rule ends up guarded by two hand-picked examples instead of a property.
 
-> **[SOFT→HARD challenge — run for EVERY [SOFT] tag before finalizing §4]** Strength is not free-choice. For each rule you are tempted to tag `[SOFT]`, ask: _does violating it corrupt data, breach authorization/tenant isolation, lose money, or break a §5 entity invariant?_ If **yes to any → it is `[HARD]`.** Under-tagging is silent and dangerous: the invariant-coverage gate counts `[HARD]` rules (`spec [mode=tests]` → property-TC count ≥ count([HARD] BR) + count(§5 invariants)), so a mis-tagged `[SOFT]` rule passes the gate with **zero** property TCs and ships unguarded across its input space. When a [SOFT] tag survives the challenge, that is a deliberate decision — record the one-line reason it cannot corrupt state.
+> **[SOFT→HARD challenge — run for EVERY [SOFT] tag before finalizing §4]** Strength is not free-choice. For each rule you are tempted to tag `[SOFT]`, ask: *does violating it corrupt data, breach authorization/tenant isolation, lose money, or break a §5 entity invariant?* If **yes to any → it is `[HARD]`.** Under-tagging is silent and dangerous: the invariant-coverage gate counts `[HARD]` rules (`spec [mode=tests]` → property-TC count ≥ count([HARD] BR) + count(§5 invariants)), so a mis-tagged `[SOFT]` rule passes the gate with **zero** property TCs and ships unguarded across its input space. When a [SOFT] tag survives the challenge, that is a deliberate decision — record the one-line reason it cannot corrupt state.
 
 ---
 
 ## Note: AI Companion Files Deprecated
 
-No `.ai.md` companion files. Single `README.{Feature}.md` only output. Template: `docs/templates/detailed-feature-spec-template.md` (authoritative).
+No `.ai.md` companion files. Single `README.{Feature}.md` only output. Template: `detailed-feature-spec-template.md` in the templates root (authoritative) — default `docs/templates`; a `docsRoots.templates.path` entry in `docs/project-config.json` overrides the path.
 
 ### Key Principles (v4.0)
 
 - **No code details** in sections 1-7 — no file paths, no source-code types, no API/command/handler/message names
-- **Evidence only in Section 8** — `[Source: namespace/service/id]` abstract-anchor references in the per-TC hidden carrier
+- **Evidence stays in carriers** — use `[Source: namespace/service/id]` fields for requirements, rules, entities and TCs; never fold source identifiers into narrative prose.
 - **Acceptance criteria MUST cross-reference BR-{FC}-NN** — each AC names the business rules it enforces
 - **Split criteria** — no line-count cap applies to Feature Specs. **Split** the capability when TCs>40 or when two distinct module-level capabilities emerge:
     1. Create `README.{FeatureName}-Part1.md` and `README.{FeatureName}-Part2.md`
     2. Keep Business Rules (S4) + Domain Model (S5) in Part1; secondary stories/edge cases → Part2
     3. Preserve TC ID continuity — both parts share `TC-{FEATURE}-` prefix; NEVER renumber
     4. Add cross-references: each part includes "**See also:** README.{FeatureName}-Part{N}.md" in header
-    5. Flag that derived spec artifacts must be refreshed so `/spec-index` can relink both parts
-- **YAML frontmatter** required: module, service, feature_code, entities[], status, last_updated
+    5. Flag that derived spec artifacts must be refreshed so `/spec [mode=index]` can relink both parts
+- **YAML frontmatter** required: module, service, feature_code, entities[], status, last_updated. When `isLargeIdea=true`, also require the complete `large_idea_decomposition` block and its stable slice IDs. Only the explicit roadmap branch carries `roadmap`, `milestone_id`, and `scope_brief`; ordinary specs omit those fields, while EXEMPT/framework branches carry their own explicit applicability metadata.
 - **Audit mode produces AUDIT-{date}.md** — NEVER modifies existing docs
-- **Init mode uses spec-index extraction phases** — all entities, rules, APIs MUST be read from source before writing
+- **Init mode uses source-first extraction phases** — all entities, rules, APIs MUST be read from source before writing
 
 ---
 
 ## Phase 3: Derived Artifact Refresh Flag
 
-After creating/updating Feature Specs, do **not** edit `docs/specs/{Bucket}/INDEX.md` directly. Flag that derived spec artifacts may need refresh:
+After creating/updating Feature Specs, do **not** edit `<spec root>/{Bucket}/INDEX.md` directly (default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path). Flag that derived spec artifacts may need refresh:
 
 1. Record the bucket(s) affected by the Feature Spec change.
 2. State: "Derived spec artifact refresh may be required for: {bucket list}."
-3. Leave regeneration to `/spec-index`, which owns `INDEX.md` and other derived navigation aids.
+3. Leave regeneration to `/spec [mode=index]`, which owns `INDEX.md` and other derived navigation aids.
 
 ## Anti-Hallucination Protocols
 
@@ -830,12 +877,7 @@ Before writing documentation, verify:
 
 ### TEST CASE EVIDENCE VERIFICATION
 
-**EVERY test case:**
-
-1. Read Evidence file at claimed line number
-2. Verify: code at line supports test assertion
-3. Check Edge Cases: find error constants in the configured error-constants location, if the project defines one
-4. Fix immediately if line numbers wrong
+For every test case, perform the four evidence checks in **Phase 3.5 → First Pass — Test Case Evidence Audit (Section 8)** below; correct inaccurate references immediately.
 
 ---
 
@@ -845,10 +887,10 @@ Before writing documentation, verify:
 
 **EVERY test case:**
 
-1. Read Evidence file at claimed line number
-2. Verify: code at line supports test assertion?
-3. Check Edge Cases: find error constants in the configured error-constants location, if the project defines one
-4. Fix immediately if line numbers wrong
+1. Resolve the TC's abstract evidence anchor through the provenance sidecar to its current source location.
+2. Read that source and verify it supports the test assertion.
+3. Check Edge Cases against error constants in the configured location, if the project defines one.
+4. Correct stale provenance immediately; keep physical coordinates in the sidecar and the abstract anchor in the TC.
 
 ### Second Pass — Domain Model Verification
 
@@ -879,9 +921,9 @@ Flag items requiring implementation assumptions:
 - **S7 (Permissions & Roles):** Permission matrix with explicit role × action × condition cells. Blank cells → flag.
 - **Concrete examples:** ≥1 example (input + expected output) per core operation. Abstract-only → LOW.
 
-If >3 INCOMPLETE items → HALT, present gap list via AskUserQuestion before completing.
+If >3 INCOMPLETE items → HALT, present gap list via ask user question tool before completing.
 
-_Reference: `.claude/skills/shared/sdd-artifact-contract.md` → "AI-Implementability Gate" (and mandate M4) for the AI-implementability criteria. `docs/project-reference/spec-principles.md` carries only repo-local prose/evidence rules._
+_Reference: `.claude/skills/shared/sdd-artifact-contract.md` → "AI-Implementability Gate" (and mandate M4) for the AI-implementability criteria. `docs/project-reference/spec-principles.md` (project-reference docs root default `docs/project-reference`; a `docsRoots.projectReference.path` entry in `docs/project-config.json` overrides the path) carries only repo-local prose/evidence rules._
 
 ### M5 — Rebuild-From-Scratch Test
 
@@ -903,16 +945,17 @@ See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7
 - [ ] Every FR / BR / operation carries a logical ID (FR-/BR-/OP-/TC-) AND a separate `[Source: namespace/service/id]` abstract-anchor evidence carrier (never physical code coordinates or repository-root paths) — `[Source:]` retained, not folded into prose (M3)
 - [ ] Every requirement is testable with one interpretation and named success/failure outcomes (M4)
 - [ ] Rebuild-From-Scratch Test answered YES — doc is re-implementable on any stack from §1-8 prose alone (M5)
-- [ ] **Business-visibility:** every §8 case passes the demo test applied to its BODY — _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY. A `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count FAILS. Judge the BODY, never the title or ID. No TC count is derived from an architecture inventory (M7 — see the Business-visibility gate above)
+- [ ] **Business-visibility:** every §8 case passes the demo test applied to its BODY — *"what would a stakeholder SEE change?"* — no answer → FAIL as TECHNICAL-ONLY. A `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count FAILS. Judge the BODY, never the title or ID. No TC count is derived from an architecture inventory (M7 — see the Business-visibility gate above)
 
 > **M1 governs vocabulary; M7 governs subject matter.** A technical case in impeccably tech-free prose satisfies M1 while violating M7 — so a clean pass on the M1/M2 banned-token check above is NOT evidence of M7 compliance. Only the demo test decides.
 
 ### Structure
 
-- [ ] Documentation placed in `docs/specs/{Bucket}/README.{FeatureName}.md`
+- [ ] Documentation placed in `<spec root>/{Bucket}/README.{FeatureName}.md` — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path
 - [ ] Feature Spec follows template format (8 tech-free sections, in order)
 - [ ] **YAML frontmatter** present with module, service, feature_code, entities[]
-- [ ] Derived spec artifact refresh flagged for `/spec-index` when Feature Specs were created, renamed, split, or deleted
+- [ ] **Applicability and Decomposition Gate** passes: embedded large-idea specs carry the complete decomposition block and stable slice IDs; explicit-roadmap specs carry approved roadmap metadata; ordinary specs omit roadmap placeholders; isolated/framework changes carry their explicit branch
+- [ ] Derived spec artifact refresh flagged for `/spec [mode=index]` when Feature Specs were created, renamed, split, or deleted
 - [ ] Stakeholder navigation table present
 - [ ] **Split criteria** — no line-count cap applies; split when TCs>40 or distinct module-level capabilities emerge (follow split procedure in Key Principles)
 - [ ] **No code details** in sections 1-7 (no file paths, no source-code types, no command/handler/API/message names)
@@ -923,7 +966,7 @@ See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7
 
 - [ ] **EVERY test case has Evidence field** with `[Source: namespace/service/id]` abstract-anchor format (never `file:line`)
 - [ ] **No template placeholders** remain (`{namespace}`, `{service}`, `{id}`)
-- [ ] **Line numbers verified** by reading actual source files
+- [ ] **Provenance verified** — abstract anchors resolve through the sidecar to inspected, current source locations
 - [ ] **Edge case errors match** constants from the configured error-constants location, if one exists
 - [ ] **Test Summary counts match** actual number of test cases in Section 8
 
@@ -978,7 +1021,7 @@ spec [author mode] (you are here)
   │     CREATE: new feature doc just created → write TCs from spec.
   │     UPDATE: existing doc updated → update TCs to match changed behavior.
   │
-  ├─ [REQUIRED] → /artifact-review --type=spec-tests
+  ├─ [REQUIRED] → /work-item --mode=review --type=spec-tests
   │     Validates TC coverage, GIVEN/WHEN/THEN completeness, no duplicate TC codes.
   │
   ├─ [REQUIRED] → spec [mode=sync]
@@ -987,9 +1030,9 @@ spec [author mode] (you are here)
   ├─ [RECOMMENDED] → /integration-test [from-changes or from-prompt mode]
   │     Generates/updates integration test files from changed TCs.
   │
-  └─ [RECOMMENDED] → /docs-update
-        If code changes triggered this doc update, run /docs-update for full chain including
-        spec-index (Phase 2.5) and spec [mode=tests] (Phase 3).
+  └─ [RECOMMENDED] → /docs-manager --mode=update
+        If code changes triggered this doc update, run /docs-manager --mode=update for full chain including
+        spec [mode=index] (Phase 2.5) and spec [mode=tests] (Phase 3).
 ```
 
 ### Doc Network Principle
@@ -1001,16 +1044,16 @@ spec [author mode] (you are here)
 >
 > Do not re-add if already present. Check before marking this skill complete.
 
-Template to insert or verify in `docs/specs/{Bucket}/README.{FeatureName}.md`:
+Template to insert or verify in `<spec root>/{Bucket}/README.{FeatureName}.md` — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path:
 
 ```markdown
 ## Related Documentation
 
-| Type                 | Link                                                          | Description                                                                                                                    |
-| -------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Spec Index (derived) | [docs/specs/{Bucket}/INDEX.md](../../specs/{Bucket}/INDEX.md) | DERIVED navigation catalog over the Feature Specs (regenerate via /spec-index) — §8 here is the canonical business TC registry |
-| Integration Tests    | `{configured-test-path}/`                                     | Test code linked to TCs via the configured test-spec annotation (key `TestSpec`)                                               |
-| Related Modules      | _(list any cross-module dependencies here)_                   |                                                                                                                                |
+| Type              | Link                                                                                                          | Description                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Spec Index (derived) | [docs/specs/{Bucket}/INDEX.md](../../specs/{Bucket}/INDEX.md) — default root `docs/specs`; `specRoots.business.path` in `docs/project-config.json` overrides it | DERIVED navigation catalog over the Feature Specs (regenerate via /spec [mode=index]) — §8 here is the canonical business TC registry |
+| Integration Tests | `{configured-test-path}/`                                                  | Test code linked to TCs via the configured test-spec annotation (key `TestSpec`) |
+| Related Modules   | _(list any cross-module dependencies here)_                                                                   |                                                                |
 ```
 
 Fill in `{Bucket}`, `{FeatureName}`, `{Module}`, and `{ServiceName}` from context.
@@ -1018,5 +1061,5 @@ Fill in `{Bucket}`, `{FeatureName}`, `{Module}`, and `{ServiceName}` from contex
 This section enables:
 
 - Humans navigating from Feature Spec → bucket index → test evidence
-- `/docs-update` detecting when a Feature Spec or bucket index is stale
+- `/docs-manager --mode=update` detecting when a Feature Spec or bucket index is stale
 - Future AI sessions knowing what exists without a full scan

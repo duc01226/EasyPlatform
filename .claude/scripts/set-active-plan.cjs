@@ -7,9 +7,9 @@
  * This script updates the session temp file with the new active plan path,
  * allowing subagents to receive the latest plan context via SubagentStart hook.
  *
- * The session temp file (/tmp/ck-session-{id}.json) is the source of truth
- * for plan context within a session. Env vars ($CK_ACTIVE_PLAN) are just
- * the initial snapshot from session start.
+ * The OS-temp per-session file (CK_TMP_DIR/session/{id}.json, resolved by
+ * getSessionStatePath) is the source of truth for plan context within a session.
+ * Env vars ($CK_ACTIVE_PLAN) are just the initial snapshot from session start.
  */
 
 const { writeSessionState, readSessionState } = require('../hooks/lib/ck-config-utils.cjs');

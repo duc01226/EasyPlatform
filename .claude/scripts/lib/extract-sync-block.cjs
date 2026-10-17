@@ -5,7 +5,7 @@
  * (`.claude/skills/shared/sync-inline-versions.md`).
  *
  * Single source of truth for both static-context generators:
- *   - `.claude/skills/claude-md-init/scripts/generate-claude-md.cjs` (CLAUDE.md bake)
+ *   - `.claude/skills/ai-context-refresh/scripts/generate-claude-md.cjs` (CLAUDE.md bake)
  *   - `.claude/scripts/codex/sync-context-workflows.mjs`            (AGENTS.md bake)
  *
  * Lifted from the inline copy that used to live in `sync-context-workflows.mjs`.
@@ -13,11 +13,20 @@
  *
  * CRLF NORMALIZATION (why it matters): the canonical markdown is committed as LF
  * (`git ls-files --eol` → `i/lf`) but a Windows working tree checks it out as CRLF
- * (`w/crlf`). The block-boundary delimiter is the literal `\n---\n\n## SYNC:`, which
- * NEVER matches a CRLF separator (`\r\n---\r\n\r\n## SYNC:`) — so an un-normalized
- * parse silently over-captures to EOF (observed: a 632-char block ballooning to
- * 100KB+, swallowing every later SYNC block). Normalizing `\r\n` → `\n` up front
- * makes the parser correct on any checkout, regardless of `core.autocrlf`.
+ * (`w/crlf`). The block-end boundary is an LF pattern (see `findBlockEnd`), which NEVER
+ * matches a CRLF separator (`\r\n---\r\n`) — so an un-normalized parse silently
+ * over-captures to EOF (observed: a 632-char block ballooning to 100KB+, swallowing
+ * every later SYNC block). Normalizing `\r\n` → `\n` up front makes the parser correct
+ * on any checkout, regardless of `core.autocrlf`.
+ *
+ * BLOCK-END RULE (shared with the Python writer): a block ends at the first `---` line
+ * (optional trailing spaces/tabs, then a newline or EOF) OR the first line starting with
+ * `## SYNC:`, whichever comes first — the rule `read_canonical_block` in
+ * `.claude/scripts/sync-update-blocks.py` applies. A stricter `\n---\n\n## SYNC:` boundary
+ * over-captured whenever anything (an HTML comment, a missing blank line) sat between the
+ * separator and the next heading, and kept a trailing `---` on the last block. The
+ * cross-reader corpus test `.claude/scripts/tests/sync-reader-parity.test.cjs` fails if
+ * the JS and Python readers disagree on any canonical heading.
  */
 
 /** Normalize CRLF (and lone CR) line endings to LF so boundary detection is checkout-agnostic. */
@@ -52,10 +61,26 @@ function findMarkerStart(md, marker) {
 }
 
 /**
+ * Index where the block that starts before `from` ends: the newline opening the first
+ * `---` line (trailing spaces/tabs allowed, then a newline or EOF) or the first line that
+ * starts with `## SYNC:`; `md.length` when neither follows. See BLOCK-END RULE above.
+ *
+ * @param {string} md   - LF-normalized markdown
+ * @param {number} from - search start (the newline ending the block's heading line)
+ * @returns {number}
+ */
+function findBlockEnd(md, from) {
+    const re = /\n(?:---[ \t]*(?:\n|$)|## SYNC:)/g;
+    re.lastIndex = from;
+    const m = re.exec(md);
+    return m ? m.index : md.length;
+}
+
+/**
  * Extract a SYNC block INCLUDING its `## SYNC:<tag>` heading line.
- * The block runs from the `## SYNC:<tag>` marker up to (but not including) the next
- * `\n---\n\n## SYNC:` separator, or EOF when this is the last block. Returns the
- * `.trim()`-ed slice, or `null` when the tag is absent.
+ * The block runs from the `## SYNC:<tag>` marker up to (but not including) its end
+ * boundary (`findBlockEnd`), or EOF when nothing follows. Returns the `.trim()`-ed
+ * slice, or `null` when the tag is absent.
  *
  * @param {string} markdown - full canonical markdown (any line endings)
  * @param {string} tag      - SYNC tag, e.g. `critical-thinking-mindset:full`
@@ -66,8 +91,7 @@ function extractSyncBlock(markdown, tag) {
     const marker = `## SYNC:${tag}`;
     const start = findMarkerStart(md, marker);
     if (start === -1) return null;
-    const next = md.indexOf('\n---\n\n## SYNC:', start + marker.length);
-    const end = next === -1 ? md.length : next;
+    const end = findBlockEnd(md, start + marker.length);
     return md.slice(start, end).trim();
 }
 

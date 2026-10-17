@@ -27,35 +27,50 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
-const rootDir = process.cwd();
+const require = createRequire(import.meta.url);
+const { resolveProjectRoot, isInvokedAsScript } = require('../lib/project-root.cjs');
+const rootResolution = resolveProjectRoot({
+    cwd: process.cwd(),
+    scriptPath: fileURLToPath(import.meta.url),
+    env: process.env,
+});
+const rootDir = rootResolution.rootDir;
 
-// SC3 review-family allow-list — the 14 finding-producing review skills. The scan is scoped to
+// SC3 review-family allow-list — the 7 finding-producing review skills. The scan is scoped to
 // these names ONLY (never a repo-wide glob) so a non-review skill using "finding"/"Severity" is
 // never flagged (TC-CONVLOOP-043).
 export const REVIEW_FAMILY_SKILLS = [
     'changes-review',
-    'code-review',
-    'architecture-review',
-    'architecture-review-full',
-    'architecture-scalability-review',
-    'security-review',
+    'code-quality-review',
+    'security-audit',
     'performance-review',
-    'integration-test-review',
-    'domain-entities-review',
     'production-readiness-review',
-    'artifact-review',
-    'ui-review',
-    'quality-gate-review',
-    'knowledge-review'
+    'knowledge-review',
+    'ai-engineering-review',
+    'web-design-guidelines'
+];
+
+// Finding-producing review MODES that live in a skill's mode reference instead of a skill of their own: each entry is
+// scanned with the same two rules as a review-family SKILL.md. Path is relative to `.claude/skills/`.
+export const REVIEW_MODE_REFERENCES = [
+    'integration-test/references/mode-review.md', // `/integration-test --mode=review`
+    'domain-analysis/references/mode-review.md', // `/domain-analysis --mode=review`
+    'architecture/references/mode-review.md', // `/architecture --mode=review`
+    'architecture/references/mode-full.md', // `/architecture --mode=full` (whole-project audit that synthesizes the faces)
+    'ui-design/references/mode-review.md', // `/ui-design --mode=review`
+    'work-item/references/mode-review.md' // `/work-item --mode=review`
 ];
 
 // SC7 grader allow-list — validate-only graders that emit a JUDGMENT (a scorecard; a
 // PASS/FAIL/CONDITIONAL verdict) and route fixes to siblings. They carry the validate + anti-bias
-// gate but MUST NOT embed the converge-to-zero fix-loop. Every grader is also a review-family skill.
-export const GRADER_SKILLS = [
-    'architecture-scalability-review',
-    'quality-gate-review'
+// gate but MUST NOT embed the converge-to-zero fix-loop. A grader is either a review-family skill
+// (GRADER_SKILLS) or a grader mode that lives in a mode reference (GRADER_MODE_REFERENCES).
+// One member today, a mode reference; both lists stay lists so a future grader is added without reshaping the rule.
+export const GRADER_SKILLS = [];
+export const GRADER_MODE_REFERENCES = [
+    'architecture/references/mode-scalability.md' // `/architecture --mode=scalability`
 ];
 
 // Findings/severity/verdict language — presence means the skill produces findings and therefore
@@ -73,7 +88,7 @@ const FINDINGS_LANGUAGE_PATTERNS = [
 // `<!-- SYNC:double-round-trip-review -->` marker — only the literal why-review route counts.
 export const VALIDATE_ROUTE_PATTERN = /why-review\s+--validate-findings/;
 
-// The fix-loop engine marker. Its expanded body verbatim IS the converge-to-zero fix-loop, so any
+// Retired fix-loop marker: reject stale copies in graders. It is not a delivered protocol. Any
 // reference to it inside a grader proves the grader embeds the loop (the definitive SC7 guard —
 // catches the fix-loop regardless of surrounding prose wording).
 export const FIX_LOOP_BLOCK_PATTERN = /double-round-trip-review/;
@@ -145,6 +160,19 @@ async function main() {
         }
     }
 
+    const graderModeSet = new Set(GRADER_MODE_REFERENCES);
+    for (const relative of [...REVIEW_MODE_REFERENCES, ...GRADER_MODE_REFERENCES]) {
+        const filePath = path.join(rootDir, '.claude', 'skills', ...relative.split('/'));
+        const content = await fs.readFile(filePath, 'utf8').catch(() => null);
+        if (content === null) {
+            console.warn(`[codex-verify-review-validate-coverage] WARN: cannot read ${normalize(filePath)} — skipped`);
+            continue;
+        }
+        for (const violation of findCoverageViolations(relative, content, { isGrader: graderModeSet.has(relative) })) {
+            failures.push(violation.message);
+        }
+    }
+
     if (failures.length > 0) {
         console.error('[codex-verify-review-validate-coverage] FAIL');
         for (const failure of failures) {
@@ -157,6 +185,6 @@ async function main() {
     console.log('[codex-verify-review-validate-coverage] PASS');
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (isInvokedAsScript(process.argv[1], fileURLToPath(import.meta.url))) {
     await main();
 }

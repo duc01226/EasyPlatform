@@ -306,13 +306,40 @@ const swapEngineIntegrationTests = [
       const content = 'x'.repeat(10000);
 
       try {
-        await swapEngine.externalize(sessionId, 'Read', { file_path: 'test.txt' }, content);
+        const stale = await swapEngine.externalize(sessionId, 'Read', { file_path: 'stale.txt' }, content);
+        const fresh = await swapEngine.externalize(sessionId, 'Read', { file_path: 'fresh.txt' }, content);
+        assertNotNullish(stale, 'Stale entry should be externalized');
+        assertNotNullish(fresh, 'Fresh entry should be externalized');
 
-        // Cleanup with 0 hours retention should remove all
-        swapEngine.cleanupSwapFiles(sessionId, 0);
+        // Age the first entry past the retention window by back-dating the
+        // capturedAt that cleanup reads. Pruning a just-written entry with a
+        // 0-hour retention instead raced the wall clock: an entry expires only
+        // when its age is STRICTLY greater than the retention (the documented
+        // "prune >24h" of .claude/docs/hooks/README.md), so whenever
+        // externalize and cleanup landed in the same millisecond the age was
+        // exactly 0, the entry survived, and this test failed on a fast runner.
+        // The retention rule is what the test owns, so it supplies an entry
+        // that is genuinely old rather than one that is old only if the clock
+        // happens to tick.
+        const staleMetaPath = path.join(stale.sessionDir, `${stale.swapId}.meta.json`);
+        const staleMeta = JSON.parse(fs.readFileSync(staleMetaPath, 'utf8'));
+        staleMeta.timestamps.capturedAt = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+        fs.writeFileSync(staleMetaPath, JSON.stringify(staleMeta, null, 2), 'utf8');
+
+        swapEngine.cleanupSwapFiles(sessionId, 1); // 1 hour retention
 
         const entries = swapEngine.getSwapEntries(sessionId);
-        assertEqual(entries.length, 0, 'All entries should be cleaned up');
+        assertEqual(entries.length, 1, 'Only the entry inside the retention window should survive');
+        assertEqual(entries[0].id, fresh.swapId, 'The surviving entry should be the fresh one');
+        assertFalse(fs.existsSync(staleMetaPath), 'Expired metadata file should be deleted');
+        assertFalse(
+          fs.existsSync(path.join(stale.sessionDir, `${stale.swapId}.content`)),
+          'Expired content file should be deleted'
+        );
+        assertTrue(
+          fs.existsSync(path.join(fresh.sessionDir, `${fresh.swapId}.content`)),
+          'Content inside the retention window should be kept'
+        );
       } finally {
         swapEngine.deleteSessionSwap(sessionId);
       }

@@ -1,63 +1,68 @@
 # Project Spec Principles
 
-> Project-specific extension for local spec, test, and documentation rules.
+## Quick Summary
 
-This file records repository-local conventions only. Do not add reusable AI-SDD principles here; keep shared rules in `shared/sdd-artifact-contract.md`.
+**Goal:** Keep specifications precise about intent and traceable to real evidence by applying a project’s configured artifact profile without duplicating shared SDD rules.
 
-## 1. Local Authority
+**Summary:**
 
-- Shared contract: `shared/sdd-artifact-contract.md`
-- Local configuration: `docs/project-config.json`
-- Local docs index: `docs/project-reference/docs-index-reference.md`
-- Local workflow cycle reference: `docs/project-reference/workflow-spec-test-code-cycle-reference.md`
+- Read the project config and select the native profile when present; otherwise use the strict default case model.
+- Keep business intent, technical contracts, and evidence in their declared roles.
+- Map every canonical case to its real executor and inspected assertion; preserve actual cardinality and conditionals.
+- Apply shared M1-M7 and review requirements in either representation.
 
-## 2. Local Source Routing
+> **Shared SDD contract:** Profiles change representation and cardinality, not the applicable intent, invariant, evidence, execution, preservation, or review gates. MUST ATTENTION READ `.claude/skills/shared/sdd-artifact-contract.md` for the complete rules.
 
-Use `docs/project-config.json` to discover project-specific paths, commands, and reference docs before writing or reviewing specs.
+## 1. Profile Routing
 
-When a project defines custom spec, feature, or test locations, record those local paths in `docs/project-config.json` and refresh `docs/project-reference/docs-index-reference.md` through the docs index scan.
+Read and validate `docs/project-config.json` before writing or reviewing specs.
 
-## 3. Local Prose Rules
+- With `specArtifacts`, use the configured section roles, logical identifier prefixes/grammars, ownership rule, and carrier roots/extensions/fields. Keep intent separate from explicitly classified contracts and evidence; unknown headings have no implicit role.
+- Without `specArtifacts`, preserve the strict default: a single `TC-{FEATURE}-{NNN}` source of truth in the Feature Spec test section, with its intent, evidence, and configured test-mapping fields.
+- A declared invalid profile is a configuration error. Stop affected spec work until corrected; never silently fall back to TC rules.
+- Do not create a second registry beside an established native source. A configured representation does not waive M1-M7, business visibility, invariant/boundary/preservation coverage, actual execution, or review.
 
-### 3.1 Evidence Carriers
+## 2. Local Authority and Source Routing
 
-Implementation identifiers belong in evidence carriers only:
+- Shared reusable rules: `.claude/skills/shared/sdd-artifact-contract.md`.
+- Project paths, roots, commands, and reference docs come from `docs/project-config.json`; resolve the project-reference docs root from `docsRoots.projectReference.path`, then use its docs index.
+- Canonical business root: `specRoots.business.path`; derived technical root: `specRoots.technical.path`. If either is unset, use the framework config loader's fallback. Follow each root owner and generator; never infer semantics from folder names.
+- Feature shape: `workflowPatterns.featureDocTemplate` or the project-local feature-spec reference.
 
-- `[Source: namespace/service/id]`
-- `**Evidence:**`
-- `**CoveredBy:**` — canonical test-coverage carrier
-- `**IntegrationTest:**` — legacy alias, still accepted as migration input; NOT emitted by current templates
-- frontmatter
-- diagrams
+## 3. Local Prose and Evidence
 
-Narrative prose should describe business behavior, observable outcomes, local constraints, and ownership rules.
+### 3.1 Narrative and Evidence Carriers
+
+Keep narrative focused on intent, user-observable outcomes, scope, constraints, and ownership. Keep implementation identifiers in explicit evidence carriers.
+
+- With `specArtifacts`, use the declared scenario/case identity and carrier fields; preserve requirement, acceptance, variant, input, expected result, and status fields that the profile defines.
+- Without a profile, use the strict default `Evidence: [Source: namespace/service/id]` and `CoveredBy` mapping. `IntegrationTest` is legacy migration input only. YAML frontmatter and diagrams remain structured carriers.
+- Use stack-portable source anchors where the selected carrier supports them. Keep physical paths and line numbers in review/audit evidence unless project-local rules explicitly designate another carrier.
+- Inspect the actual assertion or structured evidence row. An identifier match, passing aggregate, generated index, or file count alone does not prove a case executed.
 
 ### 3.2 Banned Prose Tokens
 
-Each project may add a local banned-token list when feature/spec prose risks leaking framework, product, language, persistence, messaging, auth, or project-internal implementation names.
+Apply the project’s banned-token rules only to the sections and prose areas named by its verifier. Evidence carriers remain governed by their declared format; do not broaden a ban to silence a legitimate configured carrier.
 
-The local banned-token list is enforced only where the project verifier says it applies. Evidence carriers remain allowed.
+## 4. Local Test Mapping
 
-## 4. Local Evidence Format
+Use the configured case/test format. Preserve the canonical owner and scenario/case identity plus each real variant identity; mapping can be many-to-many when the profile allows it. Every reported outcome must trace to an executor and assertion that actually reaches the case. Keep conditional criteria conditional until their precondition is satisfied and verified.
 
-Use stack-portable anchors in `[Source: ...]` fields. Physical paths and line numbers belong in review reports, provenance sidecars, or debugging notes, not in portable spec prose.
+## 5. Generated Artifacts and Verification
 
-## 5. Local Test Mapping
+Regenerate affected indexes, mirrors, dashboards, and technical views through their owning scan or sync command. Never hand-edit a generated projection.
 
-When local feature docs contain test cases, use the project's configured test-case format and keep each case mapped to the behavior or invariant it guards.
+Resolve cadence from an explicit project-local verification policy when one is declared. If none is declared, preserve the active framework skill or workflow default unchanged; this reference adds or removes no gate. Do not invent commands.
 
-## 6. Local Generated Artifacts
+## 6. Local Extension Boundaries
 
-Generated indexes, dashboards, mirrors, and context files must be refreshed by their owning scan or sync command. Do not hand-edit generated outputs when a scan or sync path exists.
+Keep reusable semantic requirements in the shared contract. Keep local paths, lifecycle, identifier formats, evidence carriers, and verification commands in the project config and reference docs. Local extensions must not weaken shared gates.
 
-## 7. Local Extension Boundaries
+## Closing Reminders
 
-Add local details here only when they name project paths, commands, ownership rules, configured doc locations, verifier commands, or repository-specific evidence formats.
+**IMPORTANT MUST ATTENTION Goal:** Keep specifications precise about intent and traceable to real evidence by applying a project’s configured artifact profile without duplicating shared SDD rules.
 
-## 8. Verification Commands
-
-Record project-specific verification commands here when available:
-
-- SDD verifier: configure in project tooling, then run before closing spec/doc sync work.
-- Docs index: refresh through the docs index scan after adding or removing project-reference docs.
-- Context mirror: run the configured context sync after changing generated prompt surfaces.
+- MUST ATTENTION validate config first; follow configured roots, roles, IDs, and carrier fields, or the strict TC default when no profile exists.
+- MUST ATTENTION keep intent distinct from technical contracts/evidence and resolve unknown headings explicitly.
+- MUST ATTENTION preserve business visibility, invariant/boundary/preservation coverage, actual execution, and review requirements.
+- MUST ATTENTION inspect the assertion, preserve identity/cardinality, and keep conditionals accurate; matching IDs are never execution proof.

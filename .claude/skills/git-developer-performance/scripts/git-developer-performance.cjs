@@ -1122,7 +1122,7 @@ function renderAnalysisPlanMarkdown({ metadata, aggregates }) {
   lines.push('');
   lines.push('## Goal');
   lines.push('');
-  lines.push('Plan and generate a developer performance quality-work report from local git history. The report must synthesize contributed value, direct commits, merge/admin commits, story point estimates, no-AI man-day estimates, AI-assisted man-day estimates, bug-fix contribution, refactor contribution, feature/change contribution, and code-quality impact.');
+  lines.push('Plan and generate a developer performance quality-work report from local git history. The report must synthesize contributed value, direct commits, merge/admin commits, effort point estimates, no-AI man-day estimates, AI-assisted man-day estimates, bug-fix contribution, refactor contribution, feature/change contribution, and code-quality impact.');
   lines.push('');
   lines.push('## Scope');
   lines.push('');
@@ -1138,8 +1138,8 @@ function renderAnalysisPlanMarkdown({ metadata, aggregates }) {
   lines.push('2. If there are more than four contributors, split tasks into batches or subagents. Each subagent owns a disjoint contributor list.');
   lines.push('3. For each contributor, read the work packet and inspect representative commits with `git show --stat --find-renames <hash>` and, when needed, `git show --patch --find-renames <hash>`.');
   lines.push('4. For no-ff feature-branch merges with multiple authors, attribute implementation to each developer\'s own direct commits. The merge author gets integration/admin signal, not the feature branch implementation credit.');
-  lines.push('5. Synthesize each contributor\'s direct authored work as one giant commit, then split it into work clusters by intent, module, date proximity, and commit subject. Estimate story points per atomic cluster from direct authored diffs first.');
-  lines.push('6. Treat zero-file merge/admin commits as integration signal only; do not add them to implementation SP.');
+  lines.push('5. Synthesize each contributor\'s direct authored work as one giant commit, then split it into work clusters by intent, module, date proximity, and commit subject. Estimate effort points per atomic cluster from direct authored diffs first.');
+  lines.push('6. Treat zero-file merge/admin commits as integration signal only; do not add them to implementation EP.');
   lines.push('7. Discount generated files, EF designer snapshots, docs/spec output, i18n sorting, lockfiles, and repeated follow-up churn before estimating.');
   lines.push('8. Estimate both `man_days_traditional` (no AI: 3-5yr dev, 6 productive hours/day) and `man_days_ai` (AI coding assistant with project context, speedup, and review overhead).');
   lines.push('9. Separate product/domain delivery, platform/tooling work, docs/generated churn, and merge/admin integration before producing team velocity totals.');
@@ -1149,15 +1149,15 @@ function renderAnalysisPlanMarkdown({ metadata, aggregates }) {
   lines.push('');
   lines.push('## Estimation Rubric');
   lines.push('');
-  lines.push('- 1 SP: small isolated change, docs tweak, simple config, or narrow fix.');
-  lines.push('- 2 SP: small feature/fix touching a few files with low coupling.');
-  lines.push('- 3 SP: moderate change, multiple files/modules, clear business value, tests or migration considerations.');
-  lines.push('- 5 SP: complex change, cross-module behavior, significant refactor, non-trivial bug investigation, or broad UI/API work.');
-  lines.push('- 8 SP: large feature or risky refactor spanning several modules with integration/test impact.');
-  lines.push('- 13 SP: very large or ambiguous work; split into smaller clusters if possible.');
-  lines.push('- Displayed theme totals above 13 SP must be sums of atomic 1/2/3/5/8/13 clusters, not one unsplit story.');
-  lines.push('- Man-days: report no-AI and AI-assisted ranges separately. AI assumes an AI coding assistant with project context; apply SP-based speedup with review overhead.');
-  lines.push('- Anti-inflation: raw churn, generated code, docs/specs, i18n sorting, lockfiles, and zero-change merge/admin commits must not inflate implementation SP.');
+  lines.push('- 1 EP: small isolated change, docs tweak, simple config, or narrow fix.');
+  lines.push('- 2 EP: small feature/fix touching a few files with low coupling.');
+  lines.push('- 3 EP: moderate change, multiple files/modules, clear business value, tests or migration considerations.');
+  lines.push('- 5 EP: complex change, cross-module behavior, significant refactor, non-trivial bug investigation, or broad UI/API work.');
+  lines.push('- 8 EP: large feature or risky refactor spanning several modules with integration/test impact.');
+  lines.push('- 13 EP: very large or ambiguous work; split into smaller clusters if possible.');
+  lines.push('- Displayed theme totals above 13 EP must be sums of atomic 1/2/3/5/8/13 clusters, not one unsplit story.');
+  lines.push('- Man-days: report no-AI and AI-assisted ranges separately. AI assumes an AI coding assistant with project context; apply EP-based speedup with review overhead.');
+  lines.push('- Anti-inflation: raw churn, generated code, docs/specs, i18n sorting, lockfiles, and zero-change merge/admin commits must not inflate implementation EP.');
   lines.push('');
   lines.push('## Contributor Tasks');
   lines.push('');
@@ -1168,7 +1168,7 @@ function renderAnalysisPlanMarkdown({ metadata, aggregates }) {
   lines.push('## Final Report Tasks');
   lines.push('');
   lines.push('- [ ] Synthesize per-contributor value and quality findings into `quality-work-summary.md` and `evidence-proof.md`.');
-  lines.push('- [ ] Include distinct contributor count, total estimated story points, total no-AI man-days, total AI-assisted man-days, and confidence.');
+  lines.push('- [ ] Include distinct contributor count, total estimated effort points, total no-AI man-days, total AI-assisted man-days, and confidence.');
   lines.push('- [ ] Separate direct authored work from merge/admin integration work.');
   lines.push('- [ ] Include velocity sanity notes for high estimates relative to active days or selected period.');
   lines.push('- [ ] Flag identity, bulk-change, generated-code, and low-confidence caveats.');
@@ -1184,7 +1184,7 @@ function renderAnalysisReadmeMarkdown({ metadata }) {
     '',
     `Scope: ${metadata.branch}, ${metadata.since} to ${metadata.until}.`,
     '',
-    'Each report should include: giant-commit synthesis, contributed value, work clusters, estimated story points, no-AI man-days, AI-assisted man-days, code-quality impact, risks, evidence commit hashes, discounted churn, and velocity sanity notes.',
+    'Each report should include: giant-commit synthesis, contributed value, work clusters, estimated effort points, no-AI man-days, AI-assisted man-days, code-quality impact, risks, evidence commit hashes, discounted churn, and velocity sanity notes.',
     '',
   ].join('\n');
 }
@@ -1201,7 +1201,7 @@ function renderWorkPacketMarkdown({ metadata, contributor, commits }) {
   lines.push('');
   lines.push('## Goal');
   lines.push('');
-  lines.push('Read and synthesize this contributor work into value, estimated story points, no-AI man-days, AI-assisted man-days, and code-quality impact. This packet is evidence for AI analysis, not the final verdict.');
+  lines.push('Read and synthesize this contributor work into value, estimated effort points, no-AI man-days, AI-assisted man-days, and code-quality impact. This packet is evidence for AI analysis, not the final verdict.');
   lines.push('');
   lines.push('## Scope');
   lines.push('');
@@ -1222,8 +1222,8 @@ function renderWorkPacketMarkdown({ metadata, contributor, commits }) {
   lines.push('- [ ] For shared feature branches, attribute implementation to each developer\'s own direct authored commits, not to the merge author or PR owner.');
   lines.push('- [ ] Synthesize all direct authored commits as one giant commit before estimating.');
   lines.push('- [ ] Cluster commits into work clusters by intent, module, and date proximity.');
-  lines.push('- [ ] Estimate story points, no-AI man-days, and AI-assisted man-days for each work cluster.');
-  lines.push('- [ ] Treat zero-file merge/admin commits as integration signal only, not implementation SP.');
+  lines.push('- [ ] Estimate effort points, no-AI man-days, and AI-assisted man-days for each work cluster.');
+  lines.push('- [ ] Treat zero-file merge/admin commits as integration signal only, not implementation EP.');
   lines.push('- [ ] Discount generated/docs/i18n/lockfile/migration-designer churn and repeated follow-up commits.');
   lines.push('- [ ] Synthesize contributed value: feature/change, bug fix, refactor, testing/docs, and operational/integration value.');
   lines.push('- [ ] Evaluate code-quality impact: maintainability, tests, risk, generated/bulk changes, and risky churn.');
@@ -1231,7 +1231,7 @@ function renderWorkPacketMarkdown({ metadata, contributor, commits }) {
   lines.push('');
   lines.push('## Estimation Guidance');
   lines.push('');
-  lines.push('Use 1/2/3/5/8/13 story points per work cluster. Prefer small clusters over one inflated estimate. Report `man_days_traditional` as no-AI baseline and `man_days_ai` as AI-coding-assistant/project-context estimate with review overhead.');
+  lines.push('Use 1/2/3/5/8/13 effort points per work cluster. Prefer small clusters over one inflated estimate. Report `man_days_traditional` as no-AI baseline and `man_days_ai` as AI-coding-assistant/project-context estimate with review overhead.');
   lines.push('');
   lines.push('## Quality Warnings');
   lines.push('');

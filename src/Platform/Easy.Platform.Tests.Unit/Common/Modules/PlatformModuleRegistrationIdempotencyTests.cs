@@ -150,11 +150,9 @@ public class PlatformModuleRegistrationIdempotencyTests : PlatformModuleTestBase
     public void RegisterModule_CalledTwiceForTheSameModuleType_ResolvesToASingleInstance()
     {
         // Descriptor counting alone is not enough, and instance identity is the half that actually mattered.
-        // Only the FIRST of the three registrations inside RegisterModuleInstance was guarded. The unguarded
-        // PlatformModule entry was benign — its factory resolves the one singleton, so extra copies of it collapse.
-        // But RegisterAllForImplementation re-registers the implementation TYPE, and a type-registered descriptor
-        // constructs its OWN instance. Those extra instances never receive RegisterServices or Init, so resolving
-        // the concrete type could hand back an UNINITIALIZED module while every symptom pointed elsewhere.
+        // RegisterModule now exits before a second temporary provider can construct/register the same module type,
+        // while the concrete and PlatformModule descriptors continue to resolve the same singleton from the final
+        // service provider.
         var (services, _) = NewHost();
 
         services.RegisterModule<LeafTestPlatformModule>();
@@ -196,6 +194,40 @@ public class PlatformModuleRegistrationIdempotencyTests : PlatformModuleTestBase
             .GroupBy(module => module.GetType())
             .Should()
             .OnlyContain(group => group.Count() == 1, "no module type may appear twice in the collection the platform initializes");
+    }
+
+    // TC-PLATMOD-114: A diamond must not repeat the shared module's registration side effects.
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PLATMOD-114")]
+    public void RegisterModule_WithADiamondDependency_RunsSharedModuleRegistrationSideEffectsOnce()
+    {
+        var (services, _) = NewHost();
+
+        services.RegisterModule<SideEffectGrandParentTestPlatformModule>();
+        services.RegisterModule<SideEffectParentTestPlatformModule>();
+
+        services.Count(descriptor => descriptor.ServiceType == typeof(SideEffectRegistrationMarker))
+            .Should()
+            .Be(1, "a shared module's registration side effects must converge with its module descriptor");
+    }
+
+    // TC-PLATMOD-114: The same guarantee for a TRUE diamond — two sibling branches share one leaf.
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PLATMOD-114")]
+    public void RegisterModule_WithATrueDiamondDependency_RunsSharedLeafRegistrationSideEffectsOnce()
+    {
+        var (services, _) = NewHost();
+
+        services.RegisterModule<SideEffectDiamondRootTestPlatformModule>();
+
+        services.Count(descriptor => descriptor.ServiceType == typeof(SideEffectRegistrationMarker))
+            .Should()
+            .Be(1, "the leaf reached through both diamond branches must register its side effects once");
+        services.Count(descriptor => descriptor.ServiceType == typeof(SideEffectLeafTestPlatformModule))
+            .Should()
+            .Be(1, "the shared leaf must be one module descriptor");
+        services.Count(descriptor => descriptor.ServiceType == typeof(SideEffectLeftBranchTestPlatformModule)).Should().Be(1);
+        services.Count(descriptor => descriptor.ServiceType == typeof(SideEffectRightBranchTestPlatformModule)).Should().Be(1);
     }
 
     // TC-PLATMOD-113: The idempotency guard must key on the module TYPE, not suppress unrelated modules.

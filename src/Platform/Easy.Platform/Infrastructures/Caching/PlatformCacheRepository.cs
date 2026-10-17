@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Reflection;
 using Easy.Platform.Application;
 using Easy.Platform.Common.BackgroundLock;
 using Easy.Platform.Common.Extensions;
@@ -196,6 +197,7 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
     // Lazy resolution avoids constructing the pool in read-only cache paths while still reusing
     // the same named pool for every queued cache write once mutation work appears.
     private readonly Lazy<IPlatformBackgroundActionPermitPool> bgPoolLazy;
+    private readonly bool useBaseGlobalKeyRegistration;
     private bool disposed;
 
     public PlatformCacheRepository(
@@ -211,6 +213,11 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
             LazyThreadSafetyMode.ExecutionAndPublication);
         CacheSettings = cacheSettings;
         ApplicationSettingContext = applicationSettingContext;
+        // Existing derived hooks own their mutation semantics. Only the base implementation can
+        // omit an unchanged registration; inspect once per instance without retaining runtime types.
+        useBaseGlobalKeyRegistration = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            .Where(method => method.Name is nameof(UpdateGlobalCachedKeys) or nameof(SetGlobalCachedKeysAsync))
+            .All(method => method.DeclaringType == typeof(PlatformCacheRepository));
     }
 
     protected ILogger Logger => loggerLazy.Value;
@@ -286,7 +293,7 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
             {
                 await SetToDistributedCacheAsync(cacheKey, value, cacheOptions, tags, token);
 
-                await UpdateGlobalCachedKeys(p => p.TryAdd(cacheKey, null));
+                await RegisterGlobalCachedKey(cacheKey);
             },
             () => Logger,
             true);
@@ -661,21 +668,46 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         await SetGlobalCachedKeysAsyncLock.ExecuteLockActionAsync(async () =>
         {
             var globalCachedKeys = await LoadGlobalAllRequestCachedKeys().ThenActionAsync(modifyGlobalCachedKeysFunc);
-            var globalAllRequestCacheKeysCacheKey = GetGlobalAllRequestCachedKeysCacheKey();
-
-            var modifiedCacheValue = globalCachedKeys.Select(p => p.Key).ToList();
-
-            if (!modifiedCacheValue.Any())
-                await RemoveAsync(globalAllRequestCacheKeysCacheKey);
-            else
-            {
-                await GetDistributedCache()
-                    .SetAsync(
-                        globalAllRequestCacheKeysCacheKey,
-                        PlatformJsonSerializer.SerializeToUtf8Bytes(modifiedCacheValue),
-                        MapToDistributedCacheEntryOptions(PlatformCacheEntryOptions.NeverExpireOptions()));
-            }
+            await PersistGlobalCachedKeys(globalCachedKeys);
         });
+    }
+
+    /// <summary>
+    /// Re-reads the backing registry on every registration, including overwrites, so registry loss
+    /// or another instance's additions are observed. An unchanged base-owned membership needs no write.
+    /// Existing virtual mutation hooks and cleanup/remove persistence retain their original behavior.
+    /// </summary>
+    private async Task RegisterGlobalCachedKey(PlatformCacheKey cacheKey)
+    {
+        if (!useBaseGlobalKeyRegistration)
+        {
+            await UpdateGlobalCachedKeys(keys => keys.TryAdd(cacheKey, null));
+            return;
+        }
+
+        await SetGlobalCachedKeysAsyncLock.ExecuteLockActionAsync(async () =>
+        {
+            var globalCachedKeys = await LoadGlobalAllRequestCachedKeys();
+            if (globalCachedKeys.TryAdd(cacheKey, null))
+                await PersistGlobalCachedKeys(globalCachedKeys);
+        });
+    }
+
+    private async Task PersistGlobalCachedKeys(ConcurrentDictionary<PlatformCacheKey, object> globalCachedKeys)
+    {
+        var globalAllRequestCacheKeysCacheKey = GetGlobalAllRequestCachedKeysCacheKey();
+        var modifiedCacheValue = globalCachedKeys.Select(p => p.Key).ToList();
+
+        if (!modifiedCacheValue.Any())
+            await RemoveAsync(globalAllRequestCacheKeysCacheKey);
+        else
+        {
+            await GetDistributedCache()
+                .SetAsync(
+                    globalAllRequestCacheKeysCacheKey,
+                    PlatformJsonSerializer.SerializeToUtf8Bytes(modifiedCacheValue),
+                    MapToDistributedCacheEntryOptions(PlatformCacheEntryOptions.NeverExpireOptions()));
+        }
     }
 
     public void Dispose()

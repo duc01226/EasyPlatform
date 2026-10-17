@@ -2,6 +2,7 @@
 
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Application.MessageBus.Producers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Cqrs.Commands;
@@ -26,7 +27,7 @@ public sealed class DemoSendFreeFormatEventBusMessageCommandResult : PlatformCqr
 internal sealed class DemoSendFreeFormatEventBusMessageCommandHandler
     : PlatformCqrsCommandApplicationHandler<DemoSendFreeFormatEventBusMessageCommand, DemoSendFreeFormatEventBusMessageCommandResult>
 {
-    private readonly IPlatformApplicationBusMessageProducer busMessageProducer;
+    private readonly IPlatformKeyedApplicationBusMessageProducer busMessageProducer;
 
     public DemoSendFreeFormatEventBusMessageCommandHandler(
         IPlatformApplicationRequestContextAccessor requestContextAccessor,
@@ -34,7 +35,7 @@ internal sealed class DemoSendFreeFormatEventBusMessageCommandHandler
         Lazy<IPlatformCqrs> cqrs,
         ILoggerFactory loggerFactory,
         IServiceProvider serviceProvider,
-        IPlatformApplicationBusMessageProducer busMessageProducer) : base(requestContextAccessor, unitOfWorkManager, cqrs, loggerFactory, serviceProvider)
+        IPlatformKeyedApplicationBusMessageProducer busMessageProducer) : base(requestContextAccessor, unitOfWorkManager, cqrs, loggerFactory, serviceProvider)
     {
         this.busMessageProducer = busMessageProducer;
     }
@@ -44,6 +45,7 @@ internal sealed class DemoSendFreeFormatEventBusMessageCommandHandler
         CancellationToken cancellationToken)
     {
         await busMessageProducer.SendAsync(
+            new PlatformMessageBusStoreKey(TextSnippetApplicationModule.MessageBusStoreKeyValue),
             new DemoSendFreeFormatEventBusMessage
             {
                 Property1 = request.Property1,

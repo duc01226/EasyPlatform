@@ -1,13 +1,13 @@
 ---
 name: design-spec
 version: 2.0.0
-description: '[Project Management] Use when you need to create UI/UX design specifications from requirements, PBIs, or user stories. Use --mode=wireframe to convert hand-drawn/digital wireframes or UI sketches into structured specs.'
+description: '[Project Management] Use when a workflow step or the user asks for UI/UX specs for views, flows, states and accessibility. --mode=wireframe converts sketches or wireframes.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
 
-> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
-> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval. Inside a workflow run, `/start-workflow` → Workflow-step mode bounds this rule.
+> **[BLOCKING]** Before each step or sub-skill call, update todo tracking: set `in_progress` when step starts, set `completed` when step ends.
 > **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
 > **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
 
@@ -15,207 +15,235 @@ description: '[Project Management] Use when you need to create UI/UX design spec
 
 ## Quick Summary
 
-**Goal:** Produce a structured, tech-agnostic UI/UX design specification from a requirement/PBI/story/wireframe so a developer can rebuild the UI on ANY stack — every component, state, design token, responsive rule, and accessibility need documented and linked back to the governing Feature Spec.
+**Goal:** Produce a complete, tech-agnostic UI/UX design spec that lets a developer rebuild the source outcome on ANY stack, preserving every required view, navigation path, component, state, token, responsive rule, accessibility need, demo journey, and governing-spec link.
 
-**Summary (read this if nothing else — PURPOSE + every main step):**
+**Summary:**
 
-- **Purpose** — translate requirements into a developer-ready UI/UX spec (component inventory, states, design tokens, responsive behavior, accessibility), tech-agnostic: name components by UX role, never by framework/library class.
-- **Step 0–0b — research first:** inventory existing related screens/components + map connected flows, record in §1 so the spec matches the live UI system; if a governing Feature Spec exists, seed from its §6 interaction surface and reuse its view + observable-state vocabulary verbatim. — why: divergent vocabulary breaks the navigable spec↔design hub.
-- **Step 1–2 — read & route input, set complexity:** Figma URL → `/figma-design`; image/screenshot → visual analysis tooling; wireframe/sketch → `--mode=wireframe`; PBI/text → extract requirements. Pick Quick Spec (§1–4) vs Full Spec (§1–7, +Flow Diagram for multi-page).
-- **Step 3–6 — author the body:** build component inventory (new vs existing), define all 7 states + interactions, extract design tokens (reuse design-system), document responsive breakpoints (mobile 320–767 / tablet 768–1023 / desktop 1024+).
-- **Step 7–8 — save & link back:** write the artifact to `team-artifacts/design-specs/`, then set the governing Feature Spec's `design_spec:`/`mockup:` frontmatter to the saved path — frontmatter only, never the §1–8 body. — why: `artifact-review --type=design` fails if the path is not recorded.
+- Journey Report (`UX-1`) → existing UI/connected flows and governing intent → design-authority read (`UX-2`) precede every spec section. Reuse reviewed companion evidence and governing view/state vocabulary; confirm inferred actor/job/outcome, or record unconfirmed when no question tool exists.
+- Route input (design link → exported frames; image → visual analysis; sketch → `--mode=wireframe`; task/text → requirements), then choose Quick, Full, or Full + Flow Diagram. Specify components, applicable states, tokens, responsive/accessibility behavior and the complete releasable flow.
+- Walk every main journey and trace its steps, interaction cost and wayfinding (`UX-8`–`UX-10`); finish the UI/UX Gate Report (`UX-11`). Save the design-spec/audit/component variant, update governing-spec companion frontmatter only, and satisfy M1–M5/M7 and logical-ID traceability.
 
 **Workflow:**
 
-1. **Read Source** — Extract UI requirements from PBI, story, or Figma URL
-2. **Determine Complexity** — Quick Spec (sections 1-4) vs Full Spec (all 7 sections)
-3. **Build Component Inventory** — List new vs existing components
-4. **Define States & Tokens** — Interactions, design tokens, responsive breakpoints
-5. **Save Artifact** — Output to `team-artifacts/design-specs/`
+1. **Journey Report** — Report main user journeys (`UX-1`) before any spec section
+2. **Ground Source** — Inventory UI/flows; seed governing §6 vocabulary; record design-authority read (`UX-2`)
+3. **Route Input** — Choose visual, wireframe, task, or text path
+4. **Set Scope** — Choose Quick / Full / Flow Diagram
+5. **Specify** — Components, 7 states, tokens, responsive/accessibility/full-flow rules
+6. **Walk + Trace** — Walk each main journey; §8 traceability matrix (`UX-8`)
+7. **Save + Link** — Save artifact; update Feature Spec frontmatter only
 
 **Key Rules:**
 
-- If Figma URL provided → auto-routes to `/figma-design` for context extraction
-- If wireframe image provided (hand-drawn/digital/tool-export) → handled internally via `--mode=wireframe` (see "Mode: wireframe" below)
-- If screenshot provided → uses `visual analysis tooling` for design extraction
-- Reference existing design system tokens from `docs/project-reference/design-system/`
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
-- Include accessibility requirements (keyboard nav, ARIA labels, contrast)
-- **[BLOCKING] Tech-agnostic output:** spec prose/headings follow `docs/project-reference/spec-principles.md` §3 — describe components by UX role, not framework/library names; source paths and class names appear ONLY in evidence fields (`**Evidence**`, `[Source:]`), frontmatter, and Mermaid.
+- **[BLOCKING] Journey-first order:** Journey Report (`UX-1`) → design-authority read (`UX-2`) → only then spec sections; every view hosts a journey step (`UX-3`) and §1b priority is computed per decision point (`UX-4`). Catalog: `.claude/docs/ux-journey-process.md`.
+- Input routing: design link (e.g. a Figma URL)→ask the user to export the frames as images, then visual analysis; wireframe/sketch→`--mode=wireframe`; screenshot→visual analysis.
+- Reuse `design-system/` tokens and `frontend-patterns-reference.md` component patterns from the reference-docs root (default `docs/project-reference`; `docsRoots.projectReference.path` in `docs/project-config.json` overrides); include keyboard navigation, ARIA labels, and contrast.
+- **[BLOCKING] Tech-agnostic output:** spec prose/headings follow `spec-principles.md` §3 under the reference-docs root (default `docs/project-reference`; `docsRoots.projectReference.path` in `docs/project-config.json` overrides) — describe components by UX role, not framework/library names; source paths and class names appear ONLY in evidence fields (`**Evidence**`, `[Source:]`), frontmatter, and Mermaid.
+- **[BLOCKING] Releasable UI surface:** apply `.claude/skills/shared/releasable-task-contract.md`; the design spec must deepen, not reduce, the task/mockup page/view, navigation, component, state, and full-flow inventories.
+
+> **Releasable outcome contract** — Preserve one complete actor-facing journey (entry/context → action/input → validation/decision → visible or persisted result → exit/next path) with every required view, navigation edge, component, and state; incomplete or ambiguous outcomes stay blocked.
+>
+> **MUST ATTENTION READ** `.claude/skills/shared/releasable-task-contract.md` for the full contract.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Design Specification](#design-specification)
+- [When to Use](#when-to-use)
+- [When NOT to Use](#when-not-to-use)
+- [Prerequisites](#prerequisites)
+- [Workflow](#workflow)
+- [Mode: wireframe (image → spec)](#mode-wireframe-image--spec)
+- [Output Format](#output-format)
+- [Design-Principles Obligations (per spec section)](#design-principles-obligations-per-spec-section)
+- [M1-M5/M7 Compliance for UI Specs](#m1-m5m7-compliance-for-ui-specs)
+- [Component States Checklist](#component-states-checklist)
+- [Accessibility Audit](#accessibility-audit)
+- [Examples](#examples)
+- [Related Skills](#related-skills)
+- [Next Steps](#next-steps)
+- [Prompt-Enhance Closing Anchors](#prompt-enhance-closing-anchors)
+- [Closing Reminders](#closing-reminders)
+
 # Design Specification
 
-Create structured UI/UX design specification documents from requirements or PBIs for developer handoff.
+Create structured UI/UX design specification documents from requirements or tasks for developer handoff.
 
 ## When to Use
 
-- A PBI or user story needs a design spec before implementation
-- Translating requirements into concrete UI layout, states, and tokens
-- Documenting component inventory and interaction patterns
-- Creating responsive breakpoint specifications
+- A task or user story needs a design spec before implementation
+- Requirements need concrete layout, states, tokens, and responsive behavior
+- A component inventory and interaction patterns need documentation
 
 ## When NOT to Use
 
-- This skill auto-routes Figma URLs to `/figma-design`; wireframes are handled internally via `--mode=wireframe` — no need to call a separate skill
-- Building the actual UI -- use `design --lane=marketing` (marketing/creative) or `design --lane=product` (product UIs)
-- Reviewing existing UI code -- use `web-design-guidelines`
+- Wireframes run internally via `--mode=wireframe` — no separate skill call
+- Building UI — use `ui-design --lane=marketing` (marketing/creative) or `ui-design --lane=product` (product UIs)
+- Reviewing UI code — use `web-design-guidelines`
 
 ## Prerequisites
 
 Read before executing:
 
-- The source PBI, user story, or requirements document
-- `docs/project-reference/design-system/` -- project design tokens (if applicable)
-- Existing design specs in `team-artifacts/design-specs/` for format consistency
+- The source task, user story, or requirements document
+- `design-system/` under the reference-docs root (default `docs/project-reference`; `docsRoots.projectReference.path` in `docs/project-config.json` overrides) -- project design tokens (if applicable)
+- Existing design specs in `design-specs/` under the team-artifacts root (default `team-artifacts/`; `docsRoots.teamArtifacts.path` in `docs/project-config.json` overrides) for format consistency
 
 ### Frontend/UI Context
 
-> When this task involves frontend or UI changes,
+> For frontend/UI work, read:
 
-- Frontend patterns: `docs/project-reference/frontend-patterns-reference.md`
-- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
-- Design system tokens: `docs/project-reference/design-system/README.md`
+All three live under the reference-docs root (default `docs/project-reference`; a `docsRoots.projectReference.path` entry in `docs/project-config.json` overrides the path):
+
+- Frontend patterns: `frontend-patterns-reference.md`
+- Styling reference: `configured styling reference`
+- Design system tokens: `design-system/README.md`
 
 ## Workflow
 
-> **[BLOCKING] Step 0 — Inventory existing UI + map connected flows** (per the `SYNC:existing-ui-research` protocol carried by this skill). Before authoring the spec, inventory the existing related screens / components / pages already serving this feature or domain, and map every connected feature flow that links to / embeds / navigates to-or-from the new screen. Record the matched screens + flows in §1 Overview so the spec faithfully matches the current UI system. Skip only for backend-only work (state it explicitly).
+> **[BLOCKING] Step 0a — Journey Report (`UX-1`).** Before ANY spec section, wireframe, design plan or token table, write §0a User Journeys (Output Format below; full template `.claude/docs/ux-journey-process.md` §4): frame (problem · business goal · success signal · constraints) · actors with context, expertise and frequency · one job statement per actor · the main journeys ranked by frequency × business value × risk × first-use criticality (catalog §5) · a step table per journey (intent · decision/action · information needed · business rule · system response · failure → recovery) · derived design requirements · assumptions and open questions.
+>
+> - **Evidence first:** when a governing Feature Spec exists, its profile-resolved interaction flows and view inventory (strict-default §6.5 and §6.2) are the primary evidence — read them here (Step 0b reuses the same read), then stories/acceptance criteria, business logic in code, and the existing UI (catalog §3). Tag every claim `SOURCED (<location>)` or `INFERRED (<reason>)`.
+> - **Companion mockup (reuse):** when a `/work-item --mode=mockup` run for the same feature already produced a reviewed Journey Report — `tmp/design/<run>/journey-report.md` (with its `direction-approved.md` and `Design authority read:` record), the Journey Report in its report, or a path the caller supplies — that report is the starting evidence: reuse it, re-confirm only what the source changed since, and surface (never silently re-derive) any journey that disagrees. An approved `direction-approved.md` seeds the §0 Design Plan (colour · type · layout recorded `ADOPTED`, still passing the `DD-3` generic test). With no companion mockup available (standalone run) derive the report and plan as above.
+> - **Confirm before generating:** an INFERRED primary actor, main job or success outcome is confirmed with the user via `ask user question tool` before any spec section is authored; with no question tool, record it `INFERRED — unconfirmed (no question tool)` in §0a assumptions and continue — never block.
+> - **Depth by spec size (catalog §10):** Quick Spec → actors + 1–2 main journeys with step tables for the view(s) in scope; Full Spec → the full template, 3–5 main journeys; multi-page flow → full template plus the cross-view navigation path. Never zero for a new or reshaped view.
+>
+> **Skip ONLY** when the feature has no user-facing surface — state that explicitly.
 
-> **[BLOCKING] Step 0b — Seed from the governing Feature Spec's §6 interaction surface (when one exists).** Detect whether a canonical Feature Spec already governs this feature (look under `docs/specs/**` for a spec covering the same capability). If one exists, READ its **§6 Process Flows & Interaction Surface** — the **View Inventory** (§6.2), **Navigation Map** (§6.3), **Key UI States** (§6.4), and **Per-Story Interaction Flow** (§6.5) — and use it as this design-spec's starting frame:
+> **[BLOCKING] Step 0 — Inventory existing UI + map connected flows** (per `SYNC:existing-ui-research`). Before authoring, inventory related existing screens/components/pages and every connected feature flow (links, embeds, navigates to/from); record matched UI + flows in §1 so the spec fits the live UI system. Skip only backend-only work; state that explicitly.
+
+> **[BLOCKING] Step 0b — Seed from governing interaction intent (when a spec exists).** Resolve `specArtifacts` through the shared SDD contract before locating the canonical owner. Search the configured business spec root for this capability. Strict-default profile: read §6.2 View Inventory, §6.3 Navigation Map, §6.4 Key UI States and §6.5 Per-Story Interaction Flow. Declared native profile: read its configured intent sections and native interaction carriers; preserve owner-qualified scenario IDs and carrier cardinality. Malformed or unsupported declarations stop without fallback. Do not require §6 headings or add duplicate strict-default registries to a valid native owner.
 >
-> - **Reuse the spec's vocabulary verbatim** — carry over the SAME UX-role view names from §6.2 and the SAME observable-state names from §6.4 (the Default / Loading / Disabled / Error / Empty / Success vocabulary in this skill's "Observable State Definitions" table is the shared language). NEVER rename or re-partition what the spec already named — the two artifacts MUST speak the same language or the navigable hub breaks.
-> - **Deepen, do not diverge or contradict.** The spec stays tech-agnostic; this design-spec is the companion that adds visual fidelity (layout, tokens, pixel detail) ON TOP of the spec's intent. Map each §6.5 step and each §6.4 state into concrete visual treatment, preserving the `US-`/`OP-`/`BR-` logical-ID cross-refs the spec already owns.
-> - This coupling is the `SYNC:ui-intent-layer` contract carried below — see that block for the full rule; do not restate it here.
+> - **Reuse vocabulary verbatim:** carry over the SAME view and observable-state names from the resolved owner. NEVER rename or repartition; both artifacts MUST use one language so the navigable hub works.
+> - **Deepen, never diverge:** keep intent tech-agnostic; add visual fidelity (layout, tokens, pixel detail). Map each resolved interaction step/state to visual treatment and preserve its native or strict-default logical-ID cross-refs.
+> - This coupling is the `SYNC:ui-intent-layer` contract below; use that block for the full rule instead of restating it.
 >
-> **Skip ONLY** when no governing Feature Spec exists (author the interaction frame from the source PBI/story instead) — state which case applies.
+> **Skip ONLY** when no governing Feature Spec exists; author the interaction frame from the source task/story and state which case applies.
+
+> **[BLOCKING] Design-authority read (`UX-2`).** Step 0 + Step 0b, together with reading `design-system/` under the reference-docs root and the project's design principles/guidelines, styling conventions and accepted design ADRs (resolved from `docs/project-config.json` and its reference docs), form the design-authority read. Record it in the spec header as `Design authority read: <paths>` or `N/A — none configured (checked: <paths>)` BEFORE authoring any spec section; adopt house patterns and never invent a token or component the project already defines.
 
 1. **Read source input & route by type**
 
-    | Input Detected           | Detection                                      | Action                                                                    |
-    | ------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------- |
-    | Figma URL                | `figma.com/design` or `figma.com/file` in text | Activate `/figma-design` to extract context, then continue                |
-    | Image/screenshot         | Image file attached to prompt                  | Use `visual analysis tooling` to extract design guidelines, then continue |
+    | Input Detected           | Detection                                      | Action                                                                   |
+    | ------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------ |
+    | Design-tool link         | A design-tool URL (e.g. `figma.com`) in text   | Ask the user via `ask user question tool` to export the frames as images, then continue on the image path |
+    | Image/screenshot         | Image file attached to prompt                  | Use `visual analysis tooling` to extract design guidelines, then continue          |
     | Hand-drawn wireframe     | Image + "wireframe"/"sketch" keyword           | Run `--mode=wireframe` (internal — see "Mode: wireframe" section)         |
-    | PBI/story text           | Acceptance criteria present                    | Extract UI requirements from text, continue                               |
-    | Verbal/text requirements | No image, no URL, no PBI                       | Clarify with user, then continue                                          |
+    | Task/story text           | Acceptance criteria present                    | Extract UI requirements from text, continue                              |
+    | Verbal/text requirements | No image, no URL, no task                       | Clarify with user, then continue                                         |
 
-For ANY visual input: extract design context FIRST, then proceed to spec generation.
+For ANY visual input, extract design context FIRST, then generate the spec.
 
 2. **Determine spec complexity**
 
     ```
-    IF single form or simple component → Quick Spec (sections 1-4 only)
-    IF full page or multi-component view → Full Spec (all 7 sections)
+    IF single form or simple component → Quick Spec (sections 0a compact, 1, 1b, 2-4, 8 walkthrough of those journeys, 9 UI/UX Gate Report)
+    IF full page or multi-component view → Full Spec (sections 0a, 0, 1-9)
     IF multi-page flow → Full Spec + Flow Diagram
     ```
 
 3. **Build component inventory**
-    - List all UI components needed
-    - Identify reusable vs feature-specific components
-    - Note existing components from shared component library or design system
+    - List needed UI components; classify reusable vs feature-specific; note existing shared-library/design-system components.
 
 4. **Define states and interactions**
-    - Default, hover, active, disabled, error, loading, empty states
-    - User interactions (click, drag, keyboard shortcuts)
-    - Transitions and animations
+    - Document applicable default, hover, active, focus, disabled, error, loading and empty states; user interactions, transitions and animations. Mark unsupported platform/input states N/A.
 
 5. **Extract design tokens**
-    - Colors, typography, spacing, shadows, border-radius
-    - Reference existing design system tokens where possible
+    - Colors, typography, spacing, shadows, and border-radius; reference existing design-system tokens where possible.
 
 6. **Document responsive behavior**
-    - Mobile (320-767px), Tablet (768-1023px), Desktop (1024px+)
-    - What changes at each breakpoint (layout, visibility, sizing)
+    - Use configured/content-driven breakpoints; mobile 320–767px, tablet 768–1023px and desktop 1024px+ are web starting examples, not universal thresholds. Document layout, visibility and sizing changes at each applicable breakpoint.
     - **Small-screen minimum bar (spec it explicitly):** the layout MUST stay usable on mobile. Preferred = reflow (rows `flex-wrap` / `row → column`, grids collapse to one column). Where a component genuinely can't reflow (data tables, canvases, wide grids), specify a `min-width`/`min-height` + `overflow: auto` scroll as the accepted fallback — scrolling is OK. Hard requirement = nothing broken (no clipped, cut-off, or unreachable content/controls). If a component needs a large redesign to work on mobile, flag it for the user rather than assuming a rewrite.
 
-7. **Save artifact** — pick the filename variant by artifact type:
-    - Design spec: `team-artifacts/design-specs/{YYMMDD}-designspec-{feature-slug}.md`
-    - Accessibility audit: `team-artifacts/design-specs/{YYMMDD}-ux-audit-{feature-slug}.md`
-    - Single-component doc: `team-artifacts/design-specs/{YYMMDD}-ux-component-{component-name}.md`
+6b. **Walk the journeys (`UX-8`)** — step through every §0a main journey on the spec as the named actor and answer the four walkthrough questions per step (knows the step is needed? sees the action? links it to the goal? sees progress?); fill §8 Journey Traceability. Fix every unserved step (no view/element) and orphan element (traces to no step, need or rule) before saving; record any remaining "no" in §7. Then fill §8's interaction-cost row per main journey (`UX-9`) and wayfinding check per view (`UX-10`), and close with §9 UI/UX Gate Report (`UX-11`) — every gate `PASS` / `FAIL → fixed` / `N/A` with evidence; an unresolved `FAIL` blocks saving as `Approved`.
 
-8. **Link back to the governing Feature Spec (when one exists).** After saving the artifact, keep the spec the navigable hub: open the governing Feature Spec under `docs/specs/**` and set its frontmatter `design_spec:` key to this design-spec's saved path (add the key if absent, update it if stale). If a mockup was also produced (e.g. via `/pbi-mockup`), set the `mockup:` key the same way. Edit **frontmatter only** — never touch the §1–§8 spec body. This satisfies the `artifact-review --type=design` link-back gate, which fails when a design-spec exists but its path is not recorded in the spec's `design_spec:` frontmatter. Skip ONLY when no governing Feature Spec exists (the design-spec is standalone) — state that.
+7. **Save artifact** — pick the filename variant by artifact type; every path below is relative to the team-artifacts root (default `team-artifacts/`; a `docsRoots.teamArtifacts.path` entry in `docs/project-config.json` overrides the path):
+    - Design spec: `design-specs/{YYMMDD}-ux-designspec-{feature-slug}.md`
+    - Accessibility audit: `design-specs/{YYMMDD}-ux-audit-{feature-slug}.md`
+    - Single-component doc: `design-specs/{YYMMDD}-ux-component-{component-name}.md`
+
+8. **Link back to the governing Feature Spec (when one exists).** After saving the artifact, keep the spec the navigable hub: open the governing Feature Spec under the business spec root (default `docs/specs/**`; `specRoots.business.path` in `docs/project-config.json` overrides) and set its frontmatter `design_spec:` key to this design-spec's saved path (add the key if absent, update it if stale). If a mockup was also produced (e.g. via `/work-item --mode=mockup`), set the `mockup:` key the same way. Edit **frontmatter only** — never touch the canonical intent/contracts/evidence body (strict-default §1–§8). This satisfies the `work-item --mode=review --type=design` link-back gate, which fails when a design-spec exists but its path is not recorded in the spec's `design_spec:` frontmatter. Skip ONLY when no governing Feature Spec exists (the design-spec is standalone) — state that.
 
 ### Role Context & Artifact Path (canonical)
 
-> Applies to Writes under `team-artifacts/design-specs/`.
+> Applies to writes under `design-specs/` in the team-artifacts root (default `team-artifacts/`; `docsRoots.teamArtifacts.path` in `docs/project-config.json` overrides).
 
 - **Active Role:** ui-ux-designer · **Skill:** design-spec
-- **Path:** `team-artifacts/design-specs/` · **Type:** designspec · **Role token:** ux
-- **Template:** `.claude/docs/team-artifacts/templates/design-spec-template.md`
+- **Path:** `design-specs/` under the team-artifacts root (default `team-artifacts/`; `docsRoots.teamArtifacts.path` in `docs/project-config.json` overrides) · **Type:** designspec · **Role token:** ux
+- **Template:** `.claude/docs/team-artifacts/templates/design-spec-template.md` (framework-owned path — NOT the configurable team-artifacts root in `docs/project-config.json`)
 - **Naming:** `{YYMMDD}-ux-{type}-{slug}.md` (general artifact-path pattern: `{YYMMDD}-{role}-{type}-{slug}.md`)
 - **Context:** DESIGN SPEC — include component states, design tokens, accessibility requirements.
-- **Quality checklist:** `- [ ]` All states documented · `- [ ]` Design tokens specified · `- [ ]` Accessibility notes included · `- [ ]` Responsive breakpoints defined
+- **Quality checklist:** `- [ ]` Journey Report (§0a, `UX-1`) precedes every other section, claims `SOURCED`/`INFERRED` · `- [ ]` `Design authority read:` recorded or `N/A` (`UX-2`) · `- [ ]` Every view hosts a journey step; information priority (`UX-4` tiers) + container recorded per view · `- [ ]` §8 traceability matrix: no unserved step, no orphan element (`UX-8`) · `- [ ]` Interaction cost per journey + wayfinding per view (`UX-9`, `UX-10`) · `- [ ]` §9 UI/UX Gate Report complete, no open `FAIL` (`UX-11`) ·  `- [ ]` All states documented · `- [ ]` Design tokens specified · `- [ ]` Accessibility notes included · `- [ ]` Responsive breakpoints defined
 
 ## Mode: wireframe (image → spec)
 
-> **Invoke with `--mode=wireframe`** (or whenever a hand-drawn wireframe, digital wireframe, or UI sketch is the input). This mode is an INPUT adapter: it analyzes the image, then flows into the normal spec sections (Output Format) and the M1-M5/M7 compliance gate. `design-spec` is the canonical owner of wireframe→spec conversion.
-
-### Input Routing (wireframe)
-
-| Input                   | Detection                               | Action                                       |
-| ----------------------- | --------------------------------------- | -------------------------------------------- |
-| Hand-drawn sketch photo | Image with rough/organic lines          | Analyze with wireframe prompts (this mode)   |
-| Digital wireframe       | Image with clean lines/shapes           | Analyze with wireframe prompts (this mode)   |
-| Wireframe tool export   | Image from Excalidraw/Balsamiq/MockFlow | Analyze with wireframe prompts (this mode)   |
-| Figma URL               | `figma.com` in text                     | Route to `/figma-design` instead             |
-| App screenshot          | Polished UI with real data              | Route to `/design --mode=screenshot` instead |
-
-### Wireframe Analysis
-
-Use `visual analysis tooling` with these prompts:
-
-**Prompt 1: Layout Extraction** — "Analyze this wireframe image. Identify: (1) page layout regions (header, sidebar, main, footer), (2) all UI elements with approximate position and type (button, input, table, card, dropdown, modal, tabs), (3) content hierarchy (what is primary vs secondary), (4) interactive elements, (5) any text labels or annotations, (6) navigation patterns."
-
-**Prompt 2: Component Identification** — "From the wireframe, list every distinct UI component. For each: name it descriptively, classify its complexity (primitive=single element, composite=grouped elements, section=page region), note its purpose."
-
-### Wireframe Output Generation
-
-After image analysis, generate (per the `SYNC:ui-wireframe-protocol` block below):
-
-1. **ASCII Wireframe** — Recreate layout using box-drawing characters
-2. **Component Inventory** — List with tier classification (Common/Domain-Shared/Page)
-3. **States Table** — Default, Loading, Empty, Error per view
-4. **Component Decomposition Tree** — If detail level warrants (refine/story)
-5. **Responsive Suggestions** — Based on layout complexity
-
-Apply the **M1-M5/M7 Compliance for UI Specs** gate (below) to all wireframe-derived prose: business-level component names, no code-prop refs, map to feature logic by logical ID, observable state transitions, rebuild-from-spec, business-visible subject matter.
-
-Wireframe-derived specs carry the same **Design-Principles Obligations** (below): the States Table (item 3) is authored empty/loading/error FIRST (`UI-1.5`) and covers all 5 interaction states per interactive element (`UI-5.2`); the Responsive Suggestions (item 5) break where the CONTENT breaks, not at device names (`UI-4.4`); and where the sketch is silent on type scale, spacing unit, or contrast (`UI-2.5`, `UI-4.1`, `UI-3.1`), record them in §4 as `[UNVERIFIED — needs design-system mapping]` rather than inventing one-off values measured off the drawing.
-
-### Mapped Business Operations
-
-Emit this table linking each interactive component to the feature operations/rules it drives (logical ID is the primary spine; mark `[UNVERIFIED — needs feature-spec mapping]` when the wireframe alone cannot determine it):
-
-| Interactive Component | Interaction (observable) | Feature Operation / Rule (logical ID) | Notes                            |
-| --------------------- | ------------------------ | ------------------------------------- | -------------------------------- |
-| Primary Button        | Click → submit form      | OP-XX                                 | Triggers create/update operation |
-| Filter Dropdown       | Select → reload list     | OP-XX                                 | Drives query/search operation    |
-| Row Action Menu       | Click → confirm dialog   | BR-XX                                 | Guarded by authorization rule    |
-
-### Wireframe Output Formats
-
-- **Format A: PBI Section (default)** — output a standalone `## UI Layout` section compatible with PBI/story templates (consumed by `/pbi-mockup`).
-- **Format B: Standalone Spec** — output to `team-artifacts/design-specs/{YYMMDD}-wireframe-spec-{slug}.md`.
-
-### Confidence & Review (wireframe)
-
-- **Always display confidence level** for wireframe interpretation (analysis is 70-80% accurate).
-- **Always recommend human review** before proceeding to implementation.
-- If confidence <70%: ask clarifying questions about ambiguous elements via `AskUserQuestion`.
+Read [references/wireframe.md](references/wireframe.md) in full when `--mode=wireframe` is selected. It owns image analysis, business-operation mapping, task-section versus standalone output, confidence and human-review rules. This input adapter preserves Step 0a and continues through the normal output and M1–M5/M7 gates.
 
 ## Output Format
 
 ```markdown
 # Design Spec: {Feature Name}
 
-**Source:** {PBI/story reference}
+**Source:** {task/story reference}
 **Date:** {YYMMDD}
 **Status:** Draft | Review | Approved
+**Design authority read (`UX-2`):** {design principles · design-system docs · styling conventions · design ADRs · existing screens read} | `N/A — none configured (checked: {paths})`
+
+## 0a. User Journeys (`UX-1`)
+
+**Frame:** {problem} · **Business goal:** {goal} · **Success signal:** {metric} · **Constraints:** {platform, rules, legacy, budget}
+**Sources read:** {profile-resolved interaction flows/view inventory (strict-default §6.5/§6.2), task/story, business-rule sources, existing screens} · **Confidence:** {%}
+
+| Actor | Context · expertise · frequency | Job statement (When…, I want to…, so I can…) | Source |
+| ----- | ------------------------------- | --------------------------------------------- | ------ |
+| {actor} | {device, interruptions · novice/expert · daily/rare} | {job} | SOURCED ({location}) / INFERRED ({reason}) |
+
+**Main journeys (ranked by frequency × value × risk × first-use):**
+
+| # | Journey | Actor | Trigger → outcome | Why main |
+| - | ------- | ----- | ----------------- | -------- |
+| J1 | {name} | {actor} | {trigger} → {outcome} | {score reason} |
+
+**J1 — {name}** · Entry: {where from} · Exit: {where next}
+
+| Step | Intent | Decision / action | Information needed | Business rule (logical ID) | System response | Failure → recovery |
+| ---- | ------ | ----------------- | ------------------ | -------------------------- | --------------- | ------------------ |
+| J1.1 | {intent} | {action} | {info} | BR-XX | {response} | {failure} → {recovery} |
+
+**Derived design requirements:** views (step → view · container) · priority per view (top items · primary action) · rules → interaction treatment · critical states per view.
+**Assumptions & open questions:** `INFERRED:` {assumption — confirmed?} · `OPEN:` {question}
+
+## 0. Design Plan (`DD-1`–`DD-3`)
+
+**Subject / audience / job:** {the concrete product, the actual person using it and where they are, and the verb they came to do}
+
+| Part           | Decision                                          | Why — traced to the subject                       |
+| -------------- | ------------------------------------------------- | ------------------------------------------------- |
+| **Color**      | {4–6 named hex values, named for this product's world} | {why these, for THIS subject}                 |
+| **Type**       | {1–2 clearly distinct families + roles + scale}   | {why this voice suits the subject}                |
+| **Layout**     | {one-sentence concept + alignment: left/centered/justified} | {what the proportions are saying}        |
+| **Principles** | {the ONE memorable element; what stays quiet around it} | {why this is what the user will remember}    |
+
+**Generic test:** {what you REVISED because it read like the default for any comparable screen — or `axes pinned by {brief | design-system doc path}`}
+
+> **Adoption shortcut:** where the project has a design system / `interface-system.md` / token files, this section reads `ADOPTED — {doc path}` plus any axis re-decided WITH its reason. Re-deciding a settled axis silently is the incoherence this section prevents.
 
 ## 1. Overview
 
 {1-2 sentence summary of what this UI does}
+
+## 1b. Information Priority & Container
+
+| View | Journey steps hosted | Primary task | Container (why) | Now — shown / asked here | Later — deferred to | Not here — owned by |
+| ---- | -------------------- | ------------ | --------------- | ------------------------ | ------------------- | ------------------- |
+| {view role} | {J1.1, J1.2} | {verb} | {full view / dialog / side panel / stepped flow / inline — why} | {items, tagged P / S / D} | {step or view} | {view} |
+
+**Priority scoring (`UX-4`, catalog §6):** score each item and action per decision point on need-at-the-decision × frequency × cost-of-missing (1–3 each); tag `now` items **P** Primary (one focal point, ONE primary action = the journey's next step) · **S** Secondary · **D** On demand (progressive disclosure); the rest go to Later / Not here. Order within a tier follows the journey's step order; §3 Layout implements this rank, never reshuffles it.
+
+**Inputs at creation vs deferred:** {the smallest set that makes a valid, useful record; everything else and where it is enriched later}
+**Complexity budget:** {counts per view/step} vs `uiReview.complexityBudget` when the project declares one; otherwise the counts plus the reasoning for the primary user.
 
 ## 2. Component Inventory
 
@@ -234,11 +262,13 @@ Emit this table linking each interactive component to the feature operations/rul
 
 ## 4. Design Tokens
 
-| Token      | Value          | Usage                 |
-| ---------- | -------------- | --------------------- |
-| $primary   | #1976D2        | Action buttons, links |
-| $text-body | 14px/1.5 Inter | Body text             |
-| $gap-md    | 16px           | Section spacing       |
+Every token traces to a §0 Design Plan decision. Names evoke this product's world, not a numeric ramp — a reader seeing only the token names should be able to guess what the product is (`DD-2`). Values come from the project's token files where they exist; a raw hex here that is not in §0's palette is a leak.
+
+| Token         | Value                    | Usage                 |
+| ------------- | ------------------------ | --------------------- |
+| $signal       | #1976D2                  | Action buttons, links |
+| $text-body    | 14px/1.5 {body family}   | Body text             |
+| $gap-md       | 16px                     | Section spacing       |
 
 ## 5. States & Interactions
 
@@ -255,21 +285,52 @@ Emit this table linking each interactive component to the feature operations/rul
 ## 7. Open Questions
 
 - {Any unresolved design decisions}
+
+## 8. Journey Traceability (`UX-8`)
+
+| Journey · step | View | Element(s) serving it | Information shown (tier) | Rule enforced | States covered | Walkthrough result |
+| -------------- | ---- | --------------------- | ------------------------ | ------------- | -------------- | ------------------ |
+| J1.1 | {view role} | {UX-role element} | {item (P/S/D)} | BR-XX | {empty, loading, error, success} | PASS / {which of the 4 questions failed → fix} |
+
+**Unserved steps:** {none | step → fix} · **Orphan elements:** {none | element → removed or justified}
+
+**Interaction cost (`UX-9`):**
+
+| Journey | Steps | Clicks/taps | View changes | Fields | Decisions | vs baseline |
+| ------- | ----- | ----------- | ------------ | ------ | --------- | ----------- |
+| J1 | {n} | {n} | {n} | {n} | {n} | {same / −n / +n with reason} |
+
+**Wayfinding (`UX-10`):** per view — where am I · where can I go · how do I get back · dead ends: {none | view → fix}
+
+## 9. UI/UX Gate Report (`UX-11`)
+
+| Gate | Result | Evidence |
+| ---- | ------ | -------- |
+| UX-1–UX-10 journey-first | PASS / FAIL → fixed / N/A | {section refs} |
+| UI-1.1–UI-9.4 floor (applicable) | … | {measured values} |
+| DD-1–DD-8 identity | … | {§0 generic test} |
+| CL-1–CL-6 checklist (CL-5 triage minimum) | … | {findings} |
+| UI copy | … | … |
 ```
 
 ## Design-Principles Obligations (per spec section)
 
 The spec is where the 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`, the `SYNC:ui-ux-design-principles` block below) become INHERITABLE — a downstream implementer builds what the spec SAYS, so an unstated clause is an unbuilt clause. Every spec this skill emits MUST carry these obligations in the named Output Format sections. Project design-system docs OUTRANK the clauses; a genuine conflict is surfaced to the user with both sides, NEVER resolved silently.
 
-| Spec section                  | Clause obligation the section MUST carry                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **§1 Overview**               | Name the ONE focal point of the screen (`UI-1.1`), and name the surface(s) in scope (web / mobile / both) so the mobile clauses (`UI-8.1`–`UI-8.4`) are either binding or explicitly skipped.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| **§3 Layout**                 | Group by proximity and shared alignment edges, never by nested borders (`UI-1.3`, `UI-1.4`); justify each breakpoint by where the CONTENT stops working, not by a device name (`UI-4.4`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| **§4 Design Tokens**          | **DECLARE the type scale as 6 named steps with no one-off sizes** (`UI-2.5`): body 16px web / 17px mobile and NEVER below 14px (`UI-2.2`), measure 45–75 characters (`UI-2.3`), leading 1.5 body / 1.1–1.2 display (`UI-2.4`), max 2 families × 3 weights (`UI-2.1`). **DECLARE ONE spacing unit** — 4px or 8px base with every gap a multiple (`UI-4.1`), space owned by the container via a gap property (`UI-4.2`), inner padding tighter than the gap to the next group (`UI-4.3`). A token table of ad-hoc values instead of a declared scale FAILS this gate.                                                                                                                                                                                    |
-| **§4 Design Tokens (colour)** | State the contrast TARGET AND THE MEASURED VALUE for every token pair — 4.5:1 text, 3:1 UI edges (`UI-3.1`) — measured, never eyeballed. One accent with one job (`UI-3.2`); dark mode specified as lifted surfaces + softened white text, NOT an inversion (`UI-3.4`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| **§5 States & Interactions**  | **Author the empty, loading and error state FIRST — before the populated state (`UI-1.5`).** Enumerate ALL 5 interaction states per interactive element — default, hover, focus, active, disabled — plus loading where it applies (`UI-5.2`, consistent with the 7-state Component States Checklist below). Response under 100ms even when the result takes longer (`UI-5.1`); motion 150–250ms ease-out honouring reduced-motion (`UI-5.4`); undo preferred over confirmation, confirm ONLY the irreversible (`UI-5.3`). Forms: labels always visible, placeholders are hints NEVER labels (`UI-7.2`); validate on blur with the fix-it message beside the field (`UI-7.3`); NEVER lose entered data across errors, navigation or refresh (`UI-7.5`). |
-| **§6 Accessibility**          | The focus ring stays VISIBLE — restyled if it clashes, NEVER removed (`UI-5.5`); colour is never the sole carrier of meaning (`UI-3.3`); on any mobile/touch surface hit targets ≥44×44pt and 8px apart (`UI-8.1`), primary actions in the bottom third (`UI-8.2`), gestures never the only route (`UI-8.3`), safe areas and the on-screen keyboard respected (`UI-8.4`).                                                                                                                                                                                                                                                                                                                                                                              |
-| **§7 Open Questions**         | Every clause deliberately deviated from, with the project doc or user decision that authorises it — an undocumented deviation is a spec defect, not a style choice.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Spec section | Clause obligation the section MUST carry |
+| --- | --- |
+| **§0a User Journeys** | Written FIRST, before §0 and every other section (`UX-1`): frame, actors + job statements, main journeys ranked by the catalog §5 score, a step table per journey (intent · decision · information needed · business rule · response · failure → recovery), derived requirements, assumptions. Every claim `SOURCED (<location>)` or `INFERRED`; an inferred primary actor, main job or success outcome is confirmed with the user (no question tool → recorded `INFERRED — unconfirmed (no question tool)`). The spec header records `Design authority read:` or `N/A` (`UX-2`). Depth follows Quick/Full (catalog §10), never zero. |
+| **§0 Design Plan** | The identity layer the 40 clauses do not cover (`SYNC:design-distinctiveness-gate`): name the subject/audience/job (`DD-1`), give all four plan parts a WHY traced to that subject (`DD-2`), and record the **Generic test** result — what you revised, or which axes the brief/design system already pinned (`DD-3`). A downstream implementer who receives no design plan supplies their own defaults, so an unstated direction is a templated build. |
+| **§1 Overview** | Name the ONE focal point of the screen (`UI-1.1`), and name the surface(s) in scope (web / mobile / both) so the mobile clauses (`UI-8.1`–`UI-8.4`) are either binding or explicitly skipped. |
+| **§1b Information Priority & Container** | Seed from the governing spec's View Inventory priority/container record when one exists (`SYNC:ui-intent-layer`); never repartition it silently. Every view names the §0a journey steps it hosts and every main-journey step lands on a view (`UX-3`); `now` items carry the `UX-4` tier (Primary / Secondary / On demand) from the need-at-the-decision × frequency × cost-of-missing score, with ONE primary action matching the journey's next step. Every view names its primary task and a container that fits it — a long or multi-section entry task is a full view or stepped flow, not a dialog (checklist `E9`). Every input is justified at THIS step or deferred (`UI-7.1`, checklist `§R1`–`R2`); creation asks only for the smallest valid record. Alternate entry modes are a first explicit choice, not stacked in one view (`B14`). A spec whose `now` set exceeds the task FAILS this gate. |
+| **§3 Layout** | Group by proximity and shared alignment edges; add a border or container only where it encodes a real boundary (`UI-1.3`, `UI-1.4`); justify each breakpoint by where the CONTENT stops working, not by a device name (`UI-4.4`). |
+| **§4 Design Tokens** | Adopt the project’s type scale, readable sizes, measures, line spacing, families/weights and spacing/grid tokens (`UI-2.1`–`UI-2.5`, `UI-4.1`). Otherwise choose purposeful, consistent values for the target platform and record why; example values are not universal fail thresholds. Container-owned spacing and clear group relationships remain required (`UI-4.2`–`UI-4.3`). |
+| **§4 Design Tokens (colour)** | Record the selected accessibility standard and its source, applicable contrast targets and measured values (`UI-3.1`); unavailable measurements stay `NOT VERIFIABLE`. Use the WCAG 2.2 AA web baseline plus stricter applicable requirements; non-web uses its documented standard. One accent with one job (`UI-3.2`); when dark mode applies, specify lifted surfaces and softened white text rather than inversion (`UI-3.4`). |
+| **§5 States & Interactions** | Author empty/loading/error before populated states (`UI-1.5`). Document supported default, hover, focus, active, disabled, error and loading states; mark unsupported states N/A (`UI-5.2`). Give immediate perceivable feedback and meaningful motion under documented platform/project timing and easing; honor reduced motion (`UI-5.1`, `UI-5.4`). Prefer undo, confirm only irreversible actions (`UI-5.3`). Keep labels visible, associate useful correction with the input at the appropriate validation point, and preserve entered data (`UI-7.2`–`UI-7.5`). |
+| **§6 Accessibility** | Preserve perceivable focus for supported focus navigation (`UI-5.5`); never convey meaning by colour alone (`UI-3.3`). On touch/mobile surfaces, meet the selected platform/accessibility target-size and spacing requirements; place actions where reachable, provide required alternatives to gesture-only actions, and respect safe areas and keyboards (`UI-8.1`–`UI-8.4`). Record applicable constraints and evidence; unsupported capabilities are N/A. |
+| **§7 Open Questions** | Every clause deliberately deviated from, with the project doc or user decision that authorises it — an undocumented deviation is a spec defect, not a style choice. |
+| **§8 Journey Traceability** | One row per §0a journey step: view → element → information tier → rule → states → walkthrough result from the four cognitive-walkthrough questions (`UX-8`). An unserved step or an orphan element FAILS this gate until fixed or justified; Quick Spec walks only the journeys §0a covers. Also carries the interaction-cost table (`UX-9`) and per-view wayfinding check (`UX-10`). |
+| **§9 UI/UX Gate Report** | One row per gate family — `UX-*`, applicable `UI-*`, `DD-*`, `CL-*` (at least the `CL-5` triage), UI copy — with result and evidence (`UX-11`). A gate missing from the table counts as not checked; an unresolved `FAIL` blocks `Approved`. |
 
 Keep every clause obligation written in observable UX language so it survives the M1-M5/M7 gate below — state the visible outcome, never a CSS property or framework prop.
 
@@ -277,33 +338,37 @@ Keep every clause obligation written in observable UX language so it survives th
 
 ## M1-M5/M7 Compliance for UI Specs
 
-See `.claude/skills/shared/sdd-artifact-contract.md` → "AI-SDD Mandates (M1-M7)" for BLOCKING criteria. A UI spec MUST satisfy these before handoff:
+> **AI-SDD artifact contract** — M1-M7 require tech-agnostic, traceable, observable, rebuildable specs; logical IDs lead prose, implementation identifiers stay in evidence carriers, and business-tree cases must be demoable.
+>
+> **MUST ATTENTION READ** `.claude/skills/shared/sdd-artifact-contract.md` for the full "AI-SDD Mandates (M1-M7)" gate.
+
+A UI spec MUST satisfy these criteria before handoff:
 
 - **M1 — Business-level component names.** Name every component by its UX role — Primary Button, Secondary Button, Modal Dialog, Data Table, Dropdown, Toast — NEVER by a framework component class name or library import. FAIL on tech-term prose.
 - **M2 — No code-prop refs in prose.** Describe behavior and appearance in plain UX language. NEVER reference component-state props, CSS class names, framework directives, or selectors in prose. Those belong only in `**Evidence**`/`[Source:]` carriers, frontmatter, and Mermaid.
 - **M3 — Cross-reference by logical ID.** For every behavior driven by feature logic, cite the driving operation or rule by its logical ID (`OP-`/`BR-`/`FR-`) — link UI behavior back to the feature spec, not to handler code. Keep any `[Source: namespace/service/id]` abstract anchor strictly in the Evidence carrier — never physical code coordinates or repository-root paths.
 - **M4 — Testable, unambiguous behavior.** Every state and interaction MUST have exactly one valid interpretation and an observable completion marker. Replace vague phrases ("handle appropriately", "show feedback") with the concrete observable result.
 - **M5 — Rebuild-from-spec.** A reader with zero codebase knowledge MUST be able to rebuild this UI on ANY framework from the spec alone. If a marker is only resolvable by reading source, it fails M5 — restate it as a visual/textual observable.
-- **M7 — Business-visibility.** A UI spec is a business-tree artifact, so apply the demo test to each case's BODY: _"what would a stakeholder SEE change?"_ — no answer → FAIL as TECHNICAL-ONLY. Every `Given` = a state a user could arrange; every `When` = an action a user could take; every `Then` = an outcome a user could see. FAIL a `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count. Judge the BODY, never the title or ID. ⚠️ **A UI state a user can SEE is business and PASSES M7** — a spinner, an empty placeholder, an error border, a disabled control are all demoable outcomes, not technical cases. Only invocation-shaped or schema-asserting cases fail.
+- **M7 — Business-visibility.** A UI spec is a business-tree artifact, so apply the demo test to each case's BODY: *"what would a stakeholder SEE change?"* — no answer → FAIL as TECHNICAL-ONLY. Every `Given` = a state a user could arrange; every `When` = an action a user could take; every `Then` = an outcome a user could see. FAIL a `When` that is an invocation (a handler runs, a consumer receives, a job fires, data syncs) or a `Then` asserting schema/type/nullability/call-count. Judge the BODY, never the title or ID. ⚠️ **A UI state a user can SEE is business and PASSES M7** — a spinner, an empty placeholder, an error border, a disabled control are all demoable outcomes, not technical cases. Only invocation-shaped or schema-asserting cases fail.
 
-> **M1 vs M7 — they are not the same gate.** M1 governs **vocabulary**; M7 governs **subject matter**. A technical case in impeccably tech-free prose satisfies M1 while violating M7 — _"the view correctly reflects the synchronized record"_ names no framework, passes M1, and is still a technical case wearing a business costume. That gap is the most common way business specs rot. Ask what a user could SEE, not which words were used.
+> **M1 vs M7 — they are not the same gate.** M1 governs **vocabulary**; M7 governs **subject matter**. A technical case in impeccably tech-free prose satisfies M1 while violating M7 — *"the view correctly reflects the synchronized record"* names no framework, passes M1, and is still a technical case wearing a business costume. That gap is the most common way business specs rot. Ask what a user could SEE, not which words were used.
 
 ### Observable State Definitions
 
 Define every state by what a user can SEE (color, icon, position, text), the business meaning, and the operation/rule that triggers it — NEVER by CSS class or component-state prop:
 
-| State    | Visual Markers (observable)                            | Business Meaning                           | Triggering Operation / Rule (logical ID) |
-| -------- | ------------------------------------------------------ | ------------------------------------------ | ---------------------------------------- |
-| Default  | Primary fill color, enabled label, no spinner          | Action available to the actor              | OP-XX (entry state)                      |
-| Loading  | Spinner icon replaces label, control non-interactive   | Operation in progress, awaiting result     | OP-XX (request submitted)                |
-| Disabled | Muted/gray fill, label dimmed, no pointer affordance   | Precondition not met / actor not permitted | BR-XX (authorization or guard rule)      |
-| Error    | Error-color border, inline message text, alert icon    | Operation rejected or validation failed    | BR-XX (validation rule)                  |
-| Empty    | Placeholder illustration + guidance text, no data rows | No records exist for the current view      | OP-XX (query returned zero results)      |
-| Success  | Confirmation toast/checkmark, updated visible data     | Operation completed and persisted          | OP-XX (operation succeeded)              |
+| State    | Visual Markers (observable)                              | Business Meaning                          | Triggering Operation / Rule (logical ID) |
+| -------- | -------------------------------------------------------- | ----------------------------------------- | ---------------------------------------- |
+| Default  | Primary fill color, enabled label, no spinner            | Action available to the actor             | OP-XX (entry state)                      |
+| Loading  | Spinner icon replaces label, control non-interactive     | Operation in progress, awaiting result    | OP-XX (request submitted)                |
+| Disabled | Muted/gray fill, label dimmed, no pointer affordance      | Precondition not met / actor not permitted | BR-XX (authorization or guard rule)      |
+| Error    | Error-color border, inline message text, alert icon       | Operation rejected or validation failed   | BR-XX (validation rule)                  |
+| Empty    | Placeholder illustration + guidance text, no data rows    | No records exist for the current view     | OP-XX (query returned zero results)      |
+| Success  | Confirmation toast/checkmark, updated visible data        | Operation completed and persisted         | OP-XX (operation succeeded)              |
 
 ## Component States Checklist
 
-Every interactive component MUST document all 7 states by their **observable appearance and business meaning** — never by CSS class or framework prop (see M2):
+Every interactive component MUST document each applicable state below by its **observable appearance and business meaning**, marking unsupported states `N/A` — never by CSS class or framework prop (see M2):
 
 - **Default** — resting appearance; action available to the actor
 - **Hover** — pointer-over affordance change (cursor / elevation / color shift)
@@ -313,63 +378,9 @@ Every interactive component MUST document all 7 states by their **observable app
 - **Error** — validation/operation failure with inline message + alert affordance
 - **Loading** — in-progress indicator (spinner / skeleton); control non-interactive
 
-## Accessibility Audit (WCAG 2.1 AA)
+## Accessibility Audit
 
-For an accessibility-audit deliverable, produce this checklist report and save it as `{YYMMDD}-ux-audit-{feature-slug}.md`:
-
-```markdown
-## Accessibility Audit: {Feature}
-
-**Date:** {Date}
-**Auditor:** {Name}
-**Standard:** WCAG 2.1 AA
-
-### Criteria Checklist
-
-#### Perceivable
-
-- [ ] 1.1.1 Non-text Content: Alt text for images
-- [ ] 1.3.1 Info and Relationships: Semantic HTML
-- [ ] 1.3.2 Meaningful Sequence: Logical reading order
-- [ ] 1.4.1 Use of Color: Not sole means of conveying info
-- [ ] 1.4.3 Contrast (Minimum): 4.5:1 text, 3:1 large text
-- [ ] 1.4.4 Resize Text: Readable at 200% zoom
-- [ ] 1.4.11 Non-text Contrast: 3:1 for UI components
-
-#### Operable
-
-- [ ] 2.1.1 Keyboard: All functions keyboard accessible
-- [ ] 2.1.2 No Keyboard Trap: Can navigate away
-- [ ] 2.4.1 Bypass Blocks: Skip navigation available
-- [ ] 2.4.3 Focus Order: Logical tab sequence
-- [ ] 2.4.4 Link Purpose: Clear from link text
-- [ ] 2.4.6 Headings and Labels: Descriptive
-- [ ] 2.4.7 Focus Visible: Clear focus indicator
-
-#### Understandable
-
-- [ ] 3.1.1 Language of Page: lang attribute set
-- [ ] 3.2.1 On Focus: No unexpected context change
-- [ ] 3.2.2 On Input: No unexpected context change
-- [ ] 3.3.1 Error Identification: Clear error messages
-- [ ] 3.3.2 Labels or Instructions: Form labels present
-
-#### Robust
-
-- [ ] 4.1.1 Parsing: Valid HTML
-- [ ] 4.1.2 Name, Role, Value: ARIA where needed
-
-### Issues Found
-
-| #   | Criterion | Issue | Severity | Recommendation |
-| --- | --------- | ----- | -------- | -------------- |
-| 1   |           |       | P1/P2/P3 |                |
-
-### Audit Status: PASS / FAIL / CONDITIONAL
-
-**Remediation Priority:**
-{List items by severity}
-```
+Read [references/accessibility-audit.md](references/accessibility-audit.md) when producing the audit variant. It provides the report checklist and status format; select the applicable platform standard and record unverified coverage honestly. Save as `{YYMMDD}-ux-audit-{feature-slug}.md` under the configured `design-specs/` artifact path.
 
 ## Examples
 
@@ -377,7 +388,7 @@ For an accessibility-audit deliverable, produce this checklist report and save i
 
 **Input:** "Design spec for customer onboarding form"
 
-**Output:** Quick Spec with sections 1-4 covering form fields (name, email, company name, plan-tier dropdown), validation rules, submit/cancel actions, and mobile stacking behavior.
+**Output:** Quick Spec opening with a compact §0a journey (a new customer completes onboarding), then sections 1-4 covering form fields (name, email, company name, plan-tier dropdown), validation rules, submit/cancel actions, and mobile stacking behavior.
 
 ### Example 2: Complex dashboard spec
 
@@ -387,279 +398,121 @@ For an accessibility-audit deliverable, produce this checklist report and save i
 
 ## Related Skills
 
-| Skill                     | When to use instead                 |
-| ------------------------- | ----------------------------------- |
-| `figma-design`            | Extract specs from Figma designs    |
-| `design --lane=marketing` | Build marketing/creative UI         |
-| `design --lane=product`   | Build product UI (dashboards, apps) |
-| `web-design-guidelines`   | Review existing UI for compliance   |
+| Skill                   | When to use instead                  |
+| ----------------------- | ------------------------------------ |
+| `ui-design --lane=marketing` | Build marketing/creative UI             |
+| `ui-design --lane=product`   | Build product UI (dashboards, apps)     |
+| `web-design-guidelines`   | Review existing UI for compliance       |
+
+## Next Steps
+
+Standalone (no parent workflow): after the spec is written, suggest `/ui-design --lane=product` (product UIs) or `/ui-design --lane=marketing` (marketing/creative) to build it, then `/workflow-review-changes` on the result. Inside a workflow, the next step is the workflow's own.
 
 ---
 
-## Workflow Recommendation
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting. This prevents context loss from long files. Keep task depth proportional to the work.
 
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
->
-> 1. **Run the design sequence** (Recommended) — `/design-spec` → `/design --lane=product` (product UIs) or `/design --lane=marketing` (marketing/creative) → `/workflow-review-changes`
-> 2. **Execute `/design-spec` directly** — run this skill standalone
+<!-- PROTOCOL-GUIDES:START -->
 
----
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+- `design-distinctiveness-gate` — Design identity gate DD-1 to DD-8: subject, design plan, generic test, restraint; designing, implementing or reviewing a visual surface → .claude/skills/shared/protocols/design-distinctiveness-gate.md
+- `design-review-checklist` — Executable front-end design review protocol CL-1 to CL-6; reviewing, planning or building front-end work → .claude/skills/shared/protocols/design-review-checklist.md
+- `existing-ui-research` — Study the existing UI before designing or specifying a screen; designing or specifying a new or updated screen → .claude/skills/shared/protocols/existing-ui-research.md
+- `review-decision-autonomy` — Choose supported review decisions and ask before extending the round budget; running any review or audit skill or mode → .claude/skills/shared/protocols/review-decision-autonomy.md
+- `ui-copywriting` — User-visible strings are design content; writing or reviewing UI text → .claude/skills/shared/protocols/ui-copywriting.md
+- `ui-intent-layer` — Tech-agnostic UI intent layer in every UI-bearing spec; writing a spec for a feature with a user interface → .claude/skills/shared/protocols/ui-intent-layer.md
+- `ui-system-context` — Resolve the project's UI conventions before a UI change; changing a user-interface surface → .claude/skills/shared/protocols/ui-system-context.md
+- `ui-ux-design-principles` — Forty usability and accessibility clauses, UI-1.1 to UI-9.4; designing, building or reviewing a user-facing interface → .claude/skills/shared/protocols/ui-ux-design-principles.md
+- `ui-wireframe-protocol` — Wireframe protocol: inputs, representation and component inventory; writing the wireframe of a design spec → .claude/skills/shared/protocols/ui-wireframe-protocol.md
+- `ux-journey-gate` — Journey-first UX gate UX-1 to UX-11: report journeys, read the design authority, generate, then check every UI/UX gate; generating, specifying, planning, mocking up or reviewing a user-facing surface → .claude/skills/shared/protocols/ux-journey-gate.md
 
-<!-- SYNC:existing-ui-research -->
-
-> **[BLOCKING] Understand the existing UI before you design or spec a new/updated screen.** Before producing any wireframe, mockup, screen design, or UI spec:
->
-> 1. **Inventory existing related UI** — search the project for screens, pages, and components already serving this feature or its domain (consult design-system docs + the real component inventory).
-> 2. **Map connected flows** — identify every feature that links to, embeds, includes, or navigates to/from the new screen; trace its entry and exit flows so the new screen fits them.
-> 3. **Reuse before invent** — prefer existing components, patterns, and layout conventions; justify any new component against what already exists.
-> 4. **Record findings** — note the matched existing screens/components + connected flows in the artifact so downstream design faithfully matches the current UI system.
->
-> **Skip ONLY** when the feature is backend-only (no UI) — state that explicitly.
-
-<!-- /SYNC:existing-ui-research -->
-
-<!-- SYNC:ui-intent-layer -->
-
-> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
->
-> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
-> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
-> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
-> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
-> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
->
-> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
->
-> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
-
-<!-- /SYNC:ui-intent-layer -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
-<!-- SYNC:ui-system-context -->
-
-> **UI System Context** — For ANY task touching `.ts`, `.html`, `.scss`, or `.css` files:
->
-> **MUST ATTENTION READ before implementing:**
->
-> 1. `docs/project-reference/frontend-patterns-reference.md` — component base classes, stores, forms
-> 2. `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins, responsive
-> 3. `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
->
-> Reference `docs/project-config.json` for project-specific paths.
-
-<!-- /SYNC:ui-system-context -->
-
-<!-- SYNC:ui-ux-design-principles -->
-
-> **UI/UX Design Principles (Rev 1.0 — 40 clauses, web + mobile)** — the working rule set for ANY task that designs, plans, implements, or reviews a user interface. Applies to BOTH platforms unless a clause names one (§8 is mobile/touch). Cite clauses by ID: `UI-3.1`, `UI-8.2`.
->
-> **Precedence:** project design-system / SCSS / frontend-pattern docs OUTRANK these clauses; these clauses outrank generic taste. A genuine conflict is SURFACED to the user with both sides — NEVER resolved silently. — why: the project's own recorded decision is the authority; these clauses are the default when it is silent.
->
-> **1.0 Visual Hierarchy & Layout**
->
-> - `UI-1.1` One focal point per screen. Two elements competing for first read → demote one.
-> - `UI-1.2` Signal order: size → weight → colour → position. Use the cheapest signal that works before adding another.
-> - `UI-1.3` Group by proximity, NEVER by border. Whitespace separates cleanly; boxes inside boxes do not.
-> - `UI-1.4` Align to a shared edge. Every unexplained indent reads as an accident.
-> - `UI-1.5` Design the empty, loading and error state FIRST. The full state is the easy one.
->
-> **2.0 Typography**
->
-> - `UI-2.1` Max 2 families, 3 weights each. More variety reads as inconsistency, not range.
-> - `UI-2.2` Body text 16px web, 17px mobile. NEVER below 14px for anything a user must read.
-> - `UI-2.3` Line length 45–75 characters. Constrain the measure, not the container.
-> - `UI-2.4` Leading scales inversely with size: 1.5 body, 1.1–1.2 display.
-> - `UI-2.5` Fixed type scale — 6 named steps shared with engineering. NEVER one-off sizes.
->
-> **3.0 Colour & Contrast**
->
-> - `UI-3.1` Contrast 4.5:1 text, 3:1 UI edges. Measure it — NEVER judge by eye on a bright screen.
-> - `UI-3.2` One accent, one job. An accent that is everywhere points at nothing.
-> - `UI-3.3` Colour NEVER carries meaning alone — pair it with an icon, label or position.
-> - `UI-3.4` Dark mode is NOT inverted light mode. Lift surfaces to signal elevation; soften pure-white text.
->
-> **4.0 Spacing & Grid**
->
-> - `UI-4.1` One spacing unit, multiplied — 4px or 8px base; every gap a multiple of it.
-> - `UI-4.2` Space belongs to the container, not the child. Use `gap`; reserve margins for exceptions.
-> - `UI-4.3` Tighter inside, looser between — inner padding always smaller than the gap to the next group.
-> - `UI-4.4` Breakpoints follow content, not devices. Break where the layout stops working.
->
-> **5.0 Interaction & Feedback**
->
-> - `UI-5.1` Every action gets a response under 100ms, even when the result takes longer.
-> - `UI-5.2` Specify all 5 states — default, hover, focus, active, disabled — plus loading where it applies.
-> - `UI-5.3` Prefer undo over confirmation. Confirm ONLY what cannot be reversed.
-> - `UI-5.4` Motion clarifies cause and effect: 150–250ms, ease-out, honours reduced-motion.
-> - `UI-5.5` Keep the visible focus ring. Restyle it if it clashes; NEVER remove it.
->
-> **6.0 Navigation & IA**
->
-> - `UI-6.1` Every screen answers: where am I, what's here, where next.
-> - `UI-6.2` Max 5 top-level destinations. Depth beats a crowded first level.
-> - `UI-6.3` Label by the user's word, not the internal one. Team vocabulary is not a taxonomy.
-> - `UI-6.4` Every state deserves a URL or a back path. Deep links and hardware back must land somewhere sensible.
->
-> **7.0 Forms & Input**
->
-> - `UI-7.1` Ask for less. Every field needs a reason it exists today.
-> - `UI-7.2` Labels stay visible. Placeholders are hints, NEVER labels.
-> - `UI-7.3` Validate on blur, not on keystroke. Errors sit next to the field and say how to fix it.
-> - `UI-7.4` Match keyboard to data type — correct input type, autocomplete and autocapitalise on every field.
-> - `UI-7.5` NEVER lose entered data. Preserve input across errors, navigation and refresh.
->
-> **8.0 Mobile & Touch** _(mobile/touch surfaces)_
->
-> - `UI-8.1` Hit target ≥44×44pt, 8px apart. The target may exceed the visible icon.
-> - `UI-8.2` Primary actions in the bottom third — that is where the thumb lives.
-> - `UI-8.3` Gestures are shortcuts, NEVER the only route. Anything swipeable is also tappable.
-> - `UI-8.4` Respect safe areas and the keyboard. Notch, home indicator and on-screen keyboard all steal space.
->
-> **9.0 Speed & Perceived Speed**
->
-> - `UI-9.1` Show structure before data — skeletons for known layouts, spinners only for unknown waits.
-> - `UI-9.2` Assume success optimistically. Update UI first, reconcile after, roll back visibly on failure.
-> - `UI-9.3` Reserve space for anything that loads. Images, ads and fonts must NEVER shift the layout.
-> - `UI-9.4` Design for the slow connection. Offline, timeout and retry are states, NOT edge cases.
->
-> **Apply by role** — the clauses are one set; what you DO with them depends on the task:
->
-> | Role                                | Obligation                                                                                                                                                              |
-> | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-> | DESIGN / PLAN a surface             | Clauses shape the artifact: empty/loading/error specified first (`UI-1.5`), all 5 states enumerated (`UI-5.2`), type scale + spacing unit declared (`UI-2.5`, `UI-4.1`) |
-> | IMPLEMENT a component               | Pre-completion gate: states · tokens · contrast · focus ring · touch target · reserved space (`UI-5.2`, `UI-2.5`/`UI-4.1`, `UI-3.1`, `UI-5.5`, `UI-8.1`, `UI-9.3`)      |
-> | REVIEW UI code or a design artifact | Each clause is a fail-condition; every finding cites `UI-<clause>` + `file:line` + severity. NEVER a tick-box sweep — one focused pass per section                      |
-> | SCAN / document a UI system         | Record where the PROJECT deliberately deviates, so the overriding doc becomes the recorded authority                                                                    |
->
-> **Skip ONLY** when the change has no user-facing surface (backend-only, tooling, docs) — state that explicitly so the skip is auditable, not an omission.
-
-<!-- /SYNC:ui-ux-design-principles -->
-
-<!-- SYNC:ui-wireframe-protocol -->
-
-> **UI Wireframe Protocol** — Wireframe-to-implementation flow: (1) Process design input (Figma/screenshot/sketch via visual analysis tooling). (2) Create ASCII wireframe with box-drawing chars. (3) Build component inventory with tier classification (Common/Domain-Shared/Page). (4) Document states (Default/Loading/Empty/Error). (5) Map to design tokens. (6) Define responsive breakpoints. Search existing component libraries before creating new. Progressive detail by skill level (idea=sketch, story=full tree+specs).
-
-<!-- /SYNC:ui-wireframe-protocol -->
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
+<!-- PROTOCOL-GUIDES:END -->
 
 <!-- SYNC:ui-system-context:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** read frontend-patterns-reference, scss-styling-guide, design-system/README before any UI change.
-  <!-- /SYNC:ui-system-context:reminder -->
+**IMPORTANT MUST ATTENTION** Before planning, implementing or changing frontend UI, find and read the current project's design system, tokens, shared components/UI controls and related usage examples; follow house conventions and reuse what fits. Start with project config and selected UI references, then inspect the actual component owners. Record searched paths and any gap before adding a control; honor explicit N/A. A reminder is not proof of discovery.
+
+<!-- /SYNC:ui-system-context:reminder -->
 
 <!-- SYNC:ui-ux-design-principles:reminder -->
 
-- **MUST ATTENTION** apply the 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`) to any user-facing surface: one focal point, proximity grouping, empty/loading/error designed FIRST (§1) · ≤2 families, 16px web / 17px mobile body, never <14px, 45–75ch, fixed 6-step scale (§2) · 4.5:1 text / 3:1 edges measured, one accent, colour never alone, dark mode ≠ inversion (§3) · one 4/8px unit, `gap` over margins, tighter-inside-looser-between, content-driven breakpoints (§4) · <100ms response, all 5 states, undo over confirm, 150–250ms ease-out honouring reduced-motion, visible focus ring (§5) · where-am-I/what's-here/where-next, ≤5 top-level destinations, user's words, URL or back path (§6) · fewer fields, visible labels, validate on blur, matched keyboard, NEVER lose input (§7) · ≥44×44pt targets 8px apart, bottom-third primaries, gestures never the only route, safe areas (§8) · structure before data, optimistic update with visible rollback, reserved space, slow-connection states (§9). Project design-system docs OUTRANK these clauses — a genuine conflict goes to the user, NEVER resolved silently. Cite every finding as `UI-<clause>` + `file:line`. Skip ONLY for changes with no user-facing surface, stated explicitly.
+Apply `UI-1.1`–`UI-9.4` only to applicable user-interface work. Resolve platform and project conventions first. Use WCAG 2.2 AA as the web accessibility baseline plus any stricter applicable legal/project requirement; non-web surfaces use the documented platform standard. Other web/mobile metrics and component tiers are defaults/examples only for matching surfaces. Skip N/A clauses and non-UI work explicitly. Project config, references, and accepted decisions govern; cite applicable findings by `UI-<clause>` + `file:line`.
 
 <!-- /SYNC:ui-ux-design-principles:reminder -->
 
 <!-- SYNC:ui-wireframe-protocol:reminder -->
 
-**IMPORTANT MUST ATTENTION** follow wireframe protocol: ASCII wireframe, component inventory with tiers, states table, design tokens, responsive breakpoints.
+**IMPORTANT MUST ATTENTION** inspect designs/access gaps; choose fitting representation; inventory actual component owners/relevant states; apply configured tokens/sizes; justify reuse/deviation. Detail: idea sketch → story decomposition.
 
 <!-- /SYNC:ui-wireframe-protocol:reminder -->
 
 <!-- SYNC:ui-intent-layer:reminder -->
 
-- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (views with information priority now/later/not-here and container role + navigation map + observable states + user-action flows), resolving it through the configured profile's intent/evidence roles and logical IDs; an unresolved owner, role, ID, carrier, or link stays `UNKNOWN`/`BLOCKED`. **Strict portable fallback — only when neither config nor local references declares a native artifact contract:** trace each flow to the default `US-`/`OP-`/`BR-` IDs and record the companion artifact in the `design_spec:`/`mockup:` frontmatter keys. Name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
 
 <!-- /SYNC:ui-intent-layer:reminder -->
-
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval; inside a workflow run, `/start-workflow` → Workflow-step mode bounds this
 **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
 **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
 **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
-<!-- SYNC:project-protocol-overlay -->
+<!-- SYNC:design-distinctiveness-gate:reminder -->
 
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+- **MUST ATTENTION** apply the design distinctiveness gate (`DD-1`–`DD-8`) to any user-facing visual surface: ground it in the named subject/audience/job and confirm when the brief is silent (`DD-1`) · every choice carries a WHY, token names included (`DD-2`) · write a design plan (colour 4–6 named hex · type families+roles+scale · layout prose+ASCII+alignment · principles) then run the BLOCKING generic test and state what you revised BEFORE coding (`DD-3`) · audit every free axis against the T1–T5 tell catalog — cream+serif+`#D97757`, acid-on-black, broadsheet, the SaaS-card kit, template chrome (ALL-CAPS eyebrows, `A · B · C`, spaced-em-dash labels, `#0B0B0B`, mono data labels, trailing `→`) — a match is a missed decision, never a defect (`DD-4`) · 1–2 clearly distinct families, real scale, <80ch, no single-word headline accent / ALL-CAPS labels / redundant eyebrows (`DD-5`) · numbering only on real sequences; hero = the subject's most characteristic thing, not big-number+gradient (`DD-6`) · one orchestrated motion moment, never per-section entrances plus universal card hovers (`DD-7`) · spend boldness once, critique the BUILT page, remove one accessory (`DD-8`). The brief's stated direction OUTRANKS the tell catalog; project design-system docs OUTRANK these clauses — genuine conflicts go to the user, NEVER resolved silently. Cite findings as `DD-<clause>` + `file:line`. Skip ONLY for surfaces with no user-facing visuals, stated explicitly.
 
-<!-- /SYNC:project-protocol-overlay -->
+<!-- /SYNC:design-distinctiveness-gate:reminder -->
 
-<!-- SYNC:project-protocol-overlay:reminder -->
+<!-- SYNC:ui-copywriting:reminder -->
 
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+- **MUST ATTENTION** treat user-visible words as design content: end-user vocabulary, not system vocabulary (notifications, not webhook config) · active-voice CTAs that say what happens ("Save changes", never "Submit") · ONE name per action across the whole flow (Publish → "Published") · errors explain what happened and how to fix it and NEVER apologize or stay vague, empty screens invite action · sentence case, plain verbs, no filler, one job per element · real subject-specific copy, never lorem — and read every string for TRUTH: one coherent story, not three products' content on one screen. Skip ONLY when no user-visible text changes, stated explicitly.
 
-<!-- /SYNC:project-protocol-overlay:reminder -->
+<!-- /SYNC:ui-copywriting:reminder -->
+
+<!-- SYNC:design-review-checklist:reminder -->
+
+- **MUST ATTENTION** when the change/plan/artifact has an applicable user-facing UI surface, READ `.claude/docs/design-review-checklist.md` and run it: `CL-1` establish context first (platform · user · task · metric · constraints · scope · artifacts — state missing context and its confidence impact) · `CL-2` evidence or nothing, cite a location per finding, NEVER invent a measurement (unmeasurable → `NOT VERIFIABLE`), tag `MEASURED`/`OBSERVED`/`HEURISTIC` · `CL-3` rank `P0`–`P4`, cap at top 10 by severity, NEVER pad, concrete fix on every `P0`/`P1` · `CL-4` sweep §A–§N plus §R over whole surfaces (changed files → affected views, composition reconstructed, render or `ENVIRONMENT-BLOCKED`), including surface load B12–B15, container fit E9–E11, §H by usage, Field Necessity Matrix for input, applying only relevant platform/product sections and the WCAG 2.2 AA web baseline plus any stricter applicable legal/project requirement, or the documented standard for other platforms · `CL-5` short on time → use the §P prompts · `CL-6` report in the §O shape · for source code, assess component ownership, base abstractions, reuse, and duplication using the project's documented taxonomy or observed boundaries. Project design-system docs and ADRs OUTRANK the checklist; report a defect ONCE across `UI-*`/`DD-*`/`CL-*`. For a plan, bind only applicable sections and states to acceptance criteria, and name each UI view's primary task, container, information priority, and creation-vs-deferred inputs; a plan review flags a UI phase that omits them. Skip when the work has no user-facing UI surface, and state why.
+
+<!-- /SYNC:design-review-checklist:reminder -->
+
+<!-- SYNC:ux-journey-gate:reminder -->
+
+- **MUST ATTENTION** journey-first, BLOCKING order: REPORT the main user journeys (`UX-1`, evidence-tagged; confirm an inferred actor/job/outcome, or with no question tool record it `INFERRED — unconfirmed` and continue) → READ project design principles, design system, existing UI (`UX-2`) → generate → CHECK all gates. Checks: views = journey steps (`UX-3`) · important information first — one focal point, one primary action = next step, first viewport holds the primary tier (`UX-4`) · rules become prevention, states, recovery (`UX-5`) · the user's mental model (`UX-6`) · low-fi first (`UX-7`) · walkthrough + traceability, no unserved step or orphan (`UX-8`) · interaction cost per journey measured — steps, clicks, view changes, fields, decisions — every click confident, not a 3-click rule (`UX-9`) · wayfinding: where am I, where can I go, how do I get back, no dead ends (`UX-10`) · close with the **UI/UX Gate Report** covering `UX-*`, `UI-*`, `DD-*`, `CL-*` and UI copy — an unresolved `FAIL` blocks hand-off (`UX-11`). Catalog: `.claude/docs/ux-journey-process.md`. Skip ONLY with no user-facing surface, stated.
+
+<!-- /SYNC:ux-journey-gate:reminder -->
+
+<!-- SYNC:review-decision-autonomy:reminder -->
+
+**MUST ATTENTION** Decide supported review choices and recommendations, record the rationale, and finish without routine user questions. Keep round-limit extension, indispensable facts and actual action authority; preserve source coverage, validation, tests, read-only boundaries and budgets. Review decisions do not accept open risks or make a failed gate pass.
+
+<!-- /SYNC:review-decision-autonomy:reminder -->
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Produce a structured, tech-agnostic UI/UX design specification from a requirement/PBI/story/wireframe so a developer can rebuild the UI on ANY stack — every component, state, design token, responsive rule, and accessibility need documented and linked back to the governing Feature Spec.
+**IMPORTANT MUST ATTENTION Goal:** Produce a complete, tech-agnostic UI/UX design spec that lets a developer rebuild the source outcome on ANY stack, preserving every required view, navigation path, component, state, token, responsive rule, accessibility need, demo journey, and governing-spec link.
 
-**IMPORTANT MUST ATTENTION main steps (do not forget any):**
+**IMPORTANT MUST ATTENTION Main steps:** Journey Report (`UX-1`) → existing UI/flows + governing intent and vocabulary → design-authority read (`UX-2`) → input routing (`--mode=wireframe` for sketches) → Quick/Full/Full + Flow Diagram → components, applicable states, tokens, responsive/accessibility and complete releasable flow → walkthrough/traceability, interaction cost, wayfinding and UI/UX Gate Report → save design-spec/audit/component variant → governing-spec `design_spec:`/`mockup:` frontmatter-only link-back → M1–M5/M7 and logical-ID handoff checks.
 
-- **Step 0–0b first** — inventory existing related UI + map connected flows (record in §1); seed from the governing Feature Spec's §6 and reuse its view/state vocabulary verbatim — why: reinventing what exists or renaming spec terms breaks the navigable hub.
-- **Step 1–2** — route by input type (Figma→`/figma-design`, image→visual analysis, wireframe→`--mode=wireframe`, PBI/text→extract), then set Quick (§1–4) vs Full (§1–7) complexity.
-- **Step 3–6** — author component inventory (new vs existing), all 7 states + interactions, design tokens (reuse design-system), responsive breakpoints.
-- **Step 7–8** — save to `team-artifacts/design-specs/`, then set the governing Feature Spec's `design_spec:`/`mockup:` frontmatter to the saved path (frontmatter only) — why: the link-back gate fails without it.
-- **M1–M5 gate (BLOCKING)** — business-level component names, no code-prop refs in prose, cross-ref behavior by logical ID (`OP-`/`BR-`/`FR-`), one testable interpretation per state, rebuildable from spec alone — why: a tech-leaking spec cannot be rebuilt on another stack.
+**IMPORTANT MUST ATTENTION** confirm inferred actor/job/outcome (no question tool → record unconfirmed), reuse governing view/state vocabulary, and resolve native profiles without fallback on malformed declarations. Wireframes retain confidence/clarification and human-review requirements. No unserved journey step, orphan element or open gate failure at handoff.
 
-**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
-
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **UI System Context:** read frontend-patterns, scss-styling, design-system before any UI change.
-- **UI Wireframe:** ASCII wireframe, tiered component inventory, states table, tokens, responsive breakpoints.
-- **Critical Thinking:** traced `file:line` proof per claim, confidence >80% to act.
-
-- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-- **MANDATORY IMPORTANT MUST ATTENTION** carry the 40 UI/UX Design Principles (`UI-1.1`–`UI-9.4`) into the spec sections so implementers INHERIT them: §5 authors empty/loading/error FIRST (`UI-1.5`) and enumerates all 5 interaction states per interactive element (`UI-5.2`); §4 DECLARES the 6-step type scale (`UI-2.5`) and the ONE 4/8px spacing unit (`UI-4.1`) instead of one-off values, with contrast targets measured and stated (4.5:1 text / 3:1 edges, `UI-3.1`); §6 keeps the focus ring visible (`UI-5.5`), colour never alone (`UI-3.3`), and ≥44×44pt targets + bottom-third primaries on touch surfaces (`UI-8.1`, `UI-8.2`); §7 records every deliberate deviation — why: an unstated clause is an unbuilt clause once the spec leaves this skill
+**MUST ATTENTION** Apply each inline protocol's body and the section-by-section Design-Principles Obligations above; carry their observable states, token/accessibility requirements and authorized deviations into the output. Read configured project UI references and search comparable implementations before creating code. Cite `file:line` (>80% to act), track work and complete a final quality review.
 
 **Anti-Rationalization:**
 
-| Evasion                                            | Rebuttal                                                                                            |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| "I'll skip the existing-UI inventory and design"   | Step 0 is BLOCKING — inventory existing screens/flows first or the spec contradicts the live UI.    |
-| "Naming the framework component is clearer"        | M1/M2 FAIL — name by UX role; framework/CSS names live only in Evidence/frontmatter/Mermaid.        |
-| "The spec already names views — I'll re-partition" | Reuse §6 view + state vocabulary verbatim; renaming breaks the navigable spec↔design hub.           |
-| "Saved the file — done"                            | Step 8 link-back is required; set the spec's `design_spec:` frontmatter or `artifact-review` fails. |
-| "'Show feedback' describes the error state"        | M4 FAIL — every state needs one observable completion marker, not a vague phrase.                   |
+| Evasion                                          | Rebuttal                                                                                              |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| "The task is clear — skip the journey report"      | Step 0a is BLOCKING — then it takes five lines. An unwritten journey is an unchecked assumption (`UX-1`). |
+| "I'll skip the existing-UI inventory and design" | Step 0 is BLOCKING — inventory existing screens/flows first or the spec contradicts the live UI.     |
+| "Naming the framework component is clearer"       | M1/M2 FAIL — name by UX role; framework/CSS names live only in Evidence/frontmatter/Mermaid.         |
+| "The spec already names views — I'll re-partition"| Reuse §6 view + state vocabulary verbatim; renaming breaks the navigable spec↔design hub.            |
+| "Saved the file — done"                           | Step 8 link-back is required; set the spec's `design_spec:` frontmatter or `work-item --mode=review` fails.   |
+| "'Show feedback' describes the error state"       | M4 FAIL — every state needs one observable completion marker, not a vague phrase.                     |
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+**[TASK-PLANNING]** Before acting, use `TaskCreate` to break the work into small tasks; update statuses per step and add a final review task. Keep task depth proportional to the work.

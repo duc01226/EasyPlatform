@@ -17,7 +17,7 @@ using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries;
 
-public sealed class SearchSnippetTextQuery : PlatformCqrsPagedQuery<SearchSnippetTextQueryResult, TextSnippetEntityDto>
+public sealed class SearchSnippetTextQuery : TextSnippetPagedQuery<SearchSnippetTextQueryResult, TextSnippetEntityDto>
 {
     public string SearchText { get; set; }
     public string SearchId { get; set; }
@@ -32,6 +32,7 @@ public sealed class SearchSnippetTextQuery : PlatformCqrsPagedQuery<SearchSnippe
     {
         return IPlatformCqrsRequest.BuildCacheRequestKeyParts(
             request,
+            "OwnerScopedSearch:v2",
             userId,
             companyId);
     }
@@ -120,11 +121,11 @@ internal sealed class SearchSnippetTextQueryHandler : PlatformCqrsQueryApplicati
         // STEP 1: Build Queries
         var fullItemsQueryBuilder = repository.GetQueryBuilder(
             builderFn: query => query
-                .Where(p => p.CreatedByUserId == RequestContext.UserId())
+                .Where(TextSnippetEntity.CreatedByUserExpr(RequestContext.UserId()))
                 .PipeIf(
                     request.SearchText.IsNotNullOrEmpty(),
-                    _ => fullTextSearchPersistenceService.Search(
-                        query,
+                    filteredQuery => fullTextSearchPersistenceService.Search(
+                        filteredQuery,
                         request.SearchText,
                         [
                             e => e.SnippetText,

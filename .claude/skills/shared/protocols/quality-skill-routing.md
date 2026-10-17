@@ -1,0 +1,5 @@
+**Quality skill routing:** For review, test or failure work, use the project's registered skill first; use a generic host or plugin equivalent only when no registered skill fits, and say why.
+
+- **Review:** `why-review` judges a rationale, decision, plan, claim or statement: necessity, alternatives, trade-offs, or the validity of review findings. `changes-review` reviews a focused code change: staged, unstaged, one branch diff or a simple pull request. `workflow-review-changes` reviews a pull request or change set that is complex, risky or cross-module, with specialist reviewers and a fix loop; for a whole pull request, choose between the two by how complex its changes are, not by file count alone.
+- **Tests:** `test` runs the suites and summarizes the results; `integration-test` and `e2e-test` write, fix or verify their suites.
+- **Failures and errors:** `investigate --mode=debug` establishes the root cause of a failed command, test or unexpected error before any fix; `fix` then repairs it at that cause.

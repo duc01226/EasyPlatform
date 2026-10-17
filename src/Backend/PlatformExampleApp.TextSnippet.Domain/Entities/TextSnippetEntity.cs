@@ -214,7 +214,7 @@ public class TextSnippetEntity : RootAuditedEntity<TextSnippetEntity, string, st
     /// Filter by created user - demonstrates user-based filtering.
     /// Usage: repository.GetAllAsync(TextSnippetEntity.CreatedByUserExpr(userId))
     /// </summary>
-    public static Expression<Func<TextSnippetEntity, bool>> CreatedByUserExpr(string userId)
+    public static Expression<Func<TextSnippetEntity, bool>> CreatedByUserExpr(string? userId)
         => e => e.CreatedByUserId == userId;
 
     #endregion

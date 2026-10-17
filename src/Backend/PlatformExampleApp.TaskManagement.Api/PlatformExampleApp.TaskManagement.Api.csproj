@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Roslyn.Analyzers" Version="1.0.3.4" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.6.0.109712">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform\Easy.Platform.AspNetCore\Easy.Platform.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\Platform\Easy.Platform.RabbitMQ\Easy.Platform.RabbitMQ.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TaskManagement.Application\PlatformExampleApp.TaskManagement.Application.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TaskManagement.Contracts\PlatformExampleApp.TaskManagement.Contracts.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TaskManagement.Persistence.Mongo\PlatformExampleApp.TaskManagement.Persistence.Mongo.csproj" />
+  </ItemGroup>
+
+</Project>

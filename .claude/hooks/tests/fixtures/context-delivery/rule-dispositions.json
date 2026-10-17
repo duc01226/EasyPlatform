@@ -1,0 +1,1832 @@
+{
+  "version": 5,
+  "policyVersion": "cd40fe8d5c06eb5d8b2349a5f58efc735bacda6a7ade37ee110f1f6b326cfdc7",
+  "sourceHashes": {
+    "universal-1": "766ee6f680ab736b0dc210931818280ad1fdef2163a2c6f99311adee5a8797f3",
+    "universal-2": "1338c56f7c77d68d3cc75236b6e549468ff1dcf05e8b0a8e3bb1efb19077676a",
+    "universal-3": "ca1bc16c01457b87eb07c3237074902a744c937d0aa3027114dd6828598fe7f9",
+    "universal-4": "56d419e6efa428b1dc72633a9a94f4390290fed3e1674a393441bcff7b62af23",
+    "route": "46422fdacf61e11928a242baf5170b8d56abe1f5652d1cb524554b971ce3e994",
+    "catalog": "b4874fb4389e876f8ce8df0f6ff422c480c94073d786110f48b638c209cff24d",
+    "core": "f129dc46a1bb06a26cc3c342b9a0e35fe4f7a5bc44cfb57f32f12e8cb99ba3b8"
+  },
+  "unit": "Every nonblank line of the seven frozen compatible payloads: `id` is `<payload>:<line>` and `sha256` hashes its text. `policyVersion` is the sha256 of the concise core and route texts the dispositions were reviewed against.",
+  "dispositions": {
+    "merge": "The concise text at `destination` states the line's primary requirement in consolidated wording. `fullSources` hold the original line; `note` names detail that is read from there.",
+    "merge-and-relax-method": "As `merge`, and the line's method prescription is an approved relaxation named in `relaxes`, which the concise method policy states as a recommendation.",
+    "defer": "The concise text does not state the line's primary requirement. It is conditional depth: `destination` holds the line, the concise text names a path that reaches it, and `readWhen` is its trigger. `note` names what the concise text keeps.",
+    "remove-wrapper": "Presentation only (a marker, heading, blank quote line or table separator): it carries no rule and has no destination."
+  },
+  "relaxations": [
+    "fixed-quota",
+    "compulsory-delegation",
+    "repetitive-reporting",
+    "unconditional-lesson-extraction"
+  ],
+  "proof": "Checked mechanically: every hash, the wrapper pattern, the closed disposition and relaxation sets, the file that holds each line, its reachability from the concise text, and for every retained line at least one `anchors` phrase of three or more words that its destination text carries. For a relaxed line the concise method policy also names its relaxation. Anchors were chosen by review, one line at a time, as the wording that states the line's primary requirement; that the wording means the same as the original stays a reviewed judgement, and behaviour under it is measured by the paired evaluation.",
+  "rules": [
+    {
+      "id": "universal-1:1",
+      "source": "universal-1",
+      "line": 1,
+      "sha256": "380db346e025715b94720c066f1873c10cd5bc45f246df32a9a0675d5c84bd11",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-1:3",
+      "source": "universal-1",
+      "line": 3,
+      "sha256": "9bc9baf367ff12ff2718e54a13ee20b3585a8d4b4abe5dedea1c5013689a3b1c",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/critical-thinking-mindset.md"
+      ],
+      "relaxes": [
+        "fixed-quota"
+      ],
+      "anchors": [
+        "Ground material repository claims in checkable sources",
+        "Investigate material assumptions before acting"
+      ]
+    },
+    {
+      "id": "universal-1:4",
+      "source": "universal-1",
+      "line": 4,
+      "sha256": "c461a0ea430419603d8759239c32701683d134f8ac8f2627ecb2d9f13039fe3a",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/critical-thinking-mindset.md",
+      "readWhen": "asking the user a question, or writing or restructuring a long prompt or protocol"
+    },
+    {
+      "id": "universal-1:5",
+      "source": "universal-1",
+      "line": 5,
+      "sha256": "b4774b1666e224cda3fcf7bbe5e8c9aef7b08127ce75d85ab83d2d65ccb614f1",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/critical-thinking-mindset.md"
+      ],
+      "relaxes": [
+        "repetitive-reporting"
+      ],
+      "anchors": [
+        "distinguish observation, inference and uncertainty",
+        "Report executed checks separately from inspection or unavailable checks"
+      ]
+    },
+    {
+      "id": "universal-1:6",
+      "source": "universal-1",
+      "line": 6,
+      "sha256": "969bf632df71cce3f11de28c16a2ab00ecfb701e80fd1a56928fff0f15df4565",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/critical-thinking-mindset.md",
+      "readWhen": "asking the user a question, or writing or restructuring a long prompt or protocol"
+    },
+    {
+      "id": "universal-1:7",
+      "source": "universal-1",
+      "line": 7,
+      "sha256": "0e3745feb86311d04cd8edbbcf9251dd60c1cd8cbbfb184b793efddcece9fdf9",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/critical-thinking-mindset.md"
+      ],
+      "anchors": [
+        "keep a short plan with acceptance criteria",
+        "Stop when the outcome is verified or explain a genuine blocker"
+      ]
+    },
+    {
+      "id": "universal-1:8",
+      "source": "universal-1",
+      "line": 8,
+      "sha256": "b93a6985b404f69cd258301744ea1b2f0b10ece4f801a6e56b3c078030e37d49",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/critical-thinking-mindset.md"
+      ],
+      "anchors": [
+        "Protect changed intent with meaningful, isolated tests"
+      ]
+    },
+    {
+      "id": "universal-1:9",
+      "source": "universal-1",
+      "line": 9,
+      "sha256": "e70cd54c9e3490ed800aabca393b9ce3f21dd7efa0a08c3f2b44067a65cbefdb",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/critical-thinking-mindset.md"
+      ],
+      "note": "The three pillars are stated in the Design and Verification bullets, and the before-done self-check closes the Design bullet.",
+      "anchors": [
+        "Keep one authoritative owner for each rule",
+        "Bound work and resource growth where it matters",
+        "Before done, answer: next change → how many edit sites? 10× → what breaks? which test goes red?"
+      ]
+    },
+    {
+      "id": "universal-1:10",
+      "source": "universal-1",
+      "line": 10,
+      "sha256": "9669f5c25a7e1a46029d29ddf755e0ad28f9263545dd3f2612b62f528857a121",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/critical-thinking-mindset.md"
+      ],
+      "relaxes": [
+        "repetitive-reporting"
+      ],
+      "anchors": [
+        "Test the user's premise and plausible alternatives fairly",
+        "“no material issue” and “insufficient evidence” are valid conclusions"
+      ]
+    },
+    {
+      "id": "universal-1:12",
+      "source": "universal-1",
+      "line": 12,
+      "sha256": "bd007fb125fe5165de21835396e83117e13b5de1e764df0f6bfe7a6306441f8c",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-1:14",
+      "source": "universal-1",
+      "line": 14,
+      "sha256": "71dccb7623d6f986ad28a5d0ea5c31bec728b809c828d4c85d30753a8de7a9df",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/discovery-and-first-principles.md"
+      ],
+      "anchors": [
+        "resolve configuration and task-relevant references through the discovery contract below",
+        "Respect relocated roots",
+        "Use the root Doc Lookup and docs index for task routing",
+        "Read `.claude/docs/README.md` for framework questions",
+        "Do not invent missing guidance"
+      ]
+    },
+    {
+      "id": "universal-1:16",
+      "source": "universal-1",
+      "line": 16,
+      "sha256": "91a0f7b3616c87fbd6eae7decb9ab1590c9a7e421c4f68e821636fc917f44efb",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/discovery-and-first-principles.md",
+      "readWhen": "writing or updating a document an agent reads, or shipping code, a dependency or a platform choice"
+    },
+    {
+      "id": "universal-1:18",
+      "source": "universal-1",
+      "line": 18,
+      "sha256": "859bc8fdcfad99975ccefdbca97087495f389f184531652b6c9e8fc85fd930ee",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-1:20",
+      "source": "universal-1",
+      "line": 20,
+      "sha256": "d998e19f11e9118a35eccb2a6340b0f8d0b164de67d06d24acdedb16dd8c38e2",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/discovery-and-first-principles.md"
+      ],
+      "relaxes": [
+        "fixed-quota"
+      ],
+      "note": "The target-code and existing-pattern reads are stated; the development-rules read is taken from the source.",
+      "anchors": [
+        "Read target code and representative existing patterns before changing it"
+      ]
+    },
+    {
+      "id": "universal-1:22",
+      "source": "universal-1",
+      "line": 22,
+      "sha256": "74764e61566379d9c893c15bf3acf92440fdff84b0eb16440b81e31643c1a6d4",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/discovery-and-first-principles.md",
+      "readWhen": "writing or updating a document an agent reads, or shipping code, a dependency or a platform choice"
+    },
+    {
+      "id": "universal-1:24",
+      "source": "universal-1",
+      "line": 24,
+      "sha256": "efcea6680d0823a1775b66857906b9214eb3413a3b371d2c950e06f4d06443aa",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/project-reference-docs-guide.md"
+      ],
+      "anchors": [
+        "Before project work, resolve configuration and task-relevant references",
+        "Prefer documented ownership over assumptions",
+        "reminders and another agent's read are not proof of loading"
+      ]
+    },
+    {
+      "id": "universal-1:25",
+      "source": "universal-1",
+      "line": 25,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-1:26",
+      "source": "universal-1",
+      "line": 26,
+      "sha256": "ae45b346dd0b509629b0f6a09e2967119008062118ea352a213db4b82a3cc10a",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/project-reference-docs-guide.md",
+      "readWhen": "choosing which project reference documents to read for the phase about to start"
+    },
+    {
+      "id": "universal-1:27",
+      "source": "universal-1",
+      "line": 27,
+      "sha256": "c000cf2f4e1ba38ecffd53cf7bb1bf7776bd7f27c2c85fc8c28a908829e70ee3",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/project-reference-docs-guide.md"
+      ],
+      "anchors": [
+        "Run `node .claude/scripts/project-context.cjs --context` for validated discovery",
+        "If the helper is unavailable, use `.claude/hooks/lib/project-config-loader.cjs`",
+        "Missing configuration is supported",
+        "Malformed declared configuration must be repaired before relying on it"
+      ]
+    },
+    {
+      "id": "universal-1:28",
+      "source": "universal-1",
+      "line": 28,
+      "sha256": "42f249a8ae095422cfc0c0902bac581536bb08a44ae5269330cadf493d30a7f9",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/project-reference-docs-guide.md"
+      ],
+      "anchors": [
+        "read the configured docs index and lessons",
+        "An explicit reference selection, including an empty one, controls generic selection"
+      ]
+    },
+    {
+      "id": "universal-1:29",
+      "source": "universal-1",
+      "line": 29,
+      "sha256": "af5a3e40511de848b7a6658a9e6c9d8cdd0bf5f43db68ee5fe308fec492e0b26",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/project-reference-docs-guide.md",
+      "readWhen": "choosing which project reference documents to read for the phase about to start"
+    },
+    {
+      "id": "universal-1:30",
+      "source": "universal-1",
+      "line": 30,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-1:31",
+      "source": "universal-1",
+      "line": 31,
+      "sha256": "07a09f76c1a123827e75ec525086c512d6125634ade3b1db3dc36f731cf9ec4d",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/project-reference-docs-guide.md",
+      "readWhen": "choosing which project reference documents to read for the phase about to start"
+    },
+    {
+      "id": "universal-1:32",
+      "source": "universal-1",
+      "line": 32,
+      "sha256": "f5e0babf727c5dcbaf72948f51e20fb9b79574e7e7e3bd06e8c06b582f28d3c9",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-1:33",
+      "source": "universal-1",
+      "line": 33,
+      "sha256": "ac21d1f7d38953bb8a46ef14f8b95e566ea3cb072676b2e688c3c350bad6369e",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/project-reference-docs-guide.md",
+      "readWhen": "choosing which project reference documents to read for the phase about to start"
+    },
+    {
+      "id": "universal-1:34",
+      "source": "universal-1",
+      "line": 34,
+      "sha256": "565729c3d60cc62c211fce19bc09df92c8d356c387d2028de8670f2ac62cd6d6",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/project-reference-docs-guide.md",
+      "readWhen": "choosing which project reference documents to read for the phase about to start"
+    },
+    {
+      "id": "universal-1:35",
+      "source": "universal-1",
+      "line": 35,
+      "sha256": "30cd3eaebc0b2f11830fc4e6036887d6ee6cbfc280bbe1cbf52a8bd0ae7b6d45",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/project-reference-docs-guide.md",
+      "readWhen": "choosing which project reference documents to read for the phase about to start"
+    },
+    {
+      "id": "universal-1:36",
+      "source": "universal-1",
+      "line": 36,
+      "sha256": "a167187c904d59b9060b5b0c2978add6f5aaeff24f8c4d0fa704102bacd483cb",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/project-reference-docs-guide.md",
+      "readWhen": "choosing which project reference documents to read for the phase about to start"
+    },
+    {
+      "id": "universal-1:37",
+      "source": "universal-1",
+      "line": 37,
+      "sha256": "00ce086aaf80c84365f4637008d233d9434e1a798800d5109be407b55d4da0b6",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/project-reference-docs-guide.md",
+      "readWhen": "choosing which project reference documents to read for the phase about to start"
+    },
+    {
+      "id": "universal-1:38",
+      "source": "universal-1",
+      "line": 38,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-1:39",
+      "source": "universal-1",
+      "line": 39,
+      "sha256": "128b4137a275d4e7e7a98bf80e45c5ed46da26b89d684a414e17d4e332a64580",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/project-reference-docs-guide.md"
+      ],
+      "anchors": [
+        "Before entering an unfamiliar path class, run `node .claude/hooks/lib/file-conventions.cjs --lookup <path> --complete`"
+      ]
+    },
+    {
+      "id": "universal-1:40",
+      "source": "universal-1",
+      "line": 40,
+      "sha256": "d34ec0443d7d868d5d255efccdfd7e433a6589efe07b8172a874605865c41b8d",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/project-reference-docs-guide.md"
+      ],
+      "relaxes": [
+        "repetitive-reporting"
+      ],
+      "anchors": [
+        "Record relevant references and material missing inputs with the work evidence",
+        "it does not disable required task/skill references or overlays",
+        "use its narrow repair owner before relying on it"
+      ]
+    },
+    {
+      "id": "universal-1:41",
+      "source": "universal-1",
+      "line": 41,
+      "sha256": "0dbc5347f4e5c740fe9bbc23152f11a662e13cebd5ce9646a4792e551746cae8",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/project-reference-docs-guide.md"
+      ],
+      "relaxes": [
+        "repetitive-reporting"
+      ],
+      "anchors": [
+        "Reuse unchanged documents already read in the current context",
+        "reload after compaction or resume"
+      ]
+    },
+    {
+      "id": "universal-1:42",
+      "source": "universal-1",
+      "line": 42,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-1:43",
+      "source": "universal-1",
+      "line": 43,
+      "sha256": "764b5e393079896f486445c5b674e23bf7c0cf40edc76ba5392dd6346724b2aa",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/project-reference-docs-guide.md"
+      ],
+      "relaxes": [
+        "repetitive-reporting"
+      ],
+      "note": "Restates the gate steps; its phase-document item follows the deferred phase table.",
+      "anchors": [
+        "Record relevant references and material missing inputs with the work evidence"
+      ]
+    },
+    {
+      "id": "universal-1:45",
+      "source": "universal-1",
+      "line": 45,
+      "sha256": "d7f854cdd16fd31eae26be5450da4b08606749bdd1567827834543151cf49f09",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-1:47",
+      "source": "universal-1",
+      "line": 47,
+      "sha256": "8743fa8fdea8f9dead649d9bc320263a920ef936eb30ca020a21b3ce5ea06f71",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/code-responsibility-hierarchy.md"
+      ],
+      "anchors": [
+        "Prefer documented ownership over assumptions",
+        "Keep one authoritative owner for each rule",
+        "Trace affected consumers and alternate/error paths"
+      ]
+    },
+    {
+      "id": "universal-2:1",
+      "source": "universal-2",
+      "line": 1,
+      "sha256": "41dd6a74b1bab233a6dabd998bf567af847d392b6bf853f92344c6498952034a",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-2:3",
+      "source": "universal-2",
+      "line": 3,
+      "sha256": "8798ae2e7371bf9cd9b8869cbc35f7a0651b04a40764630acacb5661757c36ac",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-2:5",
+      "source": "universal-2",
+      "line": 5,
+      "sha256": "0472a4f10ccb52e97f1c6b88d8818c7f3a198b87f626133aef6c1746fdf7a221",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/ai-mistake-prevention.md",
+      "readWhen": "applying a framework example or default to a project",
+      "note": "The concise text keeps configuration and reference discovery and documented ownership over assumptions; the rule against imposing technology the project does not use is read from the source."
+    },
+    {
+      "id": "universal-2:6",
+      "source": "universal-2",
+      "line": 6,
+      "sha256": "803aff7afcd4044ca0e597174640d09aa031bad914c5713df65db1e2f6dc1e1b",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "anchors": [
+        "Establish the cause before correcting a failure",
+        "Load the investigation procedure when diagnosing failures"
+      ]
+    },
+    {
+      "id": "universal-2:7",
+      "source": "universal-2",
+      "line": 7,
+      "sha256": "ae6b561b5c9d1a3766eb0bbb2d787ccc21dec52f0167d2836439995b82ea78c5",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "anchors": [
+        "Do not weaken assertions, skip tests, inflate timeouts or alter product behavior merely to make a check pass",
+        "Project investigation/test references and the registered `investigate`, `fix` or relevant test skill"
+      ]
+    },
+    {
+      "id": "universal-2:8",
+      "source": "universal-2",
+      "line": 8,
+      "sha256": "a6c0686fac1f50de79c08726751133c8954eb891af51c4760340292a9cd0f334",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "anchors": [
+        "check all consumer file types for stale references",
+        "keep dependent contracts and documentation aligned"
+      ]
+    },
+    {
+      "id": "universal-2:9",
+      "source": "universal-2",
+      "line": 9,
+      "sha256": "9068c6cedec0e6910dae6e739c86f93df052d83ef7255d0dace49162b208d212",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "anchors": [
+        "Trace affected consumers and alternate/error paths"
+      ]
+    },
+    {
+      "id": "universal-2:10",
+      "source": "universal-2",
+      "line": 10,
+      "sha256": "4e86f01c1cdf24ce66ddfb01bee3206824bc7a3f3597128a49ad144882f7968e",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "note": "Cause before correction and the ban on forcing a check green are stated; the five-way verdict taxonomy and spec triangulation are read from the source.",
+      "anchors": [
+        "Compare intended behavior, source, tests and environment",
+        "Do not weaken assertions, skip tests, inflate timeouts"
+      ]
+    },
+    {
+      "id": "universal-2:11",
+      "source": "universal-2",
+      "line": 11,
+      "sha256": "9a22327db38fcbff783a10d3481061b1ecd53da2b5320fb412710aa3e7ddc754",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "anchors": [
+        "Investigate existing rationale before changing or condemning a limit or established behavior"
+      ]
+    },
+    {
+      "id": "universal-2:12",
+      "source": "universal-2",
+      "line": 12,
+      "sha256": "3b9daec7bdbf6b11c23b6b2d2e0f22bad36b45d40e72d010ac280fce64d3cf3e",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "anchors": [
+        "check their preconditions before reuse"
+      ]
+    },
+    {
+      "id": "universal-2:13",
+      "source": "universal-2",
+      "line": 13,
+      "sha256": "1ab23bbd49a39fc732300e7fc9c1a0d0c9630c50bf5e87b0c08baeea816308a0",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "anchors": [
+        "Investigate material assumptions before acting",
+        "Compare intended behavior, source, tests and environment"
+      ]
+    },
+    {
+      "id": "universal-2:14",
+      "source": "universal-2",
+      "line": 14,
+      "sha256": "6db602d9724f3cb69bbbf36f74d8fec7b88fa3c3620eb2d3e63f5242bfe2da73",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/ai-mistake-prevention.md",
+      "readWhen": "reviewing a plan, decision or design, or changing a script, launcher, path assertion or filesystem test",
+      "note": "The concise text keeps fair testing of the premise and names why-review for formal rationale audits; the adversarial review method is read from the source."
+    },
+    {
+      "id": "universal-2:15",
+      "source": "universal-2",
+      "line": 15,
+      "sha256": "3d52e60e676c601811e007456422fee6fe1820e8e08c0990c9838e49e79bc19b",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "anchors": [
+        "a failure or successful retry alone does not identify a defect",
+        "Compare intended behavior, source, tests and environment",
+        "alter product behavior merely to make a check pass"
+      ]
+    },
+    {
+      "id": "universal-2:16",
+      "source": "universal-2",
+      "line": 16,
+      "sha256": "484d3713c915b5a1558b331b7b775b7ab3ac6b13896143cee458c32f45b6bab7",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/ai-mistake-prevention.md",
+      "readWhen": "reviewing a plan, decision or design, or changing a script, launcher, path assertion or filesystem test",
+      "note": "The concise trigger row keeps the platform-behavior and security-boundary cue and names this file as the owner to load."
+    },
+    {
+      "id": "universal-2:17",
+      "source": "universal-2",
+      "line": 17,
+      "sha256": "d7c1bb2d20fb8a74e32bb27012d3caccae46ed79dbc9ca5cfe1e1e0427b2ee65",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/ai-mistake-prevention.md"
+      ],
+      "anchors": [
+        "keep dependencies explicit and domain rules in their owning domain"
+      ]
+    },
+    {
+      "id": "universal-3:1",
+      "source": "universal-3",
+      "line": 1,
+      "sha256": "8362c5a280cdbff0568d61453ba1e229f7dcaad30ceb87db1d055f06a94fb2c3",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-3:3",
+      "source": "universal-3",
+      "line": 3,
+      "sha256": "bd53d9bedc715007ab94a511d072e9c873dce0c56a3341338c7e91d762c5abb6",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-3:5",
+      "source": "universal-3",
+      "line": 5,
+      "sha256": "da332af74efbe66ad02c91bf420214e8056a87aa49d66eebbc2f447a84244cc0",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/task-planning-rules.md"
+      ],
+      "relaxes": [
+        "repetitive-reporting"
+      ],
+      "anchors": [
+        "Plan the work and create todo tasks before acting",
+        "Prefer work in the main agent",
+        "Use one writer per shared target",
+        "Preserve the original goal and subsequent corrections",
+        "after interruption or compaction, restore it and re-read the relevant current instructions",
+        "Routing, overlays, delegation and completion pressure never waive approvals or required gates",
+        "regardless of route, as tasks for every code change",
+        "Before a test run, check its environment"
+      ]
+    },
+    {
+      "id": "universal-3:7",
+      "source": "universal-3",
+      "line": 7,
+      "sha256": "09c3f59faa0a431f4222796e5498751d20875df392771e8641aa7579ad3382ba",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-3:9",
+      "source": "universal-3",
+      "line": 9,
+      "sha256": "a79ea215039d48c89f47bb03f21810fb8fc42a96a040f7ad350093de96029500",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/artifact-storage.md"
+      ],
+      "anchors": [
+        "Keep disposable reports, logs and results under ignored project `tmp/` or `temp/`",
+        "Canonical specs, accepted fixtures/baselines and intentionally versioned projections stay at their declared paths"
+      ]
+    },
+    {
+      "id": "universal-3:11",
+      "source": "universal-3",
+      "line": 11,
+      "sha256": "72dfc44473e41c1c10c800680e4e8c8ca744eff19566de49fee6f9dc3045e3f9",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-3:13",
+      "source": "universal-3",
+      "line": 13,
+      "sha256": "5619ac606fe16f058adfc33f1f94838a3932c8ce77cc7252ddc8f74c63ced5d8",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/workflow-step-advancement.md"
+      ],
+      "anchors": [
+        "try one bounded, noninteractive install with a supported installer",
+        "Never use sudo, force the system Python or retry indefinitely"
+      ]
+    },
+    {
+      "id": "universal-3:15",
+      "source": "universal-3",
+      "line": 15,
+      "sha256": "98ece0f370a0a26196e2b3efe04fbcf4ecd6339618051af60a904c9366aaf292",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/workflow-step-advancement.md"
+      ],
+      "anchors": [
+        "applicable overlays before execution, using the current host's tools",
+        "A foreign-host tool name alone is not a blocker"
+      ]
+    },
+    {
+      "id": "universal-3:17",
+      "source": "universal-3",
+      "line": 17,
+      "sha256": "b29ce8e2cbe9162a7050d3e54770a73f6d4cbd72d8aa68c4a9c0e77ae6f29e2d",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/workflow-step-advancement.md"
+      ],
+      "anchors": [
+        "Verify real outputs and state, including delegated work",
+        "do not claim success from a task status or agent self-report",
+        "Preserve required test, review and spec/doc synchronization gates regardless of route"
+      ]
+    },
+    {
+      "id": "universal-3:19",
+      "source": "universal-3",
+      "line": 19,
+      "sha256": "e8aadb4988d0470d996fb2754a4a7779b869bfdeb42388cc4c0a198f92bfdd66",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/workflow-step-advancement.md",
+      "readWhen": "running parallel phases, nested workflows or sub-agent fan-out",
+      "note": "The concise text keeps one writer per shared target and the all-return barrier; PAR/SEQ tagging, wave declaration and the fan-out exclusions are read from the source."
+    },
+    {
+      "id": "universal-3:21",
+      "source": "universal-3",
+      "line": 21,
+      "sha256": "431fa9a8ac3495802b0dca185f3e2d566a4723ae92f4d0f8c9243f5ff4e2c2b4",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/workflow-step-advancement.md",
+      "readWhen": "running parallel phases, nested workflows or sub-agent fan-out",
+      "note": "The concise text keeps delegated scope and return verification; nested-workflow execution, the inline workflow-review-changes exception and the one-level fan-out limit are read from the source."
+    },
+    {
+      "id": "universal-3:23",
+      "source": "universal-3",
+      "line": 23,
+      "sha256": "766d6f205f9413cbf98b8c08a54a66988e883cea362422b0529c92b5c5d0cd2a",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-3:25",
+      "source": "universal-3",
+      "line": 25,
+      "sha256": "3ef81659b54301202d9b0a240291159fda2b7e817d594a1e77970c0d0b9a866d",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/evidence-investigation.md"
+      ],
+      "relaxes": [
+        "fixed-quota"
+      ],
+      "anchors": [
+        "Ground material repository claims in checkable sources",
+        "distinguish observation, inference and uncertainty",
+        "Trace affected consumers and alternate/error paths"
+      ]
+    },
+    {
+      "id": "universal-3:27",
+      "source": "universal-3",
+      "line": 27,
+      "sha256": "f802b13e9d4f5296d4304754a1269eccd0723d413bdfe04062b38ba38c28c36e",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-3:29",
+      "source": "universal-3",
+      "line": 29,
+      "sha256": "416d056530a8c3a97e74945259ddac267d70a98b3832df733e15f64f067bd9b0",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/canonical-ownership.md"
+      ],
+      "note": "Source and projection ownership and the sync trigger are stated; the portable-surface naming rule and catalog regeneration are read from the source.",
+      "anchors": [
+        "For this framework, author `.claude/**` and `CLAUDE.md`; generate `.agents/`, `.codex/`, `.opencode/` and `AGENTS.md`",
+        "regenerate after final source changes, verify parity, preserve unmanaged root text and report overflow",
+        "Do not sync when no framework source changed"
+      ]
+    },
+    {
+      "id": "universal-4:1",
+      "source": "universal-4",
+      "line": 1,
+      "sha256": "9a6ef27eb94ef2d2fe00758babfe019f3d9cc793819190c33bf1f37e549b0e44",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-4:3",
+      "source": "universal-4",
+      "line": 3,
+      "sha256": "9a025552f85d1bce1c79b66b9feff81dada3a2e99060612013e6df5f5ccf3190",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/project-protocol-overlay.md"
+      ],
+      "anchors": [
+        "configured `skill-protocols-reference.md` and matching bodies",
+        "use exact > glob > `*` matching",
+        "Reject unsafe paths; report/skip missing or malformed matched bodies",
+        "An absent index or no match means no overlay"
+      ]
+    },
+    {
+      "id": "universal-4:4",
+      "source": "universal-4",
+      "line": 4,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-4:5",
+      "source": "universal-4",
+      "line": 5,
+      "sha256": "7463abcaffee8ebe7f715cc9d025635a4c6dd344759f00ab32a9f297d75ed3aa",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/project-protocol-overlay.md"
+      ],
+      "anchors": [
+        "Overlays are additive, cannot waive gates",
+        "report/skip missing or malformed matched bodies; surface contradictions"
+      ]
+    },
+    {
+      "id": "universal-4:7",
+      "source": "universal-4",
+      "line": 7,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-4:8",
+      "source": "universal-4",
+      "line": 8,
+      "sha256": "7a16f00e8e1986889a7bdc7ccf35ef68c5732717d70a5e1b4e5f14fec12250bd",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/project-protocol-overlay.md",
+      "readWhen": "a skill activates and no overlay reminder arrived"
+    },
+    {
+      "id": "universal-4:10",
+      "source": "universal-4",
+      "line": 10,
+      "sha256": "c558b6c0b7d63d98f58155bf666f6baccd54ad42fe46b99ee11482c41a19eb94",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "universal-4:12",
+      "source": "universal-4",
+      "line": 12,
+      "sha256": "11c0baa1b35926ccc18510dfc09c620bac58794b9c2098489e42d412f60def72",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/lesson-extraction-gate.md"
+      ],
+      "relaxes": [
+        "unconditional-lesson-extraction"
+      ],
+      "anchors": [
+        "Suggest a durable lesson only for a recurring, useful gap; never silently rewrite persistent instructions"
+      ]
+    },
+    {
+      "id": "universal-4:14",
+      "source": "universal-4",
+      "line": 14,
+      "sha256": "0f5ae278f0f20cee52889e66ea382f721a1c78b54bf67f6aeec2bc1fcf271067",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/quality-skill-routing.md",
+      "readWhen": "choosing a skill for review, test or failure work",
+      "note": "The concise core keeps the failure-diagnosis row naming `investigate`; the quality-skill reminder hook delivers the route digest after tool results in both profiles."
+    },
+    {
+      "id": "universal-4:16",
+      "source": "universal-4",
+      "line": 16,
+      "sha256": "1bd5e75590d3e1c720a277587ea7fef287dcdd4f24b462411332b49c19a6c4d5",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/quality-skill-routing.md",
+      "readWhen": "choosing a skill for review, test or failure work",
+      "note": "The concise core keeps the failure-diagnosis row naming `investigate`; the quality-skill reminder hook delivers the route digest after tool results in both profiles."
+    },
+    {
+      "id": "universal-4:17",
+      "source": "universal-4",
+      "line": 17,
+      "sha256": "e51dcc42a4633173efaa2de1507c63e4ea32ef6eccfa497ecc89fd4127ef20ca",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/quality-skill-routing.md",
+      "readWhen": "choosing a skill for review, test or failure work",
+      "note": "The concise core keeps the failure-diagnosis row naming `investigate`; the quality-skill reminder hook delivers the route digest after tool results in both profiles."
+    },
+    {
+      "id": "universal-4:18",
+      "source": "universal-4",
+      "line": 18,
+      "sha256": "9efafb6ab709ccdcdf01504b73c9e8674b94e18d49724e2117a78b0deb5f562d",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/quality-skill-routing.md",
+      "readWhen": "choosing a skill for review, test or failure work",
+      "note": "The concise core keeps the failure-diagnosis row naming `investigate`; the quality-skill reminder hook delivers the route digest after tool results in both profiles."
+    },
+    {
+      "id": "universal-4:20",
+      "source": "universal-4",
+      "line": 20,
+      "sha256": "c5c875252740a8c318bb953563e55b80f46791a1d26faf82203c3f80a5b5e3be",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/universal-closing-reminders.md"
+      ],
+      "note": "Each reminder restates a rule the concise contract states once; the question-tool wording is read from critical-thinking-mindset.md.",
+      "anchors": [
+        "Work within the user's scope and the host's permissions",
+        "Preserve unrelated changes",
+        "read the configured docs index and lessons",
+        "Edit canonical source; regenerate declared projections with their owning tool"
+      ]
+    },
+    {
+      "id": "route:1",
+      "source": "route",
+      "line": 1,
+      "sha256": "d23c4348f6021e3012d2374b1db8e1abf0c806c9f915b84c79878c723d764653",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:2",
+      "source": "route",
+      "line": 2,
+      "sha256": "6d96e865d6dfaf70a980d9fb46e0a20d36b323d89bdc56646533d50976560049",
+      "disposition": "merge",
+      "destination": ".claude/hooks/lib/workflow-route-delivery.cjs",
+      "fullSources": [],
+      "anchors": [
+        "Route mode: ask (default)"
+      ]
+    },
+    {
+      "id": "route:3",
+      "source": "route",
+      "line": 3,
+      "sha256": "c7f7bcf77010d8a658c3c61c95f9b6a057e1620990c5c6fbd004fbff179e064c",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:5",
+      "source": "route",
+      "line": 5,
+      "sha256": "5552d8837b83cda842ffd85e5e02da45eea1fd39eb2940c081e0d8f42f585b45",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception"
+    },
+    {
+      "id": "route:6",
+      "source": "route",
+      "line": 6,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:7",
+      "source": "route",
+      "line": 7,
+      "sha256": "f96775b8219e499c614401e7e673691d2dc50d34bacc06d6b8cbc4cdaff62103",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "Honor explicit skill/workflow requests",
+        "starting a self-selected catalog workflow on the first task requires one question",
+        "Wait for the answer"
+      ]
+    },
+    {
+      "id": "route:8",
+      "source": "route",
+      "line": 8,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:9",
+      "source": "route",
+      "line": 9,
+      "sha256": "53e4fafc56e6a8851873931e55f46f893ae7db1a75b7c09c96ef4e73469ac00b",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "Mid-session, do not self-start or ask to start a catalog workflow"
+      ]
+    },
+    {
+      "id": "route:10",
+      "source": "route",
+      "line": 10,
+      "sha256": "c17dd8f10cb9cb29e1b41eb5332579f92c73991cae569cf9bf3895ee1795a886",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "Mid-session, keep optional chains to three skills; required quality gates do not count toward that cap",
+        "honor explicit requests and required nested workflows"
+      ]
+    },
+    {
+      "id": "route:11",
+      "source": "route",
+      "line": 11,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:12",
+      "source": "route",
+      "line": 12,
+      "sha256": "92fada20cc6a6d288f691ea2ffae6c1feee52d9716fb89c9c87fff999bc319e8",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception"
+    },
+    {
+      "id": "route:13",
+      "source": "route",
+      "line": 13,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:14",
+      "source": "route",
+      "line": 14,
+      "sha256": "bdb12112fc25ce8866cee10017c79299b387836d625ef9960db0bc416e43ca10",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "| Task signals | Route / skills to consider |"
+      ]
+    },
+    {
+      "id": "route:15",
+      "source": "route",
+      "line": 15,
+      "sha256": "f5e0babf727c5dcbaf72948f51e20fb9b79574e7e7e3bd06e8c06b582f28d3c9",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:16",
+      "source": "route",
+      "line": 16,
+      "sha256": "5b7a093e78ac8a37ff668ad9f06b89412b218bf635a445d9148c16c49a5349ad",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception"
+    },
+    {
+      "id": "route:17",
+      "source": "route",
+      "line": 17,
+      "sha256": "08d544789fdb184fd5c2e68d150906d3f7ede250dc67c2cac9681c1333d64995",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception"
+    },
+    {
+      "id": "route:18",
+      "source": "route",
+      "line": 18,
+      "sha256": "f093fb560d5a4d7b2e54e5a4f941f9b0639e959923c20d8fa6e1c2df33268164",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception"
+    },
+    {
+      "id": "route:19",
+      "source": "route",
+      "line": 19,
+      "sha256": "5c6a3be46a1ad6c9f79898964663b19a49e7c59915ed8ef375634948fed570e6",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "| Question, lookup, trivial low-risk edit | Direct, or one matching skill |"
+      ]
+    },
+    {
+      "id": "route:20",
+      "source": "route",
+      "line": 20,
+      "sha256": "e79698e77968c600f8cbae82cd521aa2a5fca094f1ab1377fcd1a9ea72ac9700",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "| Focused implementation with clear intent | Custom-simple:"
+      ]
+    },
+    {
+      "id": "route:21",
+      "source": "route",
+      "line": 21,
+      "sha256": "89a93ff21f51912fac14c60303fe4e1c1afd0b2a981bae16fa0749ee717dcaca",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception",
+      "note": "The concise cue routes an unknown-cause bug through investigate and fix; the workflow-bugfix mapping is read from the gate and the catalog."
+    },
+    {
+      "id": "route:22",
+      "source": "route",
+      "line": 22,
+      "sha256": "7833302a8ba0a4bcd529e30c625ec082d73da6786586ef9c94e0956f86d0343f",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "note": "The concise cue sends this signal to catalog fit; the workflow ids come from the catalog command.",
+      "anchors": [
+        "| Cross-module behavior/contract or material ambiguity | Inspect catalog fit before choosing a standard workflow |"
+      ]
+    },
+    {
+      "id": "route:23",
+      "source": "route",
+      "line": 23,
+      "sha256": "41d46d092ceae89276be7be17bc4f21b9cb50aaeb8e560b83abf27dc605a349a",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception"
+    },
+    {
+      "id": "route:24",
+      "source": "route",
+      "line": 24,
+      "sha256": "82fb3f46d839b627948fc6103c4709f8f52c1b3375f68f087c4fda52489d3fdf",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception"
+    },
+    {
+      "id": "route:25",
+      "source": "route",
+      "line": 25,
+      "sha256": "98ba512d0d372bae6dd89801ec54c1cc4f13f0f9900ff5482be2b00531767c64",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception"
+    },
+    {
+      "id": "route:26",
+      "source": "route",
+      "line": 26,
+      "sha256": "8de399d3dd56a8065c6769c261841d41c85700893ec65a2c587dbae20473aa64",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "Resolve custom steps from the current host's registered skill descriptions",
+        "Read the selected `SKILL.md` before calling it"
+      ]
+    },
+    {
+      "id": "route:27",
+      "source": "route",
+      "line": 27,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:28",
+      "source": "route",
+      "line": 28,
+      "sha256": "8e0af0d2a345a1bbb4a47301b4d6fdc785c86050ca43c958ee3db9eefef58c50",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception",
+      "note": "The concise cue keeps selection by unresolved decisions; the interview owners and Decision Record carry-forward are read from the gate."
+    },
+    {
+      "id": "route:29",
+      "source": "route",
+      "line": 29,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:30",
+      "source": "route",
+      "line": 30,
+      "sha256": "19d392dc88bdcf4c35a087be1f0900ca8c1b243feec641eb31d81fcd85408b70",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception",
+      "note": "The concise cue keeps the test, review and spec/doc gates and names the gate file for fit exceptions; the 80% rule is read there."
+    },
+    {
+      "id": "route:31",
+      "source": "route",
+      "line": 31,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:32",
+      "source": "route",
+      "line": 32,
+      "sha256": "0f018d59e5d55f2f50f8d627c87514dcee71c8a8ecd8a84669917c3bd2caa598",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "requires one question: full workflow, slimmer gate-preserving route, or direct work",
+        "In auto mode, ask the same question with the full workflow recommended first"
+      ]
+    },
+    {
+      "id": "route:33",
+      "source": "route",
+      "line": 33,
+      "sha256": "8c723cbd389021a2daa5af7c7b07a05fc119a0b543b174584bc9bd6d118b4e85",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/workflow-first-gate.md",
+      "readWhen": "before workflow selection or a routing exception"
+    },
+    {
+      "id": "route:34",
+      "source": "route",
+      "line": 34,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:35",
+      "source": "route",
+      "line": 35,
+      "sha256": "b0e69b4337dc0c49bdc0ceb67bb5f0784e645ad0e58d6b05c6e558ad74561e79",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "Declare `Route: custom-simple [steps] — because <scope/risk>`",
+        "load registered `start-workflow` before executing",
+        "report the gap and read the canonical registry, never invent a sequence"
+      ]
+    },
+    {
+      "id": "route:36",
+      "source": "route",
+      "line": 36,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:37",
+      "source": "route",
+      "line": 37,
+      "sha256": "cc27e889f38fadb29011059c0eb418b70b55f211acfb0982b04745077d9d57e0",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [
+        ".claude/skills/shared/workflow-first-gate.md"
+      ],
+      "anchors": [
+        "Gates, occurrence identities and declared all-return barriers remain binding",
+        "retain test, review and spec/doc gates"
+      ]
+    },
+    {
+      "id": "route:39",
+      "source": "route",
+      "line": 39,
+      "sha256": "16b5e5c349b4b0b822e9d85fa6b3ed1ca37922f49b5f4c5b4f91532745cce039",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "route:40",
+      "source": "route",
+      "line": 40,
+      "sha256": "c9aae592013f0297291d9ebdb19581d426286e8077d99b2847418296a77e2ea1",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "catalog:1",
+      "source": "catalog",
+      "line": 1,
+      "sha256": "f957ee184573d6952fe42f2f2651d3052c1139d2e90c57ae4b1b04becda006c8",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "catalog:2",
+      "source": "catalog",
+      "line": 2,
+      "sha256": "0694813db0d600c90f45646c2033d2b1cd647f2d00992e74a75a9b780c81922c",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "catalog:4",
+      "source": "catalog",
+      "line": 4,
+      "sha256": "2e2ccfa7a43a9a2b552a783c164198725d8e9950b06c102cfc0398c35e54ce37",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:6",
+      "source": "catalog",
+      "line": 6,
+      "sha256": "bb78a993c41acb24098bea140775104fc4138dd5f2446a77064c5c4f7a23d9e2",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "catalog:8",
+      "source": "catalog",
+      "line": 8,
+      "sha256": "3b4904dc305175b0d93325a3a652f6ca32d885c663fc4ad7f12bdfa3e499ab31",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:10",
+      "source": "catalog",
+      "line": 10,
+      "sha256": "4249f183ab01cbdf88e6de0928b2c327914394dd7cc4e350fbf3e4e3e26e653a",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:12",
+      "source": "catalog",
+      "line": 12,
+      "sha256": "6f72d196ba51becdf9b95c0bbe588d0a352607f8449011f5b44477387e215cfc",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-workflow-route.md",
+      "fullSources": [],
+      "anchors": [
+        "Judge by observable behavior"
+      ]
+    },
+    {
+      "id": "catalog:14",
+      "source": "catalog",
+      "line": 14,
+      "sha256": "ede380102929136cd2ae506b914819d52ec89cbc9d4c0e6cc64eb3e35a5f9b60",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:16",
+      "source": "catalog",
+      "line": 16,
+      "sha256": "59e1361e47ab8a67458db2e642d89551f40cfe09b43157e7c560caf227fac1cc",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:17",
+      "source": "catalog",
+      "line": 17,
+      "sha256": "f1a346b3c63ca7ac887076df3f598cbd2f85f0c97e31d43fb3803be524f20102",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "catalog:18",
+      "source": "catalog",
+      "line": 18,
+      "sha256": "fa8e018fa335a0c1c123d527ece70da111ad2f6b58878febb8c3490c192615f2",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:19",
+      "source": "catalog",
+      "line": 19,
+      "sha256": "2d6b9a474b510823fb2bfdb50ca44c38ba480fa060faf90bcf9edd2c20a3d0f1",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:20",
+      "source": "catalog",
+      "line": 20,
+      "sha256": "64e0089ecce206658b7eaf87ebc3f06b631e988e21e3336fd99fdbd1650b84b7",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:21",
+      "source": "catalog",
+      "line": 21,
+      "sha256": "436b658463ee3d3e5b0fb3493d41e2934a32696f4badb928e2786aa090811791",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:22",
+      "source": "catalog",
+      "line": 22,
+      "sha256": "40f8d05f106e40b9570f7fdd092baf93e0bb3cefbb63b8bb1e894c56dd4d5189",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:23",
+      "source": "catalog",
+      "line": 23,
+      "sha256": "59f11b37b6bb934a9463394c6072a6125f982c4dac069854ab7c3a5b26da07cb",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:24",
+      "source": "catalog",
+      "line": 24,
+      "sha256": "b8ecc5c20c6f28e7b28d4ae8e30d5693aa1ead081d567e0493a24412edb61198",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:25",
+      "source": "catalog",
+      "line": 25,
+      "sha256": "b587a1638bfeb002c4b03c2413231991935b814743291849d4460cf8fd71cc8e",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:26",
+      "source": "catalog",
+      "line": 26,
+      "sha256": "9e2061186c7b5a5e401161e80b226602027f726ffa3760f09bf8320993b289dd",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:27",
+      "source": "catalog",
+      "line": 27,
+      "sha256": "60f68e6c171f0bf08caea67658870edc2755807a2dc93af2051d06aa38f7161b",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:28",
+      "source": "catalog",
+      "line": 28,
+      "sha256": "55baec0b7be9552d2235c8bb0f0bddf6b7e09a7cd31f388a38122595cc5ee5ac",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:29",
+      "source": "catalog",
+      "line": 29,
+      "sha256": "7c3f05a40a90b1d9046392ed8a9e8e17ecbcb5ac68b6762dfb3480c0e479bc23",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:30",
+      "source": "catalog",
+      "line": 30,
+      "sha256": "cc2fffb39063055107d2beb3e8c7ddbc506d417396c6829de3ff42c6d9e43ee3",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:31",
+      "source": "catalog",
+      "line": 31,
+      "sha256": "4a83f173f06389df7564df0cea909dce63be1cb890bc29ce034e0ff0a89d8ac6",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:32",
+      "source": "catalog",
+      "line": 32,
+      "sha256": "f558e4b1a6a66818f39a59a170e5b83b01ff1a842e813ad23c114bfdbbfbcc77",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:33",
+      "source": "catalog",
+      "line": 33,
+      "sha256": "09ebe0e84a94826875bc78c38464e42f761c7fe56020cfbea25f13cddbe429ac",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:34",
+      "source": "catalog",
+      "line": 34,
+      "sha256": "2e14e1a5f10349a34e182d49eef68c5e73e6c85452d92bba174af766640f332f",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:36",
+      "source": "catalog",
+      "line": 36,
+      "sha256": "f47cc7a05448538ad527bdfe3b93a05cdbe0c47d24142fc4a132fc8d7d2d8608",
+      "disposition": "defer",
+      "destination": ".claude/scripts/workflow-catalog.cjs",
+      "readWhen": "before choosing a workflow"
+    },
+    {
+      "id": "catalog:37",
+      "source": "catalog",
+      "line": 37,
+      "sha256": "c74a1f4fa5a259258fff8854da0229c298345eec5e2d24fff90885e8fec06592",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "core:1",
+      "source": "core",
+      "line": 1,
+      "sha256": "05ca04b91d4e21f7ce05c5b7bb40fa20c72474be0d28ceed2cec32fcf3e54e26",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "core:2",
+      "source": "core",
+      "line": 2,
+      "sha256": "4d2012408cdfea0e1669610c03575db1726eb8847c59b2c8227fdb5ff14e3f8d",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/core-engineering-principles.md"
+      ],
+      "note": "Change cost as the measure of design is stated; its precedence over narrower design rules is read from the source.",
+      "anchors": [
+        "changes that are easy to verify and maintain",
+        "match the project's real scale",
+        "Before done, answer: next change → how many edit sites? 10× → what breaks? which test goes red?"
+      ]
+    },
+    {
+      "id": "core:3",
+      "source": "core",
+      "line": 3,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "core:4",
+      "source": "core",
+      "line": 4,
+      "sha256": "fbab2f84d6f63ca4fc6b0d9a3e65cdfc5e83297fca9f0cbfee9ddd3d74efdcb2",
+      "disposition": "merge-and-relax-method",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/core-engineering-principles.md"
+      ],
+      "relaxes": [
+        "fixed-quota"
+      ],
+      "anchors": [
+        "Keep one authoritative owner for each rule",
+        "Reuse what fits; keep dependencies explicit",
+        "Add abstractions for actual reuse or an evidenced change axis",
+        "Prefer reversible choices and avoid speculative infrastructure or pass-through wrappers with no benefit"
+      ]
+    },
+    {
+      "id": "core:5",
+      "source": "core",
+      "line": 5,
+      "sha256": "5861046778018e9abc5975798c5c664903783332f895531ca15283759f71fa6c",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/core-engineering-principles.md"
+      ],
+      "anchors": [
+        "Bound work and resource growth where it matters; match the project's real scale",
+        "avoid speculative infrastructure or pass-through wrappers"
+      ]
+    },
+    {
+      "id": "core:6",
+      "source": "core",
+      "line": 6,
+      "sha256": "e329ea655f85023e1e6e1e8cfe1992510344c65249ea22ca911f9c3863a6e218",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/core-engineering-principles.md"
+      ],
+      "anchors": [
+        "Protect changed intent with meaningful, isolated tests and checks",
+        "keep dependent contracts and documentation aligned",
+        "which test goes red"
+      ]
+    },
+    {
+      "id": "core:7",
+      "source": "core",
+      "line": 7,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "core:8",
+      "source": "core",
+      "line": 8,
+      "sha256": "88b6cba40d49b93d48552c3324a6bed501a8860413b967c06c268bb31879434d",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/core-engineering-principles.md",
+      "readWhen": "planning, implementing or reviewing any change"
+    },
+    {
+      "id": "core:9",
+      "source": "core",
+      "line": 9,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "core:10",
+      "source": "core",
+      "line": 10,
+      "sha256": "6d72f63fd3aae7f03929925cfd800ead6a1766f00363265dcd3fdeebeb36e743",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/core-engineering-principles.md",
+      "readWhen": "planning, implementing or reviewing any change"
+    },
+    {
+      "id": "core:11",
+      "source": "core",
+      "line": 11,
+      "sha256": "f9022de895e36c53cce43c89299133e1ed053b086d15eb343a57dac5d531804d",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/core-engineering-principles.md",
+      "readWhen": "planning, implementing or reviewing any change"
+    },
+    {
+      "id": "core:12",
+      "source": "core",
+      "line": 12,
+      "sha256": "0049b3794cc4763e81d732814f28c98de4328f354bba8038bde9eb8fc64b3af4",
+      "disposition": "defer",
+      "destination": ".claude/skills/shared/protocols/core-engineering-principles.md",
+      "readWhen": "planning, implementing or reviewing any change"
+    },
+    {
+      "id": "core:13",
+      "source": "core",
+      "line": 13,
+      "sha256": "62b67e1f685b7fef51102005dddd27774be3fee38c42965c53aab035d0b6b221",
+      "disposition": "remove-wrapper",
+      "destination": null
+    },
+    {
+      "id": "core:14",
+      "source": "core",
+      "line": 14,
+      "sha256": "b32f0cd6084dcc654c39cdbb6fc496fd869068819971b6b4b4f746e946c2715c",
+      "disposition": "merge",
+      "destination": ".claude/skills/shared/protocols/concise-agent-core.md",
+      "fullSources": [
+        ".claude/skills/shared/protocols/core-engineering-principles.md"
+      ],
+      "anchors": [
+        "Before done, answer: next change → how many edit sites? 10× → what breaks? which test goes red?"
+      ]
+    },
+    {
+      "id": "core:15",
+      "source": "core",
+      "line": 15,
+      "sha256": "27c277e202976b1088bbc3304d054ce15dd976acf98b31d838ae8ab93d6533ad",
+      "disposition": "remove-wrapper",
+      "destination": null
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 /**
- * Platform Loading and Error Indicator Component
+ * Platform Loading and Error Indicator Component (WebV2)
  *
  * A standalone Angular 18 component for displaying loading and error states with signal-based reactive programming.
  * Provides Angular Material-styled error messages and loading states with modern signal architecture.
@@ -12,7 +12,7 @@
  * - Multi-request state tracking support
  * - Dismiss and reload action support
  * - Angular 18 standalone component with signals
- * - Platform-style loading and reloading differentiation
+ * - WebV2-style loading and reloading differentiation
  *
  * @example
  * **Basic usage with target component:**
@@ -207,7 +207,7 @@ export class PlatformLoadingErrorIndicatorComponent extends PlatformComponent im
     public shouldShowProgressBarLoading: WritableSignal<boolean> = signal(false);
     public shouldShowSkeletonLoading: WritableSignal<boolean> = signal(false);
 
-    private checkShouldShowProgressBarLoadingIntervalId?: number;
+    private checkShouldShowProgressBarLoadingIntervalId?: ReturnType<typeof setInterval>;
     private checkShouldShowProgressBarLoadingIntervalCount: number = 0;
     private lastStartShowProgressBarLoadingDate?: Date;
 

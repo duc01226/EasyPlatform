@@ -79,9 +79,11 @@
 
 ## Resources & References
 
-| #   | Title   | URL   | Type  | Module  |
-| --- | ------- | ----- | ----- | ------- | ----- | ----- | -------- |
-| 1   | {title} | {url} | {book | article | video | tool} | Module 1 |
+> Every factual claim in the course ends with an inline `[N]` citation mapped to one row here. Type and Module tell learners what each resource is and where it is used.
+
+| #   | Title   | URL   | Author/Org | Date   | Tier  | Type                                 | Module   |
+| --- | ------- | ----- | ---------- | ------ | ----- | ------------------------------------ | -------- |
+| 1   | {title} | {url} | {author}   | {date} | {1-4} | {book \| article \| video \| tool} | Module 1 |
 
 ## Teaching Notes
 

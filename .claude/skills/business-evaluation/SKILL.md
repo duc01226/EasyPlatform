@@ -1,54 +1,76 @@
 ---
 name: business-evaluation
 version: 1.0.0
-description: '[Content] Use when you need to evaluate business idea viability: Business Model Canvas, financial projections, risk matrix, go-to-market, execution plan.'
+description: '[Content] Use when a workflow step or the user asks for business viability: Business Model Canvas, financials, risks and go-to-market recommendation.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
 
-> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
-> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Execute declared steps in order. NEVER skip, reorder, or merge without explicit user approval.
+> **[BLOCKING]** Before each step/sub-skill call, update todo tracking: set `in_progress` at start, `completed` at end.
 > **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
-> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
+> **[BLOCKING]** If Task tools unavailable, maintain equivalent step tracker with same status transitions.
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
 ## Quick Summary
 
-**Goal:** Evaluate business idea viability to deliver an evidence-backed viability verdict — score + confidence + Pursue/Pivot/Pause/Pass recommendation — grounded in a complete 9-block BMC, 3-year financials with stated assumptions, 5+ risks with mitigation, and a phased execution + GTM plan, so the go/no-go decision rests on traced evidence, never optimism.
+**Goal:** Evaluate business idea viability; deliver evidence-backed viability verdict—score, confidence, Pursue/Pivot/Pause/Pass recommendation—grounded in complete 9-block BMC, 3-year financials + assumptions, 5+ risks with mitigation + residual risk, phased execution + GTM plan, so go/no-go rests on traced evidence, never optimism.
 
 **Summary:**
 
-- **All 7 main steps, in order:** (1) capture idea (problem/solution/target), (2) load market-analysis data as evidence, (3) Business Model Canvas — all 9 blocks, (4) 3-year financial projections + assumptions table, (5) risk assessment — 5+ risks, (6) phased execution plan, (7) go-to-market — then deliver the (Step 7) verdict. NEVER skip, reorder, or merge a step — why: AI forgets the skill's own steps and ships a partial evaluation.
-- Runs after market-analysis: pull its market data in as evidence rather than re-deriving market sizing here — this skill judges viability, it does not research the market.
-- Every artifact is evidence-gated — all 9 BMC blocks cite proof, every financial number carries an assumption + source, and each of the 5+ risks needs mitigation AND a residual-risk entry; an unbacked number or block fails the gate.
-- The verdict is the load-bearing output: a 1-10 viability score, an explicit confidence tier (95/80/60/<60%) with its evidence basis, a Pursue/Pivot/Pause/Pass call, and the single key condition that must hold to succeed — bias toward skepticism, never optimism.
-- Write the result to `docs/knowledge/strategy/business/{slug}.md` via the enforced `.claude/templates/business-evaluation-template.md`, then use `AskUserQuestion` to route next (domain-analysis recommended) — never auto-decide.
+- **Order:** Seven evaluation steps, preceded by a market-evidence precondition: load market evidence first, then run ALL 7 evaluation steps in order — detect idea/scope/evidence completeness; (1) capture idea (problem/solution/target), (2) 9-block BMC, (3) 3-year financials + assumptions, (4) 5+ risks + mitigation/residual risk, (5) phased execution, (6) GTM, (7) verdict. NEVER skip, reorder, or merge — why: partial evaluation invalidates the decision.
+- **Market gate:** In workflow parent, read exact `MARKET_ANALYSIS_PATH` (`{plan-dir}/research/market-analysis.md` only copy fallback); standalone, use supplied path. If absent, state `/market-analysis` did not run, mark TAM/SAM/SOM, share, and segment size N/A, cap verdict confidence at 60%; NEVER re-derive sizing.
+- **Evidence gate:** all 9 BMC blocks cite proof; every financial number has assumption + source; each 5+ risk has mitigation + residual risk; unbacked artifact fails.
+- **Decision/output:** verdict = 1-10 score + confidence tier (95/80/60/<60%) + basis + Pursue/Pivot/Pause/Pass + key success condition; write to `docs/knowledge/strategy/business/{descriptive-slug}.md` via enforced `.claude/templates/business-evaluation-template.md`, then `ask user question tool` for next route (domain-analysis recommended); NEVER auto-decide, favor skepticism.
 
 **Workflow:**
 
+**Before evaluation — detect + reason:** classify supplied idea, scope, and market evidence as present, missing, or ambiguous; for each step run focused `Think: evidence / economics / execution / decision` passes. Derive concerns from idea + evidence; required blocks/categories guide coverage, not checklist recitation.
+
+**Precondition — load market analysis:** In `workflow-research` business-eval mode, read exact parent-provided `MARKET_ANALYSIS_PATH` (`{plan-dir}/research/market-analysis.md` only copy fallback); in another workflow, read the exact path `market-analysis` returned in this run (or its `{plan-dir}/research/market-analysis.md` copy); standalone, use explicitly supplied path.
+**Absent → do NOT re-derive:** state `/market-analysis` did not run; mark every market-sizing figure (TAM/SAM/SOM, share, segment size) N/A with that reason; cap verdict confidence at 60%.
+
 1. **Capture idea** — Problem, solution, target customer
-2. **Load market analysis** — Market data from market-analysis
-3. **Business Model Canvas** — All 9 blocks with evidence
-4. **Financial projections** — 3-year revenue, costs, break-even
-5. **Risk assessment** — 5+ risks with mitigation
-6. **Execution plan** — 3 phases with milestones
+2. **Business Model Canvas** — All 9 blocks with evidence
+3. **Financial projections** — 3-year revenue, costs, break-even
+4. **Risk assessment** — 5+ risks with mitigation
+5. **Execution plan** — 3 phases with milestones
+6. **Go-to-market** — Launch, channels, pricing rationale
 7. **Verdict** — Viability score, confidence, recommendation
 
 **Key Rules:**
 
-- All 9 BMC blocks required, each with evidence
-- Financial projections: explicit assumptions table
-- Minimum 5 risks with mitigation AND residual risk
-- Verdict must be evidence-backed with confidence declaration
+- Require all 9 BMC blocks; each cites evidence
+- Financial projections require explicit assumptions table
+- Require ≥5 risks, each with mitigation AND residual risk
+- Verdict requires evidence + confidence declaration
+- Inside a delivery or product workflow (not `workflow-research`, whose `knowledge-review` gate covers this), when the verdict feeds a go/no-go, run knowledge-review's core rows (citation, calibration, cross-validation) on the business case before presenting the decision; see Output
+- **Risk profile:** analysis. Fresh-eyes review, specialist routing, inline sub-agent protocols, and recursive quality loops: N/A — not required by this target contract; this skill does not delegate or own fix convergence.
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+**Be skeptical; apply critical/sequential thinking. Every claim needs traced proof + confidence percentage (Idea should be more than 80%).**
+
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Business Evaluation](#business-evaluation)
+- [Step 1: Capture the Idea](#step-1-capture-the-idea)
+- [Step 2: Business Model Canvas](#step-2-business-model-canvas)
+- [Step 3: Financial Projections (3 Years)](#step-3-financial-projections-3-years)
+- [Step 4: Risk Assessment](#step-4-risk-assessment)
+- [Step 5: Execution Plan](#step-5-execution-plan)
+- [Step 6: Go-to-Market](#step-6-go-to-market)
+- [Step 7: Verdict](#step-7-verdict)
+- [Output](#output)
+- [Next Steps](#next-steps)
+- [Prompt-Enhance Closing Anchors](#prompt-enhance-closing-anchors)
+- [Closing Reminders](#closing-reminders)
 
 # Business Evaluation
 
 ## Step 1: Capture the Idea
 
-From user input, extract:
+Extract from user input:
 
 - **One-liner** — Elevator pitch in 1 sentence
 - **Problem** — What pain point does it solve?
@@ -57,7 +79,7 @@ From user input, extract:
 
 ## Step 2: Business Model Canvas
 
-All 9 blocks required:
+Require all 9 blocks:
 
 | Block                      | Key Question                      | Evidence Required    |
 | -------------------------- | --------------------------------- | -------------------- |
@@ -91,16 +113,16 @@ All 9 blocks required:
 
 ### Assumptions Table
 
-Every number must list its assumption and source.
+Every number lists its assumption + source.
 
 ## Step 4: Risk Assessment
 
-Minimum 5 risks:
+Require ≥5 risks:
 
 | Risk | Likelihood | Impact | Mitigation | Residual Risk |
 | ---- | ---------- | ------ | ---------- | ------------- |
 
-Categories to consider: market, execution, financial, competitive, regulatory, technical.
+Consider market, execution, financial, competitive, regulatory, technical.
 
 ## Step 5: Execution Plan
 
@@ -112,7 +134,7 @@ Categories to consider: market, execution, financial, competitive, regulatory, t
 
 ## Step 6: Go-to-Market
 
-- **Launch strategy** — How to enter the market
+- **Launch strategy** — How to enter market
 - **Initial channels** — Top 3 acquisition channels
 - **Pricing strategy** — Model + rationale + competitive comparison
 
@@ -127,112 +149,63 @@ Categories to consider: market, execution, financial, competitive, regulatory, t
 
 Write to `docs/knowledge/strategy/business/{descriptive-slug}.md` using enforced template from `.claude/templates/business-evaluation-template.md`.
 
+**Business-case check before a go/no-go:** when this skill runs inside a delivery or product workflow (for example `workflow-big-feature` or `workflow-greenfield-init`) and the verdict feeds that workflow's go/no-go, run the core rows of `.claude/skills/knowledge-review/SKILL.md` on the written business case before presenting the decision: checklist 2 Citation Audit, 3 Confidence Accuracy and 6 Cross-Validation. Run one read-only pass, fix each failed row in the artifact (or lower the confidence it overstates), then present the verdict with the check result. Inside `workflow-research` its `knowledge-review` gate reviews the artifact instead; standalone runs skip this check.
+
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+> **Inside a workflow:** when this skill runs as a step of an active workflow, skip the prompts in this section and return the result — the workflow's next step decides what runs (`/start-workflow` → Step Execution Protocol, Workflow-step mode).
+
+**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** After completion, use `ask user question tool` to present these options. Do NOT skip because the task seems "simple" or "obvious"—the user decides:
 
 - **"/domain-analysis (Recommended)"** — Analyze domain model from business evaluation
 - **"/plan"** — If ready to plan implementation
 - **"Skip, continue manually"** — user decides
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+> **[IMPORTANT]** Use `TaskCreate` to split ALL work into small tasks BEFORE starting.
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **External Memory:** For complex/lengthy research, analysis, scans, or reviews, write intermediate findings + final results to `tmp/reports/`—preserves context and serves as deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
+> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION—every claim, finding, and recommendation requires `file:line` proof or traced evidence + confidence percentage (>80% act; <80% verify first).
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval; inside a workflow run, `/start-workflow` → Workflow-step mode bounds this
 **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
 **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
 **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
-
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Deliver an evidence-backed viability verdict — score + confidence + Pursue/Pivot/Pause/Pass recommendation — grounded in a complete 9-block BMC, 3-year financials with stated assumptions, 5+ risks with mitigation, and a phased execution + GTM plan, so the go/no-go decision rests on traced evidence, never optimism.
-
-**MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
-
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Critical Thinking:** traced `file:line` proof, confidence >80% to act, NEVER guess as fact.
+**IMPORTANT MUST ATTENTION Goal:** Evaluate business idea viability; deliver evidence-backed viability verdict—score, confidence, Pursue/Pivot/Pause/Pass recommendation—grounded in complete 9-block BMC, 3-year financials + assumptions, 5+ risks with mitigation + residual risk, phased execution + GTM plan, so go/no-go rests on traced evidence, never optimism.
 
 **IMPORTANT MUST ATTENTION** every claim, financial number, BMC block, and verdict carries evidence + confidence % (95/80/60/<60) — NEVER present a guess as fact — why: an unbacked number turns the go/no-go into optimism dressed as analysis.
 **IMPORTANT MUST ATTENTION** bias toward skepticism on the verdict — NEVER round optimism up; surface the single key condition that must hold and the residual risk if it fails — why: a falsely-rosy Pursue burns capital that an honest Pause would save.
-**IMPORTANT MUST ATTENTION** validate the next route with user via `AskUserQuestion` — NEVER auto-decide domain-analysis/plan — why: this skill judges viability, the human owns the go/no-go.
+**IMPORTANT MUST ATTENTION** validate the next route with user via `ask user question tool` — NEVER auto-decide domain-analysis/plan — why: this skill judges viability, the human owns the go/no-go.
 
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting; keep one `in_progress`, mark `completed` with evidence; add a final review todo — why: untracked multi-step work loses state on compaction.
-**MANDATORY IMPORTANT MUST ATTENTION** consume market data FROM market-analysis as evidence — NEVER re-derive market sizing here — why: this skill judges viability, it does not research the market; duplicated sizing diverges from the source.
+**MANDATORY IMPORTANT MUST ATTENTION** consume market data FROM market-analysis as evidence — NEVER re-derive market sizing here; if that producer did not run, mark the market figures N/A with the reason and cap verdict confidence at 60% rather than inventing them — why: this skill judges viability, it does not research the market; duplicated sizing diverges from the source.
 **MANDATORY IMPORTANT MUST ATTENTION** all 9 BMC blocks present, each citing proof; every financial number lists its assumption + source in the assumptions table — why: a missing block or bare number is a silent gap the verdict then rests on.
 **MANDATORY IMPORTANT MUST ATTENTION** minimum 5 risks, each with mitigation AND a residual-risk entry across market/execution/financial/competitive/regulatory/technical — why: a risk without residual pretends mitigation is total.
-**MANDATORY IMPORTANT MUST ATTENTION** run ALL 7 steps in order — idea → market-load → 9-block BMC → 3-year financials → 5+ risks → 3-phase execution plan (Validation/Build/Growth milestones) → go-to-market (launch + top-3 channels + pricing rationale) → verdict; NEVER drop financials, execution, or GTM because the idea "feels" decided — why: the verdict is only as sound as the weakest step it rests on.
+**MANDATORY IMPORTANT MUST ATTENTION** detect idea/scope/evidence completeness; load exact market-analysis evidence first (parent `MARKET_ANALYSIS_PATH`; `{plan-dir}/research/market-analysis.md` copy fallback; supplied standalone path; absent → market figures N/A + confidence cap 60%); then run ALL 7 steps in order: idea → 9-block BMC → 3-year financials → 5+ risks → 3-phase execution → GTM → verdict; output via template; `ask user question tool` for next route. NEVER re-derive sizing, skip/reorder/merge steps, drop financials/execution/GTM, or auto-decide — why: verdict quality follows the weakest step/evidence.
 **MANDATORY IMPORTANT MUST ATTENTION** before writing any figure or claim, search market-analysis output + prior evaluations for 3+ comparable patterns and cite them — why: a number with no comparable anchor is a fabrication.
-**MANDATORY IMPORTANT MUST ATTENTION** write the result to `docs/knowledge/strategy/business/{slug}.md` via the enforced `.claude/templates/business-evaluation-template.md` — NEVER hand-roll the structure — why: the template is the contract downstream skills (domain-analysis/plan) read.
-**MANDATORY IMPORTANT MUST ATTENTION** persist intermediate findings to `plans/reports/` for lengthy evaluations — why: external memory survives context loss and serves as the deliverable.
+**MANDATORY IMPORTANT MUST ATTENTION** inside a delivery or product workflow whose go/no-go rests on this verdict, run knowledge-review checklists 2, 3 and 6 (citation, calibration, cross-validation) on the written business case and fix failed rows before presenting the decision — why: those workflows run no `knowledge-review` gate on the artifact the build decision rests on.
+**MANDATORY IMPORTANT MUST ATTENTION** write the result to `docs/knowledge/strategy/business/{descriptive-slug}.md` via the enforced `.claude/templates/business-evaluation-template.md` — NEVER hand-roll the structure — why: the template is the contract downstream skills (domain-analysis/plan) read.
+**MANDATORY IMPORTANT MUST ATTENTION** persist intermediate findings to `tmp/reports/` for lengthy evaluations — why: external memory survives context loss and serves as the deliverable.
 
 **Anti-Rationalization:**
 
-| Evasion                                 | Rebuttal                                                                              |
-| --------------------------------------- | ------------------------------------------------------------------------------------- |
-| "Idea is obviously viable, skip rigor"  | Optimism is not evidence. Run all 9 blocks + financials + risks anyway.               |
-| "Skip a BMC block — not relevant"       | Every block cites proof or states why N/A explicitly; silent omission fails the gate. |
-| "Estimate the number, source it later"  | No assumption + source = no number. Fill the assumptions table before the verdict.    |
-| "5 risks is a lot, 2 covers it"         | Minimum 5, each with residual risk. Thin risk lists hide the real downside.           |
-| "Recommendation is clear, skip the ask" | Still `AskUserQuestion` for the next route — the human owns go/no-go.                 |
+| Evasion                                  | Rebuttal                                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| "Idea is obviously viable, skip rigor"   | Optimism is not evidence. Run all 9 blocks + financials + risks anyway.               |
+| "Skip a BMC block — not relevant"        | Every block cites proof or states why N/A explicitly; silent omission fails the gate. |
+| "Estimate the number, source it later"   | No assumption + source = no number. Fill the assumptions table before the verdict.    |
+| "5 risks is a lot, 2 covers it"          | Minimum 5, each with residual risk. Thin risk lists hide the real downside.           |
+| "Recommendation is clear, skip the ask"  | Still `ask user question tool` for the next route — the human owns go/no-go.                  |
 
-**IMPORTANT MUST ATTENTION** evidence + confidence % on every number — NEVER present a guess as fact. **IMPORTANT MUST ATTENTION** bias toward skepticism — NEVER round optimism up. **IMPORTANT MUST ATTENTION** `AskUserQuestion` for the next route — NEVER auto-decide.
+**IMPORTANT MUST ATTENTION** evidence + confidence % on every number — NEVER present a guess as fact. **IMPORTANT MUST ATTENTION** bias toward skepticism — NEVER round optimism up. **IMPORTANT MUST ATTENTION** `ask user question tool` for the next route — NEVER auto-decide.

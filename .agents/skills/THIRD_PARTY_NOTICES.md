@@ -261,7 +261,7 @@ If you develop a new program, and you want it to be of the greatest possible use
 To do so, attach the following notices to the program. It is safest to attach them to the start of each source file to most effectively state the exclusion of warranty; and each file should have at least the "copyright" line and a pointer to where the full notice is found.
 
 \<one line to give the program's name and a brief idea of what it does.\>
-Copyright (C) \<year\> \<name of author\>
+Copyright (C) \<year\>  \<name of author\>
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -281,6 +281,26 @@ The hypothetical commands 'show w' and 'show c' should show the appropriate part
 You should also get your employer (if you work as a programmer) or school, if any, to sign a "copyright disclaimer" for the program, if necessary. For more information on this, and how to apply and follow the GNU GPL, see [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/).
 
 The GNU General Public License does not permit incorporating your program into proprietary programs. If your program is a subroutine library, you may consider it more useful to permit linking proprietary applications with the library. If this is what you want to do, use the GNU Lesser General Public License instead of this License. But first, please read [https://www.gnu.org/licenses/why-not-lgpl.html](https://www.gnu.org/licenses/why-not-lgpl.html).
+
+---
+
+## **MIT License**
+
+The following components are licensed under MIT License reproduced below:
+
+**mattpocock/skills** (the `grilling`, `grill-me` and `wayfinder` skills), Copyright (c) 2026 Matt Pocock
+
+Source Code: [https://github.com/mattpocock/skills](https://github.com/mattpocock/skills)
+
+The `grill` and `wayfinder` skills and the `decision-interview` shared protocol adapt ideas and structure from these skills.
+
+**License Text:**
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 
@@ -306,7 +326,7 @@ The following fonts are licensed under SIL Open Font License v1.1 reproduced bel
 
 **Arsenal SC**, Copyright 2012 The Arsenal Project Authors ([andrij.design@gmail.com](mailto:andrij.design@gmail.com))
 
-**Big Shoulders**, Copyright 2019 The Big Shoulders Project Authors ([https://github.com/xotypeco/big_shoulders](https://github.com/xotypeco/big_shoulders))
+**Big Shoulders**, Copyright 2019 The Big Shoulders Project Authors ([https://github.com/xotypeco/big\_shoulders](https://github.com/xotypeco/big_shoulders))
 
 **Boldonse**, Copyright 2024 The Boldonse Project Authors ([https://github.com/googlefonts/boldonse](https://github.com/googlefonts/boldonse))
 
@@ -386,15 +406,15 @@ PERMISSION & CONDITIONS
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of the Font Software, to use, study, copy, merge, embed, modify, redistribute, and sell modified and unmodified copies of the Font Software, subject to the following conditions:
 
-1. Neither the Font Software nor any of its individual components, in Original or Modified Versions, may be sold by itself.
+1) Neither the Font Software nor any of its individual components, in Original or Modified Versions, may be sold by itself.
 
-2. Original or Modified Versions of the Font Software may be bundled, redistributed and/or sold with any software, provided that each copy contains the above copyright notice and this license. These can be included either as stand-alone text files, human-readable headers or in the appropriate machine-readable metadata fields within text or binary files as long as those fields can be easily viewed by the user.
+2) Original or Modified Versions of the Font Software may be bundled, redistributed and/or sold with any software, provided that each copy contains the above copyright notice and this license. These can be included either as stand-alone text files, human-readable headers or in the appropriate machine-readable metadata fields within text or binary files as long as those fields can be easily viewed by the user.
 
-3. No Modified Version of the Font Software may use the Reserved Font Name(s) unless explicit written permission is granted by the corresponding Copyright Holder. This restriction only applies to the primary font name as presented to the users.
+3) No Modified Version of the Font Software may use the Reserved Font Name(s) unless explicit written permission is granted by the corresponding Copyright Holder. This restriction only applies to the primary font name as presented to the users.
 
-4. The name(s) of the Copyright Holder(s) or the Author(s) of the Font Software shall not be used to promote, endorse or advertise any Modified Version, except to acknowledge the contribution(s) of the Copyright Holder(s) and the Author(s) or with their explicit written permission.
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font Software shall not be used to promote, endorse or advertise any Modified Version, except to acknowledge the contribution(s) of the Copyright Holder(s) and the Author(s) or with their explicit written permission.
 
-5. The Font Software, modified or unmodified, in part or in whole, must be distributed entirely under this license, and must not be distributed under any other license. The requirement for fonts to remain under this license does not apply to any document created using the Font Software.
+5) The Font Software, modified or unmodified, in part or in whole, must be distributed entirely under this license, and must not be distributed under any other license. The requirement for fonts to remain under this license does not apply to any document created using the Font Software.
 
 TERMINATION
 

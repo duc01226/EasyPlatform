@@ -188,12 +188,40 @@ public static partial class Util
             CancellationToken cancellationToken = default,
             bool logFullStackTraceBeforeBackgroundTask = false)
         {
+            _ = QueueActionInBackgroundTask(
+                action,
+                pool,
+                retryCount,
+                retryDelayProvider,
+                loggerFactory,
+                delayTimeSeconds,
+                cancellationToken,
+                logFullStackTraceBeforeBackgroundTask);
+        }
+
+        /// <summary>
+        /// Queues an asynchronous action using the same retry, delay, logging, and background-lock semantics as
+        /// <see cref="QueueActionInBackground(Func{Task}, IPlatformBackgroundActionPermitPool?, int?, Func{int, TimeSpan}, Func{ILogger}?, int, CancellationToken, bool)"/>,
+        /// and returns a task that completes after the queued action has finished. The default preserves the historic
+        /// fire-and-forget error handling; callers that own a lifecycle boundary can opt into exception propagation.
+        /// </summary>
+        public static Task QueueActionInBackgroundTask(
+            Func<Task> action,
+            IPlatformBackgroundActionPermitPool? pool = null,
+            int? retryCount = null,
+            Func<int, TimeSpan> retryDelayProvider = null,
+            Func<ILogger>? loggerFactory = null,
+            int delayTimeSeconds = 0,
+            CancellationToken cancellationToken = default,
+            bool logFullStackTraceBeforeBackgroundTask = false,
+            bool propagateExceptions = false)
+        {
             retryDelayProvider ??= DefaultBackgroundRetryDelayProvider;
 
             // Must use stack trace BEFORE Task.Run — after the hop the caller frame is gone.
             var fullStackTrace = logFullStackTraceBeforeBackgroundTask ? PlatformEnvironment.StackTrace() : null;
 
-            Task.Run(
+            return Task.Run(
                 async () =>
                 {
                     PlatformLogger.BackgroundThreadFullStackTraceContextAccessor.Current = fullStackTrace;
@@ -243,9 +271,16 @@ public static partial class Util
                     }
                     catch (Exception ex)
                     {
-                        if (ex is TaskCanceledException) return;
+                        if (ex is TaskCanceledException)
+                        {
+                            if (propagateExceptions) throw;
+
+                            return;
+                        }
 
                         loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread failed.");
+
+                        if (propagateExceptions) throw;
                     }
                 },
                 cancellationToken);
@@ -419,12 +454,30 @@ public static partial class Util
         /// <param name="maximumIntervalExecutionCount">The maximum number of times the action should be executed. If null, the action is executed indefinitely.</param>
         /// <param name="executeOnceImmediately">If true, the action is executed immediately upon queuing. Otherwise, the action is first executed after the interval time has passed.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the background task.</param>
+        /// <param name="logFullStackTraceBeforeBackgroundTask">Capture caller stack trace before the <c>Task.Run</c> hop.</param>
+        /// <param name="retryCount">
+        /// Retry attempts applied to EACH execution of <paramref name="action" /> (the immediate pass and every
+        /// interval pass alike). <c>null</c> (default) keeps the historic no-retry behaviour so existing callers
+        /// are unaffected. Opt in when the action talks to shared infrastructure that can be transiently
+        /// unavailable.
+        /// </param>
+        /// <param name="retryDelayProvider">Backoff between those retries. Defaults to <see cref="DefaultBackgroundRetryDelayProvider" />.</param>
         /// <remarks>
         /// This method is useful for scheduling recurring tasks, such as cache invalidation or data seeding, in a non-blocking manner.
         /// <para>
         /// IMPORTANT: long-lived interval loops MUST NOT be wrapped in
         /// <see cref="BackgroundLock.IPlatformBackgroundActionPermitPool"/> — the permit would be held for the
         /// loop's lifetime and starve the pool. Use this method only for genuinely periodic work.
+        /// </para>
+        /// <para>
+        /// <b>Why <paramref name="retryCount" /> exists.</b> <see cref="QueueIntervalAsyncAction" /> awaits the
+        /// immediate pass OUTSIDE its interval loop, so an exception there propagates and the remaining scheduled
+        /// passes never run. A caller asking for "2 passes, 5s apart" therefore got ZERO passes plus an
+        /// error-level log line whenever the first attempt hit a transient infrastructure blip. The sibling
+        /// <see cref="QueueActionInBackground(Func{Task},BackgroundLock.IPlatformBackgroundActionPermitPool,int?,Func{int,TimeSpan},Func{ILogger},int,CancellationToken,bool)" />
+        /// has had <c>retryCount</c>/<c>retryDelayProvider</c> all along; this closes that asymmetry rather than
+        /// inventing a new policy. Retries are logged at WARNING, not ERROR: an attempt that is about to be
+        /// retried is not yet a failure, and the terminal catch below still logs at ERROR if every attempt fails.
         /// </para>
         /// </remarks>
         public static void QueueIntervalAsyncActionInBackground(
@@ -434,10 +487,31 @@ public static partial class Util
             int? maximumIntervalExecutionCount = null,
             bool executeOnceImmediately = true,
             CancellationToken cancellationToken = default,
-            bool logFullStackTraceBeforeBackgroundTask = false)
+            bool logFullStackTraceBeforeBackgroundTask = false,
+            int? retryCount = null,
+            Func<int, TimeSpan> retryDelayProvider = null)
         {
             // Must use stack trace BEFORE Task.Run to run some new action in background. BECAUSE after call get data function, the stack trace get lost, only back to task.run.
             var fullStackTrace = logFullStackTraceBeforeBackgroundTask ? PlatformEnvironment.StackTrace() : null;
+
+            // Applied per execution, so the immediate pass surviving a transient fault still leaves the
+            // interval passes scheduled. Opt-in: null leaves every existing caller byte-for-byte unchanged.
+            var resilientAction = retryCount is null or <= 0
+                ? action
+                : actionCancellationToken => WaitRetryThrowFinalExceptionAsync(
+                    () => action(actionCancellationToken),
+                    retryDelayProvider ?? DefaultBackgroundRetryDelayProvider,
+                    retryCount.Value,
+                    onRetry: (ex, delay, retryAttempt, context) =>
+                    {
+                        loggerFactory?.Invoke()
+                            .LogWarning(
+                                ex.BeautifyStackTrace(),
+                                "Run in background interval thread attempt {RetryAttempt} failed; retrying in {DelaySeconds}s.",
+                                retryAttempt,
+                                delay.TotalSeconds);
+                    },
+                    cancellationToken: actionCancellationToken);
 
             Task.Run(
                 async () =>
@@ -446,7 +520,12 @@ public static partial class Util
 
                     try
                     {
-                        await QueueIntervalAsyncAction(action, intervalTimeInSeconds, maximumIntervalExecutionCount, executeOnceImmediately, cancellationToken);
+                        await QueueIntervalAsyncAction(
+                            resilientAction,
+                            intervalTimeInSeconds,
+                            maximumIntervalExecutionCount,
+                            executeOnceImmediately,
+                            cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -1141,8 +1220,27 @@ public static partial class Util
         /// <param name="waitForMsg">An optional message to include in the TimeoutException if the condition is not met within the specified time.</param>
         /// <returns>A Task that completes when the condition is met or the timeout occurs.</returns>
         /// <exception cref="TimeoutException">Thrown if the condition is not met within the specified time.</exception>
+        public static Task WaitUntilAsync(
+            Func<bool> condition,
+            double maxWaitSeconds = DefaultWaitUntilMaxSeconds,
+            double waitIntervalSeconds = DefaultWaitIntervalSeconds,
+            string waitForMsg = null)
+        {
+            return WaitUntilAsync(condition, CancellationToken.None, maxWaitSeconds, waitIntervalSeconds, waitForMsg);
+        }
+
+        /// <summary>
+        /// Waits for a condition with cooperative cancellation, including during the polling delay.
+        /// Cancellation stops the polling operation itself rather than abandoning an active waiter.
+        /// </summary>
+        /// <param name="condition">Synchronous condition to evaluate between delays.</param>
+        /// <param name="cancellationToken">Observed before each condition evaluation and during each delay.</param>
+        /// <param name="maxWaitSeconds">Maximum wait before a timeout.</param>
+        /// <param name="waitIntervalSeconds">Interval between evaluations.</param>
+        /// <param name="waitForMsg">Optional timeout context.</param>
         public static async Task WaitUntilAsync(
             Func<bool> condition,
+            CancellationToken cancellationToken,
             double maxWaitSeconds = DefaultWaitUntilMaxSeconds,
             double waitIntervalSeconds = DefaultWaitIntervalSeconds,
             string waitForMsg = null)
@@ -1150,10 +1248,13 @@ public static partial class Util
             var startWaitTime = DateTime.UtcNow;
             var maxWaitMilliseconds = maxWaitSeconds * 1000;
 
-            while (!condition())
+            while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (condition()) return;
+
                 if ((DateTime.UtcNow - startWaitTime).TotalMilliseconds < maxWaitMilliseconds)
-                    await Task.Delay((int)(waitIntervalSeconds * 1000));
+                    await Task.Delay((int)(waitIntervalSeconds * 1000), cancellationToken);
                 else
                 {
                     throw new TimeoutException(

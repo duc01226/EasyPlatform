@@ -146,9 +146,10 @@ def _find_tests_for(store: GraphStore, node, name: str) -> list[dict]:
     qn = node.qualified_name if node else name
     tests = []
     if node:
-        for e in store.get_edges_by_target(qn):
+        # TESTED_BY: source = production function, target = the test that calls it.
+        for e in store.get_edges_by_source(qn):
             if e.kind == "TESTED_BY":
-                test = store.get_node(e.source_qualified)
+                test = store.get_node(e.target_qualified)
                 if test:
                     tests.append(node_to_dict(test))
     test_nodes = store.search_nodes(f"test_{name}", limit=10)
@@ -587,15 +588,6 @@ def query_graph(
                     if caller:
                         results.append(_n2d(caller))
                     edges_out.append(_e2d(e))
-            # Fallback: CALLS edges store unqualified target names
-            # (e.g. "generateTestCode") while qn is fully qualified
-            # (e.g. "file.ts::generateTestCode"). Search by plain name too.
-            if not results and node:
-                for e in store.search_edges_by_target_name(node.name):
-                    caller = store.get_node(e.source_qualified)
-                    if caller:
-                        results.append(_n2d(caller))
-                    edges_out.append(_e2d(e))
 
         elif pattern == "callees_of":
             for e in store.get_edges_by_source(qn):
@@ -775,16 +767,41 @@ def get_connections(
                     caller = store.get_node(e.source_qualified)
                     if caller:
                         callers.append(_n2d(caller))
-            # Fallback: search by plain name
-            if not callers:
-                for e in store.search_edges_by_target_name(node.name):
-                    caller = store.get_node(e.source_qualified)
-                    if caller:
-                        callers.append(_n2d(caller))
         sections["callers_of"] = callers[:cap]
 
         # tests_for
         sections["tests_for"] = _find_tests_for(store, node, node.name)[:cap]
+
+        # Connector edges (API_ENDPOINT, SPEC_REFERENCE, and any other implicit
+        # connector kind) — surfaced generically so configured connectors are
+        # visible here without hardcoding edge-kind names.
+        _STRUCTURAL = {"CALLS", "IMPORTS_FROM", "CONTAINS", "INHERITS",
+                       "IMPLEMENTS", "TESTED_BY"}
+        connector_out: list[dict] = []
+        connector_in: list[dict] = []
+        source_ids = [qn]
+        target_ids = [qn]
+        if node.file_path and node.file_path not in source_ids:
+            source_ids.append(node.file_path)
+            target_ids.append(node.file_path)
+        for file_or_qn in source_ids:
+            for e in store.get_edges_by_source(file_or_qn):
+                if e.kind not in _STRUCTURAL:
+                    connector_out.append({
+                        **edge_to_compact_dict(e, root_str),
+                        "from_path": _to_relative(e.source_qualified, root_str),
+                        "to_path": _to_relative(e.target_qualified, root_str),
+                    })
+        for file_or_qn in target_ids:
+            for e in store.get_edges_by_target(file_or_qn):
+                if e.kind not in _STRUCTURAL:
+                    connector_in.append({
+                        **edge_to_compact_dict(e, root_str),
+                        "from_path": _to_relative(e.source_qualified, root_str),
+                        "to_path": _to_relative(e.target_qualified, root_str),
+                    })
+        sections["connector_edges_out"] = connector_out[:cap]
+        sections["connector_edges_in"] = connector_in[:cap]
 
         # Apply node-mode filter to sections that contain node dicts
         allowed_kinds = _NODE_MODE_KINDS.get(node_mode)
@@ -1320,6 +1337,7 @@ def trace_connections(
     edge_kinds: list[str] | None = None,
     node_mode: str = "all",
     compact: bool = True,
+    max_nodes: int = 500,
 ) -> dict[str, Any]:
     """Trace connections from a target node through multiple edge types.
 
@@ -1337,6 +1355,8 @@ def trace_connections(
                     + implicit edge kinds.
         node_mode: Filter output nodes: "file" (file-level only), "function",
                    "class", or "all" (default, no filter).
+        max_nodes: Cap on total nodes reached; bounds fan-out on dense graphs
+                   so an unbounded BFS cannot exhaust memory or the output size.
 
     Returns:
         Multi-level tree of connected nodes grouped by BFS depth.
@@ -1382,70 +1402,127 @@ def trace_connections(
         _n2d = (lambda n: node_to_compact_dict(n, root_str, node_mode)) if compact else node_to_dict
         _e2d = (lambda e: edge_to_compact_dict(e, root_str)) if compact else edge_to_dict
 
-        # Level 0: the starting node(s)
-        level0_nodes = []
-        for qn in current_qns:
-            n = store.get_node(qn)
-            if n:
-                level0_nodes.append(_n2d(n))
+        # The cap MUST bound the seed level too: a File target seeds EVERY node in the file,
+        # so slicing only later levels leaves level 0 unbounded and makes the documented
+        # "bounds output size" contract false for file targets. Truncate the seed before the
+        # batched fetch so the cap applies to both the emitted nodes and the BFS frontier.
+        truncated = False
+        if len(current_qns) > max_nodes:
+            # `sorted` for a deterministic kept-set: a bare set slice is hash-ordered, so the same
+            # target could emit a different subset per process.
+            current_qns = set(sorted(current_qns)[:max_nodes])
+            truncated = True
+
+        # Level 0: the starting node(s) — one batched fetch instead of N lookups
+        level0_nodes = [
+            _n2d(n) for n in store.get_nodes_by_qualified_names(list(current_qns))
+        ]
         levels.append({"depth": 0, "nodes": level0_nodes, "edges": []})
         visited.update(current_qns)
 
         # BFS levels 1..depth
         for d in range(1, depth + 1):
-            next_qns: set[str] = set()
-            level_edges: list[dict] = []
+            # Batch-resolve the whole frontier once (replaces per-node get_node).
+            frontier_nodes = store.get_nodes_by_qualified_names(list(current_qns))
+            frontier_members = set(current_qns)
+            file_paths: set[str] = set()
+            for fn in frontier_nodes:
+                if fn.file_path and fn.file_path != fn.qualified_name:
+                    frontier_members.add(fn.file_path)
+                    file_paths.add(fn.file_path)
 
-            for qn in current_qns:
-                edges: list = []
+            # Batch-fetch all edges touching the frontier (structural + connector
+            # file-path edges) in a bounded number of queries per level.
+            frontier_edges: list = []
+            if direction in ("downstream", "both"):
+                frontier_edges.extend(store.get_edges_by_sources(list(current_qns)))
+                if file_paths:
+                    frontier_edges.extend(store.get_edges_by_sources(list(file_paths)))
+            if direction in ("upstream", "both"):
+                frontier_edges.extend(store.get_edges_by_targets(list(current_qns)))
+                if file_paths:
+                    frontier_edges.extend(store.get_edges_by_targets(list(file_paths)))
 
-                if direction in ("downstream", "both"):
-                    edges.extend(store.get_edges_by_source(qn))
-                if direction in ("upstream", "both"):
-                    edges.extend(store.get_edges_by_target(qn))
-
-                # Also check edges by file_path — connector edges (API_ENDPOINT,
-                # MESSAGE_BUS) store raw file paths as source/target, not qualified names.
-                # This bridges the gap between structural (CALLS) and connector edges.
-                n = store.get_node(qn)
-                if n and n.file_path and n.file_path != qn:
-                    if direction in ("downstream", "both"):
-                        edges.extend(store.get_edges_by_source(n.file_path))
-                    if direction in ("upstream", "both"):
-                        edges.extend(store.get_edges_by_target(n.file_path))
-
-                for e in edges:
-                    if e.kind not in allowed_kinds:
-                        continue
-
-                    # Determine the "other" node (the one we haven't visited)
-                    other_qn = (
-                        e.target_qualified
-                        if e.source_qualified == qn
-                        else e.source_qualified
+            # Dedupe by edge identity: `current_qns` and `file_paths` overlap (a Class seed
+            # includes its own file), so the same edge is fetched twice. Without this the
+            # duplicate lands in `level_edges` and inflates `total_edges` / the output.
+            seen_edge_ids: set = set()
+            unique_edges: list = []
+            for e in frontier_edges:
+                eid = getattr(e, "id", None)
+                key = (
+                    eid
+                    if eid is not None
+                    else (
+                        e.kind,
+                        e.source_qualified,
+                        e.target_qualified,
+                        getattr(e, "file_path", None),
+                        getattr(e, "line", None),
                     )
+                )
+                if key in seen_edge_ids:
+                    continue
+                seen_edge_ids.add(key)
+                unique_edges.append(e)
+            frontier_edges = unique_edges
 
-                    if other_qn not in visited:
-                        # For connector edges, other_qn may be a raw file path.
-                        # Try to resolve it to the File node's qualified_name.
-                        resolved = other_qn
-                        if not store.get_node(other_qn):
-                            file_nodes = store.get_nodes_by_file(other_qn)
-                            if file_nodes:
-                                resolved = file_nodes[0].qualified_name
-                        if resolved not in visited:
-                            next_qns.add(resolved)
-                            level_edges.append(_e2d(e))
+            candidates: list[tuple[str, Any]] = []
+            for e in frontier_edges:
+                if e.kind not in allowed_kinds:
+                    continue
+                other_qn = (
+                    e.target_qualified
+                    if e.source_qualified in frontier_members
+                    else e.source_qualified
+                )
+                if other_qn not in visited:
+                    candidates.append((other_qn, e))
+
+            # Resolve raw file-path endpoints to File node qualified names in one pass.
+            raw_names = {oq for oq, _ in candidates}
+            resolved_by_name: dict[str, str] = {}
+            if raw_names:
+                found_names = {
+                    n.qualified_name
+                    for n in store.get_nodes_by_qualified_names(list(raw_names))
+                }
+                for r in raw_names:
+                    if r in found_names:
+                        resolved_by_name[r] = r
+                missing = [r for r in raw_names if r not in found_names]
+                if missing:
+                    for fn in store.get_nodes_by_files(missing):
+                        resolved_by_name.setdefault(fn.file_path, fn.qualified_name)
+
+            next_qns: set[str] = set()
+            resolved_edges: list[tuple[str, Any]] = []
+            for other_qn, e in candidates:
+                resolved = resolved_by_name.get(other_qn, other_qn)
+                if resolved in visited:
+                    continue
+                next_qns.add(resolved)
+                resolved_edges.append((resolved, e))
 
             if not next_qns:
                 break
 
-            # Resolve next level nodes
-            level_nodes = []
-            for nqn in next_qns:
-                n = store.get_node(nqn)
-                if n:
-                    level_nodes.append(_n2d(n))
+            # Cap the frontier so a dense hub cannot blow up memory or output.
+            if len(visited) + len(next_qns) > max_nodes:
+                truncated = True
+                kept = set(sorted(next_qns)[: max(0, max_nodes - len(visited))])
+                next_qns = kept
+                resolved_edges = [(r, e) for r, e in resolved_edges if r in kept]
+                if not next_qns:
+                    break
+
+            # Resolve next level nodes from a single batch fetch.
+            node_by_qn = {
+                n.qualified_name: n
+                for n in store.get_nodes_by_qualified_names(list(next_qns))
+            }
+            level_nodes = [_n2d(node_by_qn[q]) for q in next_qns if q in node_by_qn]
+            level_edges = [_e2d(e) for _, e in resolved_edges]
 
             visited.update(next_qns)
             levels.append({
@@ -1473,11 +1550,14 @@ def trace_connections(
             f"{total_nodes} nodes, {total_edges} edges across {len(levels)} levels. "
             f"Edge types: {edge_kind_counts}"
         )
+        if truncated:
+            summary += f" [truncated at {max_nodes} nodes]"
 
         if compact:
             return {
                 "status": "ok",
                 "summary": summary,
+                "truncated": truncated,
                 "levels": levels,
             }
 
@@ -1490,6 +1570,7 @@ def trace_connections(
             "node_mode": node_mode,
             "edge_kinds_filter": sorted(allowed_kinds),
             "summary": summary,
+            "truncated": truncated,
             "levels": levels,
         }
     finally:

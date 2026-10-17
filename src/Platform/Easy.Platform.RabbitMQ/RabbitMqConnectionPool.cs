@@ -128,7 +128,7 @@ public class RabbitMqPooledObjectPolicy : IPooledObjectPolicy<IConnection>
 
         try
         {
-            return CreateConnection().GetResult();
+            return CreateAsync().GetResult();
         }
         catch (Exception ex)
         {
@@ -145,7 +145,11 @@ public class RabbitMqPooledObjectPolicy : IPooledObjectPolicy<IConnection>
         return false;
     }
 
-    private async Task<IConnection> CreateConnection()
+    /// <summary>
+    /// Creates an independently owned connection with the same settings used by the channel pools.
+    /// The caller must dispose the connection; cancellation covers asynchronous connection establishment.
+    /// </summary>
+    public async Task<IConnection> CreateAsync(CancellationToken cancellationToken = default)
     {
         // Store stack trace before call CreateConnection to keep the original stack trace to log
         // after CreateConnection will lose full stack trace (may because it connect async to other external service)
@@ -157,7 +161,7 @@ public class RabbitMqPooledObjectPolicy : IPooledObjectPolicy<IConnection>
                 .Where(hostName => hostName.IsNotNullOrEmpty())
                 .ToArray();
 
-            return await connectionFactory.CreateConnectionAsync(hostNames);
+            return await connectionFactory.CreateConnectionAsync(hostNames, cancellationToken);
         }
         catch (Exception ex)
         {

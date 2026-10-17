@@ -1,8 +1,14 @@
 using System.Collections.Generic;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace PlatformExampleApp.IntegrationTests.WebAppFactory;
@@ -52,6 +58,32 @@ internal sealed class TextSnippetWebApplicationFactory : WebApplicationFactory<P
         // Prevent port binding — TestServer handles requests in-memory.
         // Avoids conflicts with a locally running TextSnippet API on port 5001.
         builder.UseUrls();
+        builder.ConfigureTestServices(services => services
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = TestUserAuthenticationHandler.SchemeName;
+                options.DefaultChallengeScheme = TestUserAuthenticationHandler.SchemeName;
+            })
+            .AddScheme<AuthenticationSchemeOptions, TestUserAuthenticationHandler>(TestUserAuthenticationHandler.SchemeName, _ => { }));
+    }
+}
+
+/// <summary>Test-only identity through the real authentication middleware; ordinary clients remain anonymous.</summary>
+public sealed class TestUserAuthenticationHandler(
+    IOptionsMonitor<AuthenticationSchemeOptions> options,
+    ILoggerFactory loggerFactory,
+    UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, loggerFactory, encoder)
+{
+    public const string SchemeName = "IntegrationTestUser";
+    public const string UserHeader = "X-Test-User";
+
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        if (!Request.Headers.TryGetValue(UserHeader, out var userId) || string.IsNullOrWhiteSpace(userId))
+            return Task.FromResult(AuthenticateResult.NoResult());
+
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, userId.ToString())], SchemeName);
+        return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName)));
     }
 }
 

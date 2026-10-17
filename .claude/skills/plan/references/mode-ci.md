@@ -1,6 +1,6 @@
 # `/plan --mode=ci` — CI / GitHub Actions failure-analysis reference
 
-> Loaded by `plan/SKILL.md`'s Mode Dispatch when invoked as `/plan --mode=ci <github-actions-log-url>`. Adds a CI-failure domain focus on top of the standard plan engine + `/plan-review` gate + `planner` agent — it does NOT replace them. (Migrated verbatim from the former `plan-ci` skill, consolidation M22.)
+> Loaded by `plan/SKILL.md`'s Mode Dispatch when invoked as `/plan --mode=ci <github-actions-log-url>`. Adds CI-failure intake and analysis to the standard concise planning contract; it does not add an automatic review step.
 
 ## Goal
 
@@ -32,5 +32,5 @@ Provide at least 2 implementation approaches with clear trade-offs, explain the 
 ## Key rules
 
 - PLANNING-ONLY: do not implement, only create the fix plan.
-- Always offer `/plan-review` after plan creation (standard `plan` gate — unchanged).
+- Preserve standard handoff: standalone follows the Standalone Validation Chain in `plan/SKILL.md`, setting and exits included, after its Self-Review Pass, and asks no further review question; a workflow invocation runs the same Self-Review Pass unless the workflow lists its own `/plan --mode=review` step, then returns to its parent, after the same chain when that workflow lists no `/plan --mode=validate` step.
 - Be skeptical; every claim needs traced proof, confidence >80% to act.

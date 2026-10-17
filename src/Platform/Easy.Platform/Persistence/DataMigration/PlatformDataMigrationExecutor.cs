@@ -94,6 +94,13 @@ public abstract class PlatformDataMigrationExecutor<TDbContext> : IPlatformDataM
     public virtual bool Ignored => false;
 
     /// <summary>
+    /// Checks transient prerequisites before selection builds execution chains or writes migration history.
+    /// False leaves the migration pending for the next selection; it must not represent permanent completion.
+    /// Dependency failures must propagate rather than being reported as an unmet prerequisite.
+    /// </summary>
+    protected virtual Task<bool> IsReadyToExecuteAsync() => Task.FromResult(true);
+
+    /// <summary>
     /// Runs the migration, wrapping <see cref="InternalExecute" /> with STARTED / FINISHED / FAILED logging so EVERY
     /// data migration reports its own lifecycle no matter which caller drives it.
     ///
@@ -225,15 +232,25 @@ public abstract class PlatformDataMigrationExecutor<TDbContext> : IPlatformDataM
                     .Select(p => p.Name))
             .Then(p => p.ToHashSet());
 
-        return ScanAllDataMigrationExecutors(scanAssembly, serviceProvider)
+        var eligibleMigrations = ScanAllDataMigrationExecutors(scanAssembly, serviceProvider)
             .Where(migrationExecution => !executedOrProcessingMigrationNames.Contains(migrationExecution.Name) &&
                                          !migrationExecution.IsExpired() &&
                                          (migrationExecution.OnlyForDbsCreatedBeforeDate == null ||
                                           migrationExecution.OnlyForDbsCreatedBeforeDate >= dbInitializedMigrationHistoryCreatedDate.Date) &&
                                          !migrationExecution.Ignored)
-            .OrderBy(x => x.GetOrderByValue())
             .ToList()
             .Pipe(EnsureAllDataMigrationExecutorsHasUniqueName);
+
+        // Evaluate sequentially: executors may resolve dependencies from the same service scope.
+        var readyMigrations = await eligibleMigrations.SelectAsync(async migration =>
+        {
+            if (await migration.IsReadyToExecuteAsync()) return migration;
+
+            migration.Dispose();
+            return null;
+        });
+
+        return readyMigrations.WhereNotNull().OrderBy(migration => migration.GetOrderByValue()).ToList();
     }
 
     protected virtual void Dispose(bool disposing)

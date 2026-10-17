@@ -379,7 +379,8 @@ public class PlatformDiagnosticJsonSerializerTests
             SetInnerException(outer, new ArgumentException("inner", outer));
 
             return outer;
-        });
+        }
+        );
 
         yield return ("aggregate-of-cycles", () =>
         {
@@ -387,7 +388,8 @@ public class PlatformDiagnosticJsonSerializerTests
             SetInnerException(outer, new ArgumentException("inner", outer));
 
             return new AggregateException(outer, outer);
-        });
+        }
+        );
     }
 
     private static Exception BuildDeepChain(int depth)

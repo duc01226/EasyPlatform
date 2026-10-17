@@ -32,7 +32,8 @@ public class PlatformOutboxConfig
     public double DeleteProcessedMessageInSeconds { get; set; } = TimeSpan.FromDays(14).TotalSeconds;
 
     /// <summary>
-    /// To config max store processed message count. Will delete old messages of maximum messages happened
+    /// Number of newest processed messages to retain; must be nonnegative. Zero retains no processed rows.
+    /// Count-based cleanup drains its initial excess in bounded batches; concurrent arrivals can wait for the next invocation.
     /// </summary>
     public int MaxStoreProcessedMessageCount { get; set; } = 100;
 
@@ -47,7 +48,9 @@ public class PlatformOutboxConfig
     public double DeleteExpiredIgnoredMessageInSeconds { get; set; } = TimeSpan.FromDays(30).TotalSeconds;
 
     /// <summary>
-    /// Default number messages is processed to be Deleted/Ignored in batch. Default is Util.TaskRunner.DefaultNumberOfParallelIoTasksPerCpuRatio;
+    /// Positive maximum number of messages selected per Deleted/Ignored batch.
+    /// Count-based retention uses this bound even when a provider must materialize IDs before deletion.
+    /// Default is Util.TaskRunner.DefaultNumberOfParallelIoTasksPerCpuRatio.
     /// </summary>
     public int NumberOfDeleteMessagesBatch { get; set; } = Util.TaskRunner.DefaultNumberOfParallelIoTasksPerCpuRatio;
 

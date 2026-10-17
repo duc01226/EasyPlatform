@@ -4,8 +4,8 @@
 /**
  * Todo State Management - Shared per-session todo state
  *
- * Atomic, Windows-safe read/write/clear primitives over the on-disk todo snapshot at
- * /tmp/ck/todo-{sessionId}.json. Todo/workflow discipline is model-driven
+ * Atomic, Windows-safe read/write/clear primitives over the per-session snapshot at
+ * CK_TMP_DIR/todo/todo-state-{sessionId}.json. Todo/workflow discipline is model-driven
  * (CLAUDE.md "Task Planning Rules"); this lib is the persistence primitive, not a gate.
  *
  * Exercised by tests/suites/lifecycle.test.cjs (atomic-write invariants under concurrency).

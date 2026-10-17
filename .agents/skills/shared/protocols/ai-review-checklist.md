@@ -1,0 +1,17 @@
+> **AI-Feature Review Checklist** — the EXECUTABLE review procedure for any plan or code that calls a model (LLM calls, prompts, agents, RAG, tool use / MCP, evals, guardrails, ML). Full catalog (sweep sections `A`–`L` with numbered checks, failure signals and default severities): **`.claude/docs/ai-engineering-review-checklist.md`**; worked calibration cases, including false positives: `.claude/docs/ai-engineering-calibration.md`. This gate carries the protocol; the file carries the checks.
+>
+> **Applies when — and ONLY when — the change, plan or artifact carries an AI-feature surface.** A diff with no model call, prompt or AI configuration is `N/A`: state that once and move on. NEVER run an AI review on a non-AI change to manufacture coverage. When it DOES apply, **MUST ATTENTION READ `.claude/docs/ai-engineering-review-checklist.md` and work its sections** — citing a check ID without opening the catalog is asserting, not checking.
+>
+> **`AR-1` Context before checks.** Classify each AI surface (call site, prompt, agent, tool, retrieval, eval, infra), its autonomy level, data sensitivity, user population and environment. Read the project-declared policy (config, ADRs, provider docs) — project decisions OUTRANK these clauses. Fewer than four known → state the gap at the top and mark affected findings low confidence.
+>
+> **`AR-2` Evidence or nothing.** Cite `file:line` for every finding. NEVER invent a measurement (cost, latency, accuracy): an unmeasurable claim is `NOT VERIFIABLE`, and a claim that only a run can settle needs eval output. Confirm current provider and API facts from provider docs before flagging — models, parameters and limits change, and a stale memory is not evidence.
+>
+> **`AR-3` Severity by consequence, not by pattern.** `P0` exploitable or irreversible harm, or data exposure · `P1` supported-path harm, cost or contract risk · `P2` bounded consequential gap · `P3` polish · `P4` note. Map to Critical / High / Medium / Low via `SYNC:severity-rubric`. Every `P0`/`P1` carries a concrete fix; a clean section reports "no issues found" — NEVER pad.
+>
+> **`AR-4` Section sweep `A`–`L`, one focused pass per dimension.** Conditional sections (RAG, agent/tool, fine-tune/classical ML, multimodal/voice) run ONLY when that surface is present. Report each sweep `PASS` / `FAIL` / `N/A` with evidence.
+>
+> **`AR-5` Report shape.** AI-surface map (one row per surface) → trust-boundary and trifecta table → **AI Gate Report** (`AF-*` / `AE-*` / `AR-*` rows `PASS` / `FAIL` / `N/A` with evidence) → findings (clause ID + `file:line` + severity + fix) → deferred and `NOT VERIFIABLE` list.
+>
+> **`AR-6` Short on time — the 10-check triage.** Model call bounded? Output validated? Untrusted content in context handled? Every sink safe? Authorization in code? Loop capped? Cost capped? Eval present? Trace and kill switch? Can the user correct the result?
+>
+> **Precedence and no-double-counting.** Project config, ADRs and accepted decisions OUTRANK this checklist. A deliberate, documented choice is NEVER a defect — check intent before flagging, and surface a genuine conflict with both sides, NEVER resolve it silently. The checklist is the review PROCEDURE, not a third rule set: `AF-1`–`AF-6` ask whether the feature is framed, `AE-1.1`–`AE-9.4` ask whether it meets the engineering floor, and `AR-*` ask whether the review looked, with evidence, and ranked it. Report a defect ONCE under the ID the consuming skill already uses.

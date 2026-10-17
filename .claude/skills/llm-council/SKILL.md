@@ -1,11 +1,11 @@
 ---
 name: llm-council
-description: '[Decision Support] Use when pressure-testing irreversible, high-stakes decisions with adversarial AI advisors.'
+description: '[Decision Support] Use when pressure-testing an irreversible, high-stakes decision with adversarial AI advisors.'
 ---
 
 > **[IMPORTANT]** MUST ATTENTION use council only for multi-option, hard-to-reverse, high-stakes decisions. NEVER council trivial, factual, reversible, or single-option questions.
 > **[IMPORTANT]** MUST ATTENTION spawn 5 advisors in parallel, then 5 fresh peer reviewers in parallel, then chairman synthesis.
-> **[IMPORTANT]** MUST ATTENTION require evidence for code/architecture claims: `file:line`, graph trace, or explicit "insufficient evidence."
+> **[IMPORTANT]** MUST ATTENTION require evidence for code/architecture claims: `file:line` (an optional graph trace is only a hint), or explicit "insufficient evidence."
 
 # LLM Council
 
@@ -17,13 +17,27 @@ description: '[Decision Support] Use when pressure-testing irreversible, high-st
 
 **Key Rules:**
 
-- MUST ATTENTION use cheaper ladder first: `/why-review` → `/plan-validate` → `/llm-council`.
-- MUST ATTENTION graph-trace code/architecture questions when `.code-graph/graph.db` exists.
+- MUST ATTENTION use cheaper ladder first: `/why-review` → `/plan --mode=validate` → `/llm-council`.
+- Optional: for a high-risk code/architecture blast radius, a graph trace (when `.code-graph/graph.db` exists) can add hints; it may be stale — verify by reading.
 - NEVER let earlier advisor responses bleed into later advisors; parallel spawn required.
 - ALWAYS mark verdict degraded if fewer than 5 usable advisor responses return.
 - ALWAYS regenerate mirrors with `/sync-codex` after editing this skill — NEVER hand-edit `.agents/` or `.codex/` (they are generated artifacts).
 
 ---
+
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Phase 0: Council Gate](#phase-0-council-gate)
+- [Advisor Dimensions](#advisor-dimensions)
+- [Step 1: Frame Question](#step-1-frame-question)
+- [Step 2: Advisor Round](#step-2-advisor-round)
+- [Step 3: Peer Review Round](#step-3-peer-review-round)
+- [Step 4: Chairman Synthesis](#step-4-chairman-synthesis)
+- [Step 5: Report Artifacts](#step-5-report-artifacts)
+- [Output Format](#output-format)
+- [Workflow Integration](#workflow-integration)
+- [Closing Reminders](#closing-reminders)
 
 ## Phase 0: Council Gate
 
@@ -65,15 +79,15 @@ When user says "council this", enrich then frame.
 
 **Context discovery budget:** <=30 seconds; read 2-3 high-signal files.
 
-**Search order:** `CLAUDE.md` / `AGENTS.md`; `docs/project-config.json`; `docs/project-reference/project-structure-reference.md`; matching `docs/project-reference/*{domain-entities,backend-patterns,frontend-patterns,code-review-rules}*`; `docs/specs/`; `memory/`; user-referenced files; `plans/reports/council-*`; domain data (pricing -> revenue, architecture -> service map, tech stack -> dependencies).
+**Search order:** `CLAUDE.md` / `AGENTS.md`; `docs/project-config.json`; `docs/project-reference/project-structure-reference.md`; matching `docs/project-reference/*{domain-entities,backend-patterns,frontend-patterns,code-review-rules}*`; `docs/specs/`; `memory/`; user-referenced files; `tmp/reports/council-*`; domain data (pricing -> revenue, architecture -> service map, tech stack -> dependencies).
 
-**Code/architecture gate:** If question references existing code, services, files, or blast radius, run before framing:
+**Code/architecture evidence:** If question references existing code, services, files, or blast radius, read the files (grep/read) before framing; optionally a graph trace can add hints:
 
 ```bash
 python .claude/scripts/code_graph trace <key-file> --direction both --json
 ```
 
-Skip graph only when `.code-graph/graph.db` missing or question is non-code.
+Skip the graph when `.code-graph/graph.db` is missing, the question is non-code, or the blast radius is low-risk.
 
 **Framed question includes:** core decision, user context, workspace evidence, stakes, constraints, known unknowns. Keep the framing neutral and opinion-free. Ask exactly one clarifying question only if prompt is too vague.
 
@@ -93,11 +107,11 @@ Question:
 ---
 
 EVIDENCE RULES:
-- Code/architecture claims require `file:line`, graph trace, or "I don't have enough evidence yet."
-- If existing code context is needed, run:
+- Code/architecture claims require `file:line` (graph output is only a hint), or "I don't have enough evidence yet."
+- If existing code context is needed, read the files; optionally (stale-able hints):
   python .claude/scripts/code_graph trace <file> --direction both --json
   python .claude/scripts/code_graph connections <file> --json
-- Cite trace output for blast radius, callers, downstream impact.
+- Cite file evidence for blast radius, callers, downstream impact; label graph output as a hint.
 - Confidence: 95-100% full trace | 80-94% main paths | 60-79% partial | <60% do not recommend.
 - Do NOT speculate. Name missing evidence instead.
 
@@ -179,11 +193,11 @@ Be direct. Do not hedge. Give clarity unavailable from one perspective.
 
 ## Step 5: Report Artifacts
 
-Write both files; create `plans/reports/` if missing.
+Write both files; create `tmp/reports/` if missing.
 
 ```text
-plans/reports/council-{YYMMDD-HHMM}-{kebab-slug}.html
-plans/reports/council-{YYMMDD-HHMM}-{kebab-slug}.md
+tmp/reports/council-{YYMMDD-HHMM}-{kebab-slug}.html
+tmp/reports/council-{YYMMDD-HHMM}-{kebab-slug}.md
 ```
 
 `{YYMMDD-HHMM}` = session datetime. `{kebab-slug}` = 3-6 word question descriptor. Both share prefix. NEVER write artifacts to workspace root or `docs/`.
@@ -199,8 +213,8 @@ plans/reports/council-{YYMMDD-HHMM}-{kebab-slug}.md
 ```text
 Council complete.
 
-Report: plans/reports/council-{YYMMDD-HHMM}-{kebab-slug}.html
-Transcript: plans/reports/council-{YYMMDD-HHMM}-{kebab-slug}.md
+Report: tmp/reports/council-{YYMMDD-HHMM}-{kebab-slug}.html
+Transcript: tmp/reports/council-{YYMMDD-HHMM}-{kebab-slug}.md
 
 Verdict: [1-2 sentence chairman recommendation]
 First action: [single next step]
@@ -212,13 +226,13 @@ First action: [single next step]
 
 Opt-in escalation hook from host skills. NEVER wire into `workflow-bugfix`, `workflow-refactor`, or `test-*` workflows. Blacklist is enforced at the `why-review` gate (Step A — workflow context check) before the 8-OR frontmatter gate evaluates.
 
-| Host skill            | Mode                                       | Default                  | Gate                                                             |
-| --------------------- | ------------------------------------------ | ------------------------ | ---------------------------------------------------------------- |
-| `architecture-design` | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
-| `tech-stack-research` | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
-| `domain-analysis`     | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
-| `why-review`          | Conditional on active plan/PBI frontmatter | Escalate when gate fires | Step A workflow blacklist suppression THEN 8-OR frontmatter gate |
-| `prioritize`          | Conditional on ranking output              | Escalate when gate fires | RICE top-2 within 15%, MoSCoW tie, or stakeholder disagreement   |
+| Host skill                       | Mode                                       | Default                  | Gate                                                             |
+| -------------------------------- | ------------------------------------------ | ------------------------ | ---------------------------------------------------------------- |
+| `architecture --mode=design`            | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
+| `tech-stack-research`            | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
+| `domain-analysis`                | Always-offer after `## Next Steps`         | Skip                     | User chooses                                                     |
+| `why-review`                     | Conditional on active plan/task frontmatter | Escalate when gate fires | Step A workflow blacklist suppression THEN 8-OR frontmatter gate |
+| `prioritize`                     | Conditional on ranking output              | Escalate when gate fires | RICE top-2 within 15%, MoSCoW tie, or stakeholder disagreement   |
 
 ### `why-review` Gate Schema
 
@@ -228,67 +242,25 @@ Gate fires when ANY field true. Absent fields default no-fire; gate opt-in via f
 | ---------------------- | -------------------------------------- | ------------------------------------------- |
 | `cross_service_impact` | `NONE` / `PARTIAL` / `FULL`            | value != `NONE`                             |
 | `breaking_changes`     | bool                                   | true                                        |
-| `complexity`           | `low` / `medium` / `high` / `critical` | `high`, `critical`, or `story_points >= 13` |
+| `complexity`           | `low` / `medium` / `high` / `critical` | `high`, `critical`, or `effort_points >= 13` |
 | `new_framework`        | bool                                   | true                                        |
 | `irreversible`         | bool                                   | true                                        |
 | `security_critical`    | bool                                   | true                                        |
 | `performance_critical` | bool                                   | true                                        |
 | `cost_high`            | bool                                   | true                                        |
 
-Host prompt copy MUST cite cheaper rungs: `/why-review`, `/plan-validate`, `/llm-council`.
+Host prompt copy MUST cite cheaper rungs: `/why-review`, `/plan --mode=validate`, `/llm-council`.
 
 ---
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
 
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION** use council only for multi-option, hard-to-reverse, high-stakes decisions.
 
-**Protocols in force — MUST ATTENTION (concise digest of the SYNC/shared blocks this skill carries):**
-
-- **Critical Thinking:** apply critical + sequential thinking; traced `file:line` proof, confidence >80% to act.
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-
 **IMPORTANT MUST ATTENTION** spawn 5 advisors in parallel, then 5 fresh peer reviewers in parallel, then chairman synthesis.
-**IMPORTANT MUST ATTENTION** require evidence for code/architecture claims: `file:line`, graph trace, or explicit "insufficient evidence."
+**IMPORTANT MUST ATTENTION** require evidence for code/architecture claims: `file:line` (graph output is only a hint), or explicit "insufficient evidence."
 **IMPORTANT MUST ATTENTION** mark verdict degraded if fewer than 5 usable advisor responses return.
-**IMPORTANT MUST ATTENTION** write paired HTML + Markdown artifacts under `plans/reports/` and open HTML.
+**IMPORTANT MUST ATTENTION** write paired HTML + Markdown artifacts under `tmp/reports/` and open HTML.
 **IMPORTANT MUST ATTENTION** after editing this skill, run `/sync-codex` to regenerate mirrors — NEVER hand-edit `.agents/` or `.codex/` (generated).
 
 **Anti-Rationalization:**
@@ -299,15 +271,4 @@ Host prompt copy MUST cite cheaper rungs: `/why-review`, `/plan-validate`, `/llm
 | "One advisor can handle it"     | Council value comes from independent angles + anonymous peer review.                                     |
 | "Sequential spawn is simpler"   | Sequential spawn contaminates independence. Parallel spawn required.                                     |
 | "Four advisors is close enough" | Missing angle changes verdict quality. Mark degraded.                                                    |
-| "Evidence would slow us down"   | Unsupported code/architecture claims are speculation. Use graph/file proof or say insufficient evidence. |
-
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
+| "Evidence would slow us down"   | Unsupported code/architecture claims are speculation. Use file proof or say insufficient evidence. |

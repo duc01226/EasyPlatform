@@ -2,7 +2,7 @@
  * Sub-Agent Routing Guard Test Suite (TC-AUDIT-007)
  *
  * Proves `.claude/scripts/check-subagent-routing.cjs` actually guards:
- *   1. the real `.claude/skills` tree is clean (post-U1, integration-test-review
+ *   1. the real `.claude/skills` tree is clean (post-U1, integration-test (incl. its review mode)
  *      → integration-tester);
  *   2. a synthetic OWN-SELECTION misroute (integration-test domain dispatching
  *      `code-reviewer`) is DETECTED — a guard that can't fail proves nothing;
@@ -45,7 +45,7 @@ const tests = [
         'Spawn fresh sub-agents for the review.',
         '2. Set `subagent_type: "code-reviewer"`',
       ].join('\n');
-      const v = scanSkillContent('integration-test-review', synthetic, DEFAULT_ALLOW_LIST);
+      const v = scanSkillContent('integration-test', synthetic, DEFAULT_ALLOW_LIST);
       assertEqual(v.length, 1, 'exactly one violation detected');
       assertEqual(v[0].assigned, 'code-reviewer', 'flags the wrong agent');
       assertEqual(v[0].required, 'integration-tester', 'names the required specialist');
@@ -60,7 +60,7 @@ const tests = [
         '  subagent_type: "code-reviewer",',
         '<!-- /SYNC:systematic-review-batching -->',
       ].join('\n');
-      const v = scanSkillContent('integration-test-review', synthetic, DEFAULT_ALLOW_LIST);
+      const v = scanSkillContent('integration-test', synthetic, DEFAULT_ALLOW_LIST);
       assertEqual(v.length, 0, 'SYNC block-body code-reviewer is excluded');
     },
   },
@@ -73,7 +73,7 @@ const tests = [
         '  subagent_type: "code-reviewer",',
         '<!-- /OVERRIDE:review-protocol-injection -->',
       ].join('\n');
-      const v = scanSkillContent('integration-test-review', synthetic, DEFAULT_ALLOW_LIST);
+      const v = scanSkillContent('integration-test', synthetic, DEFAULT_ALLOW_LIST);
       assertEqual(v.length, 0, 'OVERRIDE block-body code-reviewer is excluded');
     },
   },
@@ -82,9 +82,9 @@ const tests = [
     fn: () => {
       const synthetic = '  subagent_type: "code-reviewer",';
       assertEqual(
-        scanSkillContent('domain-entities-review', synthetic, DEFAULT_ALLOW_LIST).length,
+        scanSkillContent('domain-analysis', synthetic, DEFAULT_ALLOW_LIST).length,
         0,
-        'domain-entities-review not guarded (no DDD-entity specialist)'
+        'domain-analysis (review mode) not guarded (no DDD-entity specialist)'
       );
       assertEqual(
         scanSkillContent('production-readiness-review', synthetic, DEFAULT_ALLOW_LIST).length,
@@ -98,7 +98,7 @@ const tests = [
     fn: () => {
       const synthetic = '  subagent_type: "integration-tester",';
       assertEqual(
-        scanSkillContent('integration-test-review', synthetic, DEFAULT_ALLOW_LIST).length,
+        scanSkillContent('integration-test', synthetic, DEFAULT_ALLOW_LIST).length,
         0,
         'integration-tester is the required specialist — no violation'
       );

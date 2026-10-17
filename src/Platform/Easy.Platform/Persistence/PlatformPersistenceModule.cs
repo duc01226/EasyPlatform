@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common;
 using Easy.Platform.Common.DependencyInjection;
@@ -32,8 +33,8 @@ namespace Easy.Platform.Persistence;
 /// - Repository and Unit of Work pattern implementation
 /// - Service lifecycle management for persistence components
 ///
-/// Used by services like Growth (PostgreSQL), Surveys/Employee/Talents (MongoDB) to standardize
-/// persistence layer management while supporting different database technologies.
+/// Implemented once per consuming service to standardize persistence layer management while supporting
+/// different database technologies — relational (any EF Core provider) and document stores alike.
 /// </remarks>
 public interface IPlatformPersistenceModule : IPlatformModule
 {
@@ -48,12 +49,14 @@ public interface IPlatformPersistenceModule : IPlatformModule
     /// When set to <c>true</c>, the module:
     /// - Skips database initialization and migration
     /// - Does not register repositories and Unit of Work managers
-    /// - Only provides database context for cross-service data synchronization
+    /// - Only provides database context for an explicitly approved cross-database migration or reconciliation
     ///
-    /// This is useful for scenarios where one service needs to read/write data from another service's database
-    /// for synchronization purposes without taking ownership of the full persistence lifecycle.
+    /// This boundary is for a named migration/reconciliation operation where a service must inspect or reconcile a
+    /// peer-owned store without taking ownership of that store's persistence lifecycle. It is not a general runtime
+    /// integration mechanism; runtime cross-service synchronization must use RabbitMQ and the owning service's API or
+    /// consumer boundary.
     ///
-    /// Example: Employee service reading Growth service data for user synchronization.
+    /// Example: a migration-only module reading a peer service's data while an approved reconciliation is running.
     /// </remarks>
     public bool ForCrossDbMigrationOnly { get; }
 
@@ -88,7 +91,7 @@ public interface IPlatformPersistenceModule : IPlatformModule
     /// - Testing environments where database is pre-configured
     /// - Services that consume existing databases without schema ownership
     ///
-    /// Example: Multiple services in a microservice group sharing the same MongoDB instance.
+    /// Example: Multiple services in a microservice group sharing the same database instance.
     /// </remarks>
     public bool DisableDatabaseInitialization { get; }
 
@@ -144,7 +147,7 @@ public interface IPlatformPersistenceModule : IPlatformModule
     /// 4. Using scoped service resolution to ensure proper dependency lifecycle
     ///
     /// This ensures that dependent data is migrated before modules that consume it.
-    /// For example, Growth service user data must be migrated before Employee service processes it.
+    /// For example, a producing service's user data must be migrated before a consuming service processes it.
     ///
     /// Each migration runs in its own service scope to prevent resource leaks and ensure
     /// proper disposal of database contexts and connections.
@@ -158,7 +161,8 @@ public interface IPlatformPersistenceModule : IPlatformModule
             .Select(p => p.ModuleType)
             .ForEachAsync(async moduleType =>
             {
-                await serviceProvider.ExecuteScopedAsync(scope => scope.ServiceProvider.GetService(moduleType).As<IPlatformPersistenceModule>().MigrateDataAsync(scope));
+                await serviceProvider.ExecuteScopedAsync(
+                    scope => scope.ServiceProvider.GetService(moduleType).As<IPlatformPersistenceModule>().MigrateDataAsync(scope));
             });
     }
 }
@@ -178,8 +182,8 @@ public interface IPlatformPersistenceModule : IPlatformModule
 /// - Activity tracing for monitoring and debugging
 ///
 /// **Database Technology Support:**
-/// - Entity Framework Core (SQL Server, PostgreSQL) - used by Growth service
-/// - MongoDB - used by Surveys, Employee, Talents services
+/// - Entity Framework Core — provider-agnostic; ANY relational provider EF Core supports
+/// - Document stores, via their own platform provider package
 /// - Extensible for other database technologies
 ///
 /// **Key Features:**
@@ -191,23 +195,25 @@ public interface IPlatformPersistenceModule : IPlatformModule
 ///
 /// **Usage Examples:**
 /// ```csharp
-/// // Growth service - PostgreSQL with EF Core
-/// public class GrowthPersistenceModule : PlatformPersistenceModule&lt;GrowthDbContext&gt;
+/// // Relational store, via EF Core (any provider EF Core supports)
+/// public class MyRelationalPersistenceModule : PlatformPersistenceModule&lt;MyRelationalDbContext&gt;
 /// {
-///     // Database-specific configuration
+///     // Provider-specific configuration lives in the derived module, never here
 /// }
 ///
-/// // Employee service - MongoDB
-/// public class EmployeePersistenceModule : PlatformPersistenceModule&lt;EmployeeDbContext&gt;
+/// // Document store
+/// public class MyDocumentPersistenceModule : PlatformPersistenceModule&lt;MyDocumentDbContext&gt;
 /// {
-///     // MongoDB-specific configuration with cross-database access
+///     // Document-store-specific configuration; cross-database access is limited to approved migration modules.
 /// }
 /// ```
 ///
-/// **Recommended Connection Settings:**
-/// - Pool Size: CPU cores × 50 (max), 1 (min)
-/// - Idle Lifetime: 5 seconds (prevents connection exhaustion)
-/// - Retry Count: 10 attempts with 1-second delay
+/// **Recommended Connection Settings** (the constants below are the source of truth; keep this list in step with them):
+/// - Pool size: <see cref="DefaultRecommendedMaxPoolSize" /> = <c>Max(EffectiveProcessorCount * 10, 30)</c> max,
+///   <see cref="RecommendedMinPoolSize" /> = 1 min
+/// - Idle lifetime: <see cref="RecommendedConnectionIdleLifetimeSeconds" /> = 30 seconds
+/// - Retry: <see cref="RecommendedConnectionRetryOnFailureCount" /> = 10 attempts, backoff capped at
+///   <see cref="RecommendedConnectionRetryDelay" /> = 3 seconds
 /// - These settings optimize for containerized, high-concurrency scenarios
 ///
 /// **Initialization Process:**
@@ -236,9 +242,9 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     /// </summary>
     /// <remarks>
     /// Set to 30 seconds — balances connection reuse with resource cleanup in multi-pool microservices.
-    /// Npgsql default is 300s; 30s prevents holding too many idle connections across ~15 pools
-    /// while avoiding the reconnection churn caused by overly aggressive values (e.g., 5s).
-    /// With MinPoolSize=1, at least one connection always survives pruning.
+    /// Provider defaults for idle lifetime are typically in the hundreds of seconds; 30s prevents holding too many
+    /// idle connections across ~15 pools while avoiding the reconnection churn caused by overly aggressive values
+    /// (e.g., 5s). With MinPoolSize=1, at least one connection always survives pruning.
     /// </remarks>
     public static readonly int RecommendedConnectionIdleLifetimeSeconds = 30;
 
@@ -256,35 +262,148 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     /// </summary>
     /// <remarks>
     /// Set to 3 seconds as the upper bound for exponential backoff with jitter.
-    /// NpgsqlRetryingExecutionStrategy randomizes actual delays between 0 and this value,
+    /// A provider's retrying execution strategy randomizes actual delays between 0 and this value,
     /// reducing thundering herd probability when multiple services retry concurrently
-    /// after a pool exhaustion event (FATAL 53300).
+    /// after a pool exhaustion event.
     /// Reduced from 5s: with 10 retries, the 5s cap produced a 40-50s worst-case wait budget
     /// that consumed most of a typical HTTP request timeout. 3s keeps total retry budget under ~20s.
     /// </remarks>
     public static readonly TimeSpan RecommendedConnectionRetryDelay = 3.Seconds();
 
     /// <summary>
+    /// Per-CPU ratio for the relational connection pool and for the selected Hangfire MongoDB pools that reuse this
+    /// shared ceiling. DERIVED from the I/O fan-out ratio the pools have to serve
+    /// (<see cref="Util.TaskRunner.DefaultNumberOfParallelIoTasksPerCpuRatio" />) instead of being an independent
+    /// literal, so the two cannot drift apart as hosts scale.
+    /// </summary>
+    /// <remarks>
+    /// This is the pairing rule the Mongo provider already states for its own ceiling — "because both sides derive
+    /// from the same processor count, overriding neither nor scaling the host can silently un-pair them"
+    /// (<c>PlatformMongoDbPersistenceModule.DefaultNumberOfMaxConnectingPerCpuRatio</c>). Mongo honours it: pool
+    /// ratio 25 against fan-out ratio 10, i.e. 2.5x headroom at every processor count. The relational default was
+    /// the one member of that family whose ratio was picked WITHOUT reference to the fan-out it backs.
+    /// <para>
+    /// Was an independent <c>4</c>, which inverted the pairing. <see cref="Util.TaskRunner" /> documents ratio 10 as
+    /// the default for work that waits on "DB, HTTP, queue, file", and the platform itself dispatches DB-touching
+    /// work at that width: inbox <c>MaxParallelProcessingMessagesCount</c> (ratio 10), RabbitMQ
+    /// <c>MaxConcurrentProcessing</c> (ratio 10), Hangfire worker count (ratio 5). Against a ratio-4 pool that is a
+    /// 2.5x over-subscription at every processor count >= 5, and 40 workers against 20 connections under the
+    /// Development cap of 4 (<see cref="PlatformEnvironment.EffectiveProcessorCount" />). A caller that followed the
+    /// documented ratio-10 default for DB-bound fan-out therefore exhausted the pool and failed with a
+    /// pool-exhaustion error only after burning the full connection timeout.
+    /// </para>
+    /// </remarks>
+    public static readonly int DefaultNumberOfMaxPoolSizePerCpuRatio = Util.TaskRunner.DefaultNumberOfParallelIoTasksPerCpuRatio;
+
+    /// <summary>
+    /// Floor for <see cref="DefaultRecommendedMaxPoolSize" />, raised from 20 to 30.
+    /// </summary>
+    /// <remarks>
+    /// The floor exists for SMALL hosts only. With ratio 10 it binds only when
+    /// <see cref="PlatformEnvironment.EffectiveProcessorCount" /> is 1-2; from 3 upward the ratio wins. That is the
+    /// point: the OLD floor of 20 was the binding constraint at the Development cap of 4 (<c>Max(4*4, 20) = 20</c>),
+    /// so the previous default failed for its FLOOR, not for its ratio. A floor must never again be what starves a
+    /// fan-out — 30 sits deliberately below the 40 the ratio yields at P=4.
+    /// <para>
+    /// Why 30 rather than 20 on a 1-2 core host: the platform's fixed background machinery (inbox and outbox
+    /// processing, Hangfire, the interval ping loops) does not scale DOWN with processor count, so a tiny host still
+    /// dispatches roughly the same number of concurrent DB touches as a large one.
+    /// </para>
+    /// <para>
+    /// <b>Corrected 2026-09-09 — do not restore the previous claim.</b> This remark used to assert that 30 was "the
+    /// value every bitten service already sets by hand" through per-service pool-size settings. That was FALSE and the
+    /// surrounding argument was unsound. Verified: those per-service keys were read by NO code,
+    /// <c>"Persistence": { "MaxPoolSize": ... }</c> — the one key this module actually reads — was set in NO settings
+    /// file anywhere, and the deployment ConfigMap entries that mirrored them bound to nothing. So NO consuming
+    /// service ever had an effective override, and none was special — every relational pool in every environment has
+    /// always used this default. Nothing in that config was evidence FOR 30; it only showed what operators once
+    /// intended, and the deployed values said 500, not 30.
+    /// </para>
+    /// <para>
+    /// Those keys were live once, in a consuming service's own persistence module (introduced <c>8e8703997e9</c>,
+    /// 2023-08-24, defaults 10/40); <c>9159d596c6f</c> later centralised pool sizing here onto
+    /// <see cref="RecommendedMinPoolSize" /> / <see cref="GetRecommendedMaxPoolSize" /> without deleting the settings
+    /// it replaced. They have been ORPHANED config ever since. All 13 settings-file occurrences, the 3 ConfigMap
+    /// entries and the 12 environment-values entries were REMOVED on 2026-09-09 — a no-op at runtime (nothing read
+    /// them), but they were actively misleading: they made both a "30 cap" and a "500 cap" look enforced when neither
+    /// was. The live override key is <c>Persistence:MaxPoolSize</c> (<see cref="GetRecommendedMaxPoolSize" />) and it
+    /// is deliberately left UNSET everywhere, so this constant is the single effective value.
+    /// </para>
+    /// </remarks>
+    public const int MinRecommendedMaxPoolSize = 30;
+
+    /// <summary>
     /// Default maximum size for database connection pools when no configuration is provided.
     /// </summary>
     /// <remarks>
-    /// Formula: <c>Max(ProcessorCount * 4, 20)</c>.
-    /// The HikariCP formula (core_count × 2) does not apply 1:1 to async .NET (Npgsql) — HikariCP assumes
-    /// blocking Java threads that hold connections for the full query duration, while Npgsql releases
-    /// connections at each async yield. The *4 multiplier provides adequate burst capacity for async workloads.
-    /// Floor of 20 (up from 10) prevents starvation on containerized pods with 1-2 visible CPUs.
+    /// Formula: <c>Max(EffectiveProcessorCount * 10, 30)</c> — the pool must be able to SERVE the platform's own
+    /// default I/O fan-out, because that fan-out is what the platform dispatches against it.
+    /// <para>
+    /// The previous <c>Max(ProcessorCount * 4, 20)</c> justified its multiplier with "the provider releases connections
+    /// at each async yield". That does not hold for EF Core work: the connection is held for the life of the DbContext
+    /// query/transaction, not returned at each <c>await</c>, so the burst capacity the *4 was meant to buy never
+    /// materialised — the pool was simply 2.5x smaller than the concurrency aimed at it.
+    /// </para>
+    /// This is a CEILING, not a reservation: <see cref="RecommendedMinPoolSize" /> stays 1 and idle connections are
+    /// pruned, so raising it costs nothing until the concurrency that was already being dispatched actually arrives.
     /// Override via <see cref="GetRecommendedMaxPoolSize()"/> virtual method in derived classes,
     /// or via appsettings "Persistence:MaxPoolSize".
+    /// <para>
+    /// <b>Production sizing is UNCAPPED, and that is a recorded, accepted decision (2026-09-09) — not an oversight.</b>
+    /// The Development cap of 4 on <see cref="PlatformEnvironment.EffectiveProcessorCount" /> does NOT apply in
+    /// production, and where the deployment sets no cpu request/limit this evaluates against the full
+    /// node CPU count: on a 16-core node the per-pool ceiling moves from 64 (old ratio 4) to 160, across the roughly
+    /// 15 relational pools a service opens. Four deployed service modules also reuse this static ceiling for their
+    /// MongoDB Hangfire driver pools (Employee, Communication, Surveys, and Candidate Application), so those pools move
+    /// with the same constant even though they are not EF Core pools. There is no deployment-side cap standing behind it either — the ConfigMap entries that looked
+    /// like one were dead and have been removed (see <see cref="MinRecommendedMaxPoolSize" />). The raise was put to
+    /// the code owner with those numbers and approved: <i>"raise in prod is ok, as long as it is reasonable better"</i>.
+    /// </para>
+    /// <para>
+    /// Why it is reasonable rather than merely bigger: (a) this is a CEILING, not a reservation — with
+    /// <see cref="RecommendedMinPoolSize" /> = 1 and <see cref="RecommendedConnectionIdleLifetimeSeconds" /> = 30 the
+    /// steady-state connection count tracks actual concurrency, so nothing is consumed until the fan-out that was
+    /// ALREADY being dispatched arrives; (b) 160 is ~1.6x the out-of-the-box <c>MaxPoolSize</c> that mainstream
+    /// ADO.NET providers ship (commonly 100), i.e. the same order as a driver default, not a departure from it;
+    /// (c) the alternative is the measured failure this constant was changed to close — a ratio-4 pool starved by the
+    /// platform's own documented ratio-10 I/O fan-out. The uncapped-ness itself PRE-DATES this change (ratio 4 was
+    /// uncapped too); what changed is the multiplier.
+    /// </para>
+    /// <para>
+    /// What would make it bite, and what to watch: the ceiling only materialises under a genuine ~160-wide concurrent
+    /// DB burst per pool. The binding resource is then the SERVER, not the client — the database's own maximum
+    /// connection count, summed across all replicas and all services. If that ever becomes the constraint, the fix is
+    /// a server-side limit (a connection proxy/pooler, or raising the server's connection maximum) or a per-pod cpu
+    /// limit that lowers <see cref="PlatformEnvironment.EffectiveProcessorCount" /> — both of which move the pool WITH
+    /// the fan-out.
+    /// </para>
+    /// <para>
+    /// Deliberately NOT bounded by clamping this value: a clamp would put the pool BACK below the fan-out it exists
+    /// to serve whenever ProcessorCount &gt; 10, re-opening the exact starvation this constant was changed to close,
+    /// and breaking the pairing invariant pinned by TC-PLATMOD-049. The two sides must be bounded TOGETHER
+    /// (pool AND <see cref="Util.TaskRunner.DefaultParallelIoTaskMaxConcurrent" />) or not at all — that is a
+    /// planned platform change with its own approval, not a constant to tweak here.
+    /// </para>
     /// </remarks>
-    public static readonly int DefaultRecommendedMaxPoolSize = Math.Max(PlatformEnvironment.EffectiveProcessorCount * 4, 20);
+    public static readonly int DefaultRecommendedMaxPoolSize =
+        Math.Max(PlatformEnvironment.EffectiveProcessorCount * DefaultNumberOfMaxPoolSizePerCpuRatio, MinRecommendedMaxPoolSize);
 
     /// <summary>
     /// Gets the recommended maximum connection pool size for this persistence module.
     /// </summary>
     /// <remarks>
     /// Base implementation: reads "Persistence:MaxPoolSize" from configuration,
-    /// falling back to <see cref="DefaultRecommendedMaxPoolSize"/> (Max(ProcessorCount * 4, 20)).
+    /// falling back to <see cref="DefaultRecommendedMaxPoolSize"/> (<c>Max(EffectiveProcessorCount * 10, 30)</c>).
     /// Override in derived classes to provide database-specific pool sizing.
+    /// <para>
+    /// "Persistence:MaxPoolSize" is the ONE live override key for the relational pool and is deliberately UNSET in
+    /// every settings file and every deployment ConfigMap, so <see cref="DefaultRecommendedMaxPoolSize" /> is the
+    /// value actually in force for the relational pools. The provider-prefixed per-service pool-size keys that used to
+    /// sit beside it were orphaned by an earlier centralisation and were removed on 2026-09-09; do not reintroduce a
+    /// second spelling — an override belongs here or nowhere (see <see cref="MinRecommendedMaxPoolSize" /> for the full
+    /// history). The base method is provider-neutral across EF Core providers. Selected MongoDB Hangfire modules also
+    /// reuse the static default directly for their driver pool ceiling, but they do not read this relational override key.
+    /// </para>
     /// </remarks>
     protected virtual int GetRecommendedMaxPoolSize()
     {
@@ -373,12 +492,13 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     /// When this property is set to <c>true</c>, the persistence module:
     /// - Will not register repositories and Unit of Work managers
     /// - Will not perform database initialization and migration
-    /// - Only provides database context for cross-service data access
+    /// - Only provides database context for an explicitly approved cross-database migration or reconciliation
     ///
-    /// This is particularly useful for microservice scenarios where one service needs to access
-    /// another service's database for data synchronization or reporting purposes.
+    /// This is reserved for a named migration/reconciliation operation where a service must inspect or reconcile a
+    /// peer-owned database without taking ownership of its persistence lifecycle. Runtime cross-service synchronization
+    /// must use RabbitMQ and the owning service's API or consumer boundary.
     ///
-    /// Example: Employee service accessing Growth service database to synchronize user information.
+    /// Example: a migration-only module accessing a peer service's database during an approved reconciliation.
     /// </remarks>
     public virtual bool ForCrossDbMigrationOnly => false;
 
@@ -413,10 +533,41 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     /// - Testing environments with pre-configured databases
     /// - Services consuming existing databases without schema ownership
     ///
-    /// Example: Multiple services in a microservice group sharing the same MongoDB instance
+    /// Example: Multiple services in a microservice group sharing the same database instance
     /// where only one service is responsible for schema management.
     /// </remarks>
     public virtual bool DisableDatabaseInitialization => false;
+
+    /// <summary>
+    /// Gets the logical message-bus store key owned by this persistence module.
+    /// </summary>
+    /// <remarks>
+    /// The default keeps existing single-store applications on the legacy compatibility path. A composite host should
+    /// override this hook with a stable, non-empty key and bind it explicitly to its application lane.
+    /// </remarks>
+    public virtual PlatformMessageBusStoreKey MessageBusStoreKey => PlatformMessageBusStoreKey.Default;
+
+    /// <summary>
+    /// Gets a value indicating whether this persistence boundary contributes an inbox/outbox store to the
+    /// composition registry.
+    /// </summary>
+    /// <remarks>
+    /// Opt-in (default false). Existing hosts often load several runtime persistence modules (for example an EF
+    /// database plus a Mongo permission database) that were never designed to own separate message stores; making
+    /// them contribute implicitly would register conflicting contracts under the default key and move every service
+    /// off the legacy unqualified inbox/outbox path. Only a persistence module composed into a multi-store host
+    /// should override this with <c>true</c> together with <see cref="MessageBusStoreKey" /> and an explicit binding.
+    /// </remarks>
+    public virtual bool EnableMessageBusStoreContribution => false;
+
+    /// <summary>
+    /// Gets the concrete owner type used when this persistence boundary is composed into a message-bus store.
+    /// </summary>
+    /// <remarks>
+    /// The default is the concrete module type, not the open generic base. This keeps two closed persistence modules
+    /// distinguishable even when they share a provider and a physical database.
+    /// </remarks>
+    public virtual Type MessageBusStoreOwnerType => GetType();
 
     /// <summary>
     /// Gets the execution priority for this persistence module during application initialization.
@@ -593,7 +744,7 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     /// - <see cref="IsInboxBusMessageEnabled"/> returns <c>true</c>
     /// - Module is not in <see cref="ForCrossDbMigrationOnly"/> mode
     ///
-    /// Used by services like Employee and Surveys for processing events from other microservices.
+    /// Used by any consuming service that processes events published by other microservices.
     /// </remarks>
     protected virtual void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
     {
@@ -616,7 +767,7 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     /// - <see cref="IsOutboxBusMessageEnabled"/> returns <c>true</c>
     /// - Module is not in <see cref="ForCrossDbMigrationOnly"/> mode
     ///
-    /// Used by services like Growth and Employee for publishing domain events to other microservices.
+    /// Used by any consuming service that publishes domain events to other microservices.
     /// </remarks>
     protected virtual void RegisterOutboxEventBusMessageRepository(IServiceCollection serviceCollection)
     {
@@ -765,18 +916,18 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
 ///
 /// **Database Technology Examples:**
 /// ```csharp
-/// // PostgreSQL with Entity Framework Core (Growth service)
-/// public class GrowthPersistenceModule : PlatformPersistenceModule&lt;GrowthDbContext&gt;
+/// // Relational store, via Entity Framework Core (any provider EF Core supports)
+/// public class MyRelationalPersistenceModule : PlatformPersistenceModule&lt;MyRelationalDbContext&gt;
 /// {
-///     protected override PlatformPersistenceConfiguration&lt;GrowthDbContext&gt; ConfigurePersistenceConfiguration(
-///         PlatformPersistenceConfiguration&lt;GrowthDbContext&gt; config, IConfiguration configuration)
+///     protected override PlatformPersistenceConfiguration&lt;MyRelationalDbContext&gt; ConfigurePersistenceConfiguration(
+///         PlatformPersistenceConfiguration&lt;MyRelationalDbContext&gt; config, IConfiguration configuration)
 ///     {
 ///         return config.With(c => c.BadQueryWarningConfig.LogSlowQueries = true);
 ///     }
 /// }
 ///
-/// // MongoDB (Employee service)
-/// public class EmployeePersistenceModule : PlatformPersistenceModule&lt;EmployeeDbContext&gt;
+/// // Document store
+/// public class MyDocumentPersistenceModule : PlatformPersistenceModule&lt;MyDocumentDbContext&gt;
 /// {
 ///     public override PlatformPersistenceConfigurationPooledDbContextOptions PooledDbContextOptions()
 ///     {
@@ -892,10 +1043,10 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformPersistenc
     /// - Database context type identification in error messages
     /// - Exception type classification for troubleshooting
     ///
-    /// **Cross-Service Migration Examples:**
-    /// - Employee service migrating Growth service user data
-    /// - Surveys service synchronizing with Employee service data
-    /// - Talents service integrating with multiple data sources
+    /// **Cross-Database Migration/Reconciliation Examples:**
+    /// - An approved migration reconciling a peer service's user data
+    /// - A migration-only module synchronizing a peer-owned store under an explicit reconciliation boundary
+    /// - An approved operation integrating multiple data sources without turning this module into a runtime peer writer
     /// </remarks>
     public override async Task MigrateDataAsync(IServiceScope serviceScope)
     {
@@ -956,9 +1107,8 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformPersistenc
     /// - Exception type classification for troubleshooting
     ///
     /// **Database Technology Examples:**
-    /// - PostgreSQL: Schema migration, connection pool setup, performance monitoring
-    /// - MongoDB: Collection creation, index setup, connection validation
-    /// - SQL Server: Database creation, stored procedure setup, performance counters
+    /// - Relational (EF Core, any provider): schema migration, connection pool setup, performance monitoring
+    /// - Document store: collection creation, index setup, connection validation
     ///
     /// Called before <see cref="MigrateDataAsync"/> during application startup sequence.
     /// </remarks>
@@ -1087,6 +1237,61 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformPersistenc
     }
 
     /// <summary>
+    /// Publishes this persistence module's typed message-store contribution after a provider has registered its
+    /// context-specific repositories and inner unit-of-work service.
+    /// </summary>
+    /// <param name="serviceCollection">The service collection receiving the contribution.</param>
+    /// <param name="unitOfWorkServiceType">The closed provider-specific inner unit-of-work service type.</param>
+    /// <remarks>
+    /// The aggregate <see cref="IPlatformUnitOfWorkManager" /> remains the compatibility manager used by existing
+    /// repositories. Keyed consumers use the closed repository and inner unit-of-work service contracts recorded here,
+    /// so resolving a keyed store never selects the last unqualified repository registration.
+    /// </remarks>
+    protected void RegisterMessageBusStoreContribution(IServiceCollection serviceCollection, Type unitOfWorkServiceType)
+    {
+        ArgumentNullException.ThrowIfNull(serviceCollection);
+
+        if (!EnableMessageBusStoreContribution)
+            return;
+
+        var isRuntimeEnabled = !ForCrossDbMigrationOnly;
+        var inboxRepositoryServiceType = isRuntimeEnabled && IsInboxBusMessageEnabled()
+            ? typeof(IPlatformInboxBusMessageRepository<TDbContext>)
+            : null;
+        var outboxRepositoryServiceType = isRuntimeEnabled && IsOutboxBusMessageEnabled()
+            ? typeof(IPlatformOutboxBusMessageRepository<TDbContext>)
+            : null;
+
+        if (isRuntimeEnabled)
+            ArgumentNullException.ThrowIfNull(unitOfWorkServiceType);
+
+        serviceCollection.AddSingleton(
+            new PlatformPersistenceMessageBusStoreRegistration(
+                MessageBusStoreKey,
+                MessageBusStoreOwnerType,
+                typeof(TDbContext),
+                inboxRepositoryServiceType,
+                outboxRepositoryServiceType,
+                isRuntimeEnabled ? typeof(IPlatformUnitOfWorkManager) : null,
+                inboxRepositoryServiceType == null
+                    ? null
+                    : serviceProvider =>
+                        (IPlatformInboxBusMessageRepository)serviceProvider.GetRequiredService(inboxRepositoryServiceType),
+                outboxRepositoryServiceType == null
+                    ? null
+                    : serviceProvider =>
+                        (IPlatformOutboxBusMessageRepository)serviceProvider.GetRequiredService(outboxRepositoryServiceType),
+                isRuntimeEnabled
+                    ? serviceProvider => serviceProvider.GetRequiredService<IPlatformUnitOfWorkManager>()
+                    : null,
+                isRuntimeEnabled: isRuntimeEnabled,
+                unitOfWorkServiceType: isRuntimeEnabled ? unitOfWorkServiceType : null,
+                unitOfWorkFactory: isRuntimeEnabled
+                    ? serviceProvider => (IPlatformUnitOfWork)serviceProvider.GetRequiredService(unitOfWorkServiceType)
+                    : null));
+    }
+
+    /// <summary>
     /// Registers type-safe persistence configuration services for the specific database context.
     /// </summary>
     /// <param name="serviceCollection">The service collection to register configuration services into.</param>
@@ -1211,22 +1416,22 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformPersistenc
     ///     var poolOptions = PooledDbContextOptions();
     ///     serviceCollection.AddDbContextPool&lt;MyDbContext&gt;(options =>
     ///     {
-    ///         options.UseNpgsql(connectionString);
+    ///         options.UseMyEfCoreProvider(connectionString); // whichever EF Core provider this context targets
     ///         // Configure additional options...
     ///     }, poolOptions.MaxPoolSize);
     /// }
     ///
-    /// // MongoDB pooling
+    /// // Document-store pooling
     /// protected override void RegisterDbContextPool(IServiceCollection serviceCollection)
     /// {
-    ///     // MongoDB handles connection pooling at the client level
+    ///     // Many document-store drivers pool connections at the client level
     ///     // Register pooled client instances if needed
     /// }
     /// ```
     ///
     /// **Database Technology Considerations:**
     /// - **Entity Framework Core**: Use AddDbContextPool for built-in pooling
-    /// - **MongoDB**: Connection pooling handled by MongoDB driver
+    /// - **Document stores**: Connection pooling typically handled by the store's own driver
     /// - **Other ORMs**: Implement custom pooling based on ORM capabilities
     ///
     /// **When Called:**

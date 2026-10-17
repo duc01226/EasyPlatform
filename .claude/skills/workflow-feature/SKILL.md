@@ -1,270 +1,224 @@
 ---
 name: workflow-feature
-version: 1.0.0
-description: '[Workflow] Use when activating the Feature Implementation workflow for implement a well-defined feature with investigation, planning, implementation, and review. Also covers TDD/test-first development and spec-driven feature implementation with test specs written before code.'
+version: 1.0.1
+description: "[Workflow] Implement a well-defined feature spec-first and test-first when its behavior is not yet captured in a canonical spec. Spec-complete behavior uses workflow-implement-spec."
 disable-model-invocation: false
 ---
 
+<!-- WORKFLOW-CALLS:START -->
+## Workflow Calls and Todo Bootstrap
+
+Read [the registry](../../../.claude/workflows.json) → `workflows.workflow-feature` together with this skill. Call [`/start-workflow workflow-feature`](../start-workflow/SKILL.md) to resolve the selected mode, pre-actions and fingerprint.
+
+**Todo FIRST:** before triage, analysis or step execution, create one todo per phase of the selected mode, in order, listing every occurrence of that phase as a line, including conditional/optional ones (a mode that declares no phases gets one todo per occurrence); preserve occurrence IDs, roles and barrier groups. Use native todo tools or an equivalent persistent ledger. Then mark the first todo `in_progress`; close each step line with its run or skip evidence, and complete a phase todo only when every line is closed and its applicable exit gates hold.
+Mode selection and registry loading prepare tracking; any 'first action' below means the first substantive action after this bootstrap.
+
+**Call each step skill:** read its linked SKILL.md and execute its protocol through the active host with the registry args. Reading or naming a skill alone is not execution. Required gates and core/optional flex follow the linked start-workflow Step Execution Protocol; keep this skill's quality gates, loops and evidence requirements.
+
+**Conditions:** load each occurrence's registry `applicability.when` and `skipReason` verbatim, and record its run/skip evidence through the linked start-workflow protocol. Do not silently omit a todo or turn a conditional skill into an unconditional call; close, in one batch at triage, the todos whose condition is already false there. Declared parallel groups retain their all-return barrier.
+
+Explicit step-skill calls by mode (registry order; roles and conditions remain owned by the registry):
+
+- Mode `default`: [`/investigate`](../investigate/SKILL.md) (core) → [`/spec [mode=discovery]`](../spec/SKILL.md) (optional; conditional) → [`/domain-analysis`](../domain-analysis/SKILL.md) (optional; conditional) → [`/why-review`](../why-review/SKILL.md) (optional; conditional) → [`/spec`](../spec/SKILL.md) (core) → [`/scenario`](../scenario/SKILL.md) (optional; conditional) → [`/work-item --mode=mockup --explore`](../work-item/SKILL.md) (optional; conditional) → [`/spec [mode=tests]`](../spec/SKILL.md) (core) → [`/work-item --mode=review --type=spec-tests`](../work-item/SKILL.md) (core) → [`/spec [mode=clarify]`](../spec/SKILL.md) (optional; conditional) → [`/plan`](../plan/SKILL.md) (core) → [`/plan --mode=execute`](../plan/SKILL.md) (core) → [`/seed-test-data`](../seed-test-data/SKILL.md) (optional; conditional) → [`/integration-test`](../integration-test/SKILL.md) (optional; conditional) → [`/spec [mode=sync]`](../spec/SKILL.md) (core) → [`/workflow-review-changes --tests=defer`](../workflow-review-changes/SKILL.md) (gate) → [`/integration-test --mode=verify`](../integration-test/SKILL.md) (gate) → [`/workflow-e2e --source=context`](../workflow-e2e/SKILL.md) (optional; conditional) → [`/test --proven=@verify`](../test/SKILL.md) (gate) → [`/demo-guide`](../demo-guide/SKILL.md) (optional; conditional) → [`/workflow-end`](../workflow-end/SKILL.md) (gate) → [`/watzup`](../watzup/SKILL.md) (optional; conditional)
+  Phase todos: Discover (4) → Specify (6) → Plan (1) → Build (4; exit spec-synced) → Review (1; exit review-converged) → Verify (4; exit tests-pass) → Close (2; exit run-closed)
+<!-- workflow-mode:default fingerprint:8f289c03b40bb45e9b4044680c7d58cb70861dd450852bb5c72bff537d12e649 -->
+
+Regenerate this block with `node .claude/scripts/lib/workflow-skill-contract.cjs --write` after registry edits; [`/sync-codex`](../sync-codex/SKILL.md) refreshes it before mirroring.
+<!-- WORKFLOW-CALLS:END -->
+
+> **Work tracking:** Keep the project's tracked work current in the same change, as its root instructions (`CLAUDE.md` or `AGENTS.md`) say. When the project uses the portable tracker (`taskTracking.mode` is `observe` or `linked`), read [the linked work integration guide](../task-track/references/integration-guide.md) at capture, start, saved-work, verification, handoff and close-out checkpoints. Use the actual linked producer and exact items; retain the primary outcome and record optional upkeep once through the common owner. Continue untracked when no link exists; acceptance remains explicit.
+
 ## Quick Summary
 
-**Goal:** [Workflow] Trigger Feature Implementation workflow — implement a well-defined feature with investigation, planning, implementation, and review. This workflow is spec-driven with tests by default: test specs (`/spec [mode=tests]`) are written and reviewed BEFORE implementation (`/plan-execute`), covering former TDD/test-first use cases.
+**Goal:** Deliver a well-defined feature whose reviewed canonical spec matches the implementation, verified tests and converged change review.
 
-**Workflow:**
+**Summary:**
 
-1. **Detect** — classify request scope and target artifacts.
-2. **Execute** — apply required steps with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
+- Triage size, kind and risk; activate the workflow and resolve its registry, Goal Contract and artifact authority.
+- Main route: investigate → spec discovery → domain analysis → design rationale review (real alternatives only) → spec authoring → scenarios → explore mockup → test specs → test-spec review → clarification → plan (with its own validation interview) → execute (code and tests together) → QC seed data → missing integration tests → spec sync → static change review → integration verification → E2E → remaining test tiers → demo → close → handoff. Evaluate optional steps by the registry's conditions and record its skip reasons.
+- Preserve spec-first/test-first dependencies, human approval gates and verify-last ordering; close only with the required outcome evidence. Spec-complete work uses `workflow-implement-spec`; large ambiguous work uses `workflow-big-feature`.
 
-**Key Rules:**
+## Contents
 
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
-- MUST ATTENTION keep task tracking updated as each step starts/completes.
-- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
-- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
-- MUST ATTENTION require test specs/tests to name `Business Intent / Invariant Guarded` and fail if that intent breaks.
-- MUST ATTENTION apply the shared SDD Artifact Contract from `shared/sdd-artifact-contract.md` in the active skills root; use `docs/project-config.json` and `docs/project-reference/docs-index-reference.md` for project-specific conventions.
-- MUST ATTENTION preserve expected, unchanged, and no-regression behavior in the plan and review evidence when behavior can change.
-- MUST ATTENTION treat code-extracted specs and TCs as reference-only until canonical review accepts them.
-- MUST ATTENTION allow any supported AI tool to implement or review when the shared contract, synced context, and local docs are available.
-- NEVER skip mandatory workflow or skill gates.
+- [Workflow Calls and Todo Bootstrap](#workflow-calls-and-todo-bootstrap)
+- [Quick Summary](#quick-summary)
+- [Purpose](#purpose)
+- [Size & Kind Triage (first action)](#size--kind-triage-first-action)
+- [Required Quality Gates](#required-quality-gates)
+- [Gates and Optional Steps](#gates-and-optional-steps)
+- [Orchestration Freedom](#orchestration-freedom)
+- [Memory & Reporting](#memory--reporting)
+- [Fix Path & Loop Bounds](#fix-path--loop-bounds)
+- [Closing Reminders](#closing-reminders)
 
-## Repeated Steps Disambiguation (CRITICAL for task creation)
+## Purpose
 
-This workflow has steps that appear multiple times. When creating tasks, use these descriptions to distinguish them:
-
-| Step                                 | Occurrence   | Task Description                                 |
-| ------------------------------------ | ------------ | ------------------------------------------------ |
-| `/plan`                              | 1st (pos 8)  | PLAN₁: Feature Spec-backed implementation plan   |
-| `/plan`                              | 2nd (pos 15) | PLAN₂: Sprint-ready plan incorporating TDD specs |
-| `/plan-review`                       | 1st (pos 9)  | Review PLAN₁                                     |
-| `/plan-review`                       | 2nd (pos 16) | Review PLAN₂                                     |
-| `/spec [mode=tests]`                 | 1st (pos 12) | TDD-SPEC₁: Pre-implementation test specs         |
-| `/spec [mode=tests]`                 | 2nd (pos 20) | TDD-SPEC₂: Post-implementation test spec update  |
-| `/artifact-review --type=spec-tests` | 1st (pos 14) | Review TDD-SPEC₁                                 |
-| `/artifact-review --type=spec-tests` | 2nd (pos 22) | Review TDD-SPEC₂                                 |
-
-**NEVER deduplicate** — each occurrence is a distinct task with a different purpose.
-
----
-
-## Conditional UI Planning
-
-When a feature involves UI changes (detected during `/scout` or `/investigate`):
-
-- If image/wireframe/Figma URL is provided → route to `/design-spec --mode=wireframe` or `/figma-design` before `/plan`
-- If `/plan` detects frontend phases → ensure `ui-wireframe-protocol.md` sections are included in plan phases
-- This is advisory — NOT a mandatory workflow step change. The existing workflow sequence remains unchanged.
-
-## Closing Rule
-
-Every non-skipped step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `TaskUpdate completed`. A cited conditional skip explicitly authorized by canonical `preActions.injectContext` may complete without a skill call.
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-> **Existing-behavior trace gate:** If the feature modifies an existing final output, persisted state, API response, projection, or user-visible workflow, include an end-to-start trace of the existing path (final reader -> storage/projection -> writer -> producer/origin), feeder paths, invariants to preserve, and forward proof for the intended new behavior before implementation.
-
-> **Goal Contract propagation (workflow-owned):** At workflow start, resolve the active Goal Contract per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from the feature request). Before `/plan-execute`, verify the plan's feature success criteria map to the saved criteria. Pass the same goal file reference to every child step — child skills read the SAME saved goal, never a re-derived one from chat memory. Before `/workflow-end`, emit the final Goal Satisfaction matrix (PASS/FAIL/BLOCKED); workflow completion requires every required criterion PASS or BLOCKED with a user-facing escalation.
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /spec-discovery -> /domain-analysis -> /why-review -> /spec -> /spec-clarify -> /plan -> /plan-review -> /plan-validate -> /why-review -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /plan -> /plan-review -> /plan-execute -> /seed-test-data -> /domain-entities-review -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /security-review -> /changelog -> /test -> /scan --target=domain-entities -> /docs-update -> /demo-guide -> /workflow-end -> /watzup
-
----
-
-**IMPORTANT MANDATORY Steps:** /scout -> /investigate -> /spec-discovery -> /domain-analysis -> /why-review -> /spec -> /spec-clarify -> /plan -> /plan-review -> /plan-validate -> /why-review -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /plan -> /plan-review -> /plan-execute -> /seed-test-data -> /domain-entities-review -> /spec [mode=tests] -> /why-review -> /artifact-review --type=spec-tests -> /spec [mode=sync] -> /integration-test -> /integration-test-review -> /integration-test-verify -> /workflow-review-changes -> /security-review -> /changelog -> /test -> /scan --target=domain-entities -> /docs-update -> /demo-guide -> /workflow-end -> /watzup
-
-> **Single-pass steps are self-loop-backed (convergence lives in the skill, not the sequence):** `/domain-entities-review` and both `/artifact-review --type=spec-tests` occurrences appear once each in the flat sequence with no repeat wired — intentionally. Each carries the full `SYNC:double-round-trip-review` self-loop (review → validate findings → fix validated findings → full re-review until a clean pass), so a single sequence occurrence still converges to zero findings on its own. The workflow relies on that per-skill loop; it does NOT re-list the step to force convergence. (Contrast the six specialists in `/workflow-review-changes` steps 3–8, whose scoped-re-run note lives in that skill.)
-
-> **[BLOCKING]** Each non-skipped step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation, except a cited conditional skip explicitly authorized by canonical `preActions.injectContext`. NEVER batch-complete validation gates.
+Deliver a well-defined feature spec-first and test-first: the canonical Feature Spec states the intended behavior, test specs are written and reviewed before implementation, and the run ends with green tests, a converged change review and a spec re-verified against what was actually built. Use it when no canonical spec holds the requested behavior yet — this workflow updates the spec first. Spec-complete work goes to `workflow-implement-spec`; large, ambiguous or research-heavy work belongs in `workflow-big-feature`; a focused one-module change with no contract change is usually a custom-simple route, not this workflow.
 
 Activate the `workflow-feature` workflow. Run `/start-workflow workflow-feature` with the user's prompt as context.
 
-> **Spec check (before investigation):** If `docs/specs/` has a spec for the affected service/module, read the relevant ERD + business-rules + API-contracts files FIRST. Engineering specs provide domain context that reduces investigation time significantly. Command: `ls docs/specs/` to discover available app buckets or flat system folders; then probe `ls docs/specs/{app-bucket}/` or `ls docs/specs/{system-name}/` to find the specific service spec.
+## Size & Kind Triage (first action)
 
-**Steps:** /scout → /investigate → /spec-discovery → /domain-analysis → /why-review → /spec → /spec-clarify → /plan → /plan-review → /plan-validate → /why-review → /spec [mode=tests] → /why-review → /artifact-review --type=spec-tests → /plan → /plan-review → /plan-execute → /seed-test-data → /domain-entities-review → /spec [mode=tests] → /why-review → /artifact-review --type=spec-tests → /spec [mode=sync] → /integration-test → /integration-test-review → /integration-test-verify → /workflow-review-changes → /security-review → /changelog → /test → /scan --target=domain-entities → /docs-update → /demo-guide → /workflow-end → /watzup
+Classify the target before choosing steps and record the result in the run report:
 
-> **[CONDITIONAL TERMINAL DOMAIN-ENTITY REFERENCE REFRESH]** After `/test` and before `/docs-update`, run `/scan --target=domain-entities` to refresh the project-reference entity catalog only when the final diff changes an entity/model, DTO/data contract, persistence schema/migration, or entity-sync evidence represented in `docs/project-reference/domain-entities-reference.md`. Otherwise mark the scan step completed with a cited skip reason naming the changed files and why they are outside this scope; this is the explicitly authorized exception to the per-step skill-invocation rule.
->
-> **[PERFORMANCE-SDD ROUTE]** If this feature is a performance enhancement (latency, throughput, memory, query speed, load behavior), run `/performance-review` and require SLA/benchmark evidence: target metric, baseline, measurement command, and acceptable regression budget. Run `/plan-execute` even on the performance route — never skip it. If behavior can change, run `/test` and any relevant functional no-regression checks. Update docs/specs for changed SLA, performance constraints, or behavior boundaries. Use project-specific performance docs from `docs/project-config.json` / `docs/project-reference/` when available.
+- **Size (guidance, not a law):** **XS** 1–3 files / ≤100 changed lines · **S** ≤15 files · **M** ≤60 · **L** ≤300 · **XL** >300
+- **Kind (one or more):** docs-only · tooling/config · test-only · behavior change · public contract/API · data/schema/migration · security-sensitive (auth, secrets, money, PII) · UI surface · infra/CI · cross-module/cross-service
+- **Risk:** irreversible · data · security · cross-module
+- **Large idea:** `isLargeIdea = multipleIndependentOutcomes || ambiguousOrResearchHeavy || releaseScopeDecomposition || oversizedTaskThatMustSplit` (`shared/product-roadmap-contract.md`)
 
-> **[AI-SDD CLOSURE]** Before `/workflow-end`, confirm changed behavior, unchanged behavior, TCs/tests, docs/specs, and generated mirror sync are either completed or explicitly skipped with evidence.
->
-> **[AI-SDD CLOSURE — POST-IMPLEMENTATION SPEC RE-VERIFY (MANDATORY)]** The `/spec` authored at step 6 (before `/plan`) captured _intended_ behavior. After `/plan-execute`, re-verify Feature Spec **§1-7** (not only §8 TCs) against what was _actually built_ and adjudicate every divergence per `shared/sdd-artifact-contract.md` → Drift Gates (`SYNC:spec-drift-adjudication`): **CODE-WRONG** → fix code/test against the spec; **SPEC-STALE** → run `/spec [update]` to record the new intended behavior, then `/spec [mode=tests] [update]` + `/spec [mode=sync]`; **AMBIGUOUS** → escalate to the spec owner. A feature that shipped behavior the spec does not describe leaves the spec stale and is NOT closure-ready. This re-verify is not optional cleanup — it is the "after implement, verify and create/update specs again" half of the SDD cycle.
+Escalate depth on risk and ambiguity, not file count alone:
 
-> **UI-intent maintenance (conditional)** — runs alongside the `/spec [mode=sync]` step, **only when the change carries user-facing behavior** (else state the skip reason — backend-only change, no §6 change). When user-facing behavior is present, run `/spec` (ui-intent intent) to refresh the affected Feature Spec **§6** interaction surface — View Inventory, Key UI States, and the per-story (`US-`/`OP-`/`BR-`) click-path the feature touched — and link the governing `/design-spec`/mockup in the spec frontmatter so §6 and the design artifact stay coupled to what was actually built. The rules live in the shared block below (`SYNC:ui-intent-layer`) — follow it; do not restate it here.
+- **XS/S, one module, clear intent** — light investigation; update only the affected spec sections; one plan in the light profile; no re-plan. Test specs receive one quality review before the build. Work inline — sub-agents rarely pay off.
+- **M, or any public-contract, data/schema, security or cross-module kind** — every core step at full depth plus each optional step whose condition holds (`/scenario`, `/domain-analysis`, `/spec [mode=clarify]`, ...).
+- **L/XL, or `isLargeIdea` true** — everything M runs, plus the embedded decomposition and bounded batches per module or slice for the build, test specs and review (one report per batch). A research-heavy scope that cannot be cut into slices → recommend `workflow-big-feature` to the user.
 
-<!-- SYNC:end-to-start-debugger-trace -->
+**Representation authority:** resolve `shared/sdd-artifact-contract.md` and the configured/native case contract before interpreting the gates. Section/TC examples below apply only to the strict fallback; native profiles use their declared intent/evidence roles, owner-qualified IDs, carriers and mapping relation. Never create a second registry or default section to satisfy an example; unresolved mappings block.
 
-> **End-to-Start Debugger Trace** — For non-trivial bugs, failed verification, regression fixes, behavior-changing code, or unclear code flow, start from the observed final state and walk backward before proposing a fix.
->
-> 1. **Frame 0: observed end state** — Name the exact user-visible output, failing assertion, log line, persisted value, API response, rendered UI, or aggregate bucket. Record the reader/query/renderer that produced it with `file:line` evidence.
-> 2. **Walk backward one hop at a time** — Trace final reader -> projection/cache/storage -> writer -> consumer/handler/job -> producer/caller -> original trigger. At every hop record: input, transformation, output, owner, and evidence.
-> 3. **Enumerate all feeder paths** — Find every upstream producer/caller/event/job that can write into the final path, including retry, async, cache, background, and alternate UI/API paths. Mark each path verified, ruled out, or still unknown.
-> 4. **Build the hypothesis matrix** — For each plausible cause, list evidence for, evidence against, how to reproduce/verify, blast radius, and status (`primary`, `contributing`, `ruled out`, `latent`). Do not fix until competing causes are explicitly resolved or bounded.
-> 5. **Choose the owning fix layer** — Identify the invariant owner and the lowest shared point that protects all downstream consumers. A fix at the symptom site is rejected unless the symptom site owns the invariant.
-> 6. **Prove convergence forward** — After choosing the fix, walk start -> end again and show how the corrected state reaches the observed final output. Map each root cause to a fix part and each fix part to a test/proof.
->
-> **BLOCKED until:** final state named · backward trace written · all feeder paths enumerated · hypothesis matrix completed · owning fix layer justified · forward convergence proof mapped to tests.
->
-> **NEVER:** Start at the first suspicious code path. Collapse multiple producers into one "flow". Treat duplicate symptoms as duplicate records without proving the read model. Skip ruled-out hypotheses.
+## Required Quality Gates
 
-<!-- /SYNC:end-to-start-debugger-trace -->
+The run is not done until each applicable gate holds with its evidence:
 
-<!-- SYNC:nested-task-creation -->
+- **Tests pass** (`tests-pass`) — `/integration-test --mode=verify` (incl. the mutation check) ran green in THIS run — once, after the static review — and `/test --proven=@verify` ran every tier that verify report does not cover; every changed behavior maps to a §8 TC that names its `Business Intent / Invariant Guarded` and would fail if that intent broke; lifecycle behavior asserts persisted state transitions and invalid-transition rejection
+- **Review converged** (`review-converged`) — nested `/workflow-review-changes` ran inline in the main session and converged — validated blocking findings fixed and the fixed state re-reviewed
+- **Spec synced** (`spec-synced`, when behavior or a public contract changed) — Feature Spec §1-7 re-verified against the built behavior (the post-implementation re-verify is part of the gate, not optional cleanup); every divergence adjudicated per `SYNC:spec-drift-adjudication` in `shared/sdd-artifact-contract.md` → Drift Gates: CODE-WRONG → fix code/tests, SPEC-STALE → `/spec` update then the test-spec update and `/spec [mode=sync]`, AMBIGUOUS → escalate to the spec owner; §8 TCs ↔ test code synced
+- **Run closed** (`run-closed`) — `/workflow-end` checked every gate and emitted the Goal Satisfaction matrix
+- **Spec-first, test-first** — the canonical Feature Spec was authored or updated before the first `/plan`; test specs were written and reviewed before `/plan --mode=execute`
+- **Goal Contract** — the active Goal Contract is resolved at start per `SYNC:goal-contract-satisfaction-loop` (active plan `goal.md` → `goals/{YYMMDD-HHmm}-{slug}/goal.md` under the plans root, default `plans/`, relocated by `docsRoots.plans.path` in `docs/project-config.json` → create from the request); the plan's success criteria map to it before `/plan --mode=execute`; every child step reads that same goal file; closure needs every criterion PASS, or BLOCKED with a user-facing escalation
+- **Plan Gate** — `/plan` runs its own validation chain inside this workflow (`plan` → Standalone Validation Chain; the route lists no separate validate step) and applies the answers in that step; `/plan --mode=execute` never starts while the plan's `## Plan Gate` is `BLOCKED` or lacks human approval
+- **Large idea** (when `isLargeIdea` is true) — the complete five-field `large_idea_decomposition` block (`outcome_slices`, `dependencies_order`, `non_goals`, `risks_evidence`, `deferred_work_owner`) sits in the owning spec/task before the first mutating `/spec` and carries its slice IDs through downstream presentation/mock-up artifacts; all-false work omits it; a genuinely isolated brownfield change records `EXEMPT` with reason and accepting owner and keeps the spec, scenario, test, review and human-confirmation gates. This workflow never creates a roadmap artifact — an explicitly supplied roadmap is read-only context
+- **Existing behavior preserved** (when an existing final output, persisted state, API response, projection or user-visible flow changes) — before the build: an end-to-start trace of the existing path (final reader → storage/projection → writer → producer/origin), its feeder paths, the invariants to keep, and forward proof for the new behavior; the plan and review evidence state expected, unchanged and no-regression behavior
+- **Performance route** (when the feature is a performance enhancement) — `/performance-review` with SLA/benchmark evidence — target metric, baseline, measurement command, regression budget; `/plan --mode=execute` still runs; functional no-regression checks run whenever behavior can change; spec/docs updated for a changed SLA, performance constraint or behavior boundary
+- **UI intent** (when user-facing behavior changed) — alongside `/spec [mode=sync]`, the Feature Spec §6 interaction surface (View Inventory, Key UI States, per-story click-path) is refreshed per `SYNC:ui-intent-layer` and linked to the governing `/design-spec`; a backend-only change states its skip reason
 
-> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
->
-> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
-> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
-> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
-> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
-> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
-> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
->
-> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+## Gates and Optional Steps
 
-<!-- /SYNC:nested-task-creation -->
+**Step contract:** `/start-workflow` → Step Execution Protocol owns how gate, core and optional steps run; the registry (`.claude/workflows.json` → `workflow-feature`, delivered in the Tier-2 output) owns each step's role and its `applicability` (`when` / `skipReason`, recorded verbatim on skip). This table adds only what the registry does not state: what each step proves or feeds, plus triage hints.
 
-<!-- SYNC:critical-thinking-mindset -->
+| Step | Role | Proves / feeds · triage hint |
+| --- | --- | --- |
+| `/investigate` | core | plan evidence — read the affected area's spec under the business spec root first (default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path) and find 3+ local examples |
+| `/spec [mode=discovery]` | optional | overlaps and missing TCs before authoring — pass this run's investigation report as `--investigation=<report path>` so it is not re-run |
+| `/domain-analysis` | optional | entity model, ownership |
+| `/why-review` | optional | a design choice between real alternatives in the investigation or spec draft |
+| `/spec` | core | spec-first gate — Feature Spec §1-7 before planning |
+| `/scenario` | optional | plan risk coverage |
+| `/work-item --mode=mockup --explore` | optional | selected mockup before planning — see New-UI Explore Mockup below |
+| `/spec [mode=tests]` | core | test-first gate — every invariant mapped to TC IDs in §8 |
+| `/work-item --mode=review --type=spec-tests` | core | test-spec quality, and the design trade-offs the spec encodes (its trade-off questions) |
+| `/spec [mode=clarify]` | optional | one decision interview after the test-spec review: user-confirmed spec decisions, including the material trade-offs that review raised |
+| `/plan` | core | decisions, areas, discovery, gates — one plan over the reviewed intent and cases; its own validation interview records human approval and applies the answers (light profile for XS/S) |
+| `/plan --mode=execute` | core | the change and its tests, written together per phase; the performance route included |
+| `/seed-test-data` | optional | QC data |
+| `/integration-test` | optional | executing tests for any TC the execute step left without one |
+| `/spec [mode=sync]` | core | spec-synced — after executing tests exist, reconcile spec, cases and actual test evidence |
+| `/workflow-review-changes --tests=defer` | gate | review-converged |
+| `/integration-test --mode=verify` | gate | tests-pass — the one verify, after the review; runs the mutation check |
+| `/workflow-e2e --source=context` | optional | E2E evidence |
+| `/test --proven=@verify` | gate | tests-pass — runs only the tiers this run's verify report does not cover |
+| `/demo-guide` | optional | demo path |
+| `/workflow-end` | gate | run-closed — prints the recap when `/watzup` does not run |
+| `/watzup` | optional | consolidated session report on request or across several workflows |
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+**New-UI Explore Mockup (conditional, BEFORE `/plan`).** When the requirement or spec adds completely new user-facing UI — a new page/view, component or dialog — run `/work-item --mode=mockup --explore`, passing the spec (or the investigation report when no spec covers the UI yet) as `--source`. `work-item --mode=mockup` Step 0 owns the scope gate (asked first, before any analysis or drafting) and the direction pick; both run in the main session only. Record the outcome (`Mockup: SKIPPED by user` or the `Selection:` line) in the plan or run report; the plan's UI Layout builds on the selected mockup. Changes inside existing views skip it with the registry `skipReason`.
 
-<!-- /SYNC:critical-thinking-mindset -->
+The registry's default order, parsed by the workflow verifier — keep it equal to `workflows.json`; the roles above decide what may flex:
 
-<!-- SYNC:ai-mistake-prevention -->
+**IMPORTANT MANDATORY Steps:** /investigate -> /spec [mode=discovery] -> /domain-analysis -> /why-review -> /spec -> /scenario -> /work-item --mode=mockup --explore -> /spec [mode=tests] -> /work-item --mode=review --type=spec-tests -> /spec [mode=clarify] -> /plan -> /plan --mode=execute -> /seed-test-data -> /integration-test -> /spec [mode=sync] -> /workflow-review-changes --tests=defer -> /integration-test --mode=verify -> /workflow-e2e --source=context -> /test --proven=@verify -> /demo-guide -> /workflow-end -> /watzup
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+**On-demand skills (not registry steps):**
 
-<!-- /SYNC:ai-mistake-prevention -->
+- `/design-spec --mode=wireframe` — UI work arrives with an image or wireframe: run it before `/plan`; a design link alone (e.g. a Figma URL) → ask the user to export the frames as images. When `/plan` finds frontend phases, include the `ui-wireframe-protocol.md` sections in them.
+- `/performance-review` — the performance route above.
+- `/investigate --mode=debug` — a test fails and its cause is unknown; establish the root cause before editing either side.
 
-<!-- SYNC:incremental-persistence -->
+`/workflow-e2e --source=context` runs only on an explicit E2E request ("include E2E", "write E2E", "run E2E", "do end-to-end verification"); otherwise it records its registry skip reason. When it runs, its nested workflow keeps default-on screenshot review and records evidence-backed `N/A` or `ENVIRONMENT-BLOCKED` when the repository lacks the capability.
 
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+## Orchestration Freedom
 
-<!-- /SYNC:incremental-persistence -->
+You choose inline vs sub-agent, parallel waves vs sequential, batching and ordering — optimize wall-clock and token cost at equal quality. **Main session only:** the mockup scope gate and pick (`work-item --mode=mockup` Step 0) never run inside a delegated sub-agent. Only these data dependencies are fixed:
 
-<!-- SYNC:subagent-return-contract -->
+- a change exists before it is reviewed or tested; tests run once, last, after the static review (`--tests=defer`); a fix made by the verify step re-runs `/workflow-review-changes --tests=defer`, and a fix made by that re-review re-runs the verify (`SYNC:verify-last-order`);
+- the Feature Spec precedes the first `/plan`, and test specs are reviewed before `/plan --mode=execute`;
+- `/plan --mode=execute` writes each phase's code and tests together, and `/integration-test` (when its condition holds) adds the executing tests still missing, before one `/spec [mode=sync]` reconciliation; the sync runs before the review that checks it;
+- the nested `/workflow-review-changes` runs inline in the main session — it owns the session's review→fix→re-review loop, and its own reviewers run as sub-agents;
+- steps awaiting user answers (`/spec [mode=clarify]`, the plan's validation interview and Plan Gate approval) are never parallelized;
+- `/workflow-end` runs last, then `/watzup` when its condition holds.
 
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
->
-> **Context budget** — the return payload is a SUMMARY, not a transcript: ≤10 finding bullets, no raw file contents / full diffs / verbatim logs inline, no re-pasted source. Everything beyond the summary lives in the `Full report` on disk. A sub-agent that would exceed the summary shape MUST write the detail to its report and return only the pointer — the orchestrator's context is the scarce resource the whole map-reduce protects.
+Recommended: independent read-only work in one parallel wave (`/spec [mode=discovery]` follows `/investigate` and reuses its report); L/XL partitioned into bounded batches per module or slice with one report per batch; XS/S done inline. The nested review owns `/integration-test --mode=review`, `/security-audit`, `/domain-analysis --mode=review`, `/experience-review` and the conditional domain-entity reference refresh (`/scan --target=domain-entities` → `/docs-manager --mode=update`, run when the final diff changes an entity, data contract or schema represented in `domain-entities-reference.md`); this workflow's tail does not repeat them. `/experience-review` records `NOT-APPLICABLE` or `ENVIRONMENT-BLOCKED` honestly and never promotes a new expectation without explicit acceptance.
 
-<!-- /SYNC:subagent-return-contract -->
+## Memory & Reporting
 
-<!-- SYNC:ui-intent-layer -->
+- One phase task per phase, one row per selected step (and per batch for L/XL) so nothing is lost after compaction; a step that does not run keeps its task, closed with its logged deviation.
+- Write the run report FIRST under `tmp/reports/` — triage result, gate evidence, deviations — and append per step or batch; re-read it and `TaskList` after compaction.
+- Sub-agent briefs carry the goal file path and the resolved reference-doc paths, and make report-writing their first deliverable.
+- Project conventions come from `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`; apply the shared SDD Artifact Contract (`shared/sdd-artifact-contract.md` in the active skills root). Any supported AI tool may implement or review once that contract, synced context and local docs are available. Code-extracted specs and TCs stay reference-only until canonical review accepts them.
 
-> **[BLOCKING] Capture a tech-agnostic UI/UX intent layer in every UI-bearing spec — a reader must be able to visualize how the feature works without naming any technology.** When the feature has a user interface, the spec MUST ATTENTION carry an interaction-surface section so the application — not just its API — can be rebuilt on any stack:
->
-> 1. **View Inventory** — list each view/screen by its UX ROLE and purpose (e.g. "list of items", "item editor", "confirmation step") and what information it presents. Describe by role, never by an implementation name.
-> 2. **Navigation Map** — how a user moves between views: entry points, transitions, and exits. Trace how this surface connects to neighboring features already in the system.
-> 3. **Key observable UI States** — the distinct states a user can observe per view (empty, loading, populated, error, success, permission-denied, etc.) — described as what the user perceives, not how it is rendered.
-> 4. **Per-story interaction flow** — for each user story, the step-by-step click/action path from intent to outcome, cross-referenced to the logical IDs the spec already owns (`US-`/`OP-`/`BR-`).
-> 5. **Couple to the companion design artifact** — keep deep visual fidelity (layout, tokens, pixel detail) OUT of the spec; it lives in the linked `design-spec`/mockup. Record that companion's path in the spec frontmatter so the spec stays the navigable hub.
->
-> **M1-clean (NON-NEGOTIABLE):** the prose names ZERO frameworks, routes/URLs, CSS, or component-class names — only roles, information, states, and flows. Technology detail belongs in the companion design artifact, never here.
->
-> **Skip ONLY** when the feature is backend-only (no UI) — state that reason explicitly in the section.
+## Fix Path & Loop Bounds
 
-<!-- /SYNC:ui-intent-layer -->
+- Validate findings (evidence-backed, reproducible) before fixing; fix at the owning layer; re-run the reviewer or test that raised each finding, plus a holistic pass when the fixes were non-trivial.
+- A failing test gets a root-cause verdict before either the source or the test is edited; never weaken an assertion to force green.
+- Replanning is exceptional: only a material scope/contract decision invalidating the saved plan returns to `/plan`; ordinary implementation discovery stays with the executor.
+- Review loops (each `/work-item --mode=review` occurrence, the nested review): round 1 exits on zero open validated findings (LOW deferral); round 2 exits on zero CRITICAL/HIGH/MEDIUM with LOW-only findings deferred; cap 3 review rounds; failed checks block and at the three-round cap require explicit user-approved bounded extension; escalate with `ask user question tool` on no progress. Convergence lives inside each skill's own loop, so the sequence lists each review once.
+- Spec-loop discipline: §8 derives invariant/property TCs for every hard rule and invariant, not only example scenarios; every behavior-changing finding updates BOTH the spec and the tests, never code alone.
+
+<!-- PROTOCOL-GUIDES:START -->
+
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
+
+- `end-to-start-debugger-trace` — Walk backward from the observed end state through every feeder path before fixing; investigating non-trivial bugs or failed verification, changing code behavior, or tracing unclear code flow → .claude/skills/shared/protocols/end-to-start-debugger-trace.md
+- `incremental-persistence` — Persist results per file or section while the work proceeds; a sub-agent or heavy step processes more than three files → .claude/skills/shared/protocols/incremental-persistence.md
+- `session-goal-ledger` — Keep the original goal and every user prompt of the session; running a long or multi-prompt session → .claude/skills/shared/protocols/session-goal-ledger.md
+- `severity-rubric` — One consequence-based Critical, High, Medium, Low scale for every finding and gate; classifying a finding or deciding whether a review round passes → .claude/skills/shared/protocols/severity-rubric.md
+- `subagent-return-contract` — Sub-agents return a structured envelope and a report path, never an inline report; spawning a sub-agent → .claude/skills/shared/protocols/subagent-return-contract.md
+- `ui-intent-layer` — Tech-agnostic UI intent layer in every UI-bearing spec; writing a spec for a feature with a user interface → .claude/skills/shared/protocols/ui-intent-layer.md
+- `verify-last-order` — Build all phases and write tests, review statically, then verify once with a mutation check; planning or running any code-changing task → .claude/skills/shared/protocols/verify-last-order.md
+- `workflow-registry-binding` — Read the workflow registry entry and the workflow skill together, since they must agree; executing or editing a workflow → .claude/skills/shared/protocols/workflow-registry-binding.md
+
+<!-- PROTOCOL-GUIDES:END -->
 
 <!-- SYNC:end-to-start-debugger-trace:reminder -->
 
-**IMPORTANT MUST ATTENTION** debugger trace gate: for non-trivial bug/fix/investigation/review work, start at the observed final output and trace backward through reader -> storage/projection -> writer -> consumer/job -> producer/trigger. Enumerate all feeder paths and hypotheses before fixing. **BLOCKED until** trace, hypothesis matrix, owning fix layer, and forward convergence proof exist.
+**IMPORTANT MUST ATTENTION** for non-trivial bugs, failed verification, regression fixes, behavior-changing code or unclear code flow, trace backward from the observed output through every feeder path before fixing. Establish hypotheses, the authoritative invariant owner and forward proof; retain validation at untrusted boundaries. Ordinary artifact review or graph lookup alone does not trigger a debugging workflow.
 
 <!-- /SYNC:end-to-start-debugger-trace:reminder -->
 
-<!-- SYNC:nested-task-creation:reminder -->
-
-- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
-- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
-
-<!-- /SYNC:nested-task-creation:reminder -->
 
 <!-- SYNC:goal-contract-satisfaction-loop:reminder -->
 
-- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `plans/goals/{YYMMDD-HHmm}-{slug}/goal.md` → create from current request) and read saved success criteria before editing.
+- **MANDATORY** Resolve the active Goal Contract BEFORE work (active plan `goal.md` → `<plans root>/goals/{YYMMDD-HHmm}-{slug}/goal.md`, plans root default `plans` and overridable via a `docsRoots.plans.path` entry in `docs/project-config.json` → create from current request) and read saved success criteria before editing.
 - **MANDATORY** Append iteration evidence after execution; emit a Goal Satisfaction matrix (PASS/FAIL/BLOCKED) before reporting PASS; loop on validated FAIL; escalate repeated no-progress or blockers. NEVER store secrets in goal files.
 
 <!-- /SYNC:goal-contract-satisfaction-loop:reminder -->
 
 <!-- SYNC:ui-intent-layer:reminder -->
 
-- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (View Inventory + Navigation Map + observable UI States + per-story `US-/OP-/BR-`-traced flow); keep deep visual fidelity in the linked `design-spec`/mockup recorded in frontmatter; name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
+- **MANDATORY** For UI-bearing specs, author/maintain the tech-agnostic interaction-surface layer (views with information priority now/later/not-here and container role + navigation map + observable states + user-action flows), resolving it through the configured profile's intent/evidence roles and logical IDs; an unresolved owner, role, ID, carrier, or link stays `UNKNOWN`/`BLOCKED`. **Strict portable fallback — only when neither config nor local references declares a native artifact contract:** trace each flow to the default `US-`/`OP-`/`BR-` IDs and record the companion artifact in the `design_spec:`/`mockup:` frontmatter keys. Name ZERO frameworks/routes/CSS/component classes; skip ONLY for backend-only features with a stated reason.
 
 <!-- /SYNC:ui-intent-layer:reminder -->
 
-<!-- SYNC:project-protocol-overlay -->
+<!-- SYNC:severity-rubric:reminder -->
 
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
+- **MANDATORY** Classify every finding Critical/High/Medium/Low by consequence using the affected asset, shipped impact, exposure, reversibility, evidence location, and confidence; Critical/High/MEDIUM remain actionable under the round bar, while LOW is recorded/deferred from round 2 onward.
+- **MANDATORY** A finding names a reachable trigger path (caller, input, state or event that reaches the defect) and a consequence; an unreachable concern is an observation, and unsettled reachability is `NOT VERIFIABLE` only when the concern would be MEDIUM or higher (an observation otherwise) — never a speculative LOW.
+- **MANDATORY** Keep binary gates separate from severity: a failed test, security must-fix, required artifact, or parity check blocks at every round and is never relabeled LOW.
+- **MANDATORY** Score-based skills (sre 0-2, perf two-axis) map onto the same four tiers — no parallel severity vocabulary.
 
-<!-- /SYNC:project-protocol-overlay -->
+<!-- /SYNC:severity-rubric:reminder -->
 
-<!-- SYNC:project-protocol-overlay:reminder -->
+<!-- SYNC:session-goal-ledger:reminder -->
 
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
+- **MANDATORY** Session goal ledger per the `Task Planning Rules`: pin `Original goal:`, keep `User prompts this session: P1…Pn`, and map the result to every prompt before claiming done; full text: `.claude/skills/shared/protocols/session-goal-ledger.md`.
 
-<!-- /SYNC:project-protocol-overlay:reminder -->
+<!-- /SYNC:session-goal-ledger:reminder -->
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** [Workflow] Trigger Feature Implementation workflow — implement a well-defined feature with investigation, planning, spec-driven test-first implementation, and review.
+**IMPORTANT MUST ATTENTION Goal:** Deliver a well-defined feature whose reviewed canonical spec matches the implementation, verified tests and converged change review.
 
-**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+**IMPORTANT MUST ATTENTION Main route:** triage and activate → investigate → spec discovery → domain analysis → design rationale review (real alternatives only) → spec authoring → scenarios → explore mockup → test specs → test-spec review → clarification → plan (with its own validation interview) → execute (code and tests together) → QC seed data → missing integration tests → spec sync → static change review → integration verification → E2E → remaining test tiers → demo → close → handoff. Registry conditions govern optional steps; record their skip reasons.
 
-- **End To Start Debugger Trace:** trace observed output backward; matrix hypotheses before fixing.
-- **Nested Task Creation:** expand child phases; link parent when nested.
-- **Critical Thinking:** trace every claim; confidence >80% to act.
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Incremental Persistence:** append findings to report file; never hold in memory.
-- **Subagent Return Contract:** sub-agents return summary only; NEVER inline full output; report on disk.
-
-**IMPORTANT MUST ATTENTION** apply Phase 1 compression before structural enhancement; preserve semantic meaning.
-**IMPORTANT MUST ATTENTION** NEVER alter YAML frontmatter, code blocks, tables, or SYNC-tag bodies during optimization.
-**IMPORTANT MUST ATTENTION** keep evidence gates and mandatory workflow/skill steps explicit and enforceable.
-**IMPORTANT MUST ATTENTION** add a final review task to verify output quality and unresolved risks.
+**IMPORTANT MUST ATTENTION** triage size, kind and risk FIRST — depth follows risk and ambiguity, not file count; record the triage and every deviation.
+**IMPORTANT MUST ATTENTION** gates never flex: tests green in THIS run · nested `/workflow-review-changes` converged inline · Feature Spec re-verified and synced when behavior changed · Goal Satisfaction matrix at `/workflow-end`.
+**IMPORTANT MUST ATTENTION** spec before the first `/plan`, test specs reviewed before `/plan --mode=execute`; a `BLOCKED` Plan Gate stops the build.
+**IMPORTANT MUST ATTENTION** large ideas embed the five-field `large_idea_decomposition`; this workflow never creates a roadmap artifact.
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence with confidence >80% to act; tests name the invariant they guard and fail when it breaks.

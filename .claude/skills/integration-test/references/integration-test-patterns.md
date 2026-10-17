@@ -2,6 +2,24 @@
 
 Canonical patterns for integration tests that exercise the real application wiring for the configured repository. The patterns are stack-agnostic; syntax, file layout, fixtures, commands, and annotations come from `docs/project-config.json`, `docs/project-reference/integration-test-reference.md`, and nearby existing tests.
 
+## Contents
+
+- [Project Pattern Discovery](#project-pattern-discovery)
+- [Required Contract](#required-contract)
+- [TC Annotation Pattern](#tc-annotation-pattern)
+- [Pattern 1: Write Command Or Mutation](#pattern-1-write-command-or-mutation)
+- [Pattern 2: Query Or Read Model](#pattern-2-query-or-read-model)
+- [Pattern 3: Update Or State Transition](#pattern-3-update-or-state-transition)
+- [Pattern 4: Validation Failure](#pattern-4-validation-failure)
+- [Pattern 5: Async Event Or Cross-Boundary Flow](#pattern-5-async-event-or-cross-boundary-flow)
+- [Pattern 6: Fixture Setup](#pattern-6-fixture-setup)
+- [Pattern 7: Test Data](#pattern-7-test-data)
+- [Pattern 8: Adding A New Test Suite](#pattern-8-adding-a-new-test-suite)
+- [Pattern 9: Property / Metamorphic Test](#pattern-9-property--metamorphic-test)
+- [Pattern 10: Settle Barrier Between Actor Steps](#pattern-10-settle-barrier-between-actor-steps)
+- [Anti-Patterns](#anti-patterns)
+- [Verification Checklist](#verification-checklist)
+
 ## Project Pattern Discovery
 
 Before implementation, search the codebase for project-specific patterns:
@@ -20,8 +38,8 @@ Every integration test created through this skill must satisfy these rules:
 - Exercise real dependency wiring for the scope under test. Do not replace the behavior under review with mocks unless the local reference docs explicitly define that boundary.
 - Reproduce a sequence, pacing, and data shape production can actually reach — pass the Real-World Fidelity Gate below before writing the arrange step (barrier shape: Pattern 10).
 - Link to one protected business intent or invariant.
-- Include a TC ID comment and the configured test-spec annotation mechanism.
-- Seed unique data so the test can run repeatedly without cleanup.
+- Use the resolved canonical owner/case/variant and configured test carrier; strict-default business TCs only when no native contract exists. Technical-only tests name their guarded contract without inventing a business case.
+- Follow the project’s isolation policy: shared mutable namespaces need unique identities; deterministic isolated fixtures may use stable values. Supported cleanup removes only run-owned ephemeral resources after evidence, never shared/persistent additive data.
 - Assert persisted or externally observable state, not just "no exception".
 - Wrap data-state assertions in the repository's async wait/poll helper when writes, handlers, consumers, projections, or background work can be delayed.
 - Keep one behavior per test unless the local pattern uses scenario tables for the same invariant.
@@ -33,13 +51,16 @@ Every integration test created through this skill must satisfy these rules:
 >
 > A test earns trust by reproducing a situation the system can actually meet in production. A scenario that could never occur in real life proves nothing when it passes, and wastes hours when it fails.
 >
-> 1. **Ask the fidelity question BEFORE writing the setup:** _"Can this sequence, timing, and data actually occur in production?"_ If no, the test is mis-specified — fix the SCENARIO, never the assertion.
-> 2. **Model real pacing between actor steps.** Two distinct actor actions that production separates by seconds, minutes, or hours MUST NOT be fired back-to-back in the same millisecond. Compressed pacing manufactures races the system was never designed to survive, then reports them as product defects.
-> 3. **Wait on a real signal, never a blind sleep.** Find an observable proving the prior step finished — a persisted state change, an audit/version stamp, a queue/worker idle marker, a completion event — and poll until it settles (unchanged across a short stability window). Use a fixed delay ONLY when no observable exists, and say so in a comment.
+> 1. **Ask the fidelity question BEFORE writing the setup:** *"Can this sequence, timing, and data actually occur in production?"* If no, the test is mis-specified — fix the SCENARIO, never the assertion.
+> 2. **Model only real actor pacing.** Preserve delays present in the real journey; add presentation pacing only when the project contract configures it. Never add a fixed delay to make readiness or settling appear reliable.
+> 2a. **Use the runner's synchronization idiom.** Before an action, use the browser/device runner's native wait or an evidenced project helper for applicable readiness and actionability. Bound custom waits and include useful diagnostics; do not require a helper API or object model the project does not use.
+> 2b. **Observe → act → observe.** After an action, wait for the expected positive or negative postcondition before the next dependent action, using observable state and the configured runner. Keep the final business assertion in the test. A timeout is a test failure with diagnostics, not permission to weaken the assertion.
+> 3. **Wait on a real signal, never a blind sleep.** Find an observable proving the prior step finished — a persisted state change, an audit/version stamp, a queue/worker idle marker, a completion event — and poll until it settles (unchanged across a short stability window). Use a fixed delay ONLY when no observable exists, and say so in a comment. A browser action delay MUST never replace a readiness/actionability wait.
 > 4. **Barriers belong in ARRANGE, never in ASSERT.** Waiting for a precondition is fidelity. Widening an assertion's timeout, loosening a comparison, adding a retry around a failing assertion, or skipping the test is masking. NEVER do the latter to force green.
 > 5. **Distinguish harness-amplified from real.** Test topologies (shared infra, fan-out consumers, parallel suites, cold starts) can make a rare production race routine locally. Before filing a product defect, state whether the trigger exists in production and at what likelihood.
 > 6. **Keep the protected invariant intact.** Improving fidelity must NEVER reduce what the test protects. If a realistic scenario no longer exercises the rule, the rule needs a DIFFERENT realistic scenario — not a weaker assertion.
 > 7. **Deliberate impossible-state tests are allowed, but MUST be labelled.** Corruption-repair, migration, and fail-safe tests intentionally construct states production should never reach; comment WHY the state is reachable (upstream bug, partial write, legacy data), so they are never confused with unrealistic setups.
+> 8. **Visible browser evidence is part of fidelity.** When the project contract calls for human-QC on a web surface, use its configured visible browser runner or control path when supported; attach runtime/network listeners before interaction and capture/read the configured screenshots, traces, or video. Follow the runner's native waits or an evidenced bounded project helper, and redact sensitive evidence. An unread artifact is not an observation.
 
 <!-- /SYNC:real-world-fidelity-testing -->
 
@@ -120,8 +141,8 @@ Do not create a new fixture architecture unless existing patterns cannot cover t
 
 Test data must be:
 
-- Unique per run.
-- Additive and repeatable.
+- Isolated per test/run under the project policy; unique identities where namespaces are shared.
+- Repeatable through supported fixtures/transactions or integrity-checked additive setup; preserve shared/persistent data.
 - Created through the same command/application pipeline when the business invariant depends on command-side behavior.
 - Minimal but realistic enough to exercise permissions, relationships, and derived fields.
 - Isolated from production or shared non-test resources by configured environment gates.
@@ -143,11 +164,11 @@ Use when an invariant must hold across an INPUT SPACE, not just one hand-picked 
 1. **Discover the project's property-based testing library** from `docs/project-config.json`, dependency manifests (`package.json`, `*.csproj`, `requirements.txt`/`pyproject.toml`, `pom.xml`/`build.gradle`), and existing tests. Common per stack: **fast-check** (JS/TS), **Hypothesis** (Python), **jqwik** (Java), **FsCheck** (.NET). If none is present, name the stack-appropriate library as the recommended add and state confidence; do NOT hand-roll a random-input loop when a real generator/shrinker library is available.
 2. **Define the input domain** with the library's generators (arbitraries/strategies): the full realistic range of valid inputs for the behavior under test — bounded by the same constraints the production validation enforces. Cite the local generator/builder pattern if the suite already has one.
 3. **Assert a named invariant or metamorphic relation** that must hold for EVERY generated input — not a fixed expected value. Common metamorphic relations:
-    - **Round-trip:** `decode(encode(x)) == x`; `fromDto(toDto(e))` preserves all business fields.
-    - **Commutativity / order-independence:** reordering inputs yields the same aggregate (e.g. total, set, projection).
-    - **Idempotency:** applying the operation twice equals applying it once (re-running a sync/upsert/state transition leaves identical state).
-    - **Invariance / preservation:** a conserved quantity (sum, count, balance) is unchanged across a transformation that should not alter it.
-    - **Monotonicity / ordering:** a larger input never produces a smaller ranked/sorted output.
+   - **Round-trip:** `decode(encode(x)) == x`; `fromDto(toDto(e))` preserves all business fields.
+   - **Commutativity / order-independence:** reordering inputs yields the same aggregate (e.g. total, set, projection).
+   - **Idempotency:** applying the operation twice equals applying it once (re-running a sync/upsert/state transition leaves identical state).
+   - **Invariance / preservation:** a conserved quantity (sum, count, balance) is unchanged across a transformation that should not alter it.
+   - **Monotonicity / ordering:** a larger input never produces a smaller ranked/sorted output.
 4. **Let the library shrink on failure** — record the minimal failing counterexample it reports; that counterexample is the exact missing-invariant case to add as a regression example test.
 5. **Exercise the real application boundary** for state-changing properties (drive each generated input through the same command/handler path as the other patterns), then assert the invariant on persisted/observable state — wrap in the configured async wait/poll helper when writes are delayed.
 6. **Tie the property back to a §8 Invariant/Property TC.** Each property test carries the `TestSpec` annotation linking to its TC-{FEATURE}-{NNN} (the spec's Invariant/Property TC category). One Invariant/Property TC may map to one property test that internally covers the whole space — do NOT split it into one TC per generated input.
@@ -181,12 +202,12 @@ settleBarrier(readObservable, maxWait, pollInterval, stableReads):
 
 **Contrast with the anti-patterns it replaces:**
 
-| Shape                                           | Why it is wrong                                                                                                                                |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Fixed sleep between the two actor actions       | Guesses a duration; too short still races, too long taxes every run. Only acceptable when NO observable exists — and then say so in a comment. |
-| Widening the failing assertion's timeout        | Masks a scenario defect as a slow assertion. The precondition never settled; the assertion is not the broken part.                             |
-| Retry loop wrapped around the failing assertion | Converts a fidelity gap into flake tolerance and hides the overwrite entirely.                                                                 |
-| Skipping or deleting the test                   | Drops the protected invariant. The rule still needs a realistic scenario.                                                                      |
+| Shape                                                | Why it is wrong                                                                                                                                    |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fixed sleep between the two actor actions            | Guesses a duration; too short still races, too long taxes every run. Only acceptable when NO observable exists — and then say so in a comment.    |
+| Widening the failing assertion's timeout             | Masks a scenario defect as a slow assertion. The precondition never settled; the assertion is not the broken part.                                |
+| Retry loop wrapped around the failing assertion      | Converts a fidelity gap into flake tolerance and hides the overwrite entirely.                                                                    |
+| Skipping or deleting the test                        | Drops the protected invariant. The rule still needs a realistic scenario.                                                                          |
 
 ## Anti-Patterns
 
@@ -201,7 +222,7 @@ settleBarrier(readObservable, maxWait, pollInterval, stableReads):
 
 ## Verification Checklist
 
-- TC ID is present in the spec and in test code.
+- The selected business case identity/carrier maps to its canonical owner and actual assertion; technical-only contracts need no invented business TC.
 - Protected business intent or invariant is named.
 - Existing local integration-test patterns were cited before implementation.
 - Test data is unique and repeatable.

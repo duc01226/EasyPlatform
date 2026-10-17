@@ -1,170 +1,166 @@
 ---
 name: workflow-research
 version: 1.0.0
-description: '[Workflow] Use when activating the Research & Synthesis workflow — research a topic via web sources, then synthesize per --output={synthesis|business-eval|marketing|course} (knowledge report, business evaluation, marketing strategy, or course material).'
+description: "[Workflow] Research web sources and produce a cited, reviewed deliverable. --output={synthesis|business-eval|marketing|course}."
 disable-model-invocation: false
 ---
 
+<!-- WORKFLOW-CALLS:START -->
+## Workflow Calls and Todo Bootstrap
+
+Read [the registry](../../../.claude/workflows.json) → `workflows.workflow-research` together with this skill. Call [`/start-workflow workflow-research`](../start-workflow/SKILL.md) to resolve the selected mode, pre-actions and fingerprint.
+
+**Todo FIRST:** before triage, analysis or step execution, create one todo per phase of the selected mode, in order, listing every occurrence of that phase as a line, including conditional/optional ones (a mode that declares no phases gets one todo per occurrence); preserve occurrence IDs, roles and barrier groups. Use native todo tools or an equivalent persistent ledger. Then mark the first todo `in_progress`; close each step line with its run or skip evidence, and complete a phase todo only when every line is closed and its applicable exit gates hold.
+Mode selection and registry loading prepare tracking; any 'first action' below means the first substantive action after this bootstrap.
+
+**Call each step skill:** read its linked SKILL.md and execute its protocol through the active host with the registry args. Reading or naming a skill alone is not execution. Required gates and core/optional flex follow the linked start-workflow Step Execution Protocol; keep this skill's quality gates, loops and evidence requirements.
+
+**Conditions:** load each occurrence's registry `applicability.when` and `skipReason` verbatim, and record its run/skip evidence through the linked start-workflow protocol. Do not silently omit a todo or turn a conditional skill into an unconditional call; close, in one batch at triage, the todos whose condition is already false there. Declared parallel groups retain their all-return barrier.
+
+Explicit step-skill calls by mode (registry order; roles and conditions remain owned by the registry):
+
+- Mode `synthesis`: [`/web-research --chain=deep-dive`](../web-research/SKILL.md) (core) → [`/knowledge-synthesis`](../knowledge-synthesis/SKILL.md) (core) → [`/knowledge-review --fix-loop`](../knowledge-review/SKILL.md) (gate) → [`/workflow-end`](../workflow-end/SKILL.md) (gate) → [`/watzup`](../watzup/SKILL.md) (optional; conditional)
+  Phase todos: Discover (3; exit review-converged) → Close (2; exit run-closed)
+<!-- workflow-mode:synthesis fingerprint:ed8edfe31886313e9385ad0a8a18aed5072c6368009a258d7c54e008514d9b02 -->
+- Mode `business-eval`: [`/web-research --chain=deep-dive`](../web-research/SKILL.md) (core) → [`/market-analysis`](../market-analysis/SKILL.md) (core) → [`/business-evaluation`](../business-evaluation/SKILL.md) (core) → [`/knowledge-review --fix-loop`](../knowledge-review/SKILL.md) (gate) → [`/workflow-end`](../workflow-end/SKILL.md) (gate) → [`/watzup`](../watzup/SKILL.md) (optional; conditional)
+  Phase todos: Discover (4; exit review-converged) → Close (2; exit run-closed)
+<!-- workflow-mode:business-eval fingerprint:bb1eafaad9be2c4b1483ac6165360c484dee08040f83f403ffa6c3050dd4787b -->
+- Mode `marketing`: [`/web-research --chain=deep-dive`](../web-research/SKILL.md) (core) → [`/market-analysis`](../market-analysis/SKILL.md) (core) → [`/strategy-builder`](../strategy-builder/SKILL.md) (core) → [`/knowledge-review --fix-loop`](../knowledge-review/SKILL.md) (gate) → [`/workflow-end`](../workflow-end/SKILL.md) (gate) → [`/watzup`](../watzup/SKILL.md) (optional; conditional)
+  Phase todos: Discover (4; exit review-converged) → Close (2; exit run-closed)
+<!-- workflow-mode:marketing fingerprint:b0e4bb1aff30678ab7f703db24452a741e085cae20c94c9a1ec757fb13889fb0 -->
+- Mode `course`: [`/web-research --chain=deep-dive`](../web-research/SKILL.md) (core) → [`/course-builder`](../course-builder/SKILL.md) (core) → [`/knowledge-review --fix-loop`](../knowledge-review/SKILL.md) (gate) → [`/workflow-end`](../workflow-end/SKILL.md) (gate) → [`/watzup`](../watzup/SKILL.md) (optional; conditional)
+  Phase todos: Discover (3; exit review-converged) → Close (2; exit run-closed)
+<!-- workflow-mode:course fingerprint:e5ecac5bd853bc1f7f56e420d0afba33433a66a87c42e678231b9c0656fe5cc9 -->
+
+Regenerate this block with `node .claude/scripts/lib/workflow-skill-contract.cjs --write` after registry edits; [`/sync-codex`](../sync-codex/SKILL.md) refreshes it before mirroring.
+<!-- WORKFLOW-CALLS:END -->
+
 ## Quick Summary
 
-**Goal:** [Workflow] Trigger Research & Synthesis workflow — gather web sources, then synthesize into the target artifact selected by `--output` (knowledge report, business evaluation, marketing strategy, or course material).
+**Goal:** Research a topic from web sources and deliver ONE cited, reviewed artifact in the form `--output` selects: a knowledge report (`synthesis`, default), a business/market viability evaluation (`business-eval`), a marketing strategy (`marketing`), or structured course material (`course`). The workflow produces research artifacts only, never code.
 
-**Workflow:**
+**Use it when** the answer must come from external sources and end in a durable, cited deliverable. **Use a sibling instead** for a quick lookup with no artifact (plain `/web-research`) or for questions about this codebase (`/investigate`).
 
-1. **Detect** — classify request scope and target artifacts.
-2. **Execute** — apply required steps with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
+**IMPORTANT MANDATORY Steps:** resolve the `workflow-research` manifest variant for `--output` first (default `synthesis`), then create one task per phase with a row per returned occurrence (default: /web-research --chain=deep-dive -> /knowledge-synthesis -> /knowledge-review --fix-loop -> /workflow-end -> /watzup).
 
-**Key Rules:**
+**Step contract:** steps follow `/start-workflow` → Step Execution Protocol — `gate` steps always run, a step that runs invokes its `Skill` tool, and every other deviation is logged. NEVER batch-complete validation gates.
 
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
-- MUST ATTENTION keep task tracking updated as each step starts/completes.
-- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
-- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
-- NEVER skip mandatory workflow or skill gates.
+This skill is the canonical Research & Synthesis entry point. Invoke it with `--output=<mode>` (default `synthesis`); `/start-workflow workflow-research` resolves the same variants through `.claude/scripts/lib/workflow-manifest.cjs`. Each variant is a complete sequence, so execute the resolved manifest and never a hand-swapped list.
 
-**IMPORTANT MANDATORY Steps:** /web-research -> /deep-research -> /knowledge-synthesis -> /knowledge-review -> /workflow-end
+## Contents
 
-> These steps are the default `--output=synthesis` sequence (identical to the catalog `workflow-research` workflow sequence). For `--output={business-eval|marketing|course}` the terminal synthesis skill(s) swap per the **Output Dispatch** table below — the research scaffold and `/knowledge-review -> /workflow-end` closure are invariant.
+- [Workflow Calls and Todo Bootstrap](#workflow-calls-and-todo-bootstrap)
+- [Quick Summary](#quick-summary)
+- [Output Modes (--output)](#output-modes---output)
+- [Question-Scope Triage (first action)](#question-scope-triage-first-action)
+- [Required Quality Gates](#required-quality-gates)
+- [Recommended Skills](#recommended-skills)
+- [Orchestration](#orchestration)
+- [Memory & Reporting](#memory--reporting)
+- [Evidence Retention](#evidence-retention)
+- [Findings & Fix Path](#findings--fix-path)
+- [Closing Reminders](#closing-reminders)
 
----
+## Output Modes (--output)
 
-## Output Dispatch (--output)
+Pick the mode from the prompt BEFORE creating tasks. When the prompt is ambiguous, use `synthesis` and state the assumption. Every mode shares one research step, `/web-research --chain=deep-dive` (source map, then evidence base; the `/source-deep-dive` procedure runs inside it per `.claude/skills/web-research/references/research-chain.md`), and the `/knowledge-review --fix-loop → /workflow-end` close, followed by `/watzup` only when its condition holds; only the terminal synthesis skill(s) differ. The `/market-analysis` step of `business-eval` and `marketing` reads that evidence base first and searches only the gaps it names.
 
-All modes share the research scaffold `/web-research → /deep-research → … → /knowledge-review → /workflow-end`; only the terminal synthesis skill(s) swap per `--output`:
+| `--output`              | Deliverable                          | Terminal synthesis skill(s)                 |
+| ----------------------- | ------------------------------------ | ------------------------------------------- |
+| **synthesis** (default) | Cited knowledge report               | `/knowledge-synthesis`                      |
+| **business-eval**       | Business/market viability evaluation | `/market-analysis` → `/business-evaluation` |
+| **marketing**           | Marketing strategy                   | `/market-analysis` → `/strategy-builder`    |
+| **course**              | Learner-ready course                 | `/course-builder`                          |
 
-| `--output`              | Terminal synthesis skill(s)                 | Full sequence                                                                                                  |
-| ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **synthesis** (default) | `/knowledge-synthesis`                      | `/web-research → /deep-research → /knowledge-synthesis → /knowledge-review → /workflow-end`                    |
-| **business-eval**       | `/market-analysis` + `/business-evaluation` | `/web-research → /deep-research → /market-analysis → /business-evaluation → /knowledge-review → /workflow-end` |
-| **marketing**           | `/market-analysis` + `/strategy-builder`    | `/web-research → /deep-research → /market-analysis → /strategy-builder → /knowledge-review → /workflow-end`    |
-| **course**              | `/course-builder`                           | `/web-research → /deep-research → /course-builder → /knowledge-review → /workflow-end`                         |
+**[BLOCKING] Evidence-artifact identity for `business-eval` and `marketing`:** before invoking the
+first research child, derive one stable `ARTIFACT_SLUG` from the user's topic and record the exact
+`MARKET_ANALYSIS_PATH = docs/knowledge/strategy/market-analysis/{ARTIFACT_SLUG}.md` in the parent
+workflow context/task handoff. Pass those exact values to every child skill. `market-analysis` is the
+only producer; it must write and return that path, and `business-evaluation`/`strategy-builder` must
+read that exact path rather than deriving a second slug. If a plan directory is active, its
+`{plan-dir}/research/market-analysis.md` file is a copy of the same producer artifact, not a second
+identity. This token is not needed for the `synthesis` variant. — why: sequence ordering
+without a shared artifact key still allows a producer/consumer miss that degrades the final evidence
+without failing the workflow.
 
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+## Question-Scope Triage (first action)
 
-This skill IS the canonical Research & Synthesis entry point — invoke it directly with `--output=<mode>` (default `synthesis`) and execute the selected sequence from the dispatch table above: invoke each step skill in order via the `Skill` tool with the user's prompt as context. The workflow catalog also exposes a `workflow-research` id purely so the auto-router can detect research/business-eval/marketing/course intents; `/start-workflow workflow-research` is equally valid and injects the same OUTPUT DISPATCH table — either path executes the sequence for the selected `--output`.
+Classify the question and record it in the workflow report. Scope sets research DEPTH inside the research step's caps (≤10 searches, then ≤8 fetches); it never lowers the evidence bar.
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+| Scope                          | Signals                                                                           | Depth                                                                                                                                                                                                                  |
+| ------------------------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Narrow**                     | One fact, definition, or comparison of 2–3 named options                          | 3–5 angle-varied queries; fetch the 2–4 strongest Tier 1–2 sources; a short artifact that still carries every template section the review enforces.                                                                    |
+| **Standard**                   | One topic with several angles                                                     | Skill defaults: 5–10 queries, 5–8 fetches.                                                                                                                                                                             |
+| **Broad or decision-critical** | Multi-part topic, contested evidence, or a business/strategy decision rides on it | Split into sub-topics, one bounded research pass per sub-topic (each under the caps), then merge the source maps and evidence bases before synthesis. Run the adversarial checks of `/knowledge-review` at full depth. |
 
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+## Required Quality Gates
 
-<!-- SYNC:nested-task-creation -->
+| Gate                                             | Evidence that proves it                                                                                                                                                                 |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Review converged (`review-converged`)            | `/knowledge-review --fix-loop` verdict APPROVED on the final artifact: the gate validated its REVISE/BLOCKED findings, had them fixed at their owner and re-reviewed the fixed artifact in a fresh pass. |
+| Citation bar                                     | Every factual claim, number, table row and inference ends with an inline `[N]` citation mapped to a Sources row (Title, URL, Author/Publisher, Date, Tier).                             |
+| Cross-validated and calibrated | Factual claims rest on 2+ independent sources; a single-source claim is marked unverified and held below 60%; confidence above 80% needs contradicting evidence addressed; Tier 4 is never cited as fact; findings below 60% and open gaps are flagged. |
+| Artifact identity (`business-eval`, `marketing`) | One `MARKET_ANALYSIS_PATH`, written by `market-analysis` and read by its consumer.                                                                                                      |
+| Variant closure                                  | The workflow report records the selected mode, resolver fingerprint and ordered occurrence IDs.                                                                                         |
+| Run closed (`run-closed`)                        | `/workflow-end` ran last.                                                                                                                                                               |
 
-> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
->
-> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
-> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
-> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
-> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
-> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
-> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
->
-> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+## Recommended Skills
 
-<!-- /SYNC:nested-task-creation -->
+| Skill                       | Role | When it earns its cost                                                       | Proves / feeds                                                                           |
+| --------------------------- | ---- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `/web-research --chain=deep-dive` | core | Always; depth per triage. Runs the `/source-deep-dive` procedure inline; the synthesis skills read its evidence base. | Tiered source map with gaps (`tmp/research/_sources-{slug}.md`), then the cross-validated evidence base (`tmp/research/_evidence-{slug}.md`). |
+| Terminal synthesis skill(s) | core | Per the Output Modes table.                                                  | The deliverable.                                                                         |
+| `/knowledge-review --fix-loop` | gate | Always. It owns validate → fix → fresh re-review.                         | `review-converged`: template, citation, confidence, source-quality and anti-bias checks. |
+| `/workflow-end`             | gate | Always, last.                                                                | `run-closed`, and the short handoff with the artifact path when nothing was built.       |
+| `/watzup`                   | optional | The user asked for a session report or an HTML wrap-up, or the session spanned several workflows or prompts that need one consolidated handoff. Skip reason: workflow-end printed the recap, or the short handoff when nothing was built, and every applicable outcome gate passed. | Session report with the artifact path.                                                  |
 
-<!-- SYNC:critical-thinking-mindset -->
+## Orchestration
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+You choose inline vs sub-agent, batching and ordering to minimize wall-clock and tokens at equal quality. Narrow questions run inline. For broad questions, independent sub-topic research passes can run as one parallel wave, because each writes only its own source and evidence files. Merge them before synthesis.
 
-<!-- /SYNC:critical-thinking-mindset -->
+Fixed data dependencies: inside the research step the source map exists before the deep dive; the evidence base exists before synthesis; `market-analysis` writes `MARKET_ANALYSIS_PATH` before its consumer reads it; `/knowledge-review` checks the final artifact; `/workflow-end` runs last.
 
-<!-- SYNC:ai-mistake-prevention -->
+## Memory & Reporting
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+- Create one task per phase, with a row per resolved occurrence. Child skills expand their own steps under the parent row.
+- Create the workflow report FIRST at `tmp/reports/workflow-research-{YYMMDD}-{HHmm}-{slug}.md`: mode, triage, resolver fingerprint, per-step evidence and deviations, and the paths of the source map, evidence base and final artifact. Append after each step.
+- Sub-agent briefs carry the topic, the slug, the exact paths and the evidence bar, and make report writing the first deliverable.
+- After compaction, re-read `TaskList` and the workflow report before continuing.
 
-<!-- /SYNC:ai-mistake-prevention -->
+## Evidence Retention
 
-<!-- SYNC:incremental-persistence -->
+Retain this run’s source map and evidence base during synthesis, all review rounds, and owner repairs. Cleanup is an orchestrator lifecycle action after `/knowledge-review` returns APPROVED on the final artifact and `/workflow-end` successfully accepts closure; record the acceptance evidence and exact removed paths in the workflow report. REVISE, BLOCKED, interruption, or closure failure retains the inputs. Remove only this run’s `_sources-{slug}.md` and `_evidence-{slug}.md` if its retention policy permits; never erase another run’s evidence. Cleanup after closure is report housekeeping, not another workflow occurrence.
 
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+## Findings & Fix Path
 
-<!-- /SYNC:incremental-persistence -->
+- `/knowledge-review --fix-loop` owns the loop; each of its review passes is read-only. It validates each REVISE/BLOCKED finding against the evidence, has it fixed at its owner, then re-reviews the fixed artifact in a fresh pass. An evidence gap takes a targeted `/source-deep-dive` pass over the existing source map, or a `/web-research --chain=deep-dive` pass on the gap when the map lacks the needed sources. A synthesis defect (missing section, uncited claim, miscalibrated confidence) is fixed in the artifact through its synthesis skill.
+- Loop bounds: round 1 exits on zero open findings (LOW deferral); from round 2 the bar is zero CRITICAL/HIGH/MEDIUM, with LOWs deferred and listed; cap 3 review rounds; escalate via `ask user question tool` when a round makes no progress.
 
-<!-- SYNC:subagent-return-contract -->
+<!-- PROTOCOL-GUIDES:START -->
 
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
->
-> **Context budget** — the return payload is a SUMMARY, not a transcript: ≤10 finding bullets, no raw file contents / full diffs / verbatim logs inline, no re-pasted source. Everything beyond the summary lives in the `Full report` on disk. A sub-agent that would exceed the summary shape MUST write the detail to its report and return only the pointer — the orchestrator's context is the scarce resource the whole map-reduce protects.
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
-<!-- /SYNC:subagent-return-contract -->
+- `incremental-persistence` — Persist results per file or section while the work proceeds; a sub-agent or heavy step processes more than three files → .claude/skills/shared/protocols/incremental-persistence.md
+- `session-goal-ledger` — Keep the original goal and every user prompt of the session; running a long or multi-prompt session → .claude/skills/shared/protocols/session-goal-ledger.md
+- `subagent-return-contract` — Sub-agents return a structured envelope and a report path, never an inline report; spawning a sub-agent → .claude/skills/shared/protocols/subagent-return-contract.md
+- `workflow-registry-binding` — Read the workflow registry entry and the workflow skill together, since they must agree; executing or editing a workflow → .claude/skills/shared/protocols/workflow-registry-binding.md
 
-<!-- SYNC:nested-task-creation:reminder -->
+<!-- PROTOCOL-GUIDES:END -->
 
-- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
-- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
 
-<!-- /SYNC:nested-task-creation:reminder -->
+<!-- SYNC:session-goal-ledger:reminder -->
 
-<!-- SYNC:project-protocol-overlay -->
+- **MANDATORY** Session goal ledger per the `Task Planning Rules`: pin `Original goal:`, keep `User prompts this session: P1…Pn`, and map the result to every prompt before claiming done; full text: `.claude/skills/shared/protocols/session-goal-ledger.md`.
 
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
+<!-- /SYNC:session-goal-ledger:reminder -->
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Protocols in force (concise digest of the SYNC/shared blocks this skill carries) — NEVER treat a digest line as the full rule; it signposts the canonical SYNC body above:**
+**IMPORTANT MUST ATTENTION Goal:** one cited, reviewed artifact in the selected `--output` form, with `/knowledge-review` converged and every factual claim traceable to a Sources row.
 
-- **Nested Task Creation:** Expand child phases under the parent workflow row; link when nested.
-- **Critical Thinking:** Apply critical + sequential thinking; cite proof, confidence >80% to act.
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Incremental Persistence:** Persist findings to `plans/reports/` per file; survive context cutoff.
-- **Subagent Return Contract:** Sub-agents return summary plus report pointer only, never inline transcript.
+- **MUST ATTENTION** select the `--output` mode and triage the question scope FIRST. Scope sets research depth inside the skill caps; it never lowers the citation or cross-validation bar.
+- **MUST ATTENTION** for `business-eval` and `marketing`, derive one `ARTIFACT_SLUG` and `MARKET_ANALYSIS_PATH` before the first research step and pass the exact values to every child.
+- **MUST ATTENTION** `/knowledge-review --fix-loop` fixes validated findings at their owner (evidence gap → targeted `/source-deep-dive` or `/web-research --chain=deep-dive` pass, synthesis defect → the artifact), then re-reviews the fixed artifact in a fresh pass.
+- **MUST ATTENTION Variant closure:** record the selected `--output` mode, resolver fingerprint, ordered occurrence IDs, each invoked skill's evidence, and every deviation before `/workflow-end`; a variant mismatch is a workflow failure.
 
-**IMPORTANT MUST ATTENTION** apply Phase 1 compression before structural enhancement; preserve semantic meaning.
-**IMPORTANT MUST ATTENTION** NEVER alter YAML frontmatter, code blocks, tables, or SYNC-tag bodies during optimization.
-**IMPORTANT MUST ATTENTION** keep evidence gates and mandatory workflow/skill steps explicit and enforceable.
-**IMPORTANT MUST ATTENTION** add a final review task to verify output quality and unresolved risks.
+**Protocols in force (digest; the guide entries above point to the full text):** Nested Task Creation · Incremental Persistence · Sub-Agent Return Contract · Session Goal Ledger · Workflow Registry Binding.

@@ -33,9 +33,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PlatformExampleApp.ModularMonolith.Api\PlatformExampleApp.ModularMonolith.Api.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TaskManagement.Api\PlatformExampleApp.TaskManagement.Api.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TaskManagement.Application\PlatformExampleApp.TaskManagement.Application.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TaskManagement.Contracts\PlatformExampleApp.TaskManagement.Contracts.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TaskManagement.Domain\PlatformExampleApp.TaskManagement.Domain.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TaskManagement.Persistence.Mongo\PlatformExampleApp.TaskManagement.Persistence.Mongo.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Api\PlatformExampleApp.TextSnippet.Api.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Application\PlatformExampleApp.TextSnippet.Application.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Domain\PlatformExampleApp.TextSnippet.Domain.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Persistence.Mongo\PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj" />
     <ProjectReference Include="..\..\Platform\Easy.Platform.AutomationTest\Easy.Platform.AutomationTest.csproj" />
   </ItemGroup>
 

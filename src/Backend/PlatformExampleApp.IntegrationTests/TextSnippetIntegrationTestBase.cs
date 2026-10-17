@@ -31,7 +31,16 @@ namespace PlatformExampleApp.IntegrationTests;
 /// </para>
 /// </summary>
 public abstract class TextSnippetIntegrationTestBase
-    : PlatformServiceIntegrationTestWithAssertions<TextSnippetIntegrationTestAspNetCoreModule>
+    : TextSnippetIntegrationTestBase<TextSnippetIntegrationTestAspNetCoreModule>
+{
+}
+
+/// <summary>
+/// Shares service-specific repository and user-context setup while keeping each module's DI provider isolated.
+/// </summary>
+public abstract class TextSnippetIntegrationTestBase<TServiceModule>
+    : PlatformServiceIntegrationTestWithAssertions<TServiceModule>
+    where TServiceModule : TextSnippetIntegrationTestAspNetCoreModule
 {
     /// <inheritdoc />
     protected override IPlatformRepository<TEntity, string> ResolveRepository<TEntity>(IServiceProvider sp)

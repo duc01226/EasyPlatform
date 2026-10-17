@@ -65,7 +65,8 @@ public class QueryBenchmarkExecutor
                             {
                                 PopulateMockBenchmarkRequestContext(requestContextAccessor.Current, configuration);
 
-                                return await cqrs.SendQuery(new SearchSnippetTextQuery());
+                                // Hold the returned work constant across default-page policy changes.
+                                return await cqrs.SendQuery(new SearchSnippetTextQuery { MaxResultCount = 20 });
                             })));
     }
 

@@ -26,7 +26,7 @@ Chain subagents when tasks have dependencies or require outputs from previous st
 Spawn multiple subagents simultaneously for independent tasks:
 
 - **Code + Tests + Docs**: Separate, non-conflicting components
-- **Backend + Frontend**: Isolated .NET services and Angular components
+- **Bounded responsibilities**: For example, assign one agent a named behavior slice and another an unrelated documentation slice only when each has an explicit, disjoint file write set and neither consumes the other's output
 - **Multiple Research Topics**: Independent technical areas
 - **Careful Coordination**: Ensure no file conflicts or shared resource contention
 - **Merge Strategy**: Plan integration points before parallel execution begins

@@ -1,8 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { osEssentialsEnv } from '../../../hooks/tests/lib/os-essentials-env.cjs';
 
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const verifierPath = path.resolve(thisDir, '..', 'verify-provenance-markers.mjs');
@@ -11,6 +14,7 @@ const {
     findMarkerViolations,
     findBannerViolations,
     findConsumerViolations,
+    readConsumerBodies,
     parseSections,
     DECLARED_TAGS,
     GUARDED_SECTIONS
@@ -27,7 +31,7 @@ const {
 const PREAMBLE = [
     '# Architecture Knowledge Catalog',
     '',
-    '> **Consumed by:** `architecture-design` · `architecture-review` · `architecture-review-full`.',
+    '> **Consumed by:** `arch-alpha` · `arch-beta` · `arch-gamma`.',
     '>',
     '> **MUST ATTENTION** provenance is part of every load-bearing claim in **§3, §8, §9, §10**. The ROW is the'
         + ' only scope unit. A trailing `— VERIFY` means the claim has **not** been checked against a primary'
@@ -264,10 +268,10 @@ const NON_GUARD_BEARING_SKILL = [
 // TC-PROV-009 — a reworded guard in a guard-bearing consumer is a violation.
 test('TC-PROV-009: a guard-bearing consumer that lost the literal — VERIFY token is a violation', () => {
     const violations = findConsumerViolations(catalog(), (name) =>
-        name === 'architecture-design' ? GUARD_REWORDED : GUARD_BEARING_SKILL
+        name === 'arch-alpha' ? GUARD_REWORDED : GUARD_BEARING_SKILL
     );
     assert.equal(violations.length, 1);
-    assert.match(violations[0], /architecture-design/);
+    assert.match(violations[0], /arch-alpha/);
     assert.match(violations[0], /VERIFY/);
 });
 
@@ -278,11 +282,11 @@ test('TC-PROV-009b: consumers that keep the token pass', () => {
 });
 
 // TC-PROV-009c — NO FALSE POSITIVE on a consumer that references the catalog outside the guarded
-// sections. `architecture-review-full` is exactly this case (its pointers target §20), so the check
+// sections. A consumer such as `arch-gamma` is exactly this case (its pointers target §20), so the check
 // must skip it rather than demand a guard it has no reason to carry.
 test('TC-PROV-009c: a consumer referencing only non-guarded sections is skipped, not failed', () => {
     const violations = findConsumerViolations(catalog(), (name) =>
-        name === 'architecture-review-full' ? NON_GUARD_BEARING_SKILL : GUARD_BEARING_SKILL
+        name === 'arch-gamma' ? NON_GUARD_BEARING_SKILL : GUARD_BEARING_SKILL
     );
     assert.deepEqual(violations, [], 'a skill with no provenance guard must not be required to have one');
 });
@@ -292,6 +296,53 @@ test('TC-PROV-009c: a consumer referencing only non-guarded sections is skipped,
 test('TC-PROV-009d: an absent consumer skill is skipped (fail-soft)', () => {
     const violations = findConsumerViolations(catalog(), () => null);
     assert.deepEqual(violations, []);
+});
+
+// TC-PROV-009e — mode-only loading must preserve each mode's existing negative drift guard.
+// Node paths/argv and UTF-8 fixtures work on Windows, macOS and Linux; diagnostic paths use '/'.
+test('TC-PROV-009e: CLI rejects a lost mode guard even when sibling and router tokens remain', () => {
+    // Given an isolated catalog, router and two independent guard-bearing modes. Other consumers
+    // are deliberately absent; a §20-only reference deliberately carries no provenance token.
+    const fixture = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'ck-provenance-modes-')));
+    const write = (relative, body) => {
+        const target = path.join(fixture, relative);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, body, 'utf8');
+    };
+    const reviewPath = '.claude/skills/arch-alpha/references/mode-review.md';
+    const invoke = () => spawnSync(process.execPath, [verifierPath], {
+        cwd: fixture,
+        env: osEssentialsEnv({
+            CLAUDE_PROJECT_DIR: fixture, HOME: fixture, USERPROFILE: fixture,
+            TMPDIR: fixture, TEMP: fixture, TMP: fixture
+        }),
+        encoding: 'utf8', timeout: 60000
+    });
+    try {
+        write('.claude/docs/architecture-knowledge.md', catalog());
+        write('.claude/skills/arch-alpha/SKILL.md', '# Router\nSelect one mode; unrelated token `— VERIFY`.\n');
+        write('.claude/skills/arch-alpha/references/mode-design.md', GUARD_BEARING_SKILL);
+        write(reviewPath, GUARD_REWORDED);
+        write('.claude/skills/arch-alpha/references/notes.md', NON_GUARD_BEARING_SKILL);
+
+        // When the real CLI loads the moved contracts, Then the missing review guard must fail
+        // by its own path, despite both sibling and router tokens being present.
+        const broken = invoke();
+        assert.equal(broken.error, undefined);
+        assert.equal(broken.status, 1, broken.stdout + broken.stderr);
+        assert.ok(broken.stderr.includes(reviewPath), broken.stderr);
+        assert.match(broken.stderr, /no longer contains the literal `— VERIFY`/);
+
+        // When that mode's guard is restored, Then the CLI passes with partial/non-guard inputs
+        // unchanged. This control distinguishes a valid provenance failure from a bad fixture.
+        write(reviewPath, GUARD_BEARING_SKILL);
+        const restored = invoke();
+        assert.equal(restored.error, undefined);
+        assert.equal(restored.status, 0, restored.stdout + restored.stderr);
+        assert.match(restored.stdout, /\[codex-verify-provenance-markers\] PASS/);
+    } finally {
+        fs.rmSync(fixture, { recursive: true, force: true });
+    }
 });
 
 // ---------------------------------------------------------------------------
@@ -304,10 +355,7 @@ test('TC-PROV-010: the live catalog and its live consumers pass all checks', () 
     const catalogPath = path.join(repoRoot, '.claude', 'docs', 'architecture-knowledge.md');
     if (!fs.existsSync(catalogPath)) return; // fail-soft, same policy as the verifier
     const content = fs.readFileSync(catalogPath, 'utf8');
-    const readSkill = (name) => {
-        const filePath = path.join(repoRoot, '.claude', 'skills', name, 'SKILL.md');
-        return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
-    };
+    const readSkill = (name) => readConsumerBodies(name, repoRoot);
     const failures = [...all(content), ...findConsumerViolations(content, readSkill)];
     assert.deepEqual(failures, [], `live catalog must be clean:\n${failures.join('\n')}`);
 });
@@ -322,28 +370,25 @@ test('TC-PROV-011: the verifier is registered as a pipeline stage in the standal
     assert.match(runner, /id:\s*["']provenance-markers["']/, 'runner must register the stage id (also the --only key)');
 });
 
-// TC-PROV-011b — npm-surface parity, but ONLY in the framework's own repo.
+// TC-PROV-011b — the stage is reachable from inside the portable bundle, with no npm surface.
 //
-// A project that adopts the framework copies `.claude` and keeps its own root package.json (or has
-// none at all — `export-claude` deliberately ships no package.json, and PORT-007 asserts that). So an
-// UNCONDITIONAL package.json assertion here would fail in every adopting project and abort the sync
-// pipeline at its own test stage. The npm scripts are a convenience surface of THIS repo, not part of
-// the portable contract — hence the self-identification guard.
-test('TC-PROV-011b: package.json exposes the stage (framework repo only)', () => {
-    const pkgPath = path.join(repoRoot, 'package.json');
-    if (!fs.existsSync(pkgPath)) return; // adopting project with no root package.json
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-    if (pkg.name !== 'easy-claude-tooling') return; // adopting project's own package.json
+// This used to assert two package.json scripts. Those are gone: the framework is self-running, so no
+// host `package.json` may drive it. The guarantee the old test wanted — "this sensor is individually
+// runnable AND part of the everything-verify run" — is now UNCONDITIONAL, because both halves live
+// inside `.claude` and therefore exist in every adopting project too.
+test('TC-PROV-011b: the stage is individually runnable and inside the derived verify set', () => {
+    const verifier = path.join(repoRoot, '.claude', 'scripts', 'codex', 'verify-provenance-markers.mjs');
+    assert.ok(fs.existsSync(verifier),
+        'the verifier must exist at its in-bundle path so `node .claude/scripts/codex/verify-provenance-markers.mjs` works standalone');
 
-    assert.ok(
-        pkg.scripts['codex:verify:provenance-markers'],
-        'package.json must expose the single-stage script'
-    );
-    assert.match(
-        pkg.scripts['verify:all'],
-        /provenance-markers/,
-        'verify:all must include the provenance-markers stage'
-    );
+    const runner = fs.readFileSync(
+        path.join(repoRoot, '.claude', 'skills', 'sync-codex', 'scripts', 'run-codex-sync.mjs'), 'utf8');
+    const stage = runner.match(/\{[^{}]*\bid:\s*"provenance-markers"[^{}]*\}/);
+    assert.ok(stage, 'the runner must declare the provenance-markers stage');
+    // Read-only stages carry no `mutate: true`, so `--verify-only` selects this one by derivation —
+    // there is no roster to keep in step, which is what the old `verify:all --only` list required.
+    assert.doesNotMatch(stage[0], /\bmutate:\s*true\b/,
+        'provenance-markers is a read-only gate, so it must stay in the derived --verify-only set');
 });
 
 // TC-PROV-012 — peer-convention lock: EVERY codex verifier has a unit test beside it. This test

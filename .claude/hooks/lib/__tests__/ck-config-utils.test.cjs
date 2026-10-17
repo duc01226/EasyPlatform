@@ -90,7 +90,7 @@ test('empty → false', () => {
 console.log('\n=== sanitizePath tests ===\n');
 
 // sanitizePath needs projectRoot as second param
-const projectRoot = '/home/user/project';
+const projectRoot = path.resolve('/home/user/project');
 
 test('path traversal: "../../../tmp" → null (blocked)', () => {
   assertEquals(sanitizePath('../../../tmp', projectRoot), null);

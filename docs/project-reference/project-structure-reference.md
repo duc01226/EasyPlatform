@@ -8,6 +8,22 @@
 
 **Purpose:** Authoritative map of services, ports, directories, tech-stack versions, and module codes — so AI places code in the right project, uses correct ports/commands, and never invents paths. Every port + path is `file:line`-cited; trust this doc over memory.
 
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Architecture Overview](#architecture-overview)
+- [Service Architecture](#service-architecture)
+- [Infrastructure Ports](#infrastructure-ports)
+- [Key Directories](#key-directories)
+- [Deployment & Delivery](#deployment--delivery)
+- [Environment Configuration](#environment-configuration)
+- [Frontend Apps](#frontend-apps)
+- [Tech Stack](#tech-stack)
+- [Module Codes](#module-codes)
+- [CI/CD (Delivery Detail)](#cicd-delivery-detail)
+- [Quick Start Commands](#quick-start-commands)
+- [Closing Reminders](#closing-reminders)
+
 ## Quick Summary
 
 **Goal:** Keep architecture, service boundaries, local ports, delivery stages, environment keys, and module paths synchronized with the current repository.
@@ -72,7 +88,6 @@ Path convention: `src/Platform/{module}/` (framework) | `src/Backend/{project}/`
 | `src/Backend/`            | Layered TextSnippet backend, identity host, shared contracts, and tests | `docs/project-config.json:128-232`                                                                                          |
 | `src/Frontend/apps/`      | Angular application roots                                               | `src/Frontend/apps/playground-text-snippet/project.json:3-5`                                                                |
 | `src/Frontend/libs/`      | Frontend framework/domain libraries and reserved library slots          | `src/Frontend/libs/platform-core/project.json:2-13`; `src/Frontend/libs/apps-domains/text-snippet-domain/project.json:3-23` |
-| `src/Frontend/e2e/`       | Separate Playwright workspace                                           | `src/Frontend/e2e/package.json:4-16`                                                                                        |
 | `docs/project-reference/` | Generated/reference documentation catalog                               | `docs/project-config.json:437`                                                                                              |
 
 `src/Learning/` contains standalone tutorial samples and is not in the configured product module catalog (`docs/project-config.json:32-318`).
@@ -104,6 +119,8 @@ The repository-local delivery path is Azure Pipelines. It builds and tests the a
 
 No repository-local vault, key-management service, or production secret injection mechanism was evidenced in this scan. Treat the referenced keys as configuration contracts and supply values through the appropriate local/CI environment.
 
+The frontend Playwright workspace is absent in the current changes. Existing CI and project configuration still name its retired commands; those declarations do not prove an executable harness. Read `docs/project-reference/e2e-test-reference.md` before browser verification.
+
 ## Frontend Apps
 
 | Path                                                                                            | Kind                             | Build/serve behavior                                                           | Evidence                                                                                                                                                                   |
@@ -112,7 +129,6 @@ No repository-local vault, key-management service, or production secret injectio
 | `src/Frontend/libs/platform-core/`                                                              | Built library                    | No serve target; frontend framework foundation                                 | `src/Frontend/libs/platform-core/project.json:2-13`                                                                                                                        |
 | `src/Frontend/libs/apps-domains/text-snippet-domain/`                                           | Built library                    | No serve target; TextSnippet domain library                                    | `src/Frontend/libs/apps-domains/text-snippet-domain/project.json:3-23`                                                                                                     |
 | `src/Frontend/libs/platform-components/`, `apps-shared-components/`, `apps-domains-components/` | Reserved README-only directories | No `project.json` or build target evidenced                                    | `src/Frontend/libs/platform-components/README.md:1-3`; `src/Frontend/libs/apps-shared-components/README.md:1-3`; `src/Frontend/libs/apps-domains-components/README.md:1-3` |
-| `src/Frontend/e2e/`                                                                             | Separate Playwright workspace    | `npm ci`, browser install, and E2E test execution                              | `src/Frontend/e2e/package.json:4-16`; `azure-pipelines.yml:168-207`                                                                                                        |
 
 The app imports both configured libraries, and the domain library depends on `platform-core` (`src/Frontend/apps/playground-text-snippet/src/app/app.config.ts:7-15,34-56`; `src/Frontend/tsconfig.base.json:18-22`). Nx declares Yarn as its CLI package manager (`src/Frontend/nx.json:7`); both root lockfiles are present, so follow the command surface in the current package scripts and pipeline.
 
@@ -153,11 +169,10 @@ Backend version evidence: core dependencies are pinned in `src/Platform/Easy.Pla
 | Bootstrap            | 5.3.2          | CSS grid/utilities     |
 | Highcharts           | 11.4.8         | Charting               |
 | Jest                 | 29.7.0         | Unit testing           |
-| Playwright           | 1.57.0         | E2E testing            |
 | ESLint + Prettier    | 8.57.1 / 3.1.1 | Linting and formatting |
 | Stylelint            | 16.26.1        | SCSS linting           |
 
-Frontend resolved versions are from `src/Frontend/package-lock.json:541-542,673-674,769-770,5600-5601,11091-11092,13675-13676,16086-16087,17522-17523,20624-20625,23362-23363,24213-24214,25503-25504,27151-27152`; Playwright is resolved separately in `src/Frontend/e2e/package-lock.json:15-16`.
+Frontend resolved versions are from `src/Frontend/package-lock.json:541-542,673-674,769-770,5600-5601,11091-11092,13675-13676,16086-16087,17522-17523,20624-20625,23362-23363,24213-24214,25503-25504,27151-27152`; the formerly separate Playwright workspace has been removed from the current tree.
 
 ### Infrastructure
 
@@ -240,7 +255,7 @@ No repository-local deployment stage, promotion gate, rollback script, or altern
 | Full system (Docker) | `src/start-dev-platform-example-app.cmd`                                                                                              |
 | Infrastructure only  | `src/start-dev-platform-example-app.infrastructure.cmd`                                                                               |
 | Framework unit tests | `dotnet test src/Platform/Easy.Platform.Tests.Unit/`                                                                                  |
-| E2E tests            | `cd src/Frontend/e2e && npx playwright test`                                                                                          |
+| Browser test availability | Read `docs/project-reference/e2e-test-reference.md`                                                                                          |
 
 ## Closing Reminders
 

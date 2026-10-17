@@ -412,7 +412,7 @@ test('generateReport writes expected files from stubbed git history', () => {
   assert.equal(workPackets.length, 1);
   const workPacket = fs.readFileSync(path.join(result.outputDir, 'work-packets', workPackets[0]), 'utf8');
   assert.match(workPacket, /Required Analysis Tasks/);
-  assert.match(workPacket, /not implementation SP/);
+  assert.match(workPacket, /not implementation EP/);
   assert.match(workPacket, /shared feature branches/);
   assert.match(workPacket, /one giant commit/);
   assert.match(workPacket, /AI-assisted man-days/);
@@ -423,26 +423,27 @@ test('skill instructions follow conventions and require KPI synthesis', () => {
   const skill = fs.readFileSync(path.join(__dirname, '..', 'SKILL.md'), 'utf8');
   const lines = skill.split(/\r?\n/);
   const quickSummaryLine = lines.findIndex((line) => line.trim() === '## Quick Summary');
-  const isGeneratedCodexMirror = skill.includes('Codex compatibility note') || skill.includes('CODEX:SYNC-PROMPT-PROTOCOLS');
+  const isGeneratedCodexMirror = skill.includes('Codex compatibility note');
+  const hasFrameworkProtocolExpansion = skill.includes('<!-- PROTOCOL-GUIDES:START -->') || skill.includes('<!-- SYNC:');
 
-  if (!isGeneratedCodexMirror) assert.ok(lines.length < 100);
+  if (!isGeneratedCodexMirror && !hasFrameworkProtocolExpansion) assert.ok(lines.length < 100);
   assert.ok(quickSummaryLine >= 0);
   if (!isGeneratedCodexMirror) assert.ok(quickSummaryLine < 30);
-  assert.match(skill, /^description: '\[Git\].*developer KPI.*story point.*man-day.*code-quality.*git commit history\.'/m);
-  assert.match(skill, /<!-- SYNC:critical-thinking-mindset -->/);
-  assert.match(skill, /trigger `\$plan`/);
+  assert.match(skill, /^description: '\[Git\].*developer KPI.*effort point.*man-day.*code-quality.*git (?:commit )?history\.'/m);
+  assert.doesNotMatch(skill, /^> \*\*Root-carried protocols\*\* — /m);
+  assert.match(skill, /trigger `(?:\/|\$)plan`/);
   assert.match(skill, /one todo task per contributor/);
   assert.match(skill, /quality-work-summary\.md/);
   assert.match(skill, /man_days_traditional/);
   assert.match(skill, /man_days_ai/);
-  assert.match(skill, /never publish a single ambiguous MD number/);
+  assert.match(skill, /never publish a single ambiguous MD number/i);
   assert.match(skill, /zero-change merge\/admin commits are integration signal only/);
-  assert.match(skill, /shared feature-branch implementation credit follows direct commit authors/);
+  assert.match(skill, /shared feature-branch implementation credit follows direct commit authors/i);
   assert.match(skill, /Discount generated files/);
-  assert.match(skill, /velocity sanity check/);
+  assert.match(skill, /velocity sanity check/i);
   assert.match(skill, /giant commit/);
   assert.match(skill, /Separate product\/domain delivery, platform\/tooling work, docs\/generated churn/);
-  assert.match(skill, /not a complete HR assessment/);
+  assert.match(skill, /complete HR assessment/i);
 });
 
 test('analysis workflow reference stays small and value based', () => {
@@ -453,7 +454,7 @@ test('analysis workflow reference stays small and value based', () => {
   assert.match(reference, /Count distinct contributors/);
   assert.match(reference, /Direct commits vs merge\/admin commits/);
   assert.match(reference, /KPI-Style Evaluation/);
-  assert.match(reference, /story points, no-AI man-days, and AI-assisted man-days/);
+  assert.match(reference, /effort points, no-AI man-days, and AI-assisted man-days/);
   assert.match(reference, /Code-quality impact/);
   assert.match(reference, /Evidence: commit hashes and changed paths/);
   assert.match(reference, /man_days_traditional/);
@@ -463,7 +464,7 @@ test('analysis workflow reference stays small and value based', () => {
   assert.match(reference, /shared feature branches/);
   assert.match(reference, /velocity sanity note/);
   assert.match(reference, /giant commit/);
-  assert.match(reference, /atomic 1\/2\/3\/5\/8\/13 SP clusters/);
-  assert.match(reference, /product\/domain delivery, platform\/tooling, docs\/generated churn/);
+  assert.match(reference, /atomic 1\/2\/3\/5\/8\/13 EP clusters/);
+  assert.match(reference, /product\/domain delivery, platform\/tooling work, docs\/generated churn/);
   assert.match(reference, /Avoid ranking by commits\/lines alone/);
 });

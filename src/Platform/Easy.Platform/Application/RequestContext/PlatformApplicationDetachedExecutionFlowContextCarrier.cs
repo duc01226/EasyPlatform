@@ -91,7 +91,7 @@ namespace Easy.Platform.Application.RequestContext;
 ///
 /// <para>
 /// <strong>Bounded by the propagation caps.</strong> The carry is exactly what the allowlist resolves, so it
-/// inherits that view's key-count and total-size caps. BravoSUITE's allowlist currently sits well inside them, and
+/// inherits that view's key-count and total-size caps. A typical host allowlist sits well inside them, and
 /// identity keys sort first by propagation priority so they can never be the ones dropped — but an allowlist grown
 /// past the cap would start truncating this carry too, without an error.
 /// </para>

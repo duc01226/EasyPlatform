@@ -5,7 +5,7 @@
 
 ## Why Pressure Test Skills?
 
-We test hooks (527 tests) but don't test whether skills actually change AI behavior. A skill can be syntactically valid yet ineffective — the AI reads it and still shortcuts the process.
+Structural and hook tests do not establish that a skill changes model behavior. A skill can be syntactically valid yet ineffective — the AI reads it and still shortcuts the process.
 
 Pressure testing validates that a skill's anti-rationalization patterns, iron laws, and red flags actually prevent the specific failure modes they target.
 
@@ -20,7 +20,7 @@ Pressure testing validates that a skill's anti-rationalization patterns, iron la
     - What rationalizations does it use?
     - Where does it shortcut the process?
 
-**Output:** Baseline failure report — the specific bad behaviors to fix.
+**Output:** Observed baseline report, including failures or an already-correct result; never invent a failure to demonstrate improvement.
 
 ### GREEN — Verify Skill Effectiveness
 
@@ -105,6 +105,12 @@ Apply these individually first, then combine for maximum stress:
 
 ## Recording Results
 
-Save pressure test results to: `plans/reports/pressure-test-{skill-name}-{date}.md`
+Save pressure test results to: `tmp/reports/pressure-test-{skill-name}-{date}.md`
 
 Include: scenario description, baseline failures, skill compliance results, loopholes found, fixes applied.
+
+## Operational Corpus and Paired Records
+
+Use `.claude/skills/shared/skill-evals/corpus.v1.json` and its README for versioned activation (positive/negative/ambiguous), pressure and repair scenarios, an external-runner protocol, and the result envelope. Validate the corpus with `node .claude/skills/shared/skill-evals/validate.mjs`; validate observed paired records by passing corpus and results paths. These Node-only checks require no model credentials and prove only schema/provenance integrity.
+
+Behavioral testing requires the consuming project's configured external model runner. Match prompt/fixture bytes, non-skill context, model/version, settings/seed, tools and host runtime across fresh with/without-skill arms; record exact skill-package hashes, actual selections, real trace artifacts, per-assertion reviewer evidence and optional measured tokens/latency/cost. Repeat to assess variability. Keep negative activation cases unforced and simulate potentially consequential operations in disposable fixtures. Unsupported runtime or absent runner means `MODEL EVALUATION NOT RUN`, never an inferred PASS. Retest after content/model/runtime changes and add cases for uncovered workflows; the initial corpus does not certify every framework skill.

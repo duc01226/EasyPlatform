@@ -12,7 +12,7 @@ namespace Easy.Platform.Common.Cqrs.Commands;
 /// - Notification sending
 /// - State updates without response data
 /// - Audit logging and cleanup operations
-/// Extensively used in Growth service for leave request processing and Employee service for payroll operations.
+/// The base type every consuming service's write operations derive from.
 /// </remarks>
 public interface IPlatformCqrsCommand : IPlatformCqrsRequest
 {
@@ -31,7 +31,7 @@ public interface IPlatformCqrsCommand : IPlatformCqrsRequest
 /// - Validation operations returning validation results
 /// Inherits from both IPlatformCqrsCommand and IRequest&lt;TResult&gt; for MediatR integration.
 /// Constraint ensures all results implement IPlatformCqrsCommandResult for consistent error handling.
-/// Widely used across Growth, Employee, Talents, and Permission Provider services.
+/// Widely used across every consuming service.
 /// </remarks>
 public interface IPlatformCqrsCommand<out TResult> : IPlatformCqrsCommand, IRequest<TResult>
     where TResult : IPlatformCqrsCommandResult, new()
@@ -54,9 +54,9 @@ public interface IPlatformCqrsCommand<out TResult> : IPlatformCqrsCommand, IRequ
 /// 3. Register handler with dependency injection for MediatR discovery
 /// 
 /// Examples from codebase:
-/// - CreateEmployeeCommand&lt;CreateEmployeeResult&gt; in Employee service
-/// - ProcessPayrollCommand&lt;PayrollProcessingResult&gt; in Talents service
-/// - ApproveLeaveRequestCommand&lt;LeaveRequestResult&gt; in Growth service
+/// - CreateEntityCommand&lt;CreateEntityResult&gt; in a consuming service
+/// - ProcessBatchCommand&lt;BatchProcessingResult&gt; in a consuming service
+/// - ApproveRequestCommand&lt;ApproveRequestResult&gt; in a consuming service
 /// </remarks>
 public abstract class PlatformCqrsCommand<TResult> : PlatformCqrsRequest, IPlatformCqrsCommand<TResult>
     where TResult : PlatformCqrsCommandResult, new()

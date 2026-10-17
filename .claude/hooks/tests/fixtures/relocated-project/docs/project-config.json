@@ -1,0 +1,75 @@
+{
+  "_description": "RELOCATION FIXTURE. Every relocatable root below is deliberately NON-DEFAULT so an unwired accessor cannot pass. Consumed by .claude/hooks/tests/suites/docroot-relocation.test.cjs only.",
+  "schemaVersion": 2,
+  "project": {
+    "name": "relocated-fixture",
+    "description": "Fixture project whose docs and spec roots are all relocated.",
+    "languages": ["javascript"],
+    "packageManagers": []
+  },
+  "framework": {
+    "name": "fixture",
+    "backendPatternsDoc": "documentation/reference/backend-patterns-reference.md",
+    "frontendPatternsDoc": "documentation/reference/frontend-patterns-reference.md",
+    "codeReviewDoc": "documentation/reference/code-review-rules.md",
+    "integrationTestDoc": "documentation/reference/integration-test-reference.md",
+    "searchPatternKeywords": []
+  },
+  "specRoots": {
+    "business": {
+      "path": "spec-library",
+      "authorship": "hand",
+      "m1Policy": "strict"
+    },
+    "technical": {
+      "path": "spec-library-derived",
+      "authorship": "derived",
+      "m1Policy": "exempt"
+    }
+  },
+  "docsRoots": {
+    "projectReference": {
+      "path": "documentation/reference"
+    },
+    "adr": {
+      "path": "documentation/Decisions"
+    },
+    "templates": {
+      "path": "documentation\\blueprints"
+    },
+    "plans": {
+      "path": "work-plans"
+    },
+    "teamArtifacts": {
+      "path": "artifacts/"
+    },
+    "productRoadmap": {
+      "path": "documentation/roadmap.md"
+    }
+  },
+  "modules": [
+    {
+      "name": "ContextDelivery",
+      "kind": "library",
+      "pathRegex": "src[\\\\/]context-delivery",
+      "meta": {
+        "domain": "Context delivery behaviour, routing rules"
+      }
+    }
+  ],
+  "contextGroups": [],
+  "designSystem": {
+    "docsPath": "documentation/reference/design-system",
+    "appMappings": []
+  },
+  "referenceDocs": [],
+  "testing": {
+    "frameworks": [],
+    "filePatterns": {},
+    "commands": {}
+  },
+  "databases": {},
+  "messaging": {},
+  "api": {},
+  "infrastructure": {}
+}

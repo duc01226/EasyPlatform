@@ -1,40 +1,43 @@
 <!-- Last scanned: 2026-06-12 -->
-<!-- CRITICAL: Extend AppBase* not Platform* directly. Use effectSimple() in stores. .pipe(this.untilDestroyed()) on ALL subscriptions. BEM on ALL template elements. -->
+<!-- CRITICAL: Reuse the matching Platform component base. Use effectSimple() in stores. .pipe(this.untilDestroyed()) on ALL subscriptions. BEM on ALL template elements. -->
 
 # Frontend Patterns Reference
 
-**Final Purpose:** Make every Angular change in this repo follow the established platform conventions (AppBase\* classes, `PlatformVmStore` state, `PlatformApiService`, base-class subscription cleanup, reactive forms, BEM) so generated frontend code is correct, leak-free, and review-ready.
+**Final Purpose:** Make every Angular change in this repo follow the established platform conventions (platform component bases, `PlatformVmStore` state, `PlatformApiService`, base-class subscription cleanup, reactive forms, BEM) so generated frontend code is correct, leak-free, and review-ready.
 
 **Framework:** Angular 19 + Nx monorepo + NgRx ComponentStore + Angular Material 3 + RxJS.
-**MUST** extend `AppBase*` component classes, NEVER `Platform*` directly.
+**MUST** reuse the matching platform component base; an app wrapper requires actual shared app behavior.
 **MUST** use `.pipe(this.untilDestroyed())` on ALL observable subscriptions.
 **MUST** use `effectSimple()` for store effects, `tapResponse()` for API result handling.
 **MUST** apply BEM classes to every template element.
 
+## Contents
+
+- [Component Base Classes](#component-base-classes)
+- [State Management (PlatformVmStore)](#state-management-platformvmstore)
+- [View Model Pattern](#view-model-pattern)
+- [API Services](#api-services)
+- [DTO Patterns](#dto-patterns)
+- [Forms](#forms)
+- [Subscription Cleanup](#subscription-cleanup)
+- [Component Communication](#component-communication)
+- [Routing](#routing)
+- [Directives & Pipes](#directives--pipes)
+- [Directory Structure Conventions](#directory-structure-conventions)
+- [Styling Conventions](#styling-conventions)
+- [Translation fallback regression](#translation-fallback-regression)
+- [Closing Reminders](#closing-reminders)
+
 ## Component Base Classes
 
-| Base Class                             | Extends                    | When to Use                       | Required Overrides                        |
-| -------------------------------------- | -------------------------- | --------------------------------- | ----------------------------------------- |
-| `AppBaseComponent`                     | `PlatformComponent`        | Simple components, no VM          | None                                      |
-| `AppBaseVmComponent<TViewModel>`       | `PlatformVmComponent`      | Components with local view model  | `initOrReloadVm()`                        |
-| `AppBaseFormComponent<TFormVm>`        | `PlatformFormComponent`    | Form components with validation   | `initOrReloadVm()`, `initialFormConfig()` |
-| `AppBaseVmStoreComponent<TVm, TStore>` | `PlatformVmStoreComponent` | Complex state with external store | Constructor with store injection          |
+The empty app wrapper classes were removed. Reuse the platform owner directly; add an app-specific base only for real shared app behavior.
 
-**Path:** `apps/playground-text-snippet/src/app/shared/base/`
-
-```typescript
-// app-base-vm-store.component.ts:22-31 — Store component pattern
-@Directive()
-export abstract class AppBaseVmStoreComponent<TViewModel extends PlatformVm, TStore extends PlatformVmStore<TViewModel>> extends PlatformVmStoreComponent<
-    TViewModel,
-    TStore
-> {
-    // App-wide store component customizations
-}
-```
-
-**BAD:** `export class MyComponent extends PlatformComponent` -- skips app layer
-**GOOD:** `export class MyComponent extends AppBaseComponent` -- extends app base
+| Base | Use | Existing example |
+| --- | --- | --- |
+| `PlatformComponent` | Component lifecycle and cleanup | `src/Frontend/libs/platform-core/src/lib/components/abstracts/platform.component.ts` |
+| `PlatformVmComponent<T>` | Local view model | `src/Frontend/libs/platform-core/src/lib/components/abstracts/platform.vm-component.ts` |
+| `PlatformFormComponent<T>` | Reactive forms | `src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-detail/task-detail.component.ts:108` |
+| `PlatformVmStoreComponent<T, S>` | Store-owned state | `src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-list/task-list.component.ts:58` |
 
 ## State Management (PlatformVmStore)
 
@@ -232,7 +235,6 @@ All platform-core directives extend `PlatformDirective`; all pipes extend `Platf
 
 | Directory                                            | Contents                                                  |
 | ---------------------------------------------------- | --------------------------------------------------------- |
-| `apps/{app}/src/app/shared/base/`                    | App-level base component classes                          |
 | `apps/{app}/src/app/shared/components/`              | Feature components with store + VM                        |
 | `apps/{app}/src/app/events/`                         | App event handlers (e.g. API-error handler)               |
 | `apps/{app}/src/styles/`                             | App SCSS (variables, mixins, themes, component overrides) |
@@ -251,15 +253,21 @@ All platform-core directives extend `PlatformDirective`; all pipes extend `Platf
 
 Component-scoped SCSS with BEM naming. Import variables and mixins via `@use`. See `docs/project-reference/scss-styling-guide.md` for full guide.
 
-**MUST** extend `AppBase*` classes. **MUST** use `effectSimple()` + `tapResponse()`. **MUST** use `.pipe(this.untilDestroyed())`.
+**MUST** reuse platform component lifecycle/cleanup. **MUST** use `effectSimple()` + `tapResponse()`. **MUST** use `.pipe(this.untilDestroyed())`.
 **MUST** put logic in VM (lowest layer). **NEVER** use `HttpClient` directly. **MUST** apply BEM on all template elements.
 
 ---
 
+## Translation fallback regression
+
+`src/Frontend/apps/playground-text-snippet/src/app/platform-missing-translation-handler.spec.ts` guards readable missing-key fallback values, unresolved tokens, absent parameters and repeated/dotted literal keys through the public handler. Run it through the existing playground-text-snippet Jest target; it does not provide browser journey proof.
+
+`src/Frontend/apps/playground-text-snippet/src/app/platform-translate-service.spec.ts` resolves the real public service through TestBed and guards its exported configuration token, custom configuration identity and default values. Its Jest target uses the installed preset's `globals.ngJest.processWithEsbuild` option for the allowlisted lodash/dayjs ESM packages. Keep the configuration class initialized before decorated service metadata reads it; moving it must preserve the public export and DI token.
+
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Final Purpose:** Every Angular change follows platform conventions (AppBase\* classes, `PlatformVmStore`, `PlatformApiService`, base-class cleanup, reactive forms, BEM) — correct, leak-free, review-ready frontend code.
-**IMPORTANT MUST ATTENTION** extend `AppBase*`, NEVER `Platform*` directly — why: skips the app-wide extension seam.
+**IMPORTANT MUST ATTENTION Final Purpose:** Every Angular change follows platform conventions (platform component bases, `PlatformVmStore`, `PlatformApiService`, base-class cleanup, reactive forms, BEM) — correct, leak-free, review-ready frontend code.
+**IMPORTANT MUST ATTENTION** reuse a platform base; add an app extension seam only when it owns shared behavior.
 **IMPORTANT MUST ATTENTION** put logic in the VM (lowest layer) — query builders, display helpers, dropdown options, and form error-message text belong on the model/enum, NOT the component (anti-pattern: `task-detail.component.ts:454-466`).
 **IMPORTANT MUST ATTENTION** use `effectSimple()` + `tapResponse()` for store async; NEVER manual `subscribe()` in a store. Stores are per-component-provided.
 **IMPORTANT MUST ATTENTION** call API only through `PlatformApiService` subclasses injected into stores; NEVER `HttpClient` in components.

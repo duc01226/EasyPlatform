@@ -6,12 +6,15 @@
 
 const path = require('path');
 const { send } = require('../lib/sender.cjs');
+const { EVENT_COPY } = require('../lib/event-copy.cjs');
 
 // Discord embed colors
 const COLORS = {
+  SessionEnd: 10070709,    // Gray
   Stop: 5763719,         // Green
   SubagentStop: 3447003, // Blue
   AskUserPrompt: 15844367, // Yellow
+  AskUserQuestion: 15844367, // Yellow
   default: 10070709,     // Gray
 };
 
@@ -49,20 +52,29 @@ function truncateSessionId(sessionId) {
   return sessionId.length > 8 ? `${sessionId.slice(0, 8)}...` : sessionId;
 }
 
+// Events rendered by the shared embed layout (time, session, location).
+const EVENT_EMBEDS = {
+  Stop: { title: EVENT_COPY.Stop.title, description: EVENT_COPY.Stop.summary, color: COLORS.Stop },
+  SessionEnd: { title: EVENT_COPY.SessionEnd.title, description: EVENT_COPY.SessionEnd.summary, color: COLORS.SessionEnd },
+  AskUserPrompt: { title: 'AI Agent Needs Input', description: 'AI agent is waiting for user input', color: COLORS.AskUserPrompt },
+  AskUserQuestion: { title: EVENT_COPY.AskUserQuestion.title, description: EVENT_COPY.AskUserQuestion.summary, color: COLORS.AskUserQuestion },
+};
+
 /**
- * Build embed for Stop event
+ * Build the shared embed layout for one event's copy
  * @param {Object} input - Hook input
+ * @param {{title: string, description: string, color: number}} copy - Event copy
  * @returns {Object} Discord embed
  */
-function buildStopEmbed(input) {
+function buildEventEmbed(input, copy) {
   const cwd = input.cwd || '';
   const sessionId = input.session_id || '';
   const projectName = getProjectName(cwd);
 
   return {
-    title: 'Claude Code Session Complete',
-    description: 'Session completed successfully',
-    color: COLORS.Stop,
+    title: copy.title,
+    description: copy.description,
+    color: copy.color,
     timestamp: new Date().toISOString(),
     footer: { text: `Project • ${projectName}` },
     fields: [
@@ -85,7 +97,7 @@ function buildSubagentStopEmbed(input) {
   const projectName = getProjectName(cwd);
 
   return {
-    title: 'Claude Code Subagent Complete',
+    title: 'Subagent Complete',
     description: 'Specialized agent completed its task',
     color: COLORS.SubagentStop,
     timestamp: new Date().toISOString(),
@@ -93,30 +105,6 @@ function buildSubagentStopEmbed(input) {
     fields: [
       { name: '⏰ Time', value: formatTimestamp(), inline: true },
       { name: '🔧 Agent Type', value: agentType, inline: true },
-      { name: '🆔 Session', value: `\`${truncateSessionId(sessionId)}\``, inline: true },
-      { name: '📍 Location', value: `\`${cwd || 'Unknown'}\``, inline: false },
-    ],
-  };
-}
-
-/**
- * Build embed for AskUserPrompt event
- * @param {Object} input - Hook input
- * @returns {Object} Discord embed
- */
-function buildAskUserPromptEmbed(input) {
-  const cwd = input.cwd || '';
-  const sessionId = input.session_id || '';
-  const projectName = getProjectName(cwd);
-
-  return {
-    title: 'Claude Code Needs Input',
-    description: 'Claude is waiting for user input',
-    color: COLORS.AskUserPrompt,
-    timestamp: new Date().toISOString(),
-    footer: { text: `Project • ${projectName}` },
-    fields: [
-      { name: '⏰ Time', value: formatTimestamp(), inline: true },
       { name: '🆔 Session', value: `\`${truncateSessionId(sessionId)}\``, inline: true },
       { name: '📍 Location', value: `\`${cwd || 'Unknown'}\``, inline: false },
     ],
@@ -135,8 +123,8 @@ function buildDefaultEmbed(input) {
   const projectName = getProjectName(cwd);
 
   return {
-    title: 'Claude Code Event',
-    description: 'Claude Code event triggered',
+    title: 'AI Agent Event',
+    description: 'AI agent event triggered',
     color: COLORS.default,
     timestamp: new Date().toISOString(),
     footer: { text: `Project • ${projectName}` },
@@ -158,16 +146,10 @@ function formatEmbed(input) {
   // Use CORRECT snake_case field names (fixed from bash script's camelCase bug)
   const hookType = input.hook_event_name || 'unknown';
 
-  switch (hookType) {
-    case 'Stop':
-      return buildStopEmbed(input);
-    case 'SubagentStop':
-      return buildSubagentStopEmbed(input);
-    case 'AskUserPrompt':
-      return buildAskUserPromptEmbed(input);
-    default:
-      return buildDefaultEmbed(input);
+  if (Object.prototype.hasOwnProperty.call(EVENT_EMBEDS, hookType)) {
+    return buildEventEmbed(input, EVENT_EMBEDS[hookType]);
   }
+  return hookType === 'SubagentStop' ? buildSubagentStopEmbed(input) : buildDefaultEmbed(input);
 }
 
 module.exports = {
@@ -192,6 +174,6 @@ module.exports = {
     }
 
     const embed = formatEmbed(input);
-    return send('discord', env.DISCORD_WEBHOOK_URL, { embeds: [embed] });
+    return send('discord', env.DISCORD_WEBHOOK_URL, { embeds: [embed] }, { event: input.hook_event_name });
   },
 };

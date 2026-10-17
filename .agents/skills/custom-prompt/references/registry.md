@@ -4,22 +4,33 @@ Loaded by `SKILL.md` before any write, and before scoring in MATCH mode. Everyth
 
 ---
 
+<!-- SKILL-NAV:START -->
+## Contents
+
+- [1. Prompt body file](#1-prompt-body-file)
+- [2. Index row format](#2-index-row-format)
+- [3. Scoring rubric (MATCH mode)](#3-scoring-rubric-match-mode)
+- [4. Authoring quality bar (what "the best version" means)](#4-authoring-quality-bar-what-the-best-version-means)
+- [5. Promotion to a real skill](#5-promotion-to-a-real-skill)
+
+<!-- SKILL-NAV:END -->
+
 ## 1. Prompt body file
 
 Path: `<prompts-dir>/<slug>.md` (default `docs/project-prompts/<slug>.md`).
 
 ### Frontmatter fields
 
-| Field         | Required | Purpose                                                                                                                             |
-| ------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | **yes**  | Human name, matches the index row and the slug                                                                                      |
-| `description` | **yes**  | ONE line. This is the primary matching surface — write it as _"Use when …"_ so it states the trigger condition, not the mechanics   |
-| `triggers`    | **yes**  | Array of the words/phrases a user would actually type. The escape hatch when the description is too formal to match casual phrasing |
-| `version`     | yes      | SemVer. Patch = wording, minor = changed steps, major = changed purpose                                                             |
-| `updated`     | yes      | ISO date of the last write                                                                                                          |
-| `route`       | no       | A workflow id (`workflow-bugfix`) or skill name (`plan`) this prompt activates instead of executing its own steps                   |
-| `inputs`      | no       | Named values the body needs. Every declared input is asked for (batched) before execution if not supplied                           |
-| `tags`        | no       | Free-form grouping for LIST output                                                                                                  |
+| Field | Required | Purpose |
+| --- | --- | --- |
+| `name` | **yes** | Human name, matches the index row and the slug |
+| `description` | **yes** | ONE line. This is the primary matching surface — write it as *"Use when …"* so it states the trigger condition, not the mechanics |
+| `triggers` | **yes** | Array of the words/phrases a user would actually type. The escape hatch when the description is too formal to match casual phrasing |
+| `version` | yes | SemVer. Patch = wording, minor = changed steps, major = changed purpose |
+| `updated` | yes | ISO date of the last write |
+| `route` | no | A workflow id (`workflow-bugfix`) or skill name (`plan`) this prompt activates instead of executing its own steps |
+| `inputs` | no | Named values the body needs. Every declared input is asked for (batched) before execution if not supplied |
+| `tags` | no | Free-form grouping for LIST output |
 
 ### Body template
 
@@ -30,9 +41,9 @@ description: Use when <trigger condition> — <what it produces>.
 triggers: [<phrase>, <phrase>, <phrase>]
 version: 1.0.0
 updated: YYYY-MM-DD
-route: <workflow-id | skill-name> # optional
-inputs: [<input-name>] # optional
-tags: [<tag>] # optional
+route: <workflow-id | skill-name>      # optional
+inputs: [<input-name>]                 # optional
+tags: [<tag>]                          # optional
 ---
 
 ## Goal
@@ -69,13 +80,13 @@ tags: [<tag>] # optional
 
 ## 2. Index row format
 
-Index: `docs/project-reference/custom-prompts-reference.md`. The header carries a `**Prompts directory:**` line so the index is self-describing about where bodies live.
+Index: `custom-prompts-reference.md` under the reference-docs root (default `docs/project-reference`; a `docsRoots.projectReference.path` entry in `docs/project-config.json` overrides the path). The header carries a `**Prompts directory:**` line so the index is self-describing about where bodies live.
 
 One row per prompt, in a single table:
 
 ```markdown
-| Name           | Description                                                                                                   | Triggers                              | Updated    | Body                                                      |
-| -------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------- | --------------------------------------------------------- |
+| Name | Description | Triggers | Updated | Body |
+| --- | --- | --- | --- | --- |
 | release-hotfix | Use when a production defect needs an out-of-cycle patch — drives investigate → fix → verify → release notes. | hotfix, emergency release, patch prod | 2026-08-16 | [release-hotfix.md](../project-prompts/release-hotfix.md) |
 ```
 
@@ -92,27 +103,27 @@ Index rules:
 
 Score each index entry against the user's request. Index text only — bodies are unread by design.
 
-| Signal                     | Weight    | Scores when                                                                                            |
-| -------------------------- | --------- | ------------------------------------------------------------------------------------------------------ |
-| Exact name match           | 1.0       | The request names the prompt outright                                                                  |
-| Trigger phrase hit         | 0.6 each  | A `triggers` entry appears in the request (substring, case-insensitive)                                |
-| Description intent overlap | 0.0–0.5   | The request and the description describe the same _outcome_ — judged semantically, not by shared words |
-| Tag hit                    | 0.15 each | A `tags` entry appears in the request                                                                  |
-| Shared generic verb only   | 0.0       | "update", "run", "check" alone — never let a bare verb carry a match                                   |
+| Signal | Weight | Scores when |
+| --- | --- | --- |
+| Exact name match | 1.0 | The request names the prompt outright |
+| Trigger phrase hit | 0.6 each | A `triggers` entry appears in the request (substring, case-insensitive) |
+| Description intent overlap | 0.0–0.5 | The request and the description describe the same *outcome* — judged semantically, not by shared words |
+| Tag hit | 0.15 each | A `tags` entry appears in the request |
+| Shared generic verb only | 0.0 | "update", "run", "check" alone — never let a bare verb carry a match |
 
 Thresholds:
 
 - **≥ 1.0** — strong candidate, present first as `(Recommended)`
 - **0.5 – 1.0** — plausible, present as an alternative
 - **< 0.5** — below floor, do not present
-- **Nothing above floor** — offer _save as new_ / _handle normally_
+- **Nothing above floor** — offer *save as new* / *handle normally*
 
 Scoring rules:
 
 1. **Score the outcome, not the vocabulary.** Two entries sharing the word "test" are not both matches if only one produces what the user asked for. — why: keyword overlap is the single largest source of confidently-wrong matches.
 2. **Never break a near-tie yourself.** Two entries within ~0.2 → present both and let the user pick. A near-tie is precisely where your inference is weakest.
 3. **State the reason per candidate** in one clause ("matched trigger `patch prod`"). The user is confirming a judgement, and cannot confirm one they cannot see.
-4. **The score never replaces the gate.** 1.0 still goes to ask the user directly.
+4. **The score never replaces the gate.** 1.0 still goes to `ask user question tool`.
 
 ---
 
@@ -120,16 +131,16 @@ Scoring rules:
 
 Applied when SAVE drafts a prompt from the user's raw wording. Each row is a defect to fix in the draft, not a nicety.
 
-| Raw material                                     | Draft it as                                                   | Because                                                                                            |
-| ------------------------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| A topic or fragment ("the deploy thing")         | A named outcome (`deploy-staging-release`) + a Goal sentence  | A prompt with no stated outcome cannot have success criteria, so no run of it can ever be judged   |
-| One run-on instruction bundling several actions  | Separate ordered steps, one action each                       | Bundled steps hide which part failed, and the AI silently drops the tail of a long sentence        |
-| Vague verbs ("handle", "deal with", "make sure") | Observable actions ("run X", "assert Y", "write Z to …")      | An unobservable step cannot be verified, so the prompt reports success on a no-op                  |
-| Implied but unstated steps                       | Written out explicitly, flagged as ADDED at the proposal gate | The implication lives in the user's head today and is gone in three months                         |
-| A hardcoded id/branch/path/date                  | An `inputs:` entry referenced by the steps                    | Otherwise the second run targets the first run's data                                              |
-| "and then check it works"                        | A falsifiable Success criteria bullet                         | "It works" is not checkable; "the endpoint returns 200 and the row exists" is                      |
-| No stated limits                                 | A Guardrails bullet naming what must NOT happen               | Absent limits, the prompt inherits the widest possible interpretation on every future run          |
-| Casual phrasing the user typed                   | Kept verbatim in `triggers`                                   | Matching must hit the words the user will actually type, not the formal ones you rewrote them into |
+| Raw material | Draft it as | Because |
+| --- | --- | --- |
+| A topic or fragment ("the deploy thing") | A named outcome (`deploy-staging-release`) + a Goal sentence | A prompt with no stated outcome cannot have success criteria, so no run of it can ever be judged |
+| One run-on instruction bundling several actions | Separate ordered steps, one action each | Bundled steps hide which part failed, and the AI silently drops the tail of a long sentence |
+| Vague verbs ("handle", "deal with", "make sure") | Observable actions ("run X", "assert Y", "write Z to …") | An unobservable step cannot be verified, so the prompt reports success on a no-op |
+| Implied but unstated steps | Written out explicitly, flagged as ADDED at the proposal gate | The implication lives in the user's head today and is gone in three months |
+| A hardcoded id/branch/path/date | An `inputs:` entry referenced by the steps | Otherwise the second run targets the first run's data |
+| "and then check it works" | A falsifiable Success criteria bullet | "It works" is not checkable; "the endpoint returns 200 and the row exists" is |
+| No stated limits | A Guardrails bullet naming what must NOT happen | Absent limits, the prompt inherits the widest possible interpretation on every future run |
+| Casual phrasing the user typed | Kept verbatim in `triggers` | Matching must hit the words the user will actually type, not the formal ones you rewrote them into |
 
 Drafting rules:
 

@@ -6,8 +6,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-import { PlatformCoreModule } from '@libs/platform-core';
-import { AppBaseVmStoreComponent } from '../../base';
+import { PlatformCoreModule, PlatformVmStoreComponent } from '@libs/platform-core';
 
 import { NavLoadingTestStore, NavLoadingTestVm } from './nav-loading-test.store';
 
@@ -36,7 +35,7 @@ import { NavLoadingTestStore, NavLoadingTestVm } from './nav-loading-test.store'
     ],
     providers: [NavLoadingTestStore]
 })
-export class NavLoadingTestComponent extends AppBaseVmStoreComponent<NavLoadingTestVm, NavLoadingTestStore> {
+export class NavLoadingTestComponent extends PlatformVmStoreComponent<NavLoadingTestVm, NavLoadingTestStore> {
     public constructor(store: NavLoadingTestStore) {
         super(store);
     }

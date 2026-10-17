@@ -1,26 +1,67 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
-const rootDir = process.cwd();
+const require = createRequire(import.meta.url);
+const { resolveProjectRoot, isInvokedAsScript } = require('../lib/project-root.cjs');
+const rootResolution = resolveProjectRoot({
+    cwd: process.cwd(),
+    scriptPath: fileURLToPath(import.meta.url),
+    env: process.env,
+});
+const rootDir = rootResolution.rootDir;
 const claudeSkillsRoot = path.join(rootDir, '.claude', 'skills');
 const skillsRoot = path.join(rootDir, '.agents', 'skills');
 const claudeAgentsRoot = path.join(rootDir, '.claude', 'agents');
 const agentsRoot = path.join(rootDir, '.codex', 'agents');
+// The retired Codex context file: the sync removes it, so its presence is a stale mirror.
 const contextPath = path.join(rootDir, '.codex', 'CODEX_CONTEXT.md');
 const projectAgentsPath = path.join(rootDir, 'AGENTS.md');
-const canonicalSyncPath = path.join(rootDir, '.claude', 'skills', 'shared', 'sync-inline-versions.md');
-const SKILL_PROTOCOL_MARKER = 'CODEX:SYNC-PROMPT-PROTOCOLS:START';
-const SKILL_PROTOCOL_END_MARKER = 'CODEX:SYNC-PROMPT-PROTOCOLS:END';
-const CONTEXT_PROTOCOL_TOP_MARKER = 'PROMPT-PROTOCOLS:START';
-const CONTEXT_PROTOCOL_BOTTOM_MARKER = 'PROMPT-PROTOCOLS-BOTTOM:START';
-const WORKFLOWS_START_MARKER = 'WORKFLOWS:START';
-const WORKFLOWS_END_MARKER = 'WORKFLOWS:END';
-const AGENTS_CONTEXT_MIRROR_START = 'CODEX-CONTEXT-MIRROR:START';
-const AGENTS_CONTEXT_MIRROR_END = 'CODEX-CONTEXT-MIRROR:END';
-const DEBUGGER_TRACE_MARKER = '<!-- SYNC:end-to-start-debugger-trace -->';
+// Markers of the protocol blocks older syncs injected into mirrored skills and AGENTS.md. None may
+// come back: the universal hook delivers the shared protocols, no mirror carries them.
+const RETIRED_MIRROR_MARKERS = [
+    'CODEX:SYNC-PROMPT-PROTOCOLS:START',
+    'CODEX:PROJECT-REFERENCE-LOADING:START',
+    'PROMPT-PROTOCOLS:START',
+    'CODEX-CONTEXT-MIRROR:START'
+];
+const AGENTS_ROOT_PROJECTION_START = 'CK:CODEX-ROOT-PROJECTION';
+const AGENTS_ROOT_PROJECTION_END = '/CK:CODEX-ROOT-PROJECTION';
+// MUST equal AGENTS_ROOT_LIMIT_BYTES in `sync-context-workflows.mjs` — the generator that produces
+// the projection this gate measures. The budget is the Codex host default for `project_doc_max_bytes`:
+// the projection carries project information only, so it stays inside it. Deliberately a LOCAL copy,
+// NOT an import: this file is loaded from a `data:` URL and copied into isolated roots without its
+// siblings (`verifier-root-contract.test.mjs`), so a relative import breaks it.
+// `verify-skill-protocol-compliance.test.mjs` asserts the two constants match.
+export const AGENTS_ROOT_LIMIT_BYTES = 32768;
+// The Codex manual-only policy line (`agents/openai.yaml`). A LOCAL copy for the same reason as the budget
+// above; `verify-skill-protocol-compliance.test.mjs` asserts it equals the generator's shared constant.
+export const CODEX_IMPLICIT_OFF_RE = /^\s*allow_implicit_invocation:\s*false\s*$/m;
+// Guide carriers. A converted skill carries a shared protocol as one guide line inside its
+// PROTOCOL-GUIDES block instead of the full `<!-- SYNC:tag -->` body; the full text lives in the
+// projection file `<skills root>/shared/protocols/<tag>.md`. The recognizer is the shared P25 owner
+// (`../lib/protocol-guide-carrier.cjs`) — this file never copies its line format. It is loaded
+// LAZILY and only for text that holds a guide block, because this verifier is also copied into
+// isolated roots with nothing but its root resolver beside it (`verifier-root-contract.test.mjs`),
+// and text without the block marker cannot hold a guide entry by the recognizer's own rule.
+// `verify-skill-protocol-compliance.test.mjs` pins GUIDE_BLOCK_HINT to the recognizer's marker.
+export const GUIDE_BLOCK_HINT = 'PROTOCOL-GUIDES:START';
+const PROTOCOL_TAG_RE = /^[a-z0-9][a-z0-9-]*$/;
+let guideCarrier = null;
+const loadGuideCarrier = () => (guideCarrier ??= require('../lib/protocol-guide-carrier.cjs'));
+
+/** Tags `content` carries as guide entries (the shared recognizer), in first-seen order. */
+export function guideTagsIn(content) {
+    const text = String(content ?? '');
+    return text.includes(GUIDE_BLOCK_HINT) ? loadGuideCarrier().guideTags(text) : [];
+}
+
+export const DEBUGGER_TRACE_TAG = 'end-to-start-debugger-trace';
+const DEBUGGER_TRACE_MARKER = `<!-- SYNC:${DEBUGGER_TRACE_TAG} -->`;
 const DEBUGGER_TRACE_REQUIRED_SNIPPETS = [
     'End-to-Start Debugger Trace',
     'observed final state',
@@ -30,19 +71,17 @@ const DEBUGGER_TRACE_REQUIRED_SNIPPETS = [
     'forward convergence proof'
 ];
 
-const DEBUGGER_TRACE_REQUIRED_SOURCE_PATHS = [
-    '.claude/skills/graph-trace/SKILL.md',
-    '.claude/skills/graph-query/SKILL.md',
+export const DEBUGGER_TRACE_REQUIRED_SOURCE_PATHS = [
+    '.claude/skills/graph-code/SKILL.md',
     '.claude/skills/investigate/SKILL.md',
-    '.claude/skills/debug-investigate/SKILL.md',
+    '.claude/skills/investigate/references/mode-debug.md',
     '.claude/skills/fix/SKILL.md',
-    '.claude/skills/prove-fix/SKILL.md',
-    '.claude/skills/plan-execute/SKILL.md',
+    '.claude/skills/plan/references/mode-execute.md',
     '.claude/skills/feature-implement/SKILL.md',
     '.claude/skills/changes-review/SKILL.md',
     '.claude/skills/workflow-review-changes/SKILL.md',
-    '.claude/skills/code-review/SKILL.md',
-    '.claude/skills/why-review/skill.md',
+    '.claude/skills/code-quality-review/SKILL.md',
+    '.claude/skills/why-review/SKILL.md',
     '.claude/agents/code-reviewer.md',
     '.claude/skills/workflow-bugfix/SKILL.md',
     '.claude/skills/workflow-feature/SKILL.md'
@@ -53,39 +92,26 @@ const DEBUGGER_TRACE_REQUIRED_GENERATED_SKILLS = DEBUGGER_TRACE_REQUIRED_SOURCE_
     .map(relPath => relPath.replace('.claude/skills/', '.agents/skills/').replace(/\/skill\.md$/i, '/SKILL.md'));
 
 const REQUIRED_CONTRACT_SNIPPETS = [
-    'Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.',
-    'Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.',
+    'load the registered `.agents/skills/<name>/SKILL.md` and execute it with Codex tools',
+    'Author `.claude/**`; mirrors are generated.',
+    'Track steps before execution and keep progress/evidence current.',
+    'Explicit skill requests execute their protocol.',
+    'Use the native question tool for required questions.',
+    'an actually unavailable required capability stops with its step/evidence and a user question before adaptation.',
     'Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.',
-    'Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.',
-    'For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.',
-    'If a required step/tool cannot run in this environment, stop and ask the user before adapting.'
+    'Preserve protocol order unless the user approves a deviation.',
+    'Workflows use `$start-workflow`: gates stay fixed; other steps may flex with logged reasons and evidence.'
 ];
 
-// P6 — canonical protocol-body parity in the auto-loaded mirror (AGENTS.md = Codex project
-// context). The mirror term-rewrites tool nouns (Agent->spawn_agent, "Skill tool"->lowercased,
-// etc.), so byte-equality vs the raw canonical :full block is INVALID and would false-fail.
-// Instead anchor on each block's
-// rewrite-invariant signature (a line that contains no tool term) and assert it appears EXACTLY
-// ONCE — proving the protocol is both PRESENT (reachability) and DEDUPED (the CK-marked CLAUDE.md
-// copies were stripped during mirroring; the body is baked once via the prompt-protocol section).
-const PROTOCOL_BODY_SIGNATURES = [
-    { tag: 'critical-thinking-mindset:full', signature: '[CRITICAL-THINKING-MINDSET]' },
-    { tag: 'ai-mistake-prevention:full', signature: '## Common AI Mistake Prevention (System Lessons)' }
-];
-
-const FORBIDDEN_SKILL_PROTOCOL_PATTERNS = [
-    {
-        pattern: /^## Learned Lessons\b/m,
-        reason: 'inline learned-lessons section'
-    },
-    {
-        pattern: /^# Lessons Learned\b/m,
-        reason: 'raw lessons.md heading'
-    },
-    {
-        pattern: /\[\d{4}-\d{2}-\d{2}\].*Holistic-first:/,
-        reason: 'dated lessons.md entry'
-    }
+// P6 — the universal protocol text is carried by no root file or mirror. The universal hook delivers it
+// (`protocol-groups.json` group `universal`), so the bounded AGENTS.md projection must hold none of it. Each
+// signature is the rewrite-invariant lead line of one universal protocol; a count above zero means a
+// static carrier of shared protocol text came back.
+const UNIVERSAL_TEXT_SIGNATURES = [
+    '[CRITICAL-THINKING-MINDSET]',
+    '## Common AI Mistake Prevention (System Lessons)',
+    'Create a small task per change before edits',
+    'Add `Analyze AI mistakes & lessons learned` to non-trivial tasks'
 ];
 
 async function exists(targetPath) {
@@ -97,13 +123,21 @@ async function exists(targetPath) {
     }
 }
 
+// Local install and VCS directories are never framework skills, so neither the manifest walker nor the
+// guide walker scans them: a skill-local `npm install` ships packages with their own SKILL.md and .md files.
+// Keep this set a superset of MIRROR_EXCLUDED_DIRS in migrate-claude-to-codex.mjs; it is a local copy so
+// this read-only verifier never loads the mirror generator. The one extra entry, `venv`, is the
+// conventional Python virtualenv name; skipping it only makes the verifier less strict than the mirror
+// copy, never stricter.
+const SCAN_SKIPPED_DIRS = new Set(['.git', '.hg', '.svn', '.venv', 'venv', 'node_modules', '__pycache__']);
+
 async function collectFilesByName(dirPath, fileName, { caseInsensitive = false } = {}) {
     const collected = [];
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
     for (const entry of entries) {
         const fullPath = path.join(dirPath, entry.name);
         if (entry.isDirectory()) {
-            collected.push(...(await collectFilesByName(fullPath, fileName, { caseInsensitive })));
+            if (!SCAN_SKIPPED_DIRS.has(entry.name)) collected.push(...(await collectFilesByName(fullPath, fileName, { caseInsensitive })));
             continue;
         }
         const namesMatch = caseInsensitive ? entry.name.toLowerCase() === fileName.toLowerCase() : entry.name === fileName;
@@ -144,7 +178,10 @@ function parseSkillFrontmatter(content) {
         const rawValue = valueMatch[1].trim();
         values[key] = rawValue.replace(/^['"]|['"]$/g, '').trim();
     }
-    return { keys, values };
+    // Optional parser stays lazy for the standalone verifier's minimal fixtures.
+    const concise = keys.includes('metadata')
+        && require('../lib/skill-instruction-profile.cjs').hasConciseInstructions(content);
+    return { keys, values, concise };
 }
 
 function parseBooleanFrontmatterValue(value) {
@@ -155,12 +192,8 @@ function parseBooleanFrontmatterValue(value) {
     return null;
 }
 
-function missingSnippets(content) {
+export function missingSnippets(content) {
     return REQUIRED_CONTRACT_SNIPPETS.filter(snippet => !content.includes(snippet));
-}
-
-function normalizeForCompare(content) {
-    return content.replace(/\r\n/g, '\n').trim();
 }
 
 function escapeRegExp(value) {
@@ -169,12 +202,6 @@ function escapeRegExp(value) {
 
 function hasStandaloneMarker(content, marker) {
     return new RegExp(`^\\s*<!-- ${escapeRegExp(marker)} -->\\s*$`, 'm').test(content);
-}
-
-function extractManagedBlock(content, startMarker, endMarker) {
-    const pattern = new RegExp(`^\\s*<!-- ${escapeRegExp(startMarker)} -->\\s*$[\\s\\S]*?^\\s*<!-- ${escapeRegExp(endMarker)} -->\\s*$`, 'm');
-    const match = content.match(pattern);
-    return match?.[0] ?? null;
 }
 
 // Layout rule (mirrors .claude/scripts/refactor_skill_layout.py contract).
@@ -321,7 +348,10 @@ export function checkOrphanHeadings(content, relativePath) {
     return `${relativePath} has ${orphans.length} orphan heading(s) — a heading immediately followed by a same-or-shallower-level heading with no body (empty section). Add content or remove the heading. Examples: ${firstFew}.`;
 }
 
-export function checkDebuggerTraceCoverage(content, relativePath) {
+// `projectionText` opts a SKILL into the guide carrier: the caller passes the projection file's text
+// (null when that file is missing) for a skill path and leaves it undefined for an agent, because
+// agents keep the full protocol text (owner decision) and so only ever pass through the body branch.
+export function checkDebuggerTraceCoverage(content, relativePath, { projectionText } = {}) {
     const missing = [];
     if (!content.includes(DEBUGGER_TRACE_MARKER)) {
         missing.push(DEBUGGER_TRACE_MARKER);
@@ -332,7 +362,110 @@ export function checkDebuggerTraceCoverage(content, relativePath) {
         }
     }
     if (missing.length === 0) return null;
+    if (projectionText !== undefined && guideTagsIn(content).includes(DEBUGGER_TRACE_TAG)) {
+        if (projectionText === null) {
+            return `${relativePath} carries a ${DEBUGGER_TRACE_TAG} guide entry but its projection file shared/protocols/${DEBUGGER_TRACE_TAG}.md is missing`;
+        }
+        const projectionMissing = DEBUGGER_TRACE_REQUIRED_SNIPPETS.filter(snippet => !projectionText.includes(snippet));
+        if (projectionMissing.length === 0) return null;
+        return `${relativePath} carries a ${DEBUGGER_TRACE_TAG} guide entry but its projection file lacks snippet(s): ${projectionMissing.join(' | ')}`;
+    }
     return `${relativePath} missing end-to-start debugger trace gate snippet(s): ${missing.join(' | ')}`;
+}
+
+// Guide-carrier rules for ONE source file under the skills root. Per file on purpose: a
+// `references/*.md` that keeps a protocol's full text beside a SKILL.md that carries its guide is a
+// valid split (BR-PDL-12); the same file carrying both forms is not. Returns failure lines.
+//   - a guide naming a tag with no projection file: the pointer leads nowhere;
+//   - one file carrying the full `<!-- SYNC:tag -->` body AND a guide for that tag;
+//   - a skill named in `inlineSkills` (protocol-groups.json) carrying any guide entry (BR-PDL-11).
+export function checkGuideCarrierRules({ relativePath, skillName, content, inlineSkills = [], projectionExists }) {
+    const failures = [];
+    const tags = guideTagsIn(content);
+    if (tags.length === 0) return failures;
+    if (inlineSkills.includes(skillName)) {
+        failures.push(`${relativePath}: skill "${skillName}" is listed in inlineSkills (shared/protocol-groups.json) and must keep full SYNC bodies, but it carries guide entries: ${tags.join(', ')}`);
+    }
+    for (const tag of tags) {
+        if (!PROTOCOL_TAG_RE.test(tag) || !projectionExists(tag)) {
+            failures.push(`${relativePath}: guide entry names protocol "${tag}" but its projection file shared/protocols/${tag}.md does not exist`);
+        }
+        if (hasStandaloneMarker(content, `SYNC:${tag}`)) {
+            failures.push(`${relativePath}: carries both the full <!-- SYNC:${tag} --> body and a guide entry for "${tag}" — keep exactly one form per file`);
+        }
+    }
+    return failures;
+}
+
+async function collectMarkdownFiles(dirPath) {
+    let entries;
+    try {
+        entries = await fs.readdir(dirPath, { withFileTypes: true });
+    } catch (error) {
+        if (error.code === 'ENOENT') return [];
+        throw error;
+    }
+    const collected = [];
+    for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
+        if (entry.isDirectory()) {
+            if (!SCAN_SKIPPED_DIRS.has(entry.name)) collected.push(...(await collectMarkdownFiles(fullPath)));
+        } else if (entry.isFile() && entry.name.toLowerCase().endsWith('.md')) {
+            collected.push(fullPath);
+        }
+    }
+    return collected;
+}
+
+// `inlineSkills` from `shared/protocol-groups.json`. An absent file means no list (the rule has
+// nothing to enforce); a present but malformed one fails closed rather than silently allowing guides.
+async function readInlineSkills(failures) {
+    const groupsPath = path.join(claudeSkillsRoot, 'shared', 'protocol-groups.json');
+    if (!(await exists(groupsPath))) return [];
+    let parsed;
+    try {
+        parsed = JSON.parse(await fs.readFile(groupsPath, 'utf8'));
+    } catch (error) {
+        failures.push(`${toRelativeNormalized(groupsPath, rootDir)} is not valid JSON (${error.message}); cannot check inlineSkills`);
+        return [];
+    }
+    const list = parsed?.inlineSkills;
+    if (!Array.isArray(list) || !list.every(name => typeof name === 'string' && name)) {
+        failures.push(`${toRelativeNormalized(groupsPath, rootDir)} has no valid inlineSkills array of skill names; cannot check inline skills`);
+        return [];
+    }
+    return list;
+}
+
+async function checkSourceGuideCarriers(failures) {
+    const inlineSkills = await readInlineSkills(failures);
+    const protocolsDir = path.join(claudeSkillsRoot, 'shared', 'protocols');
+    const projectionCache = new Map();
+    const projectionExists = tag => {
+        if (!projectionCache.has(tag)) projectionCache.set(tag, fsSync.existsSync(path.join(protocolsDir, `${tag}.md`)));
+        return projectionCache.get(tag);
+    };
+    for (const filePath of await collectMarkdownFiles(claudeSkillsRoot)) {
+        const [skillName] = toRelativeNormalized(filePath, claudeSkillsRoot).split('/');
+        if (skillName === 'shared') continue; // canonical text and its projection, not a skill
+        const content = await fs.readFile(filePath, 'utf8');
+        failures.push(...checkGuideCarrierRules({
+            relativePath: toRelativeNormalized(filePath, rootDir),
+            skillName,
+            content,
+            inlineSkills,
+            projectionExists
+        }));
+    }
+}
+
+// Codex ignores `disable-model-invocation`, so a manual-only skill stays manual on Codex only through
+// its `agents/openai.yaml` policy. `policyText` is that file's text ('' when it is absent). Returns the
+// failure line, or null when the skill is not manual-only or its policy turns implicit invocation off.
+export function checkManualOnlyPolicy(sourceDisable, policyText, relativePath) {
+    if (sourceDisable !== true) return null;
+    if (CODEX_IMPLICIT_OFF_RE.test(String(policyText ?? ''))) return null;
+    return `${relativePath} is manual-only (disable-model-invocation: true) but agents/openai.yaml does not set policy.allow_implicit_invocation: false`;
 }
 
 // Actionable remediation for a FAILing run. Every failure this gate raises is a generated-mirror
@@ -342,17 +475,30 @@ export function checkDebuggerTraceCoverage(content, relativePath) {
 // so it is unit-testable without spawning the verifier or inducing a real drift.
 export function formatMirrorRemediation(failures) {
     const lines = [
-        'Remediation: regenerate the Codex mirrors with `npm run codex:sync` (or `npm run sync:all`',
-        'for all three surfaces), then re-run this gate. Without npm / a root package.json (e.g. a',
-        'project that only copied `.claude`), run the standalone orchestrator directly — it is the',
-        'single source of truth the npm scripts delegate to, no package.json required:',
-        '  node .claude/skills/sync-codex/scripts/run-codex-sync.mjs',
+        'Remediation: regenerate the Codex mirrors with the standalone orchestrator, then re-run this',
+        'gate. The framework is self-running: this command needs no npm, no package.json and no',
+        'node_modules, so it is identical in this repo and in any project that only copied `.claude`.',
+        '  node .claude/skills/sync-codex/scripts/run-codex-sync.mjs --copy-skills   # all three surfaces',
+        '  node .claude/skills/sync-codex/scripts/run-codex-sync.mjs --verify-only   # re-run every gate',
         'NEVER hand-edit or `prettier --write` the generated mirrors (AGENTS.md, .codex/**, .agents/**)',
         '— they are .prettierignore-d so the sync stays their only writer.'
     ];
     if (Array.isArray(failures) && failures.some(f => /mirror|drift/i.test(String(f)))) {
         lines.push('A "context mirror content drifted" failure almost always means a mirror file was reformatted');
-        lines.push('or edited after the last sync; `npm run codex:sync` rewrites it byte-for-byte from the source.');
+        lines.push('or edited after the last sync; the runner above rewrites it byte-for-byte from the source.');
+    }
+    // Size overflow is the ONE failure the sync cannot fix, so it must not inherit the generic
+    // "regenerate" advice above — that advice is a non-terminating loop here. The generator
+    // preserves content without truncating and only WARNS on overflow (reportAgentsRootSize), so
+    // re-running it reproduces the identical oversized file and this gate fails identically.
+    if (Array.isArray(failures) && failures.some(f => /bounded projection limit/i.test(String(f)))) {
+        lines.push('EXCEPTION — a "bytes, above the …-byte bounded projection limit" failure is NOT fixed by');
+        lines.push('re-running the sync. The generator preserves content without truncating and only warns on');
+        lines.push('overflow (`sync-context-workflows.mjs` reportAgentsRootSize), so regenerating reproduces the');
+        lines.push('identical oversized file. Change the budget or the input instead:');
+        lines.push('  - raise AGENTS_ROOT_LIMIT_BYTES in BOTH .claude/scripts/codex/verify-skill-protocol-compliance.mjs');
+        lines.push('    and .claude/scripts/codex/sync-context-workflows.mjs (TC-CTXP-035e pins them equal), or');
+        lines.push('  - shrink the projection whitelist (AGENTS_PROJECTION_HEADINGS in sync-context-workflows.mjs).');
     }
     return lines.join('\n');
 }
@@ -371,40 +517,42 @@ export function countOccurrences(haystack, needle) {
     return count;
 }
 
-// P6 (AGENTS.md): each canonical :full block's rewrite-invariant signature must appear EXACTLY ONCE
-// in the auto-loaded mirror. Fail-closed at every gap — a missing canonical source, missing mirror,
-// stale signature, or wrong occurrence count is a FAILURE, never a skip.
-async function checkCanonicalProtocolBodySignatures(failures) {
-    if (!(await exists(canonicalSyncPath))) {
-        failures.push(`Missing canonical protocol source: ${path.relative(rootDir, canonicalSyncPath)} (cannot verify mirror protocol-body parity)`);
-        return;
+// Compact-root contract. `AGENTS.md` is a small, static projection of the project root file
+// (CLAUDE.md): project information only. Keep this predicate pure so both the verifier and focused tests
+// can prove the size, marker and absence invariants without invoking a host runtime.
+export function checkCompactAgentsProjection(agentsText, {
+    limitBytes = AGENTS_ROOT_LIMIT_BYTES
+} = {}) {
+    const failures = [];
+    const agents = String(agentsText ?? '');
+    const bytes = Buffer.byteLength(agents, 'utf8');
+    if (bytes > limitBytes) {
+        failures.push(`AGENTS.md is ${bytes} bytes, above the ${limitBytes}-byte bounded projection limit`);
     }
-    const canonicalText = (await fs.readFile(canonicalSyncPath, 'utf8')).replace(/\r\n/g, '\n');
+    if (!hasStandaloneMarker(agents, AGENTS_ROOT_PROJECTION_START) ||
+        !hasStandaloneMarker(agents, AGENTS_ROOT_PROJECTION_END)) {
+        failures.push(`AGENTS.md missing bounded root projection markers (${AGENTS_ROOT_PROJECTION_START}/${AGENTS_ROOT_PROJECTION_END})`);
+    }
+    for (const marker of RETIRED_MIRROR_MARKERS) {
+        if (agents.includes(marker)) failures.push(`AGENTS.md still carries the retired block ${marker}; the sync no longer writes protocol or context mirrors`);
+    }
+    failures.push(...checkNoUniversalProtocolText(agents, 'AGENTS.md'));
+    return failures;
+}
 
-    // Anchor: each signature MUST still live in the canonical :full block, else it is stale and the
-    // count check below would silently drift. This ties the check to canonical, not to a hardcoded string.
-    for (const { tag, signature } of PROTOCOL_BODY_SIGNATURES) {
-        if (!canonicalText.includes(signature)) {
-            failures.push(`Canonical SYNC:${tag} no longer contains body signature "${signature}" — update PROTOCOL_BODY_SIGNATURES in .claude/scripts/codex/verify-skill-protocol-compliance.mjs`);
+// A root file or mirror must carry none of the universal protocol text. Pure + exported so a focused
+// test can drive every signature — and prove the guard is not silently deletable — without a host runtime.
+export function checkNoUniversalProtocolText(text, label, {
+    signatures = UNIVERSAL_TEXT_SIGNATURES
+} = {}) {
+    const failures = [];
+    for (const signature of signatures) {
+        const n = countOccurrences(text, signature);
+        if (n > 0) {
+            failures.push(`${label}: universal protocol text "${signature}" found ${n}× (expected 0 — the universal hook delivers the shared protocols; no root file or mirror carries them)`);
         }
     }
-
-    const targets = [
-        { label: 'AGENTS.md', filePath: projectAgentsPath } // P6 — Codex project context
-    ];
-    for (const { label, filePath } of targets) {
-        if (!(await exists(filePath))) {
-            failures.push(`Missing protocol mirror ${label}: ${path.relative(rootDir, filePath)} (fail-closed — protocol reachability unverifiable)`);
-            continue;
-        }
-        const content = await fs.readFile(filePath, 'utf8');
-        for (const { tag, signature } of PROTOCOL_BODY_SIGNATURES) {
-            const n = countOccurrences(content, signature);
-            if (n !== 1) {
-                failures.push(`${label}: canonical SYNC:${tag} body signature "${signature}" found ${n}× (expected exactly 1 — a single deduped copy of the :full block)`);
-            }
-        }
-    }
+    return failures;
 }
 
 async function checkRequiredDebuggerTraceFiles(relativePaths, failures) {
@@ -415,7 +563,15 @@ async function checkRequiredDebuggerTraceFiles(relativePaths, failures) {
             continue;
         }
         const content = await fs.readFile(fullPath, 'utf8');
-        const failure = checkDebuggerTraceCoverage(content, relPath);
+        // A skill (source or mirror) may carry the gate as a guide entry; its projection lives in
+        // that same skills root. Agents are not offered the guide branch (they keep full text).
+        const skillsRootMatch = relPath.match(/^(.*\/skills)\//);
+        const options = {};
+        if (skillsRootMatch) {
+            const projectionPath = path.join(rootDir, ...skillsRootMatch[1].split('/'), 'shared', 'protocols', `${DEBUGGER_TRACE_TAG}.md`);
+            options.projectionText = (await exists(projectionPath)) ? await fs.readFile(projectionPath, 'utf8') : null;
+        }
+        const failure = checkDebuggerTraceCoverage(content, relPath, options);
         if (failure) failures.push(failure);
     }
 }
@@ -432,6 +588,7 @@ async function main() {
             const orphanFailure = checkOrphanHeadings(sourceContent, toRelativeNormalized(sourcePath, rootDir));
             if (orphanFailure) failures.push(orphanFailure);
         }
+        await checkSourceGuideCarriers(failures);
     }
 
     if (!(await exists(skillsRoot))) {
@@ -485,30 +642,31 @@ async function main() {
                 }
 
                 const sourceFrontmatter = sourceFrontmatterByRel.get(generatedRel);
+                if (Boolean(sourceFrontmatter?.concise) !== Boolean(frontmatter.concise)) {
+                    failures.push(`${relativePath} instruction-profile mismatch with source (.claude/skills/${generatedRel})`);
+                }
                 const sourceDisableModelInvocation = parseBooleanFrontmatterValue(sourceFrontmatter?.values?.['disable-model-invocation']);
                 const generatedDisableModelInvocation = parseBooleanFrontmatterValue(frontmatter.values?.['disable-model-invocation']);
                 if (sourceDisableModelInvocation !== generatedDisableModelInvocation) {
                     failures.push(`${relativePath} disable-model-invocation mismatch with source (.claude/skills/${generatedRel})`);
                 }
+                // Codex ignores the frontmatter flag, so a manual-only skill needs its invocation policy file.
+                if (sourceDisableModelInvocation === true) {
+                    const policyText = await fs.readFile(path.join(path.dirname(skillPath), 'agents', 'openai.yaml'), 'utf8').catch(() => '');
+                    const policyFailure = checkManualOnlyPolicy(sourceDisableModelInvocation, policyText, relativePath);
+                    if (policyFailure) failures.push(policyFailure);
+                }
             }
 
-            const missing = missingSnippets(content);
+            const missing = frontmatter?.concise ? [] : missingSnippets(content);
             if (missing.length > 0) {
                 failures.push(`${relativePath} missing contract snippet(s): ${missing.join(' | ')}`);
             }
 
-            if (!content.includes(SKILL_PROTOCOL_MARKER)) {
-                failures.push(`${relativePath} missing synced prompt-protocol marker (${SKILL_PROTOCOL_MARKER})`);
+            for (const marker of RETIRED_MIRROR_MARKERS) {
+                if (content.includes(marker)) failures.push(`${relativePath} carries the retired injected block ${marker}; mirrored skills carry exactly their source text, the universal hook delivers the shared protocols`);
             }
-
-            const protocolBlock = extractManagedBlock(content, SKILL_PROTOCOL_MARKER, SKILL_PROTOCOL_END_MARKER);
-            if (protocolBlock) {
-                for (const forbidden of FORBIDDEN_SKILL_PROTOCOL_PATTERNS) {
-                    if (forbidden.pattern.test(protocolBlock)) {
-                        failures.push(`${relativePath} synced prompt-protocol block contains ${forbidden.reason}; generated .agents skills must reference docs/project-reference/lessons.md instead of inlining learned lessons`);
-                    }
-                }
-            }
+            failures.push(...checkNoUniversalProtocolText(content, relativePath));
 
             if (/\bAgent\(/.test(content) || /\bsubagent_type[=:]/.test(content)) {
                 failures.push(`${relativePath} contains Claude Agent invocation syntax; Codex mirrors must use spawn_agent/agent_type examples`);
@@ -577,60 +735,17 @@ async function main() {
         }
     }
 
-    if (!(await exists(contextPath))) {
-        failures.push(`Missing Codex context file: ${path.relative(rootDir, contextPath)}`);
+    if (await exists(contextPath)) {
+        failures.push(`${path.relative(rootDir, contextPath)} is a retired mirror; the sync removes it (run node .claude/skills/sync-codex/scripts/run-codex-sync.mjs)`);
+    }
+    if (!(await exists(projectAgentsPath))) {
+        failures.push(`Missing AGENTS.md file: ${path.relative(rootDir, projectAgentsPath)}`);
     } else {
-        const contextText = await fs.readFile(contextPath, 'utf8');
-        const missing = missingSnippets(contextText);
-        if (missing.length > 0) {
-            failures.push(`${path.relative(rootDir, contextPath)} missing contract snippet(s): ${missing.join(' | ')}`);
-        }
-        if (!contextText.includes(CONTEXT_PROTOCOL_TOP_MARKER)) {
-            failures.push(`${path.relative(rootDir, contextPath)} missing top prompt protocol mirror marker (${CONTEXT_PROTOCOL_TOP_MARKER})`);
-        }
-        const topIndex = contextText.indexOf(CONTEXT_PROTOCOL_TOP_MARKER);
-        const bottomIndex = contextText.indexOf(CONTEXT_PROTOCOL_BOTTOM_MARKER);
-        const workflowsStartIndex = contextText.indexOf(WORKFLOWS_START_MARKER);
-        const workflowsEndIndex = contextText.indexOf(WORKFLOWS_END_MARKER);
-
-        if (workflowsStartIndex >= 0 && topIndex > workflowsStartIndex) {
-            failures.push(`${path.relative(rootDir, contextPath)} top prompt protocol marker must appear before workflows (${WORKFLOWS_START_MARKER})`);
-        }
-        // Bottom protocol mirror is optional; when present it must remain after workflows.
-        if (workflowsEndIndex >= 0 && bottomIndex >= 0 && bottomIndex < workflowsEndIndex) {
-            failures.push(`${path.relative(rootDir, contextPath)} bottom prompt protocol marker must appear after workflows (${WORKFLOWS_END_MARKER})`);
-        }
-
-        if (!(await exists(projectAgentsPath))) {
-            failures.push(`Missing AGENTS.md file: ${path.relative(rootDir, projectAgentsPath)}`);
-        } else {
-            const agentsText = await fs.readFile(projectAgentsPath, 'utf8');
-            if (!hasStandaloneMarker(agentsText, AGENTS_CONTEXT_MIRROR_START)) {
-                failures.push(`${path.relative(rootDir, projectAgentsPath)} missing managed context mirror start marker (${AGENTS_CONTEXT_MIRROR_START})`);
-            }
-            if (!hasStandaloneMarker(agentsText, AGENTS_CONTEXT_MIRROR_END)) {
-                failures.push(`${path.relative(rootDir, projectAgentsPath)} missing managed context mirror end marker (${AGENTS_CONTEXT_MIRROR_END})`);
-            }
-            const mirroredBlock = extractManagedBlock(agentsText, AGENTS_CONTEXT_MIRROR_START, AGENTS_CONTEXT_MIRROR_END);
-            if (mirroredBlock) {
-                // Compare the mirrored payload, stripping wrapper text from AGENTS managed block.
-                const normalizedMirrorBlock = mirroredBlock.replace(/\r\n/g, '\n');
-                const mirroredPayload = normalizedMirrorBlock
-                    .replace(`<!-- ${AGENTS_CONTEXT_MIRROR_START} -->`, '')
-                    .replace(`<!-- ${AGENTS_CONTEXT_MIRROR_END} -->`, '')
-                    .replace(/^## Codex Context Mirror \(Auto-Synced\)\n\nThis block is auto-generated[\s\S]*?\n\n/m, '')
-                    .trim();
-                if (normalizeForCompare(mirroredPayload) !== normalizeForCompare(contextText)) {
-                    failures.push(`${path.relative(rootDir, projectAgentsPath)} context mirror content drifted from ${path.relative(rootDir, contextPath)}`);
-                }
-            }
-        }
+        failures.push(...checkCompactAgentsProjection(await fs.readFile(projectAgentsPath, 'utf8')));
     }
 
     await checkRequiredDebuggerTraceFiles(DEBUGGER_TRACE_REQUIRED_SOURCE_PATHS, failures);
     await checkRequiredDebuggerTraceFiles(DEBUGGER_TRACE_REQUIRED_GENERATED_SKILLS, failures);
-
-    await checkCanonicalProtocolBodySignatures(failures);
 
     if (failures.length > 0) {
         console.error('[codex-skill-compliance] FAIL');
@@ -645,6 +760,6 @@ async function main() {
     console.log('[codex-skill-compliance] PASS - strict execution contract present across generated Codex artifacts');
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (isInvokedAsScript(process.argv[1], fileURLToPath(import.meta.url))) {
     await main();
 }

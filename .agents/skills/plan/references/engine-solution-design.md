@@ -2,6 +2,7 @@
 
 ### 4. Solution Design
 
+
 #### Core Principles
 
 - **YAGNI** (You Aren't Gonna Need It) - Don't add functionality until necessary
@@ -61,27 +62,27 @@
 
 #### Frontend Solution Design
 
-When designing frontend solutions with Figma context:
+When designing frontend solutions from a design spec or mockup:
 
 ##### Design Context Integration
 
-1. **Check for Figma Context**
-    - Review extracted design specifications
-    - Verify dimensions and spacing match design system
+1. **Check the design source**
+    - Review the design spec / exported mockup images
+    - Verify dimensions and spacing match the design system
     - Note any custom values needing tokens
 
 2. **Component Structure**
-    - Match Figma hierarchy to the configured frontend component tree
+    - Match the design hierarchy to the configured frontend component tree
     - Identify reusable components
     - Map to existing shared library components
 
 3. **Token Mapping**
-    - Map Figma colors to design tokens
+    - Map design colors to design tokens
     - Verify spacing uses standard tokens
     - Flag any values needing new tokens
 
 4. **Responsive Considerations**
-    - Check if Figma shows breakpoint variants
+    - Check whether the design shows breakpoint variants
     - Plan responsive behavior for unlisted breakpoints
     - Note any mobile-specific layouts
 

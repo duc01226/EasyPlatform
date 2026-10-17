@@ -7,13 +7,13 @@ Inserts:
               the reminders region below the main authored content. When a host
               has NO SYNC region (find_sync_region_start returns EOF), the block
               appends at EOF, creating the host's first SYNC region (acceptable —
-              e.g. architecture-scalability-review).
+              e.g. a skill with only a bottom reminder).
   BOTTOM:     a SYNC:...:reminder block immediately BEFORE `## Closing Reminders`,
               or appended at EOF when no such heading exists.
 
 Host set is hand-picked (a "do" skill + review skills + a research skill), so this
 uses an explicit SKILL_NAMES list rather than the inject_review_skill_blocks.py
-review-batch matrix. Structure mirrors inject_nested_task_creation.py.
+review-batch matrix. Structure mirrors inject_workflow_registry_binding.py.
 """
 from __future__ import annotations
 
@@ -21,15 +21,13 @@ import re
 import sys
 from pathlib import Path
 
-from sync_blocks import find_sync_region_start, load_wrapped_sync_block
+from line_endings import read_text, write_text
+from sync_blocks import find_sync_region_start, has_guide_entry, load_wrapped_sync_block
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = PROJECT_ROOT / ".claude" / "skills"
 
 SKILL_NAMES = [
-    "architecture-design",            # "do" — design-time technique consideration
-    "architecture-review",            # review — Cat 11 scalability & coupling
-    "architecture-scalability-review",# review — scalability scorecard (no SYNC region → EOF append)
     "production-readiness-review",    # review — SRE readiness
     "tech-stack-research",            # research — technique-aware stack selection
 ]
@@ -66,6 +64,9 @@ def inject(text: str) -> tuple[str, dict]:
     status = {"top": "skipped", "bottom": "skipped", "already_present": False, "errors": []}
 
     top_present = TOP_OPEN in text
+    # A guide entry (a skill converted to guide lines) carries the protocol like the body:
+    # never insert the body, still keep the reminder.
+    guided = not top_present and has_guide_entry(text, TAG.removeprefix("SYNC:"))
     bottom_present = REMINDER_OPEN in text
 
     if top_present:
@@ -85,7 +86,10 @@ def inject(text: str) -> tuple[str, dict]:
             text = text[: m.start()] + BOTTOM_BLOCK + text[m.end():]
             status["bottom"] = "refreshed"
 
-    if top_present:
+    if top_present or guided:
+        if guided:
+            status["already_present"] = True
+            status["top"] = "guided"
         if not bottom_present:
             m = CLOSING_RE.search(text)
             if m:
@@ -135,7 +139,7 @@ def main() -> int:
         if path is None:
             results.append((name, "MISSING", {}))
             continue
-        original = path.read_text(encoding="utf-8")
+        original, newline = read_text(path)
         new_text, status = inject(original)
         if status.get("errors"):
             results.append((name, "MALFORMED", status))
@@ -149,7 +153,7 @@ def main() -> int:
         if check or dry_run:
             results.append((name, "WOULD-UPDATE" if check else "DRY-RUN", status))
             continue
-        path.write_text(new_text, encoding="utf-8")
+        write_text(path, new_text, newline)
         results.append((name, "UPDATED", status))
 
     print(f"{'SKILL':<42} {'STATUS':<18} TOP / BOTTOM")

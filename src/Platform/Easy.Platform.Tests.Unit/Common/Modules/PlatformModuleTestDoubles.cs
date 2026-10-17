@@ -76,6 +76,77 @@ public class GrandParentTestPlatformModule : PlatformModule
     public override List<Func<IConfiguration, Type>> GetDependentModuleTypes() => [_ => typeof(ParentTestPlatformModule)];
 }
 
+/// <summary>
+/// Registers an observable service so the diamond test can prove registration side effects, not only module
+/// descriptor cardinality, are executed once.
+/// </summary>
+public sealed class SideEffectRegistrationMarker;
+
+public sealed class SideEffectLeafTestPlatformModule : PlatformModule
+{
+    public SideEffectLeafTestPlatformModule(IServiceProvider serviceProvider, IConfiguration configuration)
+        : base(serviceProvider, configuration) { }
+
+    protected override void InternalRegister(IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddSingleton<SideEffectRegistrationMarker>();
+    }
+}
+
+public sealed class SideEffectParentTestPlatformModule : PlatformModule
+{
+    public SideEffectParentTestPlatformModule(IServiceProvider serviceProvider, IConfiguration configuration)
+        : base(serviceProvider, configuration) { }
+
+    public override List<Func<IConfiguration, Type>> GetDependentModuleTypes() =>
+        [_ => typeof(SideEffectLeafTestPlatformModule)];
+}
+
+public sealed class SideEffectGrandParentTestPlatformModule : PlatformModule
+{
+    public SideEffectGrandParentTestPlatformModule(IServiceProvider serviceProvider, IConfiguration configuration)
+        : base(serviceProvider, configuration) { }
+
+    public override List<Func<IConfiguration, Type>> GetDependentModuleTypes() =>
+        [_ => typeof(SideEffectParentTestPlatformModule)];
+}
+
+/// <summary>Left branch of a true diamond: depends on <see cref="SideEffectLeafTestPlatformModule" />.</summary>
+public sealed class SideEffectLeftBranchTestPlatformModule : PlatformModule
+{
+    public SideEffectLeftBranchTestPlatformModule(IServiceProvider serviceProvider, IConfiguration configuration)
+        : base(serviceProvider, configuration) { }
+
+    public override List<Func<IConfiguration, Type>> GetDependentModuleTypes() =>
+        [_ => typeof(SideEffectLeafTestPlatformModule)];
+}
+
+/// <summary>Right branch of a true diamond: also depends on <see cref="SideEffectLeafTestPlatformModule" />.</summary>
+public sealed class SideEffectRightBranchTestPlatformModule : PlatformModule
+{
+    public SideEffectRightBranchTestPlatformModule(IServiceProvider serviceProvider, IConfiguration configuration)
+        : base(serviceProvider, configuration) { }
+
+    public override List<Func<IConfiguration, Type>> GetDependentModuleTypes() =>
+        [_ => typeof(SideEffectLeafTestPlatformModule)];
+}
+
+/// <summary>
+/// Root of a true diamond (Root -> Left -> Leaf, Root -> Right -> Leaf): the shared leaf is reached through two
+/// sibling branches within ONE registration call, with no repeated host call.
+/// </summary>
+public sealed class SideEffectDiamondRootTestPlatformModule : PlatformModule
+{
+    public SideEffectDiamondRootTestPlatformModule(IServiceProvider serviceProvider, IConfiguration configuration)
+        : base(serviceProvider, configuration) { }
+
+    public override List<Func<IConfiguration, Type>> GetDependentModuleTypes() =>
+    [
+        _ => typeof(SideEffectLeftBranchTestPlatformModule),
+        _ => typeof(SideEffectRightBranchTestPlatformModule)
+    ];
+}
+
 /// <summary>Declares a dependency on a type that is NOT a platform module — the guard-rail case.</summary>
 public class InvalidDependencyTestPlatformModule : PlatformModule
 {

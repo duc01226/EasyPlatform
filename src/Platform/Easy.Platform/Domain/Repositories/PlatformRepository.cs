@@ -47,8 +47,8 @@ namespace Easy.Platform.Domain.Repositories;
 /// <para><strong>Usage Patterns:</strong></para>
 /// The repository is extensively used across the platform in:
 /// <list type="bullet">
-/// <item><description>Query handlers for read operations (GetWorkingShiftFilterOptionQuery, GetPerformanceReviewParticipantInfoQuery)</description></item>
-/// <item><description>Command handlers for write operations (CreateCandidateCommand, UpdateEmployeeCommand)</description></item>
+/// <item><description>Query handlers for read operations (GetEntityByIdQuery, GetFilterOptionsQuery)</description></item>
+/// <item><description>Command handlers for write operations (CreateEntityCommand, UpdateEntityCommand)</description></item>
 /// <item><description>Event handlers for processing domain events and integration events</description></item>
 /// <item><description>Background services and scheduled jobs for batch processing</description></item>
 /// <item><description>Data seeders for initial data setup and migrations</description></item>
@@ -893,27 +893,24 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
         }
     }
 
+    /// <summary>
+    /// Executes a read once. Nonparallel providers hold the UOW lock for the entire read and release it
+    /// on success, failure or cancellation; acquisition failures do not release a lock they never acquired.
+    /// Provider failures propagate to the caller, which owns any explicit retry policy.
+    /// </summary>
     protected async Task<TResult> ExecuteUowReadQueryThreadSafe<TResult>(IPlatformUnitOfWork uow, Func<IPlatformUnitOfWork, Task<TResult>> executeFn)
     {
         if (DoesSupportParallelExecution() == false)
         {
             var uowOfTUow = uow.UowOfType<TUow>();
+            await uowOfTUow.LockAsync();
 
             try
             {
-                //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released
-                await uowOfTUow.LockAsync();
-
-                var result = await executeFn(uow);
-
-                uowOfTUow.ReleaseLock();
-
-                return result;
+                return await executeFn(uow);
             }
-            catch (Exception)
+            finally
             {
-                //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
-                //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
                 uowOfTUow.ReleaseLock();
             }
         }

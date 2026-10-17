@@ -1,19 +1,14 @@
 const PREFERRED_SKILL_ALIASES = new Map([
-  ["debug", "debug-investigate"],
   ["simplify", "code-simplifier"],
 ]);
 
 const COMPATIBILITY_NOTE_LINES = [
   "> Codex compatibility note:",
-  "> - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.",
-  "> - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.",
-  "> - User-question prompts mean to ask the user directly in Codex.",
-  "> - Ignore Claude-specific mode-switch instructions when they appear.",
-  "> - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.",
+  "> - Invoke `$skill-name`: load the registered `.agents/skills/<name>/SKILL.md` and execute it with Codex tools; no separate `Skill` tool or Claude mode switch is needed. Author `.claude/**`; mirrors are generated.",
+  "> - Track steps before execution and keep progress/evidence current. Explicit skill requests execute their protocol. Use the native question tool for required questions.",
+  "> - Map foreign tool names to available host capabilities. A name mismatch needs no approval; an actually unavailable required capability stops with its step/evidence and a user question before adaptation.",
   "> - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.",
-  "> - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.",
-  "> - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.",
-  "> - If a required step/tool cannot run in this environment, stop and ask the user before adapting.",
+  "> - Preserve protocol order unless the user approves a deviation. Workflows use `$start-workflow`: gates stay fixed; other steps may flex with logged reasons and evidence.",
   "",
 ];
 
@@ -62,21 +57,21 @@ export function rewriteClaudeToolTermsForCodex(text) {
   return text
     .replace(
       /\(content auto-injected by hooks?[^)]*\)/gi,
-      "(Codex has no hook injection — open this file directly before proceeding)"
+      "(Hooks may point to this file; every host must open it directly before proceeding)"
     )
     .replaceAll(
       "(content auto-injected by hook — check for [Injected: ...] header before reading)",
-      "(Codex has no hook injection — open this file directly before proceeding)"
+      "(Hooks may point to this file; every host must open it directly before proceeding)"
     )
     .replaceAll(
       "(content auto-injected by hooks).",
       "(Claude may inject this via hooks; Codex must open this file directly)."
     )
-    .replaceAll("`TaskCreate`", "task tracking")
+    .replaceAll("`TaskCreate`", "todo tracking")
     .replaceAll("`TaskList`", "the current task list")
-    .replaceAll("via `AskUserQuestion`", "by asking the user directly")
-    .replaceAll("`AskUserQuestion` decision", "user decision")
-    .replaceAll("`AskUserQuestion`", "ask the user directly")
+    .replaceAll("via `AskUserQuestion`", "using ask user question tool")
+    .replaceAll("`AskUserQuestion` decision", "user decision using ask user question tool")
+    .replaceAll("`AskUserQuestion`", "ask user question tool")
     .replaceAll("`EnterPlanMode`", "manual plan-mode switching")
     .replaceAll("`Skill` tool", "skill invocation")
     .replaceAll("`Skill`", "skill invocation")
@@ -88,11 +83,11 @@ export function rewriteClaudeToolTermsForCodex(text) {
     .replace(/\bsubagent_type:/g, "agent_type:")
     .replace(/\bsubagent_type=/g, "agent_type=")
     .replace(/\bsubagent_type\b/g, "agent_type")
-    .replace(/\bTaskCreate:/g, "Task tracking:")
-    .replace(/\bTaskCreate\b/g, "task tracking")
+    .replace(/\bTaskCreate:/g, "Todo tracking:")
+    .replace(/\bTaskCreate\b/g, "todo tracking")
     .replace(/\bTaskList\b/g, "the current task list")
-    .replace(/\bvia AskUserQuestion\b/g, "by asking the user directly")
-    .replace(/\bAskUserQuestion\b/g, "ask the user directly")
+    .replace(/\bvia AskUserQuestion\b/g, "using ask user question tool")
+    .replace(/\bAskUserQuestion\b/g, "ask user question tool")
     .replace(/\bEnterPlanMode\b/g, "manual plan-mode switching");
 }
 

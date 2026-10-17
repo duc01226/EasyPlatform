@@ -8,40 +8,41 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 2. **Max Length:** 64 characters
 3. **Characters:** `a-z`, `0-9`, `-` (no underscores, spaces)
 4. **Match:** `name` field MUST ATTENTION match directory name exactly
+5. **No built-in names:** never name a skill like a Claude Code built-in command or bundled skill (`code-review`, `security-review`, `design`, …). A project skill replaces the built-in's `/name`, so the built-in disappears. `.claude/scripts/codex/tests/skill-builtin-names.test.mjs` holds the list and fails on a collision; `plan` is the one owner-accepted exception.
 
 ## Canonical Order Rule (subject-first)
 
-**Rule:** when a skill belongs to a subject family, name it `<subject>-<verb>` (subject-first), NOT `<verb>-<subject>`. Example: `architecture-review`, not `review-architecture`.
+**Rule:** when a skill belongs to a subject family, name it `<subject>-<verb>` (subject-first), NOT `<verb>-<subject>`. Example: `changes-review`, not `review-changes`.
 
-**Rationale:** subject-first is the codebase majority — the `*-review` pattern (`security-review`, `performance-review`, `code-review`, `integration-test-review`, `knowledge-review`, `architecture-scalability-review`, `production-readiness-review`, `quality-gate-review`, `plan-review`) outnumbers the `review-*` outliers, and it keeps subject families grouped alphabetically (`architecture-design`, `architecture-review`, `architecture-review-full`, `architecture-scalability-review`; `spec`, `spec-clarify`, `spec-discovery`, `spec-index`; `plan`, `plan-execute`, `plan-review`, `plan-validate`; `integration-test`, `integration-test-review`, `integration-test-verify`; `graph-*`). Grouping by subject lowers discovery cost and future change cost.
+**Rationale:** subject-first is the codebase majority — the `*-review` pattern (`performance-review`, `code-quality-review`, `knowledge-review`, `production-readiness-review`, `changes-review`, `ai-engineering-review`) outnumbers the `review-*` outliers, and it keeps subject families grouped alphabetically (`architecture` with modes `design`, `review`, `scalability`, `full`; `spec`; `plan`; `integration-test`, `integration-test --mode=review`, `integration-test --mode=verify`; `graph-*`). Grouping by subject lowers discovery cost and future change cost.
 
-**Trade-off accepted:** subject-first sacrifices _action-family_ adjacency (all `review-*` no longer sort together) in exchange for _subject-family_ adjacency (`architecture-*`, `spec-*`, `plan-*`, `integration-test-*` each stay grouped). Chosen because slash-command discovery keys on the subject a user is thinking about (`architecture`, `spec`, `plan`) more naturally than on the shared action, and the `*-review` majority already dominates — so the minority pays the smaller migration cost.
+**Trade-off accepted:** subject-first sacrifices _action-family_ adjacency (all `review-*` no longer sort together) in exchange for _subject-family_ adjacency (`spec`, `plan`, `integration-test`, `graph-*` each stay grouped). Chosen because slash-command discovery keys on the subject a user is thinking about (`architecture`, `spec`, `plan`) more naturally than on the shared action, and the `*-review` majority already dominates — so the minority pays the smaller migration cost.
 
-**Pure-action carve-out (verb-first allowed):** a skill that is a single action with NO subject family stays verb-first: `fix`, `scout`, `refine`, `investigate`, `prove-fix`, `debug-investigate`, `seed-test-data`, `scaffold`, `brainstorm`, `prioritize`, `plan`, `test`, `story`, `idea`.
+**Pure-action carve-out (verb-first allowed):** a skill that is a single action with NO subject family stays verb-first: `fix`, `investigate`, `seed-test-data`, `scaffold`, `brainstorm`, `prioritize`, `plan`, `test`, `initiative`.
 
-**Modifier+noun and noun-compound names are NOT verb-first** and are unaffected: `web-research`/`deep-research` (modifier qualifies the noun `research`), `knowledge-synthesis`/`knowledge-review` (already subject-first: `knowledge` + action), `design-spec` (the noun compound "design specification", a produced artifact), `web-design-guidelines` (noun compound).
+**Modifier+noun and noun-compound names are NOT verb-first** and are unaffected: `web-research` (modifier qualifies the noun `research`), `source-deep-dive` (noun compound: a deep dive into sources), `knowledge-synthesis`/`knowledge-review` (already subject-first: `knowledge` + action), `design-spec` (the noun compound "design specification", a produced artifact), `web-design-guidelines` (noun compound).
+<!-- KEEP AS WRITTEN: `security-audit` is NOT a `*-review` name (it is `security` + action) and `source-deep-dive` has no `research` token (it is a noun compound). An earlier draft listed both under the wrong pattern; a framework re-sync re-applied it twice. Do not merge the examples back together. -->
 
 ### Audit — every architecture + workflow step-skill classified
 
-| Skill                                                                                                                                                                                       | Pattern                            | Subject family?         | Verdict                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ----------------------- | ---------------------------------------------------------------------- |
-| `review-architecture`                                                                                                                                                                       | verb-first                         | `architecture-*` exists | **rename → `architecture-review`**                                     |
-| `review-architecture-full`                                                                                                                                                                  | verb-first                         | `architecture-*` exists | **rename → `architecture-review-full`**                                |
-| `review-changes`                                                                                                                                                                            | verb-first                         | `*-review` majority     | **rename → `changes-review`**                                          |
-| `review-domain-entities`                                                                                                                                                                    | verb-first                         | `*-review` majority     | **rename → `domain-entities-review`**                                  |
-| `review-artifact`                                                                                                                                                                           | verb-first                         | `*-review` majority     | **rename → `artifact-review`**                                         |
-| `review-ui`                                                                                                                                                                                 | verb-first                         | `*-review` majority     | **rename → `ui-review`**                                               |
-| `architecture-design`                                                                                                                                                                       | subject-first                      | `architecture-*`        | keep                                                                   |
-| `architecture-scalability-review`                                                                                                                                                           | subject-first                      | `architecture-*`        | keep                                                                   |
-| `security-review`, `performance-review`, `production-readiness-review`, `code-review`, `quality-gate-review`, `knowledge-review`                                                            | subject-first                      | `*-review`              | keep                                                                   |
-| `integration-test`, `integration-test-review`, `integration-test-verify`                                                                                                                    | subject-first                      | `integration-test-*`    | keep                                                                   |
-| `plan`, `plan-execute`, `plan-review`, `plan-validate`                                                                                                                                      | subject-first / carve-out (`plan`) | `plan-*`                | keep                                                                   |
-| `spec`, `spec-clarify`, `spec-discovery`, `spec-index`                                                                                                                                      | subject-first                      | `spec-*`                | keep                                                                   |
-| `design-spec`                                                                                                                                                                               | noun compound                      | artifact name           | keep — "design spec" is a produced artifact, neither token is the verb |
-| `web-research`, `deep-research`                                                                                                                                                             | modifier+noun                      | `research`              | keep — modifier qualifies the noun, not verb-first                     |
-| `knowledge-synthesis`, `knowledge-review`                                                                                                                                                   | subject-first                      | `knowledge-*`           | keep — subject + action already                                        |
-| `scout`, `investigate`, `debug-investigate`, `refine`, `fix`, `prove-fix`, `seed-test-data`, `scaffold`, `brainstorm`, `prioritize`, `story`, `idea`, `test`                                | verb-first                         | none (pure action)      | keep (carve-out)                                                       |
-| `domain-analysis`, `tech-stack-research`, `changelog`, `docs-update`, `watzup`, `story`, `pbi-*`, `dor-gate`, `linter-setup`, `harness-setup`, `feature-presentation`, `excalidraw-diagram` | subject-first / noun / carve-out   | various                 | keep                                                                   |
+| Skill                                                                                                                                                                          | Pattern                            | Subject family?         | Verdict                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- | ----------------------- | ---------------------------------------------------------------------- |
+| `review-architecture`                                                                                                                                                          | verb-first                         | `architecture` exists | **rename → `architecture --mode=review`**                                     |
+| `review-architecture-full`                                                                                                                                                     | verb-first                         | `architecture` exists | **rename → `architecture --mode=full`**                                |
+| `review-changes`                                                                                                                                                               | verb-first                         | `*-review` majority     | **rename → `changes-review`**                                          |
+| `review-domain-entities`                                                                                                                                                       | verb-first                         | `*-review` majority     | **rename → `domain-analysis --mode=review`**                                  |
+| `review-artifact`                                                                                                                                                              | verb-first                         | `*-review` majority     | **rename → `work-item --mode=review`**                                         |
+| `review-ui`                                                                                                                                                                    | verb-first                         | `ui-design` exists     | **rename → `ui-design --mode=review`**                                               |
+| `architecture` (modes `design`, `review`, `scalability`, `full`) | subject-first | `architecture` | keep |
+| `security-audit`, `performance-review`, `production-readiness-review`, `code-quality-review`, `knowledge-review`, `ai-engineering-review`                                                                      | subject-first                      | `*-review` (`security-audit`: `security` + action) | keep                                                                   |
+| `integration-test` (modes `review`, `verify`), `e2e-test` (mode `verify`)                                                                                                                      | subject-first                      | `integration-test`      | keep                                                                   |
+| `plan`                                                                                                                                                               | subject-first / carve-out (`plan`) | `plan-*`                | keep                                                                   |
+| `spec` (modes `discovery`, `clarify`, `index`)                                                                                                                                 | subject-first                      | `spec`                  | keep                                                                   |
+| `design-spec`                                                                                                                                                                  | noun compound                      | artifact name           | keep — "design spec" is a produced artifact, neither token is the verb |
+| `web-research`, `source-deep-dive`                                                                                                                                                | modifier+noun / noun compound | `research`, `deep-dive` | keep — neither token is a leading verb |
+| `knowledge-synthesis`, `knowledge-review`                                                                                                                                      | subject-first                      | `knowledge-*`           | keep — subject + action already                                        |
+| `investigate`, `fix`, `seed-test-data`, `scaffold`, `brainstorm`, `prioritize`, `initiative`, `test`                                                               | verb-first                         | none (pure action)      | keep (carve-out)                                                       |
+| `domain-analysis`, `tech-stack-research`, `docs-manager` (modes `init`, `update`), `watzup`, `work-item` (modes `refine`, `story`, `mockup`, `challenge`, `review`, `dor`), `linter-setup`, `harness-setup`, `feature-presentation` | subject-first / noun / carve-out   | various                 | keep                                                                   |
 
 **Result:** exactly 6 breakers — the `review-*` skills. No 7th breaker surfaced.
 
@@ -60,10 +61,10 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 **Project Examples:**
 | Skill | Purpose |
 | -------------------------------- | ------------------------------- |
-| `security-review` | Security & threat analysis |
+| `security-audit` | Security & threat analysis |
 | `performance-review` | Performance & scalability |
 
-> Note: `arch-security-review` was consolidated into the single `security-review` skill, and `arch-performance-optimization` into the single `performance-review` skill (no `arch-` prefix — each covers all scopes; `performance-review` additionally carries an architecture-altitude section for design reviews, not only architecture).
+> Note: `arch-security-review` was consolidated into the single `security-audit` skill, and `arch-performance-optimization` into the single `performance-review` skill (no `arch-` prefix — each covers all scopes; `performance-review` additionally carries an architecture-altitude section for design reviews, not only architecture).
 
 **When to Use:**
 
@@ -73,11 +74,11 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 
 ### Frontend Patterns (via docs)
 
-**Approach:** Frontend patterns are handled via `docs/project-reference/frontend-patterns-reference.md`, read statically per the project-reference-docs gate in `CLAUDE.md` when editing frontend files. No tech-stack-specific skill needed — keeps the skill catalog generic.
+**Approach:** Frontend patterns are handled via `frontend-patterns-reference.md` in the project-reference docs root — default `docs/project-reference`; a `docsRoots.projectReference.path` entry in `docs/project-config.json` overrides the path — read statically per the hook-delivered project-reference-docs gate (`SYNC:project-reference-docs-guide`) when editing frontend files. No tech-stack-specific skill needed — keeps the skill catalog generic.
 
 **When to Use:**
 
-- `design` — for UI implementation (`--lane=marketing` creative, `--lane=product` app UIs)
+- `ui-design` — for UI implementation (`--lane=marketing` creative, `--lane=product` app UIs)
 - `web-design-guidelines` — for UI compliance review
 - Pattern reference docs — auto-injected when editing `.ts` files
 - Implements YourProject frontend patterns
@@ -89,9 +90,8 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 
 **Project Examples:**
 
-- `debug-investigate` - Systematic debugging (any language)
-- `documentation` - Doc enhancement
-- `code-review` - Interactive code review
+- `investigate` - Code-flow tracing and systematic bug root-cause debugging via `--mode=debug` (any language)
+- `code-quality-review` - Interactive code review
 
 **When to Use:**
 
@@ -99,15 +99,15 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 - Interactive mode is primary use case
 - Skill applies to many contexts
 
-## Shared Protocol Pattern (SYNC Inline)
+## Shared Protocol Pattern (SYNC bodies and guides)
 
 ### `shared/` Directory
 
-**Purpose:** Contains the canonical source for all SYNC-inlined protocol content.
+**Purpose:** Contains the canonical source for all shared protocol content and its generated projection.
 
 **Location:** `.claude/skills/shared/sync-inline-versions.md` (single canonical file)
 
-**Architecture:** Standalone protocol files have been deleted. All protocol content is now inlined directly into consuming skills via `<!-- SYNC:tag -->` blocks. This approach improves AI compliance by ~40% compared to file-read indirection.
+**Architecture:** One canonical file owns every protocol; every other copy is a generated projection (`SYNC:shared-protocol-duplication-policy`). All skill entrypoints, including the four review-family skills, carry guide lines. Hooks deliver full text from `.claude/skills/shared/protocols/`; read absent applicable full text before acting, including when delivery overflows. The live registry `inlineSkills` list is empty. Agents and mode-reference SYNC bodies retain full text, role reminders remain, and each fresh reviewer prompt receives all 11 complete review-protocol bodies VERBATIM. Universal protocols remain hook-only. The projection is generated; guide lines are written only by `sync-update-blocks.py --mode=guide`.
 
 **To update protocols:**
 
@@ -146,10 +146,10 @@ Reference guide for naming Claude Code skills consistently in YourProject.
 
 | Issue                          | Example                         | Fix                                 |
 | ------------------------------ | ------------------------------- | ----------------------------------- |
-| Redundant suffix               | `debugging-skill`               | `debug-investigate`                 |
+| Redundant suffix               | `debugging-skill`               | `debug-trace`                       |
 | Mixed case                     | `DebugHelper`                   | `debug-helper`                      |
 | Underscores                    | `task_runner`                   | `task-runner`                       |
-| Overly specific                | `angular-19-nx-component`       | `design`                            |
+| Overly specific                | `angular-19-nx-component`       | `ui-design`                            |
 | No variant reference           | Missing cross-link              | Add blockquote                      |
 | Shared module < 3 consumers    | Extracting for 2 skills         | Keep inline until 3+                |
 | Over-extraction to references/ | Moving core logic to references | Keep essential patterns in SKILL.md |
@@ -190,6 +190,7 @@ description: ...
 - [ ] Uses lowercase-hyphen-case
 - [ ] Under 64 characters
 - [ ] Directory name matches `name` field
+- [ ] Not a Claude Code built-in name (`skill-builtin-names.test.mjs` passes)
 - [ ] Appropriate prefix (or none)
 - [ ] Variant cross-references added
 - [ ] Description includes trigger keywords

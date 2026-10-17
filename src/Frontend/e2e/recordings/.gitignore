@@ -1,3 +1,0 @@
-# Ignore raw Playwright codegen recordings (refactored copies go to tests/)
-*.spec.ts
-!.gitkeep

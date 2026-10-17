@@ -14,6 +14,7 @@ using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.MessageBus.Producers;
 using Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Application.Services;
@@ -129,6 +130,8 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     public async Task SeedData(IServiceScope serviceScope)
     {
+        var ownedDataSeederTypes = GetValidatedApplicationDataSeederTypes().ToHashSet();
+
         //if the db server is not initiated, SeedData could fail.
         //So that we do retry to ensure that SeedData action run successfully.
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
@@ -138,6 +141,7 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
                     serviceScope
                         .ServiceProvider.GetServices<IPlatformApplicationDataSeeder>()
                         .DistinctBy(p => p.GetType())
+                        .Where(p => ownedDataSeederTypes.Contains(p.GetType()))
                         .Where(p => p.DelaySeedingInBackgroundBySeconds <= 0)
                         .GroupBy(p => p.SeedOrder)
                         .OrderBy(p => p.Key)
@@ -148,6 +152,7 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
                     serviceScope
                         .ServiceProvider.GetServices<IPlatformApplicationDataSeeder>()
                         .DistinctBy(p => p.GetType())
+                        .Where(p => ownedDataSeederTypes.Contains(p.GetType()))
                         .Where(p => p.DelaySeedingInBackgroundBySeconds > 0)
                         .GroupBy(p => p.SeedOrder)
                         .OrderBy(p => p.Key)
@@ -181,10 +186,14 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
         {
             if (inBackground)
             {
-                Util.TaskRunner.QueueActionInBackground(
+                var backgroundSeedTask = Util.TaskRunner.QueueActionInBackgroundTask(
                     () => RunDataSeeders(dataSeeders, inNewScope: true),
-                    loggerFactory: () => CreateLogger(LoggerFactory)
-                );
+                    loggerFactory: () => CreateLogger(LoggerFactory),
+                    propagateExceptions: true);
+
+                serviceScope.ServiceProvider
+                    .GetRequiredService<IPlatformApplicationDataSeedingTracker>()
+                    .Track(backgroundSeedTask);
             }
             else
                 await RunDataSeeders(dataSeeders);
@@ -294,6 +303,69 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
     public override List<Assembly> GetAssembliesForServiceScanning()
     {
         return [Assembly];
+    }
+
+    /// <summary>
+    /// Gets the logical message-bus store key owned by this application module.
+    /// </summary>
+    /// <remarks>
+    /// The default keeps the legacy single-store composition compatible. Composite hosts should override this
+    /// value and bind it explicitly to a persistence module at the composition root.
+    /// </remarks>
+    public virtual PlatformMessageBusStoreKey MessageBusStoreKey => PlatformMessageBusStoreKey.Default;
+
+    /// <summary>
+    /// Gets an explicit application identity for this module's message-bus lane, or <see langword="null" /> to use the
+    /// host's configured <see cref="IPlatformApplicationSettingContext.ApplicationName" />.
+    /// </summary>
+    /// <remarks>
+    /// The configured name is the identity already persisted in <c>ProduceFrom</c> and inbox <c>ForApplicationName</c>
+    /// values, so defaulting to it keeps existing rows reachable. Override only when several application modules share
+    /// one store key in a composite host and therefore need distinct lane identities.
+    /// </remarks>
+    public virtual string MessageBusApplicationName => null;
+
+    /// <summary>
+    /// Gets the data-seeder types owned by this application module.
+    /// </summary>
+    /// <remarks>
+    /// The default is limited to concrete seeders in the module's service-scanning assemblies. Override this
+    /// explicitly when a seeder is registered from an external assembly; the external type is then registered
+    /// as a module-owned seeder and is filtered out of sibling module seeding runs.
+    /// </remarks>
+    protected virtual IReadOnlyCollection<Type> GetApplicationDataSeederTypes()
+    {
+        return GetAssembliesForServiceScanning()
+            .Where(assembly => assembly != null)
+            .SelectMany(assembly => assembly.GetTypes())
+            .Where(type =>
+                type.IsClass &&
+                !type.IsAbstract &&
+                type.IsAssignableTo(typeof(IPlatformApplicationDataSeeder)))
+            .Distinct()
+            .ToList();
+    }
+
+    private List<Type> GetValidatedApplicationDataSeederTypes()
+    {
+        var seederTypes = (GetApplicationDataSeederTypes() ?? [])
+            .Where(type => type != null)
+            .Distinct()
+            .ToList();
+
+        var invalidSeederType = seederTypes.FirstOrDefault(type =>
+            !type.IsClass ||
+            type.IsAbstract ||
+            !type.IsAssignableTo(typeof(IPlatformApplicationDataSeeder)));
+
+        if (invalidSeederType != null)
+        {
+            throw new ArgumentException(
+                $"Application data-seeder type '{invalidSeederType.FullName ?? invalidSeederType.Name}' must be a concrete implementation of '{typeof(IPlatformApplicationDataSeeder).FullName}'.",
+                nameof(GetApplicationDataSeederTypes));
+        }
+
+        return seederTypes;
     }
 
     /// <summary>
@@ -415,7 +487,11 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
     /// </summary>
     protected virtual PlatformApplicationSettingContext DefaultApplicationSettingContextFactory(IServiceProvider serviceProvider)
     {
-        return new PlatformApplicationSettingContext(serviceProvider) { ApplicationName = Assembly.GetName().Name, ApplicationAssembly = Assembly };
+        return new PlatformApplicationSettingContext(serviceProvider)
+        {
+            ApplicationName = Assembly.GetName().Name,
+            ApplicationAssembly = Assembly
+        };
     }
 
     /// <summary>
@@ -427,9 +503,20 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
     {
         base.InternalRegister(serviceCollection);
 
-        serviceCollection.RegisterAllFromType<IPlatformApplicationDataSeeder>(GetAssembliesForServiceScanning(), ServiceLifeTime.Scoped);
+        serviceCollection.RegisterIfServiceNotExist<
+            IPlatformApplicationDataSeedingTracker,
+            PlatformApplicationDataSeedingTracker>(ServiceLifeTime.Singleton);
+
+        var serviceScanningAssemblies = GetAssembliesForServiceScanning()
+            .Where(assembly => assembly != null)
+            .Distinct()
+            .ToList();
+        var ownedDataSeederTypes = GetValidatedApplicationDataSeederTypes();
+
+        serviceCollection.RegisterAllFromType<IPlatformApplicationDataSeeder>(serviceScanningAssemblies, ServiceLifeTime.Scoped);
+        RegisterExplicitExternalDataSeeders(serviceCollection, ownedDataSeederTypes, serviceScanningAssemblies);
         serviceCollection.RegisterAllSelfImplementationFromType<IPlatformCqrsEventApplicationHandler>(GetAssembliesForServiceScanning());
-        RegisterMessageBus(serviceCollection);
+        RegisterMessageBus(serviceCollection, ownedDataSeederTypes);
         RegisterApplicationSettingContext(serviceCollection);
         RegisterDefaultApplicationRequestContext(serviceCollection);
         serviceCollection.RegisterIfServiceNotExist<IPlatformUnitOfWorkManager, PlatformPseudoApplicationUnitOfWorkManager>(ServiceLifeTime.Scoped);
@@ -800,53 +887,132 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
         return [];
     }
 
+    private static void RegisterExplicitExternalDataSeeders(
+        IServiceCollection serviceCollection,
+        IEnumerable<Type> ownedDataSeederTypes,
+        IEnumerable<Assembly> serviceScanningAssemblies)
+    {
+        var scanningAssemblies = serviceScanningAssemblies.ToHashSet();
+
+        ownedDataSeederTypes
+            .Where(seederType => !scanningAssemblies.Contains(seederType.Assembly))
+            .ForEach(seederType =>
+            {
+                serviceCollection.Register(
+                    seederType,
+                    ServiceLifeTime.Scoped,
+                    replaceIfExist: false,
+                    skipIfExist: true,
+                    skipIfExistStrategy: DependencyInjectionExtension.CheckRegisteredStrategy.ByService);
+
+                serviceCollection.RegisterInterfacesForImplementation(
+                    seederType,
+                    ServiceLifeTime.Scoped,
+                    replaceIfExist: false,
+                    replaceStrategy: DependencyInjectionExtension.CheckRegisteredStrategy.ByBoth,
+                    skipIfExist: true,
+                    skipIfExistStrategy: DependencyInjectionExtension.CheckRegisteredStrategy.ByBoth);
+            });
+    }
+
     /// <summary>
     /// Registers the message bus services in the provided service collection.
     /// </summary>
     /// <param name="serviceCollection">The service collection to add the services to.</param>
-    private void RegisterMessageBus(IServiceCollection serviceCollection)
+    private void RegisterMessageBus(IServiceCollection serviceCollection, IReadOnlyCollection<Type> ownedDataSeederTypes)
     {
-        serviceCollection.Register<IPlatformMessageBusScanner, PlatformApplicationMessageBusScanner>(ServiceLifeTime.Singleton);
+        // Resolved from the final provider so the lane identity defaults to the host's configured application name,
+        // whichever setting-context implementation (factory override or custom class) the service registers.
+        var explicitMessageBusApplicationName = MessageBusApplicationName;
+        serviceCollection.AddSingleton(
+            serviceProvider => new PlatformMessageBusApplicationLaneRegistration(
+                MessageBusStoreKey,
+                GetType(),
+                string.IsNullOrWhiteSpace(explicitMessageBusApplicationName)
+                    ? serviceProvider.GetRequiredService<IPlatformApplicationSettingContext>().ApplicationName
+                    : explicitMessageBusApplicationName,
+                Assembly,
+                InboxConfigProvider,
+                OutboxConfigProvider,
+                ownedDataSeederTypes));
 
-        serviceCollection.Register<IPlatformApplicationBusMessageProducer, PlatformApplicationBusMessageProducer>();
-        serviceCollection.RegisterAllSelfImplementationFromType(typeof(IPlatformCqrsEventBusMessageProducer<>), GetAssembliesForServiceScanning());
-        serviceCollection.RegisterAllSelfImplementationFromType(
-            typeof(PlatformCqrsCommandEventBusMessageProducer<>),
-            GetAssembliesForServiceScanning()
-        );
-        serviceCollection.RegisterAllSelfImplementationFromType(
-            typeof(PlatformCqrsEntityEventBusMessageProducer<,,>),
-            GetAssembliesForServiceScanning()
-        );
+        if (serviceCollection.All(descriptor => descriptor.ServiceType != typeof(PlatformMessageBusProcessWideRegistrationMarker)))
+        {
+            serviceCollection.AddSingleton<PlatformMessageBusProcessWideRegistrationMarker>();
 
-        serviceCollection.RegisterAllSelfImplementationFromType(typeof(IPlatformMessageBusConsumer), typeof(PlatformApplicationModule).Assembly);
-        serviceCollection.RegisterAllSelfImplementationFromType(typeof(IPlatformMessageBusConsumer), GetAssembliesForServiceScanning());
-        serviceCollection.RegisterAllSelfImplementationFromType(
-            typeof(IPlatformApplicationMessageBusConsumer<>),
-            GetAssembliesForServiceScanning()
-        );
+            // These services are process-wide compatibility infrastructure. Per-module identity, configuration,
+            // repository, and seeder ownership are retained by the lane contribution above and by the registry.
+            serviceCollection.Register<IPlatformMessageBusScanner, PlatformApplicationMessageBusScanner>(ServiceLifeTime.Singleton);
+            serviceCollection.Register<IPlatformApplicationBusMessageProducer, PlatformApplicationBusMessageProducer>();
+            serviceCollection.Register<IPlatformKeyedApplicationBusMessageProducer, PlatformApplicationBusMessageProducer>();
+            serviceCollection.RegisterHostedService<PlatformInboxBusMessageCleanerHostedService>();
+            serviceCollection.RegisterHostedService<PlatformConsumeInboxBusMessageHostedService>();
+            serviceCollection.Register(
+                typeof(PlatformInboxConfig),
+                InboxConfigProvider,
+                ServiceLifeTime.Singleton,
+                true,
+                DependencyInjectionExtension.CheckRegisteredStrategy.ByService
+            );
 
-        serviceCollection.RegisterHostedService<PlatformInboxBusMessageCleanerHostedService>();
-        serviceCollection.RegisterHostedService<PlatformConsumeInboxBusMessageHostedService>();
-        serviceCollection.Register(
-            typeof(PlatformInboxConfig),
-            InboxConfigProvider,
-            ServiceLifeTime.Singleton,
-            true,
-            DependencyInjectionExtension.CheckRegisteredStrategy.ByService
-        );
+            serviceCollection.RegisterHostedService<PlatformOutboxBusMessageCleanerHostedService>();
+            serviceCollection.RegisterHostedService<PlatformSendOutboxBusMessageHostedService>();
+            serviceCollection.Register(
+                typeof(PlatformOutboxConfig),
+                OutboxConfigProvider,
+                ServiceLifeTime.Singleton,
+                true,
+                DependencyInjectionExtension.CheckRegisteredStrategy.ByService
+            );
 
-        serviceCollection.RegisterHostedService<PlatformOutboxBusMessageCleanerHostedService>();
-        serviceCollection.RegisterHostedService<PlatformSendOutboxBusMessageHostedService>();
-        serviceCollection.Register(
-            typeof(PlatformOutboxConfig),
-            OutboxConfigProvider,
-            ServiceLifeTime.Singleton,
-            true,
-            DependencyInjectionExtension.CheckRegisteredStrategy.ByService
-        );
+            if (serviceCollection.All(descriptor => descriptor.ServiceType != typeof(IPlatformMessageBusStoreRegistry)))
+            {
+                var strictCompositionValidation = Configuration?.GetValue<bool?>(
+                    PlatformMessageBusStoreRegistry.StrictCompositionValidationConfigurationKey) == true;
 
+                serviceCollection.AddSingleton<IPlatformMessageBusStoreRegistry>(serviceProvider =>
+                    new PlatformMessageBusStoreRegistry(
+                        serviceProvider.GetServices<PlatformMessageBusApplicationLaneRegistration>(),
+                        serviceProvider.GetServices<PlatformPersistenceMessageBusStoreRegistration>(),
+                        serviceProvider.GetServices<PlatformMessageBusStoreBinding>(),
+                        strictCompositionValidation));
+            }
+        }
+
+        var serviceScanningAssemblies = GetAssembliesForServiceScanning()
+            .Where(assembly => assembly != null)
+            .Distinct()
+            .ToList();
+
+        RegisterOncePerAssembly(
+            assembly =>
+            {
+                serviceCollection.RegisterAllSelfImplementationFromType(
+                    typeof(IPlatformCqrsEventBusMessageProducer<>),
+                    assembly);
+                serviceCollection.RegisterAllSelfImplementationFromType(
+                    typeof(PlatformCqrsCommandEventBusMessageProducer<>),
+                    assembly);
+                serviceCollection.RegisterAllSelfImplementationFromType(
+                    typeof(PlatformCqrsEntityEventBusMessageProducer<,,>),
+                    assembly);
+                serviceCollection.RegisterAllSelfImplementationFromType(
+                    typeof(IPlatformMessageBusConsumer),
+                    assembly);
+                serviceCollection.RegisterAllSelfImplementationFromType(
+                    typeof(IPlatformApplicationMessageBusConsumer<>),
+                    assembly);
+            },
+            serviceScanningAssemblies,
+            nameof(RegisterMessageBus));
+
+        RegisterOncePerAssembly(
+            assembly => serviceCollection.RegisterAllSelfImplementationFromType(typeof(IPlatformMessageBusConsumer), assembly),
+            [typeof(PlatformApplicationModule).Assembly],
+            "RegisterPlatformApplicationMessageBusBuiltInConsumers");
     }
+
+    private sealed class PlatformMessageBusProcessWideRegistrationMarker { }
 }
 
 /// <summary>

@@ -8,6 +8,16 @@
 
 ---
 
+## Contents
+
+- [Critical Rules](#critical-rules)
+- [Backend Rules](#backend-rules)
+- [Frontend Rules](#frontend-rules)
+- [Architecture Rules](#architecture-rules)
+- [Anti-Patterns](#anti-patterns)
+- [Decision Trees](#decision-trees)
+- [Checklists](#checklists)
+
 ## Critical Rules
 
 | #   | Rule                                                                                                                                                                  | Violation Impact                                           |
@@ -17,7 +27,7 @@
 | 3   | **Logic belongs in LOWEST layer** — Entity/Model > Service > Component/Handler. Constants, display helpers, dropdown options = Model layer.                           | Duplicated logic across handlers/components                |
 | 4   | **DTOs own their mapping** via `MapToEntity()`/`MapToObject()`. NEVER map in handlers or controllers.                                                                 | Mapping drift, inconsistent create/update behavior         |
 | 5   | **Cross-service communication MUST use RabbitMQ message bus**. NEVER access another service's database directly.                                                      | Tight coupling, data consistency issues                    |
-| 6   | **Frontend components MUST extend app base classes** — `AppBaseComponent`, `AppBaseVmStoreComponent`, `AppBaseFormComponent`. NEVER extend platform classes directly. | Missed app-wide customizations                             |
+| 6   | **Frontend components inherit the matching platform base.** Introduce an app base only when it owns real app behavior. | Missed app-wide customizations                             |
 | 7   | **All subscriptions MUST use `.pipe(this.untilDestroyed())`**.                                                                                                        | Memory leaks                                               |
 | 8   | **MUST use `ChangeDetectionStrategy.OnPush`** and **`ViewEncapsulation.None`** on all components.                                                                     | Performance degradation, style isolation issues            |
 
@@ -256,9 +266,9 @@ Configuration.GetSection("MongoDB:ConnectionString");
 
 | Scenario       | Base Class                                    | Example                  |
 | -------------- | --------------------------------------------- | ------------------------ |
-| Simple display | `AppBaseComponent`                            | Static content, no state |
-| State + store  | `AppBaseVmStoreComponent<TViewModel, TStore>` | Lists, dashboards        |
-| Forms          | `AppBaseFormComponent<TFormVm>`               | Create/edit forms        |
+| Simple display | `PlatformComponent`                            | Static content, no state |
+| State + store  | `PlatformVmStoreComponent<TViewModel, TStore>` | Lists, dashboards        |
+| Forms          | `PlatformFormComponent<TFormVm>`               | Create/edit forms        |
 
 ```typescript
 // DO — src/Frontend/apps/playground-text-snippet/src/app/app.component.ts:59
@@ -267,15 +277,14 @@ Configuration.GetSection("MongoDB:ConnectionString");
     encapsulation: ViewEncapsulation.None,
     standalone: true
 })
-export class AppComponent extends AppBaseVmStoreComponent<AppVm, AppStore> {
+export class AppComponent extends PlatformVmStoreComponent<AppVm, AppStore> {
     public constructor(store: AppStore) {
         super(store);
     }
 }
 
-// DON'T — extend platform class directly or use default change detection
-export class MyComponent extends PlatformVmStoreComponent<V, S> {} // WRONG — use AppBase*
-export class MyComponent extends AppBaseComponent {} // with ChangeDetectionStrategy.Default — WRONG
+// DON'T — use default change detection
+export class MyComponent extends PlatformComponent {} // with ChangeDetectionStrategy.Default — WRONG
 ```
 
 ### State Management with PlatformVmStore
@@ -431,10 +440,10 @@ Shared ──> Easy.Platform ONLY      (leaf)                                   
 
 - Integration tests extend `PlatformServiceIntegrationTestWithAssertions<TModule>` (`TextSnippetIntegrationTestBase.cs:33-34`)
 - Drive use cases via `ExecuteCommandAsync` / `ExecuteQueryAsync` — never call handlers directly
-- Generate ALL test data with `IntegrationTestHelper.UniqueName(...)` (alias defined `IntegrationTests/GlobalUsings.cs:16`) — never literal/static names (collide across parallel runs)
+- Generate ALL test data with `IntegrationTestHelper.UniqueName(...)` (alias defined `src/Backend/PlatformExampleApp.IntegrationTests/GlobalUsings.cs:16`) — never literal/static names (collide across parallel runs)
 - Assert DB state via `AssertEntityMatchesAsync<T>` / `WaitUntilAsync` (eventual consistency) — never a single immediate read
 - Tag tests with `[Trait("TestSpec", "TC-...")]` for spec traceability
-- **NO mocking libraries** — `grep Moq|NSubstitute` across `src/Backend` = 0. Integration-first against real DB + real bus (`FluentAssertions` only)
+- **Integration suites use real DB and bus.** Isolated framework/application mechanics in `src/Backend/PlatformExampleApp.Tests.Unit/` use Moq; they do not prove provider/broker integration.
 
 ### Configuration & Secrets
 
@@ -464,7 +473,7 @@ Shared ──> Easy.Platform ONLY      (leaf)                                   
 
 | Anti-Pattern                                                                                                                       | Correct Pattern                                                                                |
 | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `extends PlatformComponent` directly                                                                                               | `extends AppBaseComponent`                                                                     |
+| Empty pass-through app wrapper                                                                                               | `extends PlatformComponent`                                                                     |
 | `private http: HttpClient` + direct calls                                                                                          | `extends PlatformApiService`                                                                   |
 | `signal<T[]>([])` for list/domain/async state                                                                                      | `PlatformVmStore` + `effectSimple()` (ephemeral local UI flags via `signal()` are OK)          |
 | Option-array + label helpers duplicated in components (`task-list.component.ts:71-84,174-218`, `task-detail.component.ts:131-144`) | Static `dropdownOptions` + label helpers on the data model (`task-item.data-model.ts:220,238`) |
@@ -480,9 +489,9 @@ Shared ──> Easy.Platform ONLY      (leaf)                                   
 
 ### Which Component Base Class?
 
-- Has reactive form with validation? --> `AppBaseFormComponent<TFormVm>`
-- Has complex state (API data, loading, pagination)? --> `AppBaseVmStoreComponent<TViewModel, TStore>`
-- Simple display or event forwarding? --> `AppBaseComponent`
+- Has reactive form with validation? --> `PlatformFormComponent<TFormVm>`
+- Has complex state (API data, loading, pagination)? --> `PlatformVmStoreComponent<TViewModel, TStore>`
+- Simple display or event forwarding? --> `PlatformComponent`
 
 ### Where to Put New Backend Logic?
 
@@ -518,7 +527,7 @@ Shared ──> Easy.Platform ONLY      (leaf)                                   
 
 ### Frontend PR Checklist
 
-- Component extends `AppBaseComponent` / `AppBaseVmStoreComponent` / `AppBaseFormComponent`
+- Component extends `PlatformComponent` / `PlatformVmStoreComponent` / `PlatformFormComponent`
 - `ChangeDetectionStrategy.OnPush` and `ViewEncapsulation.None` are set
 - Component is `standalone: true`
 - All subscriptions use `.pipe(this.untilDestroyed())`

@@ -101,6 +101,15 @@ public class PlatformRabbitMqOptions
     /// </summary>
     public double RequeueDelayTimeInSeconds { get; set; } = 60;
 
+    /// <summary>Maximum retained malformed deliveries per source queue; overflow rejects new parking publishes.</summary>
+    public int MalformedMessageQueueMaxMessageCount { get; set; } = 10000;
+
+    /// <summary>Maximum retained malformed-message body bytes per source queue; overflow never evicts older copies.</summary>
+    public long MalformedMessageQueueMaxLengthBytes { get; set; } = 256 * 1024 * 1024;
+
+    /// <summary>Deadline for waiting, connecting, declaring and confirming a parked delivery; positive, at most 300 seconds.</summary>
+    public double MalformedMessageRecoveryTimeoutSeconds { get; set; } = 30;
+
     /// <summary>
     /// Gets or sets the expiration time in seconds for requeued messages.
     /// If a message remains in the requeue state for longer than this duration, it is considered expired and might be discarded or handled differently.

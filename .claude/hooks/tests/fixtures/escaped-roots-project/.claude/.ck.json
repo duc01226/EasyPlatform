@@ -1,0 +1,6 @@
+{
+  "portability": {
+    "enabled": true,
+    "projectConfigPath": "docs/project-config.json"
+  }
+}

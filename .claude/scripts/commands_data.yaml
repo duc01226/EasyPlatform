@@ -70,7 +70,7 @@
   category: content
 - name: /ck:cook:auto:fast
   path: cook/auto/fast.md
-  description: No research. Only scout, plan & implement ["trust me bro"]
+  description: No research. Only investigate, plan & implement ["trust me bro"]
   argument_hint:
   - tasks-or-prompt
   power_level: 1
@@ -298,12 +298,6 @@
   - tasks-or-prompt
   power_level: 3
   category: review
-- name: /ck:scout
-  path: scout.md
-  description: ''
-  argument_hint: ''
-  power_level: 0
-  category: core
 - name: /ck:skill:add
   path: skill/add.md
   description: ''

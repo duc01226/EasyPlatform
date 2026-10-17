@@ -1,5 +1,6 @@
 using Easy.Platform.AspNetCore;
 using Easy.Platform.AzureFileStorage;
+using Easy.Platform.Common.Utils;
 using Easy.Platform.FirebasePushNotification;
 using Easy.Platform.HangfireBackgroundJob;
 using Easy.Platform.Infrastructures;
@@ -108,6 +109,18 @@ public class PlatformProviderModuleContractTests : PlatformModuleTestBase
                 PlatformPersistenceModule.DefaultRecommendedMaxPoolSize,
                 "the Mongo driver multiplexes far more concurrent operations per connection than the generic "
                 + "relational default assumes, so its ceiling must exceed the generic floor, not merely equal or undercut it");
+
+        // The Mongo ceiling must ALSO clear the fan-out the platform aims at it — the same pairing pinned for the
+        // relational default in PlatformLayerModuleContractTests.ConnectionPoolCeiling_CanServe_ThePlatformsOwnDefaultDbFanOut.
+        // Mongo already satisfies this (ratio 25 against Util.TaskRunner's I/O ratio 10 is 2.5x headroom at every
+        // processor count); asserting it here stops a future tightening of the Mongo ratio from re-creating on this
+        // side the exact under-provisioning the relational side had to be corrected for.
+        mongoMaxPoolSize
+            .Should()
+            .BeGreaterThanOrEqualTo(
+                Util.TaskRunner.DefaultParallelIoTaskMaxConcurrent,
+                "the platform dispatches DB-touching work at DefaultParallelIoTaskMaxConcurrent regardless of which "
+                + "driver backs the repository, so the Mongo ceiling has to serve that width too");
     }
 
     [Fact]

@@ -1,11 +1,14 @@
 ---
 name: custom-agent
-description: '[AI & Tools] Use when you need create, verify, or enhance Claude Code custom agents (Claude Code custom agent files).'
+description: '[AI & Tools] Use when creating, verifying, or enhancing Claude Code custom agent files.'
+disable-model-invocation: true
 ---
 
 ## Quick Summary
 
-**Goal:** Create new custom agents, audit existing agent quality, or enhance agent definitions.
+**Goal:** Create new custom agents, audit existing agent quality, or enhance agent definitions so each agent is valid, least-privilege, structurally complete, and ready for safe delegation.
+
+**Summary:** Produce valid agents through the selected mode: Create — clarify → check existing → scaffold → write → validate; Audit — discover → read/parse → validate → report → fix confirmed Errors; Enhance — read → analyze → recommend → apply confirmed changes. Validate frontmatter, tools, structure, and quality score.
 
 **Workflow:** Detect mode (Create/Audit/Enhance) from `$ARGUMENTS` → Execute → Validate
 
@@ -15,8 +18,27 @@ description: '[AI & Tools] Use when you need create, verify, or enhance Claude C
 - Agent does NOT inherit Claude Code system prompt — write complete instructions
 - Minimize tools to only what the agent needs
 - System prompt structure: `## Role` → `## Workflow` → `## Key Rules` → `## Output`
+- Analyze scope and use `TaskCreate` for small tasks/subtasks before starting, including final review. Keep task depth proportional to the work.
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Modes](#modes)
+- [Mode 1: Create Agent](#mode-1-create-agent)
+- [Mode 2: Audit Agents](#mode-2-audit-agents)
+- [Mode 3: Enhance Agent](#mode-3-enhance-agent)
+- [Agent Frontmatter Schema](#agent-frontmatter-schema)
+- [Tool Restriction Patterns](#tool-restriction-patterns)
+- [Model Selection](#model-selection)
+- [Description Best Practices](#description-best-practices)
+- [Common Anti-Patterns](#common-anti-patterns)
+- [Context Passing](#context-passing)
+- [Audit Checklist](#audit-checklist)
+- [File Priority (highest first)](#file-priority-highest-first)
+- [Requirements](#requirements)
+- [Closing Reminders](#closing-reminders)
 
 ## Modes
 
@@ -28,7 +50,7 @@ description: '[AI & Tools] Use when you need create, verify, or enhance Claude C
 
 ## Mode 1: Create Agent
 
-1. **Clarify** — `AskUserQuestion`: purpose, read-only vs read-write, model preference, memory needs
+1. **Clarify** — `ask user question tool`: purpose, read-only vs read-write, model preference, memory needs
 2. **Check Existing** — Glob `.claude/agents/*.md` for similar agents. Avoid duplication.
 3. **Scaffold** — Create `.claude/agents/{name}.md` using frontmatter template below
 4. **Write System Prompt** — Structure: `## Role` → `## Workflow` → `## Key Rules` → `## Output`
@@ -37,8 +59,8 @@ description: '[AI & Tools] Use when you need create, verify, or enhance Claude C
 ## Mode 2: Audit Agents
 
 1. **Discover** — Glob `.claude/agents/*.md`
-2. **Parse** — Read first 30 lines of each, extract frontmatter
-3. **Validate** — Check each audit rule below
+2. **Read and parse** — Read each complete frontmatter and body before checking or scoring it. A header preview is discovery only; follow multiline YAML through its closing delimiter.
+3. **Validate** — Apply the [Audit Checklist](#audit-checklist) and quality score; consult [Agent Frontmatter Schema](#agent-frontmatter-schema) for field definitions and [Tool Restriction Patterns](#tool-restriction-patterns) for tool scope.
 4. **Report** — Issues grouped by severity (Error > Warning > Info), include quality scores
 5. **Fix** — If user confirms, fix Error-level issues automatically
 
@@ -88,7 +110,7 @@ hooks:
                 command: './scripts/validate.sh'
 
 # OPTIONAL — Memory (MEMORY.md auto-injected, Read/Write/Edit auto-added)
-memory: project # user (~/.claude/agent-memory/) | project (.claude/agent-memory/) | local (gitignored)
+memory: project # user (~/.claude/agent-memory/) | project (.claude/agent-memory/) | local (.claude/agent-memory-local/); .claude/.gitignore ignores both project folders
 
 # OPTIONAL — Execution
 background: false # true = always background task
@@ -100,21 +122,23 @@ isolation: worktree # Run in temporary git worktree
 
 | Agent Type           | Recommended `tools`                     |
 | -------------------- | --------------------------------------- |
-| Explorer/Scout       | `Read, Grep, Glob, Bash`                |
+| Explorer / `/investigate` | `Read, Grep, Glob, Bash`                |
 | Reviewer (read-only) | `Read, Grep, Glob`                      |
 | Writer/Implementer   | `Read, Write, Edit, Grep, Glob, Bash`   |
 | Researcher           | `Read, Grep, Glob, WebFetch, WebSearch` |
 | Orchestrator         | `Read, Grep, Glob, Task(sub1, sub2)`    |
 
-Available tools: Read, Write, Edit, MultiEdit, Glob, Grep, Bash, WebFetch, WebSearch, Task, NotebookRead, NotebookEdit, TaskCreate, TaskUpdate, AskUserQuestion, + MCP tools.
+Available tools: Read, Write, Edit, MultiEdit, Glob, Grep, Bash, WebFetch, WebSearch, Task, NotebookRead, NotebookEdit, TaskCreate, TaskUpdate, ask user question tool, + MCP tools.
 
 ## Model Selection
+
+These are routing heuristics, not measured quality rankings or compatibility evidence. Preserve an explicit user choice; otherwise prefer `inherit`. Record representative model/runtime tests separately, with unavailable comparisons marked `NOT RUN`.
 
 | Model     | Best For                                                                                               |
 | --------- | ------------------------------------------------------------------------------------------------------ |
 | `haiku`   | Fast read-only: scanning, search, file listing                                                         |
 | `sonnet`  | Balanced: code review, debugging, analysis                                                             |
-| `opus`    | High-stakes: architecture, complex implementation. Better quality for code review, debugging, analysis |
+| `opus`    | Candidate for high-stakes architecture or complex implementation; verify suitability on representative tasks |
 | `inherit` | Default — match parent's model                                                                         |
 
 ## Description Best Practices
@@ -178,74 +202,34 @@ Same `name` across levels: higher-priority wins. Use `claude agents` CLI to list
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST ATTENTION FOLLOW)**
+<!-- PROTOCOL-GUIDES:START -->
 
-- Always break work into small todo tasks
-- Always add a final review todo task
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
----
+- `review-decision-autonomy` — Choose supported review decisions and ask before extending the round budget; running any review or audit skill or mode → .claude/skills/shared/protocols/review-decision-autonomy.md
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+<!-- PROTOCOL-GUIDES:END -->
 
-<!-- SYNC:ai-mistake-prevention -->
+<!-- SYNC:review-decision-autonomy:reminder -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+**MUST ATTENTION** Decide supported review choices and recommendations, record the rationale, and finish without routine user questions. Keep round-limit extension, indispensable facts and actual action authority; preserve source coverage, validation, tests, read-only boundaries and budgets. Review decisions do not accept open risks or make a failed gate pass.
 
-<!-- /SYNC:ai-mistake-prevention -->
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
+<!-- /SYNC:review-decision-autonomy:reminder -->
 
 ## Closing Reminders
+
+**IMPORTANT MUST ATTENTION Goal:** Create new custom agents, audit existing agent quality, or enhance agent definitions so each agent is valid, least-privilege, structurally complete, and ready for safe delegation.
+
+**IMPORTANT MUST ATTENTION** follow the mode-specific path: detect mode → Create: clarify, check existing agents, scaffold, write the system prompt, validate; Audit: discover, parse, validate, report, and fix only after confirmation; Enhance: read, analyze, recommend, apply only after confirmation; then run the final audit checklist and quality-score validation.
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
 - **AI Mistakes:** holistic-first debug, fix at responsible layer, surgical diff, verify ALL outputs.
-- **Critical Thinking:** traced `file:line` proof every claim, confidence >80% to act, NEVER guess.
 
-- **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-- **MANDATORY IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-- **MANDATORY IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
+- Use `TaskCreate` before starting, including final review; keep task depth proportional to the work.
+- Search 3+ similar patterns before creating code; cite `file:line` for every claim, with confidence >80% to act.
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
+| Evasion | Required action |
+| --- | --- |
+| "Header preview is enough" | Read complete frontmatter and body before checking or scoring |
+| "Audit found Errors, fix now" | Report first; fix Error-level issues only after user confirmation |

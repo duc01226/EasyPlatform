@@ -70,7 +70,7 @@ public interface IPlatformCqrs
     /// This method enforces the single-handler constraint of the CQRS pattern. If multiple handlers are registered
     /// for the same command type, an exception will be thrown. Commands are executed within the current Unit of Work
     /// context if available, ensuring transactional consistency with repository operations.
-    /// Common usage includes CreateEmployeeCommand, UpdatePerformanceReviewCommand, and DeleteCandidateCommand.
+    /// Common usage includes CreateEntityCommand, UpdateEntityCommand, and DeleteEntityCommand shapes.
     /// </remarks>
     /// <exception cref="InvalidOperationException">Thrown when multiple handlers are registered for the command type.</exception>
     /// <exception cref="ArgumentNullException">Thrown when the command parameter is null.</exception>
@@ -125,7 +125,7 @@ public interface IPlatformCqrs
     /// Queries are optimized for read operations and can access multiple data sources, apply complex filters,
     /// and perform data transformations. They do not participate in Unit of Work transactions but can
     /// access the current Unit of Work context for data consistency. Common examples include
-    /// GetEmployeeByIdQuery, GetPerformanceReviewListQuery, and GetCandidateSearchResultsQuery.
+    /// GetEntityByIdQuery, GetEntityListQuery, and GetSearchResultsQuery shapes.
     /// </remarks>
     Task<TResult> SendQuery<TQuery, TResult>(TQuery query, CancellationToken cancellationToken = default)
         where TQuery : PlatformCqrsQuery<TResult>;
@@ -156,8 +156,8 @@ public interface IPlatformCqrs
     /// <remarks>
     /// Events follow the publish-subscribe pattern where zero or more handlers can process the same event.
     /// Event handlers execute in parallel when possible and are not part of the originating transaction
-    /// unless explicitly coordinated. Common events include EmployeeCreatedEvent, PerformanceReviewCompletedEvent,
-    /// and CandidateStatusChangedEvent. Events enable loose coupling between bounded contexts and support
+    /// unless explicitly coordinated. Common events include EntityCreatedEvent, WorkflowCompletedEvent,
+    /// and StatusChangedEvent shapes. Events enable loose coupling between bounded contexts and support
     /// cross-cutting concerns like auditing, notifications, and integration with external systems.
     /// </remarks>
     Task SendEvent(PlatformCqrsEvent cqrsEvent, CancellationToken cancellationToken = default);

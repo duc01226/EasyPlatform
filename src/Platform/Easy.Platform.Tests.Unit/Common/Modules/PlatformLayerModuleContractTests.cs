@@ -1,6 +1,7 @@
 using System.Reflection;
 using Easy.Platform.Application;
 using Easy.Platform.Common;
+using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain;
 using Easy.Platform.Infrastructures;
 using Easy.Platform.Infrastructures.BackgroundJob;
@@ -231,6 +232,37 @@ public class PlatformLayerModuleContractTests : PlatformModuleTestBase
 
         PlatformPersistenceModule.RecommendedConnectionRetryDelay.Should().BeGreaterThan(TimeSpan.Zero);
         PlatformPersistenceModule.DefaultRecommendedMaxPoolSize.Should().BeGreaterThanOrEqualTo(20, "the pool floor keeps small hosts usable");
+    }
+
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PLATMOD-049")]
+    public void ConnectionPoolCeiling_CanServe_ThePlatformsOwnDefaultDbFanOut()
+    {
+        // The pool ceiling and the fan-out aimed at it are two halves of ONE contract, and the platform dispatches
+        // the DB half itself: PlatformInboxConfig.MaxParallelProcessingMessagesCount and PlatformRabbitMqOptions
+        // .MaxConcurrentProcessing both default to Util.TaskRunner.DefaultParallelIoTaskMaxConcurrent, whose XML doc
+        // sanctions that ratio for work that waits on "DB, HTTP, queue, file". When the ceiling sits BELOW that
+        // width, every caller that followed the documented default over-subscribes the pool and fails with "The
+        // connection pool has been exhausted" only after burning the full connection timeout — which is exactly how
+        // the ratio-4-vs-ratio-10 gap surfaced (40 seeding workers against a 20-connection pool).
+        //
+        // Pin the RELATIONSHIP, never either number alone: a bare floor like ">= 30" keeps passing when someone
+        // re-states the pool ratio as an independent literal and the gap silently returns on any host with 5+ cores.
+        // Both sides derive from PlatformEnvironment.EffectiveProcessorCount, so comparing the COMPUTED values holds
+        // at every processor count this process could see, including the Development cap of 4.
+        PlatformPersistenceModule.DefaultRecommendedMaxPoolSize
+            .Should()
+            .BeGreaterThanOrEqualTo(
+                Util.TaskRunner.DefaultParallelIoTaskMaxConcurrent,
+                "the platform's own inbox and message-bus consumers dispatch DB work at DefaultParallelIoTaskMaxConcurrent, "
+                + "so a pool ceiling below that width is over-subscribed by the platform itself before any application code fans out");
+
+        PlatformPersistenceModule.DefaultNumberOfMaxPoolSizePerCpuRatio
+            .Should()
+            .Be(
+                Util.TaskRunner.DefaultNumberOfParallelIoTasksPerCpuRatio,
+                "the pool ratio must stay DERIVED from the I/O fan-out ratio it serves — re-stating it as an independent "
+                + "literal is precisely what let the two drift apart to 4-vs-10 and stay drifted as hosts scaled");
     }
 
     [Fact]

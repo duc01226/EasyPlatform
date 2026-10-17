@@ -441,7 +441,7 @@ public abstract class PlatformUnitOfWork : IPlatformUnitOfWork
             // Keep manager bookkeeping synchronous so a disposed UoW cannot remain visible to the next Begin(false)
             // call. Current OnDisposedActions are only idempotent manager-tracking removals.
             // The previous `OnDisposedActions.ParallelAsync(...).Wait()` was sync-over-async: under high-concurrency
-            // transient-read disposal (e.g. the Insights UpsertDocuments nested fan-out draining a large set) every
+            // transient-read disposal (e.g. a nested bulk-upsert fan-out draining a large set) every
             // read blocked a threadpool thread waiting on Task.Run work queued BEHIND it, hill-climbing the pool into
             // starvation. Invoke directly; exceptions stay logged inside CatchException.
             foreach (var onDisposedAction in OnDisposedActions)

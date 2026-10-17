@@ -1,52 +1,66 @@
 ---
 name: knowledge-synthesis
 version: 1.0.0
-description: '[Research] Use when you need to synthesize research findings into structured report using template.'
+description: '[Research] Use when a workflow step or the user asks for synthesis of existing evidence into a cited research report.'
 ---
+
+> **Web Research Protocol** — Factual claims need 2+ independent sources; rank Tier 1 authoritative > Tier 2 industry reports > Tier 3 credible blogs; Tier 4 unverified, NEVER cite as fact; declare confidence (95/80/60/<60%). Working files → `tmp/research/`; final output → `docs/knowledge/`.
+>
+> **MUST ATTENTION READ** only the **Knowledge Work Rules (canonical for the research chain)** section of `.claude/skills/web-research/SKILL.md` for canonical research rules; source-discovery procedures belong to a separate discovery request.
 
 ## Quick Summary
 
-**Goal:** Produce a fully-cited, template-compliant research report by synthesizing the evidence base using the enforced template — whose confidence scores and gaps are honest enough to trust for decisions.
+**Goal:** Synthesize the existing evidence base into a fully cited, template-compliant research report with honest confidence and explicit gaps, trustworthy for decisions.
 
 **Summary:**
 
-- **Purpose:** consolidate an EXISTING evidence base (`.claude/tmp/_evidence-{slug}.md` + `_sources-{slug}.md` from deep-research) into one fully-cited report at `docs/knowledge/research/{slug}.md` — this skill does NOT gather sources, it synthesizes them — why: gathering already happened upstream; re-researching here invents findings.
-- **Main steps, in order:** (1) **Load evidence** — inventory findings, confidence scores, unresolved discrepancies, remaining gaps; (2) **Load template** (`.claude/templates/research-report-template.md`) — every section required; (3) **Synthesize** — map findings into each section with inline `[N]` citations + per-finding confidence, note cross-cutting patterns/contradictions in Analysis; (4) **Citation audit** — zero orphan citations, zero orphan sources; (5) **Confidence summary** — importance-weighted rollup flagging every <60% finding; then clean up `.claude/tmp/` working files.
-- Enforced template is non-negotiable — every section MUST appear, Knowledge Gaps NEVER omitted — why: a missing gaps section manufactures false confidence.
-- Citation discipline is the core gate — every claim inline `[N]`, every Sources-table row referenced ≥1×, Tier 4 (unverified) NEVER cited as fact, 2+ independent sources per factual claim.
-- Synthesize FROM evidence only — NEVER fabricate, add, or upgrade findings beyond gathered evidence — why: invented findings poison the report's trust.
+- **Purpose/input/output:** Synthesize `tmp/research/_evidence-{slug}.md` + `_sources-{slug}.md` from `source-deep-dive` into `docs/knowledge/research/{slug}.md`; do not gather sources — upstream gathering already happened; no alternate mode or flag.
+- **Main path:** (1) create small tasks; (2) load evidence and inventory findings/confidence/discrepancies/gaps; (3) load template; (4) synthesize every section with `[N]` citations, per-finding confidence, and Analysis patterns/contradictions; (5) audit citations; (6) roll up confidence, flag `<60%`, run final review, then retain working evidence for acceptance and repair.
+- **Evidence gate:** Every factual claim MUST have inline `[N]` and 2+ independent sources; every Sources-table row needs a reference; Tier 4 is NEVER cited as fact; preserve gaps and discrepancies.
+- **Template/terminal gate:** Every enforced-template section, including Knowledge Gaps, MUST appear; final output is `docs/knowledge/research/{slug}.md`, with this run’s `tmp/research/` evidence retained through review acceptance.
 
 **Workflow:**
 
-1. **Load evidence** — Read evidence base from deep-research
-2. **Load template** — Read enforced template from .claude/templates/
-3. **Synthesize** — Write report following template structure
-4. **Citation check** — Verify every claim has citation
-5. **Confidence summary** — Aggregate scores, flag gaps
+1. **Bootstrap** — Create small `TaskCreate` tasks; keep one `in_progress`; add a final review task.
+2. **Load evidence** — Read both evidence files; inventory total findings/confidence, discrepancies, and gaps.
+3. **Load template** — Read `.claude/templates/research-report-template.md`; retain every section.
+4. **Synthesize** — Write `docs/knowledge/research/{slug}.md`; map evidence into each section, cite `[N]`, declare confidence, and record patterns/contradictions in Analysis.
+5. **Citation audit** — Verify claim citations, Sources-table coverage, and no orphan citations.
+6. **Confidence and close** — Average scores, weight by importance, flag `<60%`; retain this run's source map and evidence base through downstream review and repair; synthesis completion does not authorize cleanup.
 
 **Key Rules:**
 
-- MUST ATTENTION use enforced template structure — all sections required
-- Every factual claim inline-cited: `[N]` referencing source table
-- Knowledge gaps section mandatory
+- **MUST ATTENTION** use enforced template structure; every section, including Knowledge Gaps, appears.
+- **MUST ATTENTION** cite every factual claim inline `[N]`; use 2+ independent sources; reference every Sources-table row; Tier 4 is NEVER fact.
+- **MUST ATTENTION** synthesize existing evidence only; NEVER gather sources, fabricate, add, or upgrade findings.
+- **MUST ATTENTION** declare confidence, preserve gaps/discrepancies, and flag every `<60%` finding.
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+**Be skeptical; apply critical/sequential thinking; trace every claim; state confidence (>80% to act).**
+
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Knowledge Synthesis](#knowledge-synthesis)
+- [Knowledge Work Rules](#knowledge-work-rules)
+- [Step 1: Load Evidence](#step-1-load-evidence)
+- [Step 2: Load Template](#step-2-load-template)
+- [Step 3: Synthesize Report](#step-3-synthesize-report)
+- [Step 4: Citation Audit](#step-4-citation-audit)
+- [Step 5: Confidence Summary](#step-5-confidence-summary)
+- [Output](#output)
+- [Closing Reminders](#closing-reminders)
 
 # Knowledge Synthesis
 
 ## Knowledge Work Rules
 
-> **Web Research Protocol** — Every factual claim needs 2+ independent sources. Source tiers: Tier 1 (authoritative .gov/.edu/official docs), Tier 2 (industry reports), Tier 3 (credible blogs — cross-validate), Tier 4 (unverified — NEVER cite as fact). Declare confidence (95/80/60/<60%) for all findings. Use the enforced template structure — all sections required. Working files → `.claude/tmp/`, final output → `docs/knowledge/`. Canonical protocol lives in the `web-research` skill.
+Apply the Knowledge Work Rules in `.claude/skills/web-research/SKILL.md` (read that section first): source tiers, cross-validation, confidence declarations, enforced template, working files under `tmp/research/`, final output under `docs/knowledge/`.
 
 ## Step 1: Load Evidence
 
-Read `.claude/tmp/_evidence-{slug}.md` and `.claude/tmp/_sources-{slug}.md`.
+Read `tmp/research/_evidence-{slug}.md` and `tmp/research/_sources-{slug}.md`.
 
-Inventory:
-
-- Total findings with confidence scores
-- Unresolved discrepancies
-- Remaining gaps
+Inventory total findings with confidence scores, unresolved discrepancies, and remaining gaps.
 
 ## Step 2: Load Template
 
@@ -67,7 +81,7 @@ Write to `docs/knowledge/research/{slug}.md`. For each template section:
 
 Verify:
 
-- Every factual claim has 1+ `[N]` citation
+- Every factual claim has inline `[N]` citations and 2+ independent sources
 - Every source in Sources table referenced 1+ time
 - No orphan citations (referencing non-existent source)
 
@@ -83,89 +97,35 @@ Calculate overall report confidence:
 
 Final report: `docs/knowledge/research/{descriptive-slug}.md`
 
-Clean up working files from `.claude/tmp/` after successful synthesis.
+Retain this run's `tmp/research/_sources-{slug}.md` and `_evidence-{slug}.md` through review and repair. In a workflow, only the orchestrator may clean these exact files after `/knowledge-review` APPROVED the final artifact and `/workflow-end` successfully accepted closure; record the acceptance and cleanup in the workflow report. On REVISE, BLOCKED, interruption, or closure failure, keep both files so their owning skills can rerun. Standalone synthesis retains both files until an explicit acceptance or retention policy authorizes cleanup; never delete other files under `tmp/research/`.
 
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
-
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Produce a fully-cited, template-compliant research report by synthesizing the existing evidence base through the enforced template — whose confidence scores and Knowledge Gaps are honest enough to trust for decisions.
+**IMPORTANT MUST ATTENTION Goal:** Synthesize the existing evidence base into a fully cited, template-compliant research report with honest confidence and explicit gaps, trustworthy for decisions.
 
-**Protocols in force (concise digest of the SYNC/shared blocks this skill carries):** MUST ATTENTION honor every block below — each is a signpost to its canonical body above.
+**IMPORTANT MUST ATTENTION Main path:** (1) create small `TaskCreate` tasks; keep one `in_progress`; add a final review task; (2) load both evidence files and inventory findings/confidence/discrepancies/gaps; (3) load the enforced template and retain every section; (4) synthesize to `docs/knowledge/research/{slug}.md` with `[N]` citations, per-finding confidence, and Analysis patterns/contradictions; (5) audit claim citations, Sources-table coverage, and orphan citations; (6) average scores, weight by importance, flag `<60%`, run final review, then retain source/evidence inputs until accepted workflow closure or explicit standalone acceptance.
 
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Critical Thinking:** traced proof per claim, confidence >80% to act, never guess as fact.
+**IMPORTANT MUST ATTENTION Mode/boundary:** No alternate mode or flag; consume existing `source-deep-dive` evidence; NEVER gather sources, fabricate, or upgrade findings; retain `tmp/research/` source/evidence inputs through review and repair.
 
 **IMPORTANT MUST ATTENTION** use enforced template structure (`.claude/templates/research-report-template.md`) — every section required, NEVER omit Knowledge Gaps — why: a missing gaps section manufactures false confidence in incomplete research
 **IMPORTANT MUST ATTENTION** inline-cite every factual claim with `[N]`; verify zero orphan citations (claim cites missing source) AND zero orphan sources (Sources-table row referenced 0 times) — why: uncited claims are assertions, not findings
-**IMPORTANT MUST ATTENTION** synthesize FROM the evidence base only (`.claude/tmp/_evidence-{slug}.md` + `_sources-{slug}.md`) — NEVER fabricate, add, or upgrade findings beyond gathered evidence; this skill consolidates, it does not research — why: invented findings poison the report's trust
+**IMPORTANT MUST ATTENTION** synthesize FROM the evidence base only (`tmp/research/_evidence-{slug}.md` + `_sources-{slug}.md`) — NEVER fabricate, add, or upgrade findings beyond gathered evidence; this skill consolidates, it does not research — why: invented findings poison the report's trust
 **IMPORTANT MUST ATTENTION** respect source tiers — Tier 4 (unverified) NEVER cited as fact; every factual claim backed by 2+ independent sources — why: single-source or unverified claims read as confident but unproven
 **IMPORTANT MUST ATTENTION** close with an honest confidence rollup (importance-weighted average of finding scores) that prominently flags every <60% finding — why: an unflagged weak finding inflates apparent report confidence
 **IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting; mark one `in_progress` at a time and complete it on evidence
 **IMPORTANT MUST ATTENTION** cite `file:line` evidence (or `[N]` source) for every claim — confidence >80% to act, <60% DO NOT assert; NEVER present a guess as fact
 **IMPORTANT MUST ATTENTION** grep/read 3+ similar existing reports under `docs/knowledge/research/` before writing — match the template's section shape, do NOT invent a new layout — why: divergent report structure breaks the knowledge-review gate
-**IMPORTANT MUST ATTENTION** output final report to `docs/knowledge/research/{slug}.md`, then clean up `.claude/tmp/` working files after successful synthesis — why: stale working files leak across runs
+**IMPORTANT MUST ATTENTION** output final report to `docs/knowledge/research/{slug}.md`, retain this run’s working evidence until acceptance authorizes cleanup — why: rejected artifacts need reproducible repair inputs
 **IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality (template complete · citations balanced · gaps present · rollup flagged)
 
 **Anti-Rationalization:**
 
-| Evasion                                      | Rebuttal                                                                           |
-| -------------------------------------------- | ---------------------------------------------------------------------------------- |
-| "Evidence is thin, fill the gap with my own" | NEVER fabricate. Record it in Knowledge Gaps with confidence <60% instead.         |
-| "This claim is obvious, skip the citation"   | No `[N]` = not a finding. Cite the source or move it to assumptions.               |
+| Evasion                                       | Rebuttal                                                                          |
+| --------------------------------------------- | --------------------------------------------------------------------------------- |
+| "Evidence is thin, fill the gap with my own" | NEVER fabricate. Record it in Knowledge Gaps with confidence <60% instead.        |
+| "This claim is obvious, skip the citation"   | No `[N]` = not a finding. Cite the source or move it to assumptions.              |
 | "Gaps section is empty, drop it"             | Empty ≠ omit. State "no unresolved gaps" explicitly — omission fakes completeness. |
 | "All findings strong, skip the rollup flag"  | Compute the weighted average; flag any <60%. One weak finding hides in the mean.   |
 | "Template section is N/A, delete it"         | Keep it, write "Not applicable — why". Missing sections fail the knowledge-review. |
-
-**IMPORTANT MUST ATTENTION Goal echo:** fully-cited, template-compliant report; NEVER omit Knowledge Gaps; zero orphan citations/sources — synthesize FROM evidence, never fabricate.

@@ -584,59 +584,30 @@ function Install-NodeDeps {
     # Install local npm packages for skills
     Write-Info "Installing local npm packages for skills..."
 
-    # sequential-thinking
-    $seqThinkingPath = Join-Path $ScriptDir "sequential-thinking"
-    $seqPackageJson = Join-Path $seqThinkingPath "package.json"
-    if ((Test-Path $seqThinkingPath) -and (Test-Path $seqPackageJson)) {
-        Write-Info "Installing sequential-thinking dependencies..."
-        Push-Location $seqThinkingPath
-        npm install --quiet
-        Pop-Location
-        Write-Success "sequential-thinking dependencies installed"
+    # pdf-convert (to-pdf: md-to-pdf, gray-matter; to-markdown: @opendocsg/pdf2md)
+    foreach ($direction in @("to-pdf", "to-markdown")) {
+        $pdfDirPath = Join-Path (Join-Path $ScriptDir "pdf-convert") $direction
+        $pdfDirPackageJson = Join-Path $pdfDirPath "package.json"
+        if ((Test-Path $pdfDirPath) -and (Test-Path $pdfDirPackageJson)) {
+            Write-Info "Installing pdf-convert/$direction dependencies..."
+            Push-Location $pdfDirPath
+            npm install --quiet
+            Pop-Location
+            Write-Success "pdf-convert/$direction dependencies installed"
+        }
     }
 
-    # markdown-to-pdf (md-to-pdf, gray-matter)
-    $mdToPdfPath = Join-Path $ScriptDir "markdown-to-pdf"
-    $mdToPdfPackageJson = Join-Path $mdToPdfPath "package.json"
-    if ((Test-Path $mdToPdfPath) -and (Test-Path $mdToPdfPackageJson)) {
-        Write-Info "Installing markdown-to-pdf dependencies..."
-        Push-Location $mdToPdfPath
-        npm install --quiet
-        Pop-Location
-        Write-Success "markdown-to-pdf dependencies installed"
-    }
-
-    # markdown-to-docx (markdown-docx, gray-matter)
-    $mdToDocxPath = Join-Path $ScriptDir "markdown-to-docx"
-    $mdToDocxPackageJson = Join-Path $mdToDocxPath "package.json"
-    if ((Test-Path $mdToDocxPath) -and (Test-Path $mdToDocxPackageJson)) {
-        Write-Info "Installing markdown-to-docx dependencies..."
-        Push-Location $mdToDocxPath
-        npm install --quiet
-        Pop-Location
-        Write-Success "markdown-to-docx dependencies installed"
-    }
-
-    # docx-to-markdown (mammoth, turndown, turndown-plugin-gfm)
-    $docxToMdPath = Join-Path $ScriptDir "docx-to-markdown"
-    $docxToMdPackageJson = Join-Path $docxToMdPath "package.json"
-    if ((Test-Path $docxToMdPath) -and (Test-Path $docxToMdPackageJson)) {
-        Write-Info "Installing docx-to-markdown dependencies..."
-        Push-Location $docxToMdPath
-        npm install --quiet
-        Pop-Location
-        Write-Success "docx-to-markdown dependencies installed"
-    }
-
-    # pdf-to-markdown (@opendocsg/pdf2md)
-    $pdfToMdPath = Join-Path $ScriptDir "pdf-to-markdown"
-    $pdfToMdPackageJson = Join-Path $pdfToMdPath "package.json"
-    if ((Test-Path $pdfToMdPath) -and (Test-Path $pdfToMdPackageJson)) {
-        Write-Info "Installing pdf-to-markdown dependencies..."
-        Push-Location $pdfToMdPath
-        npm install --quiet
-        Pop-Location
-        Write-Success "pdf-to-markdown dependencies installed"
+    # docx-convert (to-docx: markdown-docx, gray-matter; to-markdown: mammoth, turndown, turndown-plugin-gfm)
+    foreach ($direction in @("to-docx", "to-markdown")) {
+        $docxDirPath = Join-Path (Join-Path $ScriptDir "docx-convert") $direction
+        $docxDirPackageJson = Join-Path $docxDirPath "package.json"
+        if ((Test-Path $docxDirPath) -and (Test-Path $docxDirPackageJson)) {
+            Write-Info "Installing docx-convert/$direction dependencies..."
+            Push-Location $docxDirPath
+            npm install --quiet
+            Pop-Location
+            Write-Success "docx-convert/$direction dependencies installed"
+        }
     }
 
     # Optional: Shopify CLI (ask user unless auto-confirming)

@@ -45,8 +45,8 @@ public class PlatformMongoMigrationHistory
     /// How often the owner of a <see cref="Statuses.Processing" /> row refreshes <see cref="LastProcessingPingTime" /> to prove it is
     /// still alive. Deliberately identical to
     /// <see cref="Easy.Platform.Persistence.DataMigration.PlatformDataMigrationHistory.ProcessingPingIntervalSeconds" /> — on
-    /// bravoINSIGHTS both ledgers share ONE physical collection, so two different staleness windows over the same rows would let each
-    /// side reach a different verdict about whether the same migration is still running.
+    /// a consuming DbContext MAY map both ledgers onto ONE physical collection, so two different staleness windows over the same rows
+    /// would let each side reach a different verdict about whether the same migration is still running.
     /// </summary>
     public const int ProcessingPingIntervalSeconds = 10;
 
@@ -126,8 +126,9 @@ public class PlatformMongoMigrationHistory
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Why row identity needs more than <see cref="Name" />.</b> bravoINSIGHTS maps this ledger and the data-migration ledger onto ONE
-    /// physical collection (<c>AnalyzeDbContext.cs:69,71</c>), and the two name-spaces are validated independently — the mongo-side
+    /// <b>Why row identity needs more than <see cref="Name" />.</b> A consuming DbContext may map this ledger and the data-migration
+    /// ledger onto ONE physical collection — it only has to give both the same collection name — and the two name-spaces are validated
+    /// independently: the mongo-side
     /// <c>EnsureAllMigrationExecutorsHasUniqueName</c> never sees the data-migration names. So a single duplicated name puts two logically
     /// distinct migrations on one document. Keying writes on <see cref="Name" /> alone would then let a mongo migration claim a FOREIGN
     /// row: flipping its <see cref="Status" /> and clearing its <see cref="LastProcessError" />, silently destroying another subsystem's
@@ -187,8 +188,8 @@ public class PlatformMongoMigrationHistory
     /// constant the MongoDB LINQ provider can translate. A closure over a pre-computed <see cref="DateTime" /> becomes a literal in the
     /// generated query; referencing a clock property inside the lambda would leave a member access the driver cannot translate.
     /// <br />
-    /// <b>Why a missing ping counts as stale, not live.</b> A row written by an older build (or by the data-migration side on
-    /// bravoINSIGHTS' shared collection) has no <see cref="LastProcessingPingTime" />. Treating null as live would let one such row block
+    /// <b>Why a missing ping counts as stale, not live.</b> A row written by an older build (or by the data-migration side of a
+    /// shared physical collection) has no <see cref="LastProcessingPingTime" />. Treating null as live would let one such row block
     /// its migration forever — exactly the deadlock the ping exists to prevent.
     /// </remarks>
     public static Expression<Func<PlatformMongoMigrationHistory, bool>> LiveProcessingExpr()
@@ -222,8 +223,8 @@ public class PlatformMongoMigrationHistory
     /// Migration lifecycle states.
     /// </summary>
     /// <remarks>
-    /// <b>Member names are load-bearing and must not be renamed casually.</b> bravoINSIGHTS maps this collection and the
-    /// <c>PlatformDataMigrationHistory</c> collection to the SAME physical collection (<c>AnalyzeDbContext.cs:69,71</c>), so one
+    /// <b>Member names are load-bearing and must not be renamed casually.</b> A consuming DbContext may map this collection and the
+    /// <c>PlatformDataMigrationHistory</c> collection to the SAME physical collection, so one
     /// <c>Status</c> field holds strings written by BOTH this enum and
     /// <see cref="Easy.Platform.Persistence.DataMigration.PlatformDataMigrationHistory.Statuses" />. They coexist only because enums
     /// persist as strings (<c>PlatformHybridEnumSerializationProvider</c> writes <c>value.ToString()</c>) and the member names coincide.

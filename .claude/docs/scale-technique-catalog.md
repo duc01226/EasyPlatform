@@ -23,6 +23,8 @@
 > `docs/specs/**`, `docs/project-config.json`, infra/compose/k8s manifests, and load/capacity notes. Cite
 > `file:line`/config/infra + a confidence %. **Unknown → state the assumption; do NOT default to T3.**
 
+**Capacity evidence:** user-count labels orient the profile; they are not hardware capacity limits or a DAU-to-RPS conversion. Read `.claude/skills/shared/protocols/measured-capacity-engineering.md` when choosing an optimization or scaling step: define the workload/SLO, measure the limiting owner and useful throughput, prove safe cache behavior and headroom, then compare the next increment. Read `.claude/skills/performance-review/references/performance-knowledge.md` §10.1 when designing the experiment. A local proxy cache can remove application work on one host; distinguish that offload from geographic CDN/edge delivery.
+
 ## Verdicts (per warranted technique)
 
 | Verdict             | Meaning                                | Action                                             |
@@ -36,7 +38,7 @@
 
 ## 1 · Traffic & Edge
 
-Owning depth: **security-review** (WAF/DDoS/CORS boundary), **production-readiness-review** (edge posture).
+Owning depth: **security-audit** (WAF/DDoS/CORS boundary), **production-readiness-review** (edge posture).
 
 | Technique       | Warranting signal                                        | Min tier | Over-engineering caveat                                  |
 | --------------- | -------------------------------------------------------- | -------- | -------------------------------------------------------- |
@@ -64,7 +66,7 @@ Owning depth: **performance-review**.
 
 ## 3 · Data Scaling & Consistency
 
-Owning depth: **performance-review**, **architecture-review** (coupling/consistency boundaries).
+Owning depth: **performance-review**, **`architecture --mode=review`** (coupling/consistency boundaries).
 
 | Technique               | Warranting signal                          | Min tier | Over-engineering caveat                                                   |
 | ----------------------- | ------------------------------------------ | -------- | ------------------------------------------------------------------------- |
@@ -83,7 +85,7 @@ Owning depth: **performance-review**, **architecture-review** (coupling/consiste
 
 ## 4 · Async & Messaging
 
-Owning depth: **architecture-review** (messaging/service boundaries).
+Owning depth: **`architecture --mode=review`** (messaging/service boundaries).
 
 | Technique                   | Warranting signal                           | Min tier | Over-engineering caveat                                        |
 | --------------------------- | ------------------------------------------- | -------- | -------------------------------------------------------------- |
@@ -118,7 +120,7 @@ Owning depth: **production-readiness-review**.
 
 ## 6 · Scaling & Compute
 
-Owning depth: **architecture-scalability-review**.
+Owning depth: **`architecture --mode=scalability`**.
 
 | Technique                      | Warranting signal                          | Min tier | Over-engineering caveat                                        |
 | ------------------------------ | ------------------------------------------ | -------- | -------------------------------------------------------------- |
@@ -133,7 +135,7 @@ Owning depth: **architecture-scalability-review**.
 
 ## 7 · Deployment & Release
 
-Owning depth: **production-readiness-review**, **architecture-scalability-review** (delivery/CI).
+Owning depth: **production-readiness-review**, **`architecture --mode=scalability`** (delivery/CI).
 
 | Technique                | Warranting signal                         | Min tier | Over-engineering caveat                                         |
 | ------------------------ | ----------------------------------------- | -------- | --------------------------------------------------------------- |
@@ -174,7 +176,7 @@ Owning depth: **production-readiness-review**.
 
 ## 9 · Security & Compliance
 
-Owning depth: **security-review** (OWASP + secrets + boundary).
+Owning depth: **security-audit** (OWASP + secrets + boundary).
 
 | Technique             | Warranting signal                 | Min tier | Over-engineering caveat                                             |
 | --------------------- | --------------------------------- | -------- | ------------------------------------------------------------------- |
@@ -193,7 +195,7 @@ Owning depth: **security-review** (OWASP + secrets + boundary).
 
 ## 10 · DR & Infra
 
-Owning depth: **production-readiness-review**, **architecture-scalability-review**.
+Owning depth: **production-readiness-review**, **`architecture --mode=scalability`**.
 
 | Technique                | Warranting signal                      | Min tier | Over-engineering caveat                                  |
 | ------------------------ | -------------------------------------- | -------- | -------------------------------------------------------- |
@@ -208,7 +210,7 @@ Owning depth: **production-readiness-review**, **architecture-scalability-review
 
 ## Cross-cutting network & protocol concerns
 
-These arise across tiers; surface them where the topology makes them relevant (owning depth: **architecture-review** / **performance-review**).
+These arise across tiers; surface them where the topology makes them relevant (owning depth: **`architecture --mode=review`** / **performance-review**).
 
 | Technique                       | Warranting signal                           | Min tier | Over-engineering caveat                                        |
 | ------------------------------- | ------------------------------------------- | -------- | -------------------------------------------------------------- |

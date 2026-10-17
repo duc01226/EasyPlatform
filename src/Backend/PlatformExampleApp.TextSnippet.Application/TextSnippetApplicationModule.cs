@@ -3,6 +3,7 @@
 using Easy.Platform.Application;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Infrastructures.Caching;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,14 @@ namespace PlatformExampleApp.TextSnippet.Application;
 
 public class TextSnippetApplicationModule : PlatformApplicationModule
 {
+    /// <summary>
+    /// Stable logical store key used when TextSnippet is composed beside another application module.
+    /// Standalone hosts still resolve this single pair through the platform's legacy compatibility adapter.
+    /// </summary>
+    public const string MessageBusStoreKeyValue = "TextSnippet";
+
+    public override PlatformMessageBusStoreKey MessageBusStoreKey => new(MessageBusStoreKeyValue);
+
     public TextSnippetApplicationModule(IServiceProvider serviceProvider, IConfiguration configuration)
         : base(serviceProvider, configuration)
     {

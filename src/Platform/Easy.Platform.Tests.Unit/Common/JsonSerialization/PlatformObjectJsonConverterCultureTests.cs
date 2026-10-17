@@ -31,8 +31,8 @@ public sealed class PlatformObjectJsonConverterCultureTests : PlatformUnitTestBa
     /// <summary>
     /// Documents the ACTUAL contract for a top-level <c>object</c> property: <c>PlatformObjectJsonConverter.Read</c>
     /// maps <c>JsonTokenType.String</c> straight to <c>reader.GetString()</c>, so a JSON string stays a
-    /// <see cref="string" /> — it is NOT coerced to a date here. Date coercion happens later, in the domain
-    /// (<c>Field.ParseFieldValueToDateTime</c> / <c>Employee.ToDateTimeValue</c>).
+    /// <see cref="string" /> — it is NOT coerced to a date here. Date coercion happens later, in the consuming
+    /// service's own domain code.
     /// </summary>
     /// <remarks>
     /// This test pins that boundary deliberately. The type-sniffing path (<c>TryGetStringValue</c>, which DOES try

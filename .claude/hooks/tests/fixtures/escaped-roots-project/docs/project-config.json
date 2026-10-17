@@ -1,0 +1,32 @@
+{
+  "_description": "NEGATIVE RELOCATION FIXTURE. Every relocatable root escapes the repository root, so every accessor must reject it and fall back to its documented default (TC-DOCROOT-161).",
+  "schemaVersion": 2,
+  "specRoots": {
+    "business": {
+      "path": "../escape-business"
+    },
+    "technical": {
+      "path": "../escape-technical"
+    }
+  },
+  "docsRoots": {
+    "projectReference": {
+      "path": "../escape-reference"
+    },
+    "adr": {
+      "path": "../escape-adr"
+    },
+    "templates": {
+      "path": "../escape-templates"
+    },
+    "plans": {
+      "path": "../escape-plans"
+    },
+    "teamArtifacts": {
+      "path": "../escape-artifacts"
+    },
+    "productRoadmap": {
+      "path": "../escape-roadmap.md"
+    }
+  }
+}

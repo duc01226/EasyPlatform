@@ -1,0 +1,16 @@
+{
+  "name": "html-export",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local dependencies for the html-export skill",
+  "scripts": {
+    "test": "node tests/run-tests.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "playwright": "^1.55.1"
+  }
+}

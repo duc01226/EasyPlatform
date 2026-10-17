@@ -1,376 +1,208 @@
 ---
 name: workflow-e2e
-description: '[Workflow] Use when activating the E2E testing workflow to generate, update, or maintain Playwright/E2E tests. Pick mode with --source={changes|recording|update-ui}.'
+description: '[Workflow] Use when E2E tests need to be written, updated or fixed: resolves the scope, authors tests only when needed, then verifies them through the configured runner in a bounded fix/retest loop.'
 disable-model-invocation: false
 ---
 
 > Codex compatibility note:
->
-> - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
-> - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
-> - User-question prompts mean to ask the user directly in Codex.
-> - Ignore Claude-specific mode-switch instructions when they appear.
-> - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Invoke `$skill-name`: load the registered `.agents/skills/<name>/SKILL.md` and execute it with Codex tools; no separate `Skill` tool or Claude mode switch is needed. Author `.claude/**`; mirrors are generated.
+> - Track steps before execution and keep progress/evidence current. Explicit skill requests execute their protocol. Use the native question tool for required questions.
+> - Map foreign tool names to available host capabilities. A name mismatch needs no approval; an actually unavailable required capability stops with its step/evidence and a user question before adaptation.
 > - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.
-> - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
-> - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
-> - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
+> - Preserve protocol order unless the user approves a deviation. Workflows use `$start-workflow`: gates stay fixed; other steps may flex with logged reasons and evidence.
+<!-- WORKFLOW-CALLS:START -->
+## Workflow Calls and Todo Bootstrap
 
-<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->
+Read [the registry](../../../.claude/workflows.json) → `workflows.workflow-e2e` together with this skill. Call [`$start-workflow workflow-e2e`](../start-workflow/SKILL.md) to resolve the selected mode, pre-actions and fingerprint.
 
-## Codex Project-Reference Loading (No Hooks)
+**Todo FIRST:** before triage, analysis or step execution, create one todo per phase of the selected mode, in order, listing every occurrence of that phase as a line, including conditional/optional ones (a mode that declares no phases gets one todo per occurrence); preserve occurrence IDs, roles and barrier groups. Use native todo tools or an equivalent persistent ledger. Then mark the first todo `in_progress`; close each step line with its run or skip evidence, and complete a phase todo only when every line is closed and its applicable exit gates hold.
+Mode selection and registry loading prepare tracking; any 'first action' below means the first substantive action after this bootstrap.
 
-Codex uses static project-reference loading instead of runtime-injected project docs.
-When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.
+**Call each step skill:** read its linked SKILL.md and execute its protocol through the active host with the registry args. Reading or naming a skill alone is not execution. Required gates and core/optional flex follow the linked start-workflow Step Execution Protocol; keep this skill's quality gates, loops and evidence requirements.
 
-**Always read:**
+**Conditions:** load each occurrence's registry `applicability.when` and `skipReason` verbatim, and record its run/skip evidence through the linked start-workflow protocol. Do not silently omit a todo or turn a conditional skill into an unconditional call; close, in one batch at triage, the todos whose condition is already false there. Declared parallel groups retain their all-return barrier.
 
-- `docs/project-config.json` (project-specific paths, commands, modules, and workflow/test settings)
-- `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
-- `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
+Explicit step-skill calls by mode (registry order; roles and conditions remain owned by the registry):
 
-**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
+- Mode `default`: [`$investigate`](../investigate/SKILL.md) (optional; conditional) → [`$e2e-test`](../e2e-test/SKILL.md) (optional; conditional) → [`$e2e-test --mode=verify --fix-loop`](../e2e-test/SKILL.md) (gate) → [`$docs-manager --mode=update`](../docs-manager/SKILL.md) (optional; conditional) → [`$workflow-end`](../workflow-end/SKILL.md) (optional; conditional) → [`$watzup`](../watzup/SKILL.md) (optional; conditional)
+  Phase todos: Discover (1) → Build (1) → Verify (2; exit tests-pass) → Close (2; exit run-closed)
+<!-- workflow-mode:default fingerprint:a1ba99b235b5c816b8417b5e47045c2a5ec4059ba9abc05783e14458d322f510 -->
 
-**Situation-based docs:**
+Regenerate this block with `node .claude/scripts/lib/workflow-skill-contract.cjs --write` after registry edits; [`$sync-codex`](../sync-codex/SKILL.md) refreshes it before mirroring.
+<!-- WORKFLOW-CALLS:END -->
 
-- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
-- Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
-- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
-- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
-- Integration test implementation/review: `integration-test-reference.md`
-- E2E test implementation/review: `e2e-test-reference.md`
-- Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
 
-Do not read all docs blindly. Start from `docs-index-reference.md`, then open only relevant files for the task.
+> **[BLOCKING]** Workflow steps follow the guided contract in `$start-workflow` → Step Execution Protocol: `gate` steps are fixed; other steps may flex with a logged reason.
+> **[BLOCKING]** Before each step or sub-skill call, update todo tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
+> **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
 
-<!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
+<!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:END -->
 
 ## Quick Summary
 
-**Goal:** [Workflow] Trigger the E2E testing workflow — one parameterized entry covering all three E2E sources. `--source` selects the protocol; the sequence is identical for every source.
+**Goal:** One E2E lifecycle for every request — resolve the source and scope, author or update tests only when needed, then converge the fixed scope to an honest green through the configured runner. E2E quality/visual review is capped at one pass per verification attempt; execution/fix/retest rounds remain a separate bounded convergence mechanism.
 
-**Workflow:**
+**Use this** to write, update, run, verify or fix E2E/browser/user-flow coverage. Use `workflow-integration-test` (`--mode=green` / `--mode=write`) for integration tiers, `$e2e-test --mode=verify` alone for a one-shot report-only check, and `workflow-bugfix` when the task is a product bug whose E2E test is only the proof.
 
-1. **Detect** — read `--source={changes|recording|update-ui}`; classify request scope and target artifacts.
-2. **Execute** — apply the source-specific protocol below with evidence-backed actions.
-3. **Verify** — confirm constraints, output quality, and completion evidence.
+**IMPORTANT MANDATORY Steps:** $investigate -> $e2e-test -> $e2e-test --mode=verify --fix-loop -> $docs-manager --mode=update -> $workflow-end -> $watzup
 
-**Key Rules:**
+**Step contract:** steps follow `$start-workflow` → Step Execution Protocol — `gate` steps always run, a step that runs invokes its skill invocation, and every other deviation is logged. NEVER batch-complete validation gates.
 
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
-- MUST ATTENTION keep task tracking updated as each step starts/completes.
-- MUST ATTENTION define success criteria before execution and loop until observable verification passes.
-- MUST ATTENTION when creating/reviewing specs or tests, name `Business Intent / Invariant Guarded` or the protected business intent/invariant and ensure the test would fail if that intent breaks.
-- NEVER skip mandatory workflow or skill gates.
+## Contents
 
-**IMPORTANT MANDATORY Steps:** $scout -> $e2e-test -> $test -> $docs-update -> $workflow-end -> $watzup
+- [Workflow Calls and Todo Bootstrap](#workflow-calls-and-todo-bootstrap)
+- [Quick Summary](#quick-summary)
+- [Size & Kind Triage (FIRST action)](#size--kind-triage-first-action)
+- [Required Quality Gates (non-negotiable)](#required-quality-gates-non-negotiable)
+- [Recommended Skills](#recommended-skills)
+- [Source Dispatch (`--source`)](#source-dispatch---source)
+- [Visual Review (`--visual-review`)](#visual-review---visual-review)
+- [Test Architecture Contract Handoff](#test-architecture-contract-handoff)
+- [Orchestration Freedom](#orchestration-freedom)
+- [Memory & Reporting](#memory--reporting)
+- [Fix Path & Loop Bounds](#fix-path--loop-bounds)
+- [Closing Reminders](#closing-reminders)
 
-> **[BLOCKING]** Each step MUST ATTENTION invoke its skill invocation — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+## Size & Kind Triage (FIRST action)
+
+Before choosing steps, classify the target and record the result in the run report:
+
+- **Source** — resolve `--source` (below) and `--visual-review` (below). State both before any step.
+- **Size** — XS: one known test or journey · S: one feature's cases (≤15 test files) · M: several features or ≤60 files · L/XL: a module-wide or `whole` run (hundreds of cases). Size sets batching and delegation, never whether the green gate runs.
+- **Kind** — test-only authoring · baseline/visual update · verification-only (`prompt|context|whole` with no expected edits) · product fix expected (a failing journey on changed behavior) · data/auth/environment-sensitive (seed, accounts, external services).
+- **Risk** — escalate depth on shared persistent state, auth/secrets, irreversible data, cross-service journeys, or an ambiguous scope; not on file count alone.
+
+The triage picks which recommended skills run and how deep. An unresolvable source or scope stops with an ambiguity record — never a silently chosen maintenance mode.
+
+## Required Quality Gates (non-negotiable)
+
+| Gate                                                                                       | Evidence that proves it                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests-pass` — the fixed scope is green in THIS run                                        | `$e2e-test --mode=verify --fix-loop` report: exact runner output (counts, failing names, exit status), the configured consecutive fresh green runs, Round Integrity Check pass, no scope shrink, no skipped/weakened/deleted test                    |
+| Case traceability                                                                          | Each selected owner-qualified case/variant (or strict-default TC/§8 when no native `specArtifacts` profile applies) maps to an actual test, assertion and observed result; ID presence alone is not proof; unresolved links stay `UNVERIFIED` |
+| Honest verdicts                                                                            | Every failure is classified `SOURCE-WRONG` / `TEST-WRONG` / `TEST-NOT-OPTIMAL` / `ENVIRONMENT-BLOCKED` / `AMBIGUOUS` before any edit; a fix lands at the owning layer and is reviewed                                                         |
+| Explicit acceptance                                                                        | No snapshot, baseline, fixture or expectation changes without a named acceptance record; otherwise `ACCEPTANCE-PENDING`                                                                                                                       |
+| Visual (when it applies)                                                                   | One review pass per verification attempt: every required capture opened/read case by case via `$experience-review --rounds=0`; blocking findings return to the execution/fix/retest loop. A false value cannot waive a required gate            |
+| Docs synced (when the run changed tests, baselines, product source or documented behavior) | `$docs-manager --mode=update` triage result with terminal evidence                                                                                                                                                                                           |
+| `run-closed` (top-level run)                                                               | `$workflow-end` verifies every gate above; a nested run is closed by its parent workflow, whose `$workflow-end` checks this run's `tests-pass` evidence                                                                                      |
+
+`N/A` needs evidence: E2E is `APPLICABLE` only with a configured framework, runner and command; a relevant but unavailable capability is `ENVIRONMENT-BLOCKED`, never green.
+
+## Recommended Skills
+
+| Skill                                   | Earns its cost when                                                                                | Proves / feeds                                             |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `$investigate` (conditional)            | Scope, runner, case profile or test organization is not already evidenced in this session; M+ size | Applicability, case map, commands, data strategy           |
+| `$e2e-test` (`e2e-author`, conditional) | `--source` is `changes`, `recording` or `update-ui`                                                | Authored/updated artifact + exact scope handed to the loop |
+| `$e2e-test --mode=verify --fix-loop` (gate)    | Always                                                                                             | `tests-pass`, verdicts, visual gate, fresh reruns          |
+| `$experience-review --rounds=0`         | Called by the loop when visual review applies                                                      | Per-capture records, blocking vs advisory findings         |
+| `$docs-manager --mode=update` (conditional)            | The run changed tests, baselines, product source, specs or documented behavior                     | Docs synced                                                |
+| `$workflow-end` (`e2e-end`, conditional) | Top-level run only; a nested run is closed by its parent workflow                                 | `run-closed`                                               |
+| `$watzup` (`e2e-watzup`, conditional)   | Top-level run only; a nested run leaves the recap to its parent                                    | Handoff summary                                            |
+
+`$test` is not a second top-level run and no separate visual-fix loop exists — `$e2e-test --mode=verify --fix-loop` is the single convergence and remediation owner after preparation. Skipping a recommended skill is fine when triage shows it does no real work; log it as a deviation (`intent-skip` / `when-false`) with evidence.
+
+**Conditional step notes (registry `skipReason`, verbatim):**
+
+- `$investigate` — skip when: The parent run or this session already evidences the scope, runner, case map and test organization.
+- `$e2e-test` — skip when: Resolved --source is prompt, context, or whole; e2e-test --mode=verify --fix-loop owns scenario selection or generation for that source.
+- `$docs-manager --mode=update` — skip when: Verification-only run: no test, baseline, product source, spec, or documented behavior changed, so docs-manager --mode=update has nothing to record; cite the unchanged diff and the terminal verify report.
+- `$workflow-end` — skip when: Nested inside a parent workflow, whose own workflow-end closes the run and checks this workflow's tests-pass evidence.
+- `$watzup` — skip when: Nested inside a parent workflow (workflow-feature, workflow-bugfix, workflow-big-feature, workflow-implement-spec); the parent's tail (workflow-end then watzup) owns the whole run's recap, so this nested run skips its own workflow-end and records its recap as `covered by the parent workflow's watzup` instead of printing a second one.
 
 ## Source Dispatch (`--source`)
 
-Resolve `--source` from the invocation. If omitted, infer from the request (recording file present → `recording`; UI/SCSS/HTML diff → `update-ui`; otherwise `changes`) and state the chosen source before proceeding.
+An explicit value wins. When omitted, infer in order: recording JSON present → `recording`; explicit whole-project request → `whole`; run/verify/QC a feature, bugfix, journey or current context → `prompt` or `context`; UI/style/template diff with baseline intent → `update-ui`; confirmed code/spec/API change → `changes`. No evidenced signal → stop with an ambiguity record.
 
-| `--source`  | Use when                                                                 | When NOT to use                                                        |
-| ----------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `changes`   | Test specs or source code changed and E2E tests need to be synced.       | New recordings (`recording`), visual-only changes (`update-ui`).       |
-| `recording` | A Chrome DevTools recording JSON exists and a Playwright test is wanted. | Updating existing tests, writing from scratch, running existing tests. |
-| `update-ui` | UI changed and E2E screenshot baselines need updating.                   | Generating new tests, fixing test logic, non-visual changes.           |
+| `--source`           | Use when                                                                    | `$e2e-test` mode it drives                                                                                                                                        |
+| -------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `changes`            | Test specs, source or API changed and E2E coverage must follow              | `from-changes` / `from-spec`: update only cases the changed intent requires                                                                                       |
+| `recording`          | A browser recording JSON exists and a runner test is wanted                 | `from-recording`: convert with the project's configured recorder/converter (else author by hand), add outcome assertions, follow the configured test organization |
+| `update-ui`          | UI changed and screenshot baselines need review                             | `update-ui`: collect candidate evidence; keep accepted expectations until an explicit acceptance record                                                           |
+| `prompt` / `context` | A feature, bugfix, journey, QC request or current context defines the scope | none — the loop selects or generates cases                                                                                                                        |
+| `whole`              | Project-wide E2E/QC verification                                            | none — the loop runs the configured full suite                                                                                                                    |
 
-All three sources run the same sequence: `$scout → $e2e-test → $test → $docs-update → $workflow-end → $watzup`. The downstream `e2e-test` leaf is mode-aware and performs the per-source work; this wrapper only injects the matching protocol and triggers the workflow.
+Authoring sources run only a focused authoring check at most; the final full green run belongs to the loop. Every source hands the loop one exact scope plus its case map.
 
-### `--source=changes` — E2E from Changes
+## Visual Review (`--visual-review`)
 
-```
-E2E FROM CHANGES PROTOCOL:
-1. Detect change type from git diff:
-   - Test spec changes in feature docs -> Generate new test cases
-   - Code changes -> Update existing test assertions
-   - API changes -> Update test data and API mocks
-2. Load affected test specifications (TC-{FEATURE}-{NNN})
-3. Update or generate test implementations
-4. Ensure traceability: each TC has corresponding test
-5. Run tests to verify changes work
-6. Report updated test coverage
-```
+Resolve independently from an explicit value, the task request and the project contract. `true` (explicit or project-required) on an applicable surface: capture the project-declared state × viewport matrix per the resolved `uiStateCapture.mode`, index captures, and have `$experience-review --rounds=0` read every required capture in exactly one review pass for that verification attempt. Validated `BLOCKING` findings join the execution failure set and return to owning-layer repair; a fresh rerun may collect fresh evidence but never starts a second review pass for the prior attempt. `ADVISORY` findings are recorded, never looped on. A false value cannot waive a project-required gate. A non-visual scope records `N/A`.
 
-### `--source=recording` — E2E from Recording
+Read `.claude/skills/shared/e2e-quality-protocol.md` before authoring or verification, and `.claude/skills/shared/ui-state-capture-protocol.md` when visual review applies; they own the scenario/invariant, isolation, auth, wait, evidence, cleanup and capture rows. This workflow owns only sequencing.
 
-```
-E2E FROM RECORDING PROTOCOL:
-1. Validate recording file exists (JSON format)
-2. Identify target app and feature from user context
-3. Run convert-recording.ts to generate initial test file
-4. Load test specifications from feature docs Section 8
-5. Map TC-{FEATURE}-{NNN} test cases to recording steps
-6. Enhance generated code with project CSS conventions (from docs/project-config.json → workflowPatterns.cssMethodology)
-7. Add screenshot assertions at key states
-8. Generate Page Object if complex flow
-9. Run test to verify it passes
-10. Report generated files and any manual steps needed
-```
+## Test Architecture Contract Handoff
 
-### `--source=update-ui` — E2E Update UI
+Resolve one record before the first authoring or verification step and carry it to every step (the loop owns execution evidence; `$docs-manager --mode=update` receives the terminal result):
 
-```
-E2E UPDATE UI PROTOCOL:
-1. Identify visual changes from git diff (SCSS, HTML, TS)
-2. Map changed files to affected page objects
-3. Find E2E specs using those page objects
-4. Run affected tests to generate new screenshots
-5. Update screenshot baselines with --update-snapshots
-6. Visual review: diff old vs new baselines
-7. Confirm changes are intentional with user
-8. Report updated files and visual changes
-```
+| Field                            | Required content                                                                                                                                                           |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `applicability`                  | `APPLICABLE` with evidence of a configured framework, runner and command; otherwise `N/A — <evidence>`. Skill-local browser helpers are not project evidence               |
+| `caseMap`                        | Configured owner/case/scenario/variant + evidence fields, or strict-default TC/§8 when no native profile applies; a malformed declared profile blocks and never falls back |
+| `fullCommand` / `focusedCommand` | Copy-ready configured commands; invalid or zero-match selections exit non-zero                                                                                             |
+| `runIdentity` / `dataStrategy`   | Unique non-sensitive run identity, public-path setup, declared seed/accumulation mode, parallel-worker isolation                                                           |
+| `testOrganization`               | The declared local pattern and its canonical locator/action/wait owners; never require a Page Object Model or abstract base the project does not select                    |
+| `result`                         | Exact counts, failing names, exit status, repeat evidence; one fresh green full run, or the project's configured `consecutiveGreen` count                                   |
 
-**UNIVERSAL RULES (all sources):**
+Browser journeys follow observe → act → observe with the configured runner's native waits or an evidenced project helper; action pacing applies only when the project contract configures it and never substitutes for a real settle signal.
 
-- Goal-Driven Execution: define success criteria before execution; loop until observable checks pass.
-- Tests Verify Intent: when creating or reviewing specs/tests, name the protected business intent or invariant and ensure the test would fail if that intent breaks.
+## Orchestration Freedom
 
-Activate the `workflow-e2e` workflow. Run `$start-workflow workflow-e2e` with the user's prompt as context and the resolved `--source` protocol above.
+You choose inline vs sub-agent, batching and wave layout, optimizing wall-clock and token cost at equal quality. Fixed constraints only: a test exists before it is verified; fixes are re-verified after they land; `$workflow-end` runs last in a top-level run; nested in a parent workflow, this run records its evidence in the parent's Goal Contract instead of creating a second one, and the parent closes the run; gates awaiting user approval never run in parallel; each loop round runs the default verify pass inline (never a nested `--fix-loop`). Recommended: XS/S inline without sub-agents; L/XL partition authoring and failure triage per module or feature batch (one report per batch), while the green gate still runs the full fixed scope; delegate authoring to the `e2e-runner` agent when the batch is large.
 
-**Steps:** $scout → $e2e-test → $test → $docs-update → $workflow-end → $watzup
+## Memory & Reporting
 
----
+- One phase task per phase, one row per selected step (and per batch for L/XL) so nothing is lost after compaction.
+- Write the run report under `tmp/reports/` FIRST, then append per step, round and batch; visual records are appended one capture at a time.
+- After compaction, re-read the report and the current task list before continuing; sub-agent briefs make report writing their first deliverable and return only the summary envelope.
 
-**IMPORTANT MANDATORY Steps:** $scout -> $e2e-test -> $test -> $docs-update -> $workflow-end -> $watzup
+## Fix Path & Loop Bounds
 
-<!-- SYNC:ai-mistake-prevention -->
+Owned by `$e2e-test --mode=verify --fix-loop`; this workflow only enforces its bounds. Classify before editing, trace root cause with `$investigate --mode=debug`, fix at the owning layer with `$fix`, review the round's diff with `$changes-review` — nested in a parent workflow whose review gate re-runs after this step, that per-round review defers to the parent's re-review, which receives the round's changed files — run the Round Integrity Check every round, then rerun fresh over the same scope. Converge on one fresh green run (default 1; the project may configure more consecutive greens) within the round cap (default 3). A non-shrinking or rising failure count, a cap hit with failures open, scope shrink or test loss → `NOT-CONVERGED` and escalate via `ask user question tool` with exact evidence. Never weaken, skip, narrow, delete, silence or auto-accept to obtain green.
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+<!-- PROTOCOL-GUIDES:START -->
 
-<!-- /SYNC:ai-mistake-prevention -->
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
-<!-- SYNC:nested-task-creation -->
+- `e2e-visual-design-contract` — Evidence and baseline rules for visual review in E2E and human QC; handling visual-review evidence or visual baseline updates → .claude/skills/shared/protocols/e2e-visual-design-contract.md
+- `incremental-persistence` — Persist results per file or section while the work proceeds; a sub-agent or heavy step processes more than three files → .claude/skills/shared/protocols/incremental-persistence.md
+- `session-goal-ledger` — Keep the original goal and every user prompt of the session; running a long or multi-prompt session → .claude/skills/shared/protocols/session-goal-ledger.md
+- `subagent-return-contract` — Sub-agents return a structured envelope and a report path, never an inline report; spawning a sub-agent → .claude/skills/shared/protocols/subagent-return-contract.md
+- `test-architecture-execution-contract` — Testability as an architecture condition: required test types and execution modes; setting up or reviewing a test architecture → .claude/skills/shared/protocols/test-architecture-execution-contract.md
+- `workflow-registry-binding` — Read the workflow registry entry and the workflow skill together, since they must agree; executing or editing a workflow → .claude/skills/shared/protocols/workflow-registry-binding.md
 
-> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
->
-> 1. Call the current task list first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
-> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
-> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
-> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
-> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
-> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
->
-> **Blocked until:** the current task list done, child phases created, parent linked when nested, first child marked `in_progress`.
+<!-- PROTOCOL-GUIDES:END -->
 
-<!-- /SYNC:nested-task-creation -->
 
-<!-- SYNC:critical-thinking-mindset -->
+<!-- SYNC:test-architecture-execution-contract:reminder -->
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+**MUST ATTENTION** Each assertion-bearing test names the behavior or technical contract it protects and asserts an outcome it owns. Use the project's configured/native test format — Given/When/Then is one valid format, never a framework-wide requirement. When `specArtifacts` is valid, link configured owner/case/variant identity and `intent/contracts` evidence; when absent, name the guarded business intent or technical contract. A malformed declared profile BLOCKS without fallback. Broad test-format migration → assign an owner and next step, never rewrite cases outside scope.
 
-<!-- /SYNC:critical-thinking-mindset -->
+**MUST ATTENTION** Before implementation record evidence-backed applicability for the test types and modes the task/project contract requires: copy-ready full and focused commands where available, zero-match behavior, a useful platform-appropriate entry point, supported execution modes and environments, state-isolation requirements, exact results, and repeat evidence where persistent state makes it relevant. Exercise claimed modes; report a missing required capability as `ENVIRONMENT-BLOCKED`. Never invent production targets or impose a test format. Browser/UI E2E uses the configured runner's waits or project helper for observable readiness and outcomes; apply action pacing only where the project contract specifies it. Reuse the project's evidenced test organization — require a POM, base class, or component taxonomy only when the project actually selects it.
 
-<!-- SYNC:incremental-persistence -->
+<!-- /SYNC:test-architecture-execution-contract:reminder -->
 
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+<!-- SYNC:e2e-visual-design-contract:reminder -->
 
-<!-- /SYNC:incremental-persistence -->
+**MUST ATTENTION** visual E2E/QC resolves the project design authority first, applies project design-system and frontend decisions plus applicable `UI-*`/`DD-*`/`CL-*` roles, records component ownership using the project's taxonomy or observed boundaries, sends static source findings to `$ui-design --mode=review` and runtime image evidence to `$experience-review`, captures states and transitions required by the configured evidence contract, reloads the convention docs then reads and records each required capture before synthesizing findings with coverage gaps, treats `UIX`/UI/accessibility-floor findings as blocking and `UIX-POLISH`/DD identity as advisory, never invents measurements, and never auto-promotes baselines; non-visual runs state `N/A`.
 
-<!-- SYNC:subagent-return-contract -->
+<!-- /SYNC:e2e-visual-design-contract:reminder -->
 
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
->
-> **Context budget** — the return payload is a SUMMARY, not a transcript: ≤10 finding bullets, no raw file contents / full diffs / verbatim logs inline, no re-pasted source. Everything beyond the summary lives in the `Full report` on disk. A sub-agent that would exceed the summary shape MUST write the detail to its report and return only the pointer — the orchestrator's context is the scarce resource the whole map-reduce protects.
 
-<!-- /SYNC:subagent-return-contract -->
+<!-- SYNC:session-goal-ledger:reminder -->
 
-<!-- SYNC:critical-thinking-mindset:reminder -->
+- **MANDATORY** Session goal ledger per the `Task Planning Rules`: pin `Original goal:`, keep `User prompts this session: P1…Pn`, and map the result to every prompt before claiming done; full text: `.claude/skills/shared/protocols/session-goal-ledger.md`.
 
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- SYNC:nested-task-creation:reminder -->
-
-- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
-- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
-
-<!-- /SYNC:nested-task-creation:reminder -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
+<!-- /SYNC:session-goal-ledger:reminder -->
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+**IMPORTANT MUST ATTENTION Goal:** one E2E lifecycle — resolve `--source` and visual mode, author only when the source needs it, then converge the fixed scope to an honest green through `$e2e-test --mode=verify --fix-loop` or escalate with exact evidence.
 
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Nested Task Creation:** expand child phases, link parent when nested.
-- **Critical Thinking:** traced `file:line` proof, confidence >80% to act.
-- **Incremental Persistence:** append findings to report file after each section.
-- **Subagent Return Contract:** sub-agent returns summary-only with `Full report:` pointer.
-
-**IMPORTANT MUST ATTENTION** break work into small todo tasks using task tracking BEFORE starting
-**IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-**IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
-
-<!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
-
-## Hookless Prompt Protocol Mirror (Auto-Synced)
-
-Source: `.claude/.ck.json` + `.claude/skills/shared/sync-inline-versions.md` (`:full` blocks) + `.claude/scripts/lib/hookless-prompt-protocol.cjs`
-
-## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
-
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
-
-1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
-2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
-3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
-4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
-5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
-6. **PARALLELIZE:** Before executing the task list, tag each task `PAR` (independent inputs + write set disjoint from every other `PAR` task) or `SEQ` (name the blocking dependency), group `PAR` tasks into waves, declare the wave plan, and spawn each wave's sub-agents in ONE message — all-return barrier per wave, fan-out one level deep unless a sub-agent's own definition authorizes further fan-out. Sequential-by-default is a defect when tasks are independent; do not parallelize shared write targets, output-consuming tasks, trivial single-file work, ordering a skill or workflow explicitly fixes, or user-approval gates.
-7. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
-
-## Shared AI-SDD Protocol Markers
-
-Source: `.claude/skills/shared/sync-inline-versions.md`
-
-## SYNC:ai-sdd-artifact-contract
-
-> **AI-SDD Artifact Contract** — Shared spec-driven development rules stay portable and source-owned.
->
-> 1. Keep reusable AI-SDD principles in `.claude`; put repository-specific paths, commands, owners, products, and formats in project config/reference docs.
-> 2. Preserve cycle: `spec -> plan -> tasks -> implement -> verify -> update spec/docs`.
-> 3. Trace every requirement or invariant through decision, task, TC/test, source evidence, and docs/spec update.
-> 4. Treat code-to-spec extraction as reference-only until accepted by the canonical spec owner.
-> 5. Any supported AI tool may plan, implement, review, or verify with synced context; using multiple tools is optional.
-> 6. Update `.claude` source first, then sync generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`. — why: mirrors are generated artifacts; hand-edits are overwritten on the next sync
-> 7. If `docs/project-config.json`, root instruction files, or a required project-reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
->
-> **Active reference:** `shared/sdd-artifact-contract.md` in the active skills root.
-
----
-
-## SYNC:ai-sdd-artifact-contract:reminder
-
-- **MANDATORY** Apply `shared/sdd-artifact-contract.md`; keep reusable AI-SDD in `.claude` and local rules in project docs.
-- **MANDATORY** Code-to-spec extraction is reference-only until canonical acceptance; any supported AI tool may execute with synced context.
-- **MANDATORY** Update `.claude` source before syncing generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`.
-- **MANDATORY** Missing or stale project config, root instruction files, or required reference docs route project-specific work through `$project-init` or the narrow setup route automatically.
-  **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
-
-## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
-
-Break work into small tasks (task tracking) before starting. Add final task: "Analyze AI mistakes & lessons learned".
-
-**Extract lessons — ROOT CAUSE ONLY, not symptom fixes:**
-
-1. Name the FAILURE MODE (reasoning/assumption failure), not symptom — "assumed API existed without reading source" not "used wrong enum value".
-2. Generality test: does this failure mode apply to ≥3 contexts/codebases? If not, abstract one level up.
-3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
-4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
-5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
-7. BOTH gates pass → ask user to run `$learn`.
-   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
-   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
-
-## Common AI Mistake Prevention (System Lessons)
-
-- **Re-read files after context compaction.** Edit requires prior Read in same context; compaction wipes read state. Re-read before editing.
-- **Grep for old terms after bulk replacements.** AI over-trusts find/replace completeness. Grep full repo after bulk edits for missed refs in docs/configs/catalogs.
-- **Check downstream references before deleting.** Deletions cascade doc/code staleness. Map referencing files before removal.
-- **After memory loss, check existing state before creating new.** Compaction wipes prior-work memory. Query current state to resume — never blindly duplicate.
-- **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, method signatures. Grep to confirm existence before documenting/referencing.
-- **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Trace the full chain.
-- **When renaming, grep ALL consumer file types.** Some file types silently ignore missing refs (no compile error). Search code, templates, configs, generated files.
-- **Trace ALL code paths when verifying correctness.** Code existing ≠ code executing. Trace early exits, error branches, conditional skips — not just happy path.
-- **Update docs that embed canonical data when source changes.** Docs inlining derived data (workflows, schemas, configs) go stale silently. Update all embedding docs alongside source.
-- **Verify sub-agent results after context recovery.** Background agents may finish while parent compacted — grep-verify output, don't trust assumed completion.
-- **Cross-check full target list against sub-agent assignments.** Parallel sub-agents by category miss boundary items. Reconcile union of assignments against target list before proceeding.
-- **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
-- **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
-- **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
-- **Test failure → record a provisional verdict before trace/edit, then investigate.** Use the full five-way taxonomy: SOURCE-WRONG (production violates intent), TEST-WRONG (assertion/setup is stale), TEST-NOT-OPTIMAL (valid but fragile or low-signal test), ENVIRONMENT-BLOCKED (external state prevents a verdict), or AMBIGUOUS (intent/evidence cannot choose safely). Then trace root cause and triangulate against the governing spec (`docs/specs/**` if one exists) AND source. NEVER weaken an assertion, add a skip, relax a timeout, or change source merely to force green.
-- **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
-- **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
-- **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
-- **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
-- **Surgical changes — apply the diff test (context-aware).** Two modes: (1) Bug fix → every line traces to the bug; no restyling; orphan cleanup only for imports YOUR changes made unused. (2) Review/enhancement → implement improvements AND announce as "Enhancement beyond main request: [what]". Never silently scope-creep. Diff test: "Would this line exist if I wasn't asked to do X?" — if no, delete or announce.
-- **Surface ambiguity before coding — don't pick silently.** Multiple valid interpretations → present each with effort: "[Request] could mean (1) [N h], (2) [N h]. Which matters?" List scope/format/volume/constraints assumptions first. If simpler path exists, say so. Never silently pick.
-- **[MANDATORY FIRST ACTION] ALWAYS activate a suitable skill or workflow BEFORE responding.** Match task against workflow catalog + skill list; invoke via skill invocation or `$start-workflow <workflowId>`. NEVER answer or write code before checking. Skip = protocol violation.
-- **Why-Review adversarial mindset — apply when reviewing any plan, decision, or design.** Default SKEPTIC not VALIDATOR: steel-man a rejected alternative, invert each stated reason ("what does it sacrifice?"), stress-test top 2-3 assumptions, run pre-mortem ("ships, fails in 3 months — what breaks?"), surface 1-2 alternatives author missed. Section presence ≠ quality; quality = causal reasoning + concrete mitigations + evidence, not "it's better" or "monitor closely".
-- **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
-- **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
-- **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
-- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
-- **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
-
-<!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->
+- **MUST ATTENTION** triage first (source, size, kind, risk) and record it; size changes batching and depth, never whether the green gate runs.
+- **MUST ATTENTION** `tests-pass` = exact runner output for the fixed scope, configured consecutive fresh green runs within the round cap, Round Integrity Check pass — never weaken, skip, narrow, delete or auto-accept a test or baseline to get there.
+- **MUST ATTENTION** map every selected owner-qualified case (or strict-default TC/§8) to an actual test, assertion and result; classify each failure before editing and fix at the owning layer.
+- **MUST ATTENTION** visual review only when requested or required by the project contract for an applicable surface; read and record every required capture case by case via `$experience-review --rounds=0`; a false value cannot waive a project-required gate.
+- **MUST ATTENTION** cap E2E quality/visual review at one pass per verification attempt; do not confuse bounded execution/fix/retest convergence with review rounds.
+- **MUST ATTENTION** write the report under `tmp/reports/` first, keep one phase task per phase, one row per selected step, re-read both after compaction; `$workflow-end` runs last in a top-level run, and a nested run is closed by its parent.

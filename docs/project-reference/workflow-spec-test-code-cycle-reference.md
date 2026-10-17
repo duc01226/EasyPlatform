@@ -20,7 +20,6 @@ Use this local workflow sequence when behavior, public contracts, specs, tests, 
 
 - Project config: `docs/project-config.json`
 - Project docs index: `docs/project-reference/docs-index-reference.md`
-- Codex context mirror: `.codex/CODEX_CONTEXT.md`
 - Root instruction mirror: `AGENTS.md`
 - Shared reusable contract: `shared/sdd-artifact-contract.md`
 

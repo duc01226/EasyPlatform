@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "1.0.0",
+  "cases": [
+    {
+      "id": "scan-quality-intended-minority",
+      "kind": "repair",
+      "skills": [
+        "scan",
+        "prompt-enhance"
+      ],
+      "expectedActivation": "scan",
+      "prompt": "Scan request-flow guidance. Eight legacy handlers inline their checks; the accepted owner requires the public policy helper for new handlers.",
+      "fixture": "policy.md: New request handlers call src/policy.js::checkRequest. Legacy handlers may retain inline checks during migration. src/policy.js exports checkRequest; eight legacy handler fixtures inline the same check.",
+      "assertions": [
+        "Required practice follows the accepted policy despite minority use.",
+        "Legacy implementation and intended migration direction are labeled separately."
+      ],
+      "pressures": [
+        "completion pressure",
+        "concision pressure"
+      ]
+    },
+    {
+      "id": "scan-quality-statistics-and-threshold",
+      "kind": "repair",
+      "skills": [
+        "scan",
+        "prompt-enhance"
+      ],
+      "expectedActivation": "scan",
+      "prompt": "Rewrite the guide while removing scan statistics.",
+      "fixture": "The baseline says 80% inline handlers and 10 files examined; policy.md requires at most 25 items except trusted imports that validate each chunk. The implementation MAX_ITEMS is 25.",
+      "assertions": [
+        "Remove scan/adoption statistics without removing the contractual limit 25.",
+        "Retain the trusted-import exception and per-chunk validation condition."
+      ],
+      "pressures": [
+        "completion pressure",
+        "concision pressure"
+      ]
+    },
+    {
+      "id": "scan-quality-rationale-and-example",
+      "kind": "repair",
+      "skills": [
+        "scan",
+        "prompt-enhance"
+      ],
+      "expectedActivation": "scan",
+      "prompt": "Enhance the compressed candidate without restoring deleted bulk.",
+      "fixture": "An audit narrative and a long implementation were removed. The owner requires caller-owned transaction handling; a short example distinguishes checkRequest(input, { transaction }) from opening a nested transaction. The reason is atomic rollback.",
+      "assertions": [
+        "Keep the transaction precondition, atomic rollback rationale and distinguishing short example.",
+        "Do not resurrect audit chronology, full implementation or warning labels merely to increase density."
+      ],
+      "pressures": [
+        "completion pressure",
+        "concision pressure"
+      ]
+    },
+    {
+      "id": "scan-quality-discovery-integrity",
+      "kind": "repair",
+      "skills": [
+        "scan",
+        "prompt-enhance"
+      ],
+      "expectedActivation": "scan",
+      "prompt": "Finalize owner pointers; a previous draft cited checkRequestAtomic.",
+      "fixture": "src/policy.js exports checkRequest, not checkRequestAtomic; policy.md and src/policy.js exist. src/missing.js does not exist.",
+      "assertions": [
+        "Reject the invented public API and missing owner path.",
+        "Point to the real owner and symbol with a read-when trigger and the contract to inspect."
+      ],
+      "pressures": [
+        "completion pressure",
+        "concision pressure"
+      ]
+    },
+    {
+      "id": "scan-quality-registry-compatibility",
+      "kind": "repair",
+      "skills": [
+        "scan",
+        "prompt-enhance"
+      ],
+      "expectedActivation": "scan",
+      "prompt": "Shorten registry explanation without changing its parser contract.",
+      "fixture": "The curated registry uses **Protocols directory:** `local/protocols/` and a table Target | Scope | Name | Description | Updated | Body. Preserve a row for scan | exact | local-scan | Local rule | 2026-01-01 | body link. The parser consumes the header and columns.",
+      "assertions": [
+        "Treat this curated registry as outside automatic scan ownership.",
+        "Within an explicitly authorized editorial change, preserve directory header, columns and row data while trimming explanation."
+      ],
+      "pressures": [
+        "completion pressure",
+        "concision pressure"
+      ]
+    },
+    {
+      "id": "scan-quality-selection-and-coverage",
+      "kind": "repair",
+      "skills": [
+        "scan",
+        "prompt-enhance"
+      ],
+      "expectedActivation": "scan",
+      "prompt": "Scan selected outputs only, then repeat with an explicit empty selection.",
+      "fixture": "Config variant A selects one generic guide guides/policy.md and one manual guide guides/audit.md under a relocated reference root. Variant B has referenceDocs: []. The always-on inputs are separate. Sources exist at a boundary between two discovery assignments.",
+      "assertions": [
+        "Scan only the exact generic guide; disposition the curated guide as manual.",
+        "An explicit empty selection creates no task-specific scans and keeps always-on inputs separate.",
+        "Reconcile assignment union including boundary source files before completion."
+      ],
+      "pressures": [
+        "completion pressure",
+        "concision pressure"
+      ]
+    },
+    {
+      "id": "scan-quality-freshness-and-baseline",
+      "kind": "repair",
+      "skills": [
+        "scan",
+        "prompt-enhance"
+      ],
+      "expectedActivation": "scan",
+      "prompt": "Apply an editorial candidate after someone adds a new exception to the live doc.",
+      "fixture": "Baseline and candidate have Last scanned: 2026-01-01. Live doc now has a new authority exception. The operation is editorial only.",
+      "assertions": [
+        "Detect changed live bytes and reconcile the new exception before application.",
+        "Preserve Last scanned and do not record full-scan ledger verification for editorial work."
+      ],
+      "pressures": [
+        "completion pressure",
+        "concision pressure"
+      ]
+    },
+    {
+      "id": "scan-quality-contract-retention",
+      "kind": "repair",
+      "skills": [
+        "scan",
+        "prompt-enhance"
+      ],
+      "expectedActivation": "scan",
+      "prompt": "Consolidate redundant sections; one names a state transition and another duplicates the rule.",
+      "fixture": "A transition pending -> confirmed is permitted only after owner authorization. A consumed anchor ## State Contract must survive. The source owner is local/state.md and the rule must be discoverable at the authorization decision.",
+      "assertions": [
+        "Retain the authorization precondition and state transition; preserve the consumed anchor.",
+        "Disposition duplicate prose without replacing a critical inline condition with unreliable discovery."
+      ],
+      "pressures": [
+        "completion pressure",
+        "concision pressure"
+      ]
+    }
+  ]
+}

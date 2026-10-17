@@ -81,8 +81,46 @@ public abstract class PlatformIntervalHostingBackgroundService : PlatformHosting
                 if (IsFirstTimeTriggered) IsFirstTimeTriggered = false;
             }
 
-            await Task.Delay(ProcessTriggerIntervalTime(), cancellationToken);
+            await Task.Delay(SafeProcessTriggerIntervalTime(), cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Computes the next interval without letting a failing <see cref="ProcessTriggerIntervalTime" /> end the loop.
+    /// </summary>
+    /// <remarks>
+    /// Overrides may derive the interval from state that can fail to resolve transiently (e.g. per-store configuration).
+    /// An exception here used to escape the loop and stop the hosted service permanently; instead it is logged and the
+    /// <see cref="FallbackProcessTriggerIntervalTime" /> is used so the next tick retries the computation.
+    /// </remarks>
+    private TimeSpan SafeProcessTriggerIntervalTime()
+    {
+        try
+        {
+            return ProcessTriggerIntervalTime();
+        }
+        catch (Exception e)
+        {
+            var fallbackInterval = FallbackProcessTriggerIntervalTime();
+
+            Logger.LogError(
+                e.BeautifyStackTrace(),
+                "IntervalProcessHostedService {TargetName} failed to compute the trigger interval; retrying after fallback interval {FallbackInterval}. Error: {Error}",
+                GetType().Name,
+                fallbackInterval,
+                e.Message);
+
+            return fallbackInterval;
+        }
+    }
+
+    /// <summary>
+    /// The interval used when <see cref="ProcessTriggerIntervalTime" /> throws. Defaults to
+    /// <see cref="DefaultProcessTriggerIntervalTimeMilliseconds" />; override to use a configured legacy value.
+    /// </summary>
+    protected virtual TimeSpan FallbackProcessTriggerIntervalTime()
+    {
+        return DefaultProcessTriggerIntervalTimeMilliseconds.Milliseconds();
     }
 
     protected virtual TimeSpan? FirstTimeTriggeredDelayTime()

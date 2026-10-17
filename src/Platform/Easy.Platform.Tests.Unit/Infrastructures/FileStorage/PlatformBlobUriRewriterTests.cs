@@ -167,10 +167,10 @@ public class PlatformBlobUriRewriterTests : PlatformUnitTestBase
     [Trait("TechnicalSpec", "TC-SUP-INF-003")]
     public void GetBlobEndpointFromConnectionString_WhenOnlyEndpointSuffixPresent_ShouldDeriveAzureBlobEndpoint()
     {
-        var connectionString = "DefaultEndpointsProtocol=https;AccountName=bravostorage;AccountKey=fake;EndpointSuffix=core.windows.net";
+        var connectionString = "DefaultEndpointsProtocol=https;AccountName=examplestorage;AccountKey=fake;EndpointSuffix=core.windows.net";
 
         var result = PlatformBlobUriRewriter.GetBlobEndpointFromConnectionString(connectionString);
 
-        result.Should().Be("https://bravostorage.blob.core.windows.net/");
+        result.Should().Be("https://examplestorage.blob.core.windows.net/");
     }
 }

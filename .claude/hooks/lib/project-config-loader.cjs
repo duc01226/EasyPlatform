@@ -15,9 +15,24 @@
 
 const fs = require('fs');
 const path = require('path');
-const { loadConfig, DEFAULT_PORTABILITY } = require('./ck-config-loader.cjs');
+const {
+    loadConfig,
+    loadConfigFromPath,
+    DEFAULT_PORTABILITY,
+    LOCAL_OVERRIDE_PATH,
+    LOCAL_CONFIG_PATH,
+    GLOBAL_CONFIG_PATH
+} = require('./ck-config-loader.cjs');
+const { resolveProjectRoot } = require('./project-root.cjs');
+const { normalizeRootPath, escapesRepoRoot, isPathWithinRoot, joinRoot, sanitizePath } = require('./ck-path-utils.cjs');
+const { validateConfig } = require('./project-config-schema.cjs');
+const { deferNewerTracking } = require('./task-tracking-config.cjs');
 
-const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+// Resolve from the nearest portable bundle, not the caller's current directory.
+// This keeps Claude hooks and Codex entrypoints equivalent when invoked from a
+// nested worktree or a copied bundle.  Explicit CLAUDE_PROJECT_DIR remains the
+// highest-priority override for test fixtures and host integrations.
+const PROJECT_DIR = resolveProjectRoot({ cwd: process.cwd(), scriptPath: __filename, env: process.env }).rootDir;
 
 function resolveConfiguredPath(configuredPath, fallbackPath) {
     const rawPath = configuredPath || fallbackPath;
@@ -37,74 +52,373 @@ function getConfiguredProjectConfigPath() {
     }
 }
 
+/**
+ * The default docs-index path, tolerant of a STUBBED `ck-config-loader`.
+ *
+ * `test-lib-modules-extended.cjs` evaluates this module in a VM sandbox whose `ck-config-loader`
+ * stub omits `DEFAULT_PORTABILITY.docsIndexPath`, so anything that dereferences it at module scope
+ * throws before a single helper runs. Resolve it lazily, with the framework literal as the last
+ * resort, so a partial stub degrades instead of exploding.
+ */
+const FALLBACK_DOCS_INDEX_PATH = 'docs/project-reference/docs-index-reference.md';
+
+function defaultDocsIndexPath() {
+    const declared = DEFAULT_PORTABILITY?.docsIndexPath;
+    return typeof declared === 'string' && declared.trim() ? declared.trim() : FALLBACK_DOCS_INDEX_PATH;
+}
+
+/** The docs-index FILENAME, taken from the default path so the two never drift apart. */
+function docsIndexBasename() {
+    return path.posix.basename(defaultDocsIndexPath().replace(/\\/g, '/')) || 'docs-index-reference.md';
+}
+
+/**
+ * An EXPLICITLY declared `portability.docsIndexPath`, or `null` when no config file declares one.
+ *
+ * `loadConfig()` merges `DEFAULT_PORTABILITY` in, so its `docsIndexPath` is NEVER absent — an unset
+ * knob is indistinguishable there from one deliberately pinned to the default. Distinguishing the
+ * two is the whole point here, so the raw files are read directly, highest priority first.
+ */
+function explicitDocsIndexPath() {
+    for (const candidate of [LOCAL_OVERRIDE_PATH, LOCAL_CONFIG_PATH, GLOBAL_CONFIG_PATH]) {
+        const declared = loadConfigFromPath(candidate)?.portability?.docsIndexPath;
+        if (typeof declared !== 'string' || !declared.trim()) continue;
+        // Reading raw bypasses `loadConfig`'s `sanitizeConfig`, so re-apply the SAME guard the old
+        // tier-1 path got for free: `sanitizePath` honours an absolute value verbatim but rejects a
+        // relative value that escapes the repo root (and null-byte payloads). Without this a
+        // malformed `.ck.json` steers docs scaffolding/scanning outside the project instead of
+        // failing soft to the default — the exact regression this clause restores.
+        const safe = sanitizePath(declared.trim(), PROJECT_DIR);
+        if (safe) return safe;
+    }
+    return null;
+}
+
+/**
+ * `docsRoots.projectReference.path`, slash-normalized, or `null` when undeclared/unsafe.
+ *
+ * Read with an uncached parse rather than `loadProjectConfig()` ON PURPOSE. This function runs at
+ * module scope in consumers (`session-init-helpers.cjs` derives `REFERENCE_DOCS_DIR` from it at
+ * require time), and `loadProjectConfig` caches for the process lifetime — warming that cache at
+ * require time would change when the config is first read for every hook, so a test that requires a
+ * module and only then writes its fixture config would silently observe the pre-write value.
+ */
+function projectReferenceRootFromConfig() {
+    const declared = loadConfigFromPath(CONFIG_PATH)?.docsRoots?.projectReference?.path;
+    if (typeof declared !== 'string' || !declared.trim()) return null;
+    // A repo-escaping value falls back rather than resolving outside the project. Use the SAME
+    // predicate the schema's fail-closed plane uses (`validateDocsRootsSemantics`), not a hand-rolled
+    // subset: a `..`-only check would still let an ABSOLUTE root through, and `resolveConfiguredPath`
+    // honours absolute paths verbatim — so the stub tree would land outside the repo entirely.
+    if (escapesRepoRoot(declared.trim())) return null;
+    const normalized = normalizeRootPath(declared.trim());
+    return normalized || null;
+}
+
+/**
+ * Where the docs index lives — ONE root, resolved from a declared precedence.
+ *
+ * WHY THE `docsRoots` TIER EXISTS
+ * The reference-docs root had TWO independent sources of truth: this function read only
+ * `.ck.json`'s `portability.docsIndexPath`, while `CLAUDE.md`, the project-config schema and the
+ * codex residue verifier all treat `docsRoots.projectReference.path` as THE override. A project
+ * that followed the documented instruction and relocated only the latter was still resolved to the
+ * DEFAULT root here — so `session-init-helpers`, which derives `REFERENCE_DOCS_DIR` from this
+ * value, scaffolded a full stub tree at `docs/project-reference/` beside the project's real docs,
+ * and every downstream consumer then read the stubs. Measured: 18 stub files created and the
+ * count-drift guard red, against a green suite once both knobs agreed.
+ *
+ * Precedence, highest first:
+ *   1. an EXPLICIT `.ck.json` `portability.docsIndexPath` — a full path to the index FILE, and the
+ *      only tier that can point the index somewhere other than beside the reference docs;
+ *   2. `docsRoots.projectReference.path` from the project config — the documented root knob;
+ *   3. the framework default.
+ *
+ * Tier 1 stays on top so no project that already pinned the index moves underneath it.
+ */
 function getConfiguredDocsIndexPath() {
     try {
-        const ckConfig = loadConfig({
-            includeProject: false,
-            includeAssertions: false,
-            includeLocale: false
-        });
-        return resolveConfiguredPath(ckConfig.portability?.docsIndexPath, DEFAULT_PORTABILITY.docsIndexPath);
+        const explicit = explicitDocsIndexPath();
+        if (explicit) return resolveConfiguredPath(explicit);
+
+        const referenceRoot = projectReferenceRootFromConfig();
+        // `joinRoot`, never bare template concatenation — see the contract at ck-path-utils.cjs:256.
+        if (referenceRoot) return resolveConfiguredPath(joinRoot(referenceRoot, docsIndexBasename()));
+
+        return resolveConfiguredPath(defaultDocsIndexPath());
     } catch {
-        return resolveConfiguredPath(DEFAULT_PORTABILITY.docsIndexPath);
+        return resolveConfiguredPath(defaultDocsIndexPath());
     }
 }
 
 const CONFIG_PATH = getConfiguredProjectConfigPath();
 
 let _cache = null;
+let _configStatus = null;
 
 /**
- * Load project-config.json. Returns empty object on failure.
- * Result is cached for the process lifetime.
+ * Read and validate the required project config without collapsing missing or
+ * invalid states into a normal empty config.
+ *
+ * @param {{refresh?: boolean}} [options]
+ * @returns {{state: 'valid'|'missing'|'invalid', exists: boolean, valid: boolean, config: object, errors: string[], warnings: string[]}}
+ */
+function getProjectConfigStatus({ refresh = false } = {}) {
+    if (_configStatus && !refresh) return _configStatus;
+
+    if (!fs.existsSync(CONFIG_PATH)) {
+        _cache = {};
+        _configStatus = {
+            state: 'missing',
+            exists: false,
+            valid: false,
+            config: _cache,
+            errors: [`Required project config is missing: ${path.relative(PROJECT_DIR, CONFIG_PATH).replace(/\\/g, '/')}`],
+            warnings: []
+        };
+        return _configStatus;
+    }
+
+    try {
+        const parsed = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+        const candidate = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+        const validation = deferNewerTracking(parsed, validateConfig(parsed));
+        _cache = candidate;
+        _configStatus = {
+            state: validation.valid ? 'valid' : 'invalid',
+            exists: true,
+            valid: validation.valid,
+            config: _cache,
+            errors: validation.errors,
+            warnings: validation.warnings
+        };
+    } catch (error) {
+        _cache = {};
+        _configStatus = {
+            state: 'invalid',
+            exists: true,
+            valid: false,
+            config: _cache,
+            errors: [`Unable to read project config: ${error.message}`],
+            warnings: []
+        };
+    }
+    return _configStatus;
+}
+
+/**
+ * Load the project config. Omitted optional sections remain absent so callers
+ * can use their documented defaults or skip unsupported capabilities. Call
+ * getProjectConfigStatus() when the distinction between missing and invalid is
+ * needed. Result is cached for the process lifetime.
  */
 function loadProjectConfig() {
     if (_cache) return _cache;
-    try {
-        _cache = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
-    } catch {
-        _cache = {};
-    }
-    return _cache;
+    return getProjectConfigStatus().config;
 }
+
+/** Uncached, explicit-checkout reader for tools that can select several projects. */
+function readProjectConfigAt(rootDir) {
+    const root = fs.realpathSync(rootDir);
+    // loadConfig() replaces an unusable selection with the default path. An explicit-checkout reader must refuse
+    // that selection instead: the default file is not the config the checkout selected.
+    const requested = [GLOBAL_CONFIG_PATH, path.join(root, '.claude', '.ck.json'), path.join(root, '.claude', '.ck.local.json')]
+        .map(loadConfigFromPath).reduce((value, layer) => layer?.portability?.projectConfigPath ?? value, undefined);
+    if (requested !== undefined && !sanitizePath(requested, root)) {
+        return { state: 'invalid', config: {}, errors: ['Selected project config escapes the selected checkout'], warnings: [],
+            filePath: path.resolve(root, String(requested)) };
+    }
+    const ckConfig = loadConfig({ projectRoot: root, includeProject: false, includeAssertions: false, includeLocale: false });
+    const declared = ckConfig.portability?.projectConfigPath || DEFAULT_PORTABILITY.projectConfigPath;
+    const filePath = path.resolve(root, declared);
+    if (!isPathWithinRoot(filePath, root)) {
+        return { state: 'invalid', config: {}, errors: ['Selected project config escapes the selected checkout'], warnings: [], filePath };
+    }
+    try {
+        const { readBytes } = require('./task-tracking-files.cjs');
+        const relative = path.relative(root, filePath).replace(/\\/g, '/');
+        const config = JSON.parse(readBytes(root, relative).toString('utf8'));
+        const result = deferNewerTracking(config, validateConfig(config));
+        return { state: result.valid ? 'valid' : 'invalid', config, ...result, filePath };
+    } catch (error) {
+        if (error.code === 'ENOENT') return { state: 'missing', config: {}, errors: [], warnings: [], filePath };
+        return { state: 'invalid', config: {}, errors: ['Selected project config is unreadable or malformed'], warnings: [], filePath };
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Relocatable docs/spec roots — CONFIGURED, with the framework literal as fallback
+//
+// Every root below is declarable in docs/project-config.json (`specRoots`,
+// `docsRoots`). A project that declares nothing gets the exact literal the
+// framework always used, so the unset path is byte-identical to the fixed-root
+// behaviour these accessors replaced.
+//
+// Config consumers use documented defaults for omitted optional properties,
+// while getProjectConfigStatus() keeps missing, malformed and schema-invalid
+// files distinguishable. The UserPromptSubmit setup gate requires a valid file
+// before normal work; accessors stay fail-soft so hooks can report that state
+// without crashing before the gate runs.
+//
+// This reverses the earlier fixed-root design at the user's explicit request: a
+// project that relocates its specs had no way to tell the framework, and the one
+// runtime line that tells the AI where specs live (`:507`) reported `docs/specs/`
+// regardless. Predictability across copied frameworks is preserved by the
+// defaults, not by refusing configuration.
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Resolve portability path tokens in workflow text destined for the AI.
- * Spec artifacts have a fixed portable home: docs/specs/.
+ * The 8 portability tokens — the SINGLE definition of what each one means.
  *
- * Single source of truth — the Codex mirror generator
- * (.claude/scripts/codex/sync-context-workflows.mjs) requires THIS function so both
- * runtimes resolve identically.
+ * `.claude/scripts/codex/sync-context-workflows.mjs` reads THIS table so the Claude
+ * runtime and the Codex mirror generator cannot disagree about `{SPEC_ROOT}` by
+ * construction. Adding a token here is the only place a token is born.
  *
- * @param {string} text - raw workflow text (description / injectContext)
- * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
- * @returns {string} input text unchanged when string; input returned unchanged otherwise
+ * Every value resolves SLASH-FREE (file tokens resolve to a file path); prose in
+ * the consuming text supplies its own separator, so `{PLANS_ROOT}/{plan-id}/`
+ * cannot produce `plans//`. The two spec ACCESSORS below keep their historical
+ * trailing slash — the token and the accessor deliberately return different forms.
+ *
+ * @type {Record<string, {configPath: string, default: string}>}
  */
-function resolvePortabilityTokens(text, config) {
-    if (typeof text !== 'string' || !text) return text;
-    void config;
-    return text;
-}
+const PORTABILITY_TOKENS = {
+    SPEC_ROOT: { configPath: 'specRoots.business.path', default: 'docs/specs' },
+    SPEC_ROOT_TECHNICAL: { configPath: 'specRoots.technical.path', default: 'docs/specs-technical' },
+    REF_DOCS_ROOT: { configPath: 'docsRoots.projectReference.path', default: 'docs/project-reference' },
+    ADR_ROOT: { configPath: 'docsRoots.adr.path', default: 'docs/adr' },
+    TEMPLATES_ROOT: { configPath: 'docsRoots.templates.path', default: 'docs/templates' },
+    PLANS_ROOT: { configPath: 'docsRoots.plans.path', default: 'plans' },
+    TEAM_ARTIFACTS_ROOT: { configPath: 'docsRoots.teamArtifacts.path', default: 'team-artifacts' },
+    PRODUCT_ROADMAP_DOC: { configPath: 'docsRoots.productRoadmap.path', default: 'docs/product-roadmap.md' }
+};
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Spec path accessors (fixed portable root)
-//
-// Runtime gates use this helper instead of per-project configuration. The fixed
-// root keeps copied frameworks predictable across projects.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const SPEC_DOCS_PATH = 'docs/specs/';
+/** `docsRoots` key -> the token that owns its default. */
+const DOCS_ROOT_TOKENS = {
+    projectReference: 'REF_DOCS_ROOT',
+    adr: 'ADR_ROOT',
+    templates: 'TEMPLATES_ROOT',
+    plans: 'PLANS_ROOT',
+    teamArtifacts: 'TEAM_ARTIFACTS_ROOT',
+    productRoadmap: 'PRODUCT_ROADMAP_DOC'
+};
 
 function ensureTrailingSlash(p) {
     return p.endsWith('/') ? p : p + '/';
 }
 
+/** Read a dotted path out of a plain object without throwing on any missing hop. */
+function readConfigPath(config, dottedPath) {
+    let node = config;
+    for (const key of dottedPath.split('.')) {
+        if (!node || typeof node !== 'object') return undefined;
+        node = node[key];
+    }
+    return node;
+}
+
 /**
- * Fixed feature/spec single-home root, trailing slash GUARANTEED.
+ * Resolve one token to its slash-free value. Fail-SOFT by construction: a blank,
+ * non-string, or repo-escaping configured value returns the documented default.
+ *
+ * @param {string} token - key of PORTABILITY_TOKENS
+ * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
+ * @returns {string} resolved slash-free root, or '' for an unknown token
+ */
+function resolvePortabilityToken(token, config) {
+    const spec = PORTABILITY_TOKENS[token];
+    if (!spec) return '';
+    const cfg = config || loadProjectConfig();
+    const normalized = normalizeRootPath(readConfigPath(cfg, spec.configPath));
+    if (!normalized || escapesRepoRoot(normalized)) return spec.default;
+    return normalized;
+}
+
+/**
+ * Business feature/spec root, trailing slash GUARANTEED.
+ *
+ * Resolves `specRoots.business.path`; falls back to `'docs/specs/'`. The trailing
+ * slash is part of the long-standing contract — callers such as
+ * `doc-sync-classify.cjs:30,131` CONSTRUCT paths from it — so it is preserved even
+ * though the `{SPEC_ROOT}` token resolves slash-free.
+ *
+ * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
  * @returns {string} e.g. 'docs/specs/'
  */
-function getSpecDocsPath() {
-    return ensureTrailingSlash(SPEC_DOCS_PATH);
+function getSpecDocsPath(config) {
+    return ensureTrailingSlash(resolvePortabilityToken('SPEC_ROOT', config));
+}
+
+/**
+ * Technical spec root, trailing slash GUARANTEED. Same contract as
+ * `getSpecDocsPath` over `specRoots.technical.path`; default `'docs/specs-technical/'`.
+ *
+ * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
+ * @returns {string} e.g. 'docs/specs-technical/'
+ */
+function getTechnicalSpecDocsPath(config) {
+    return ensureTrailingSlash(resolvePortabilityToken('SPEC_ROOT_TECHNICAL', config));
+}
+
+/**
+ * Resolve one of the 6 `docsRoots` keys — `projectReference`, `adr`, `templates`,
+ * `plans`, `teamArtifacts`, `productRoadmap`.
+ *
+ * Returns a SLASH-FREE root (`productRoadmap` returns a file path), so prose can
+ * compose `${getDocsRoot('plans')}/${planId}/` without producing `plans//`. An
+ * unknown key returns `''` rather than throwing — see the fail-soft note above.
+ *
+ * @param {string} key - docsRoots key
+ * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
+ * @returns {string} slash-free root, or '' for an unknown key
+ */
+function getDocsRoot(key, config) {
+    const token = DOCS_ROOT_TOKENS[key];
+    if (!token) return '';
+    return resolvePortabilityToken(token, config);
+}
+
+/**
+ * Resolve portability path tokens in text destined for the AI.
+ *
+ * Single source of truth — the Codex mirror generator
+ * (.claude/scripts/codex/sync-context-workflows.mjs) requires THIS function so both
+ * runtimes resolve identically.
+ *
+ * Unknown `{...}` sequences are left UNTOUCHED ON PURPOSE: `workflows.json` prose
+ * carries `{Bucket}`, `{FeatureName}`, `{plan-id}` and `{n}` placeholders that are
+ * instructions to the AI, not paths. Only the 8 keys of `PORTABILITY_TOKENS` are
+ * replaced.
+ *
+ * @param {string} text - raw text (workflow description / injectContext / whenToUse)
+ * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
+ * @returns {string} text with known tokens resolved; non-strings returned unchanged
+ */
+function resolvePortabilityTokens(text, config) {
+    if (typeof text !== 'string' || !text) return text;
+    if (!text.includes('{')) return text;
+    const cfg = config || loadProjectConfig();
+    return text.replace(/\{([A-Z][A-Z0-9_]*)\}/g, (match, token) =>
+        Object.prototype.hasOwnProperty.call(PORTABILITY_TOKENS, token)
+            ? resolvePortabilityToken(token, cfg)
+            : match
+    );
+}
+
+/**
+ * Runtime accessor for the optional native artifact contract.
+ *
+ * Hooks stay fail-soft when a config is absent, unreadable or malformed; the
+ * project-config schema CLI is the fail-closed validation plane for declarations.
+ * @param {object} [config] parsed project config; loaded when omitted
+ * @returns {object|null} immutable normalized profile, or null for default behavior
+ */
+function getSpecArtifactProfile(config) {
+    const source = config === undefined ? loadProjectConfig() : config;
+    try {
+        return require('./spec-artifact-profile.cjs').resolveSpecArtifactProfile(source);
+    } catch {
+        return null;
+    }
 }
 
 /**
@@ -331,46 +645,71 @@ function isMultilingualProject(config) {
 }
 
 /**
- * Check if a parsed project config has been populated with real values.
- * "Populated" = has a non-empty project.name AND at least one substantive section
- * (modules, services, contextGroups, framework with real name, testing, e2eTesting, styling, etc.)
- * This is generic — works for any project type (backend, frontend, full-stack, static site).
+ * Check whether the required project config exists and is schema-valid.
+ * Optional sections do not determine readiness; omitted sections use their
+ * documented defaults or capability-based skips.
  * @param {object} [config] - Parsed project-config.json. If omitted, loads from disk.
  * @returns {boolean}
  */
 function isConfigPopulated(config) {
-    if (config === undefined) config = loadProjectConfig();
-    if (!config || typeof config !== 'object') return false;
-    const hasName = config.project?.name?.trim().length > 0;
-    if (!hasName) return false;
+    if (config === undefined) return getProjectConfigStatus().valid;
+    return !!validateConfig(config).valid;
+}
 
-    // Check any substantive section is populated (not just modules/services)
-    const hasModules = Array.isArray(config.modules) && config.modules.length > 0;
-    const hasServices = !!(config.backendServices?.serviceMap && Object.keys(config.backendServices.serviceMap).some(k => k !== 'ExampleService'));
-    const hasContextGroups = Array.isArray(config.contextGroups) && config.contextGroups.length > 0;
-    const hasFramework = !!(config.framework?.name?.trim().length > 0 && config.framework.name !== 'ExampleFramework');
-    const hasTesting = !!(config.testing?.frameworks?.length > 0 || config.e2eTesting?.framework?.trim().length > 0);
-    const hasStyling = !!(config.styling?.technology?.trim().length > 0 || (config.scss?.appMap && Object.keys(config.scss.appMap).length > 0));
-    const hasFrontendApps = !!(config.frontendApps?.appMap && Object.keys(config.frontendApps.appMap).length > 0);
-    const hasLocalization = !!(config.localization && (Array.isArray(config.localization.supportedLocales) || Array.isArray(config.localization.translationFilePatterns)));
+/** Directory name of the knowledge workspace inside the resolved docs tree. */
+const KNOWLEDGE_DIR_NAME = 'knowledge';
 
-    return hasModules || hasServices || hasContextGroups || hasFramework || hasTesting || hasStyling || hasFrontendApps || hasLocalization;
+/**
+ * Knowledge workspace root, DERIVED from the resolved docs tree.
+ *
+ * The workspace is the `knowledge/` sibling of the project-reference root, so a project
+ * that relocates its docs to `documentation/reference` gets `documentation/knowledge`.
+ * Falls back to `docs/knowledge` when the reference root has no parent directory.
+ *
+ * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
+ * @returns {string} slash-free knowledge root, e.g. 'docs/knowledge'
+ */
+function getKnowledgeRoot(config) {
+    const referenceRoot = normalizeRootPath(getDocsRoot('projectReference', config));
+    const parent = referenceRoot.includes('/')
+        ? referenceRoot.slice(0, referenceRoot.lastIndexOf('/'))
+        : '';
+    if (!parent) return `docs/${KNOWLEDGE_DIR_NAME}`;
+    return `${parent}/${KNOWLEDGE_DIR_NAME}`;
 }
 
 /**
- * Check if a file path is in the knowledge workspace (docs/knowledge/).
- * Used by coding-specific hooks to skip injection on knowledge files.
+ * Is this file path inside the knowledge workspace?
+ *
+ * Used by coding-specific hooks to skip injection on knowledge files. Matching is
+ * SEGMENT-BOUNDARY (`isPathWithinRoot`), not a frozen `docs/knowledge` regex, so a
+ * relocated docs tree still routes and a sibling such as `docs/knowledge-archive/`
+ * no longer fails open into the workspace.
+ *
+ * Accepts a repo-relative path or an absolute path under the project root; an absolute
+ * path is reduced to its repo-relative form before comparison.
+ *
+ * @param {string} filePath - repo-relative or absolute path
+ * @param {object} [config] - parsed project-config.json; loaded + cached if omitted
+ * @returns {boolean}
  */
-const KNOWLEDGE_PATH_RE = /docs[\\/]knowledge[\\/]/i;
-function isKnowledgePath(filePath) {
+function isKnowledgePath(filePath, config) {
     if (!filePath) return false;
-    return KNOWLEDGE_PATH_RE.test(filePath.replace(/\\/g, '/'));
+    const normalized = normalizeRootPath(filePath);
+    if (!normalized) return false;
+    const root = getKnowledgeRoot(config);
+    if (isPathWithinRoot(normalized, root)) return true;
+    const repoRoot = normalizeRootPath(PROJECT_DIR);
+    if (repoRoot && normalized.toLowerCase().startsWith(`${repoRoot.toLowerCase()}/`)) {
+        return isPathWithinRoot(normalized.slice(repoRoot.length + 1), root);
+    }
+    return false;
 }
 
 /**
  * Generate a compact project structure summary from project-config.json.
  * 100% data-driven — no hardcoded project knowledge. Returns empty string
- * if config is not populated.
+ * if the config does not pass schema validation.
  * @param {object} [config] - Parsed config. If omitted, loads from disk.
  * @returns {string} Multi-line summary (~30-60 lines depending on config richness)
  */
@@ -510,7 +849,9 @@ module.exports = {
     CONFIG_PATH,
     getConfiguredProjectConfigPath,
     getConfiguredDocsIndexPath,
+    getProjectConfigStatus,
     loadProjectConfig,
+    readProjectConfigAt,
     buildRegexMap,
     buildPatternList,
     getModules,
@@ -522,7 +863,13 @@ module.exports = {
     isMultilingualProject,
     isConfigPopulated,
     isKnowledgePath,
+    getKnowledgeRoot,
     generateProjectSummary,
+    PORTABILITY_TOKENS,
+    resolvePortabilityToken,
     resolvePortabilityTokens,
-    getSpecDocsPath
+    getSpecArtifactProfile,
+    getSpecDocsPath,
+    getTechnicalSpecDocsPath,
+    getDocsRoot
 };

@@ -1,9 +1,11 @@
 #region
 
 using Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.EntityEventBusProducers;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
@@ -19,6 +21,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Entity
 // for SendByMessageSelfRoutingKey in Producer is True
 internal sealed class SnippetTextEntityEventBusConsumer : PlatformCqrsEntityEventBusMessageConsumer<TextSnippetEntityEventBusMessage, TextSnippetEntity>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public SnippetTextEntityEventBusConsumer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager uowManager,

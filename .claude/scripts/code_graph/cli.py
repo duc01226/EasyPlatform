@@ -31,6 +31,35 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+GRAPH_OFF_MESSAGE = "code graph is off for this project (hooks.codeGraph)"
+
+
+CODE_GRAPH_SETTINGS = ("auto", "on", "off")
+
+
+def _graph_mode_is_off(repo: str | None) -> bool:
+    """True when the hooks resolve the graph mode to off (graph-utils.cjs `codeGraphMode`).
+
+    Off: hooks.codeGraph.enabled is "off", a value outside auto|on|off, or a
+    codeGraph section that is not an object — validation rejects the last two,
+    and until the config is fixed the graph stays inert rather than guessing.
+    Omitted, "auto" and "on" are not off. The config is found the way the hooks
+    find it (see incremental.configured_project_config_path). Reads only the
+    project config; it never opens or creates graph.db.
+    """
+    from .incremental import find_project_root, load_project_config
+
+    root = Path(repo) if repo else find_project_root()
+    config = load_project_config(root)
+    hooks = config.get("hooks") if isinstance(config, dict) else None
+    if not isinstance(hooks, dict) or "codeGraph" not in hooks:
+        return False
+    section = hooks["codeGraph"]
+    if not isinstance(section, dict):
+        return True
+    enabled = section.get("enabled", "auto")
+    return not isinstance(enabled, str) or enabled not in CODE_GRAPH_SETTINGS or enabled == "off"
+
 
 def main() -> None:
     ap = argparse.ArgumentParser(
@@ -153,6 +182,8 @@ def main() -> None:
                         help="Comma-separated edge kinds to follow (default: all)")
     tr_cmd.add_argument("--node-mode", choices=["file", "function", "class", "all"],
                         default="all", help="Filter result nodes: file (overview), function, class, all (default)")
+    tr_cmd.add_argument("--max-nodes", type=int, default=500,
+                        help="Cap total nodes reached (default: 500) to bound fan-out")
     tr_cmd.add_argument("--no-compact", action="store_true", dest="no_compact", help="Disable compact mode (use verbose output)")
     tr_cmd.add_argument("--compact", action="store_true", default=True, help="(default) Compact output: relative paths, minimal metadata")
     tr_cmd.add_argument("--repo", default=None)
@@ -177,6 +208,14 @@ def main() -> None:
         return
 
     use_json = getattr(args, "json_output", False)
+    if _graph_mode_is_off(getattr(args, "repo", None)):
+        # Refuse before any command opens graph.db, so no caller reads a graph nobody keeps fresh.
+        if use_json:
+            print(json.dumps({"status": "off", "message": GRAPH_OFF_MESSAGE}, indent=2))
+        else:
+            print(GRAPH_OFF_MESSAGE, file=sys.stderr)
+        sys.exit(1)
+
     if not use_json:
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -288,7 +327,10 @@ def _dispatch(args) -> dict:
         result = build_or_update_graph(
             full_rebuild=False, repo_root=args.repo, base=args.base
         )
-        _auto_connect(args.repo, result)
+        # Only re-scan connectors when files were actually re-parsed — the
+        # connector pass walks the repo and cannot gain edges otherwise.
+        if result.get("files_reparsed", 0) > 0:
+            _auto_connect(args.repo, result)
         return result
     elif args.command == "sync":
         result = sync_graph(repo_root=args.repo)
@@ -342,6 +384,7 @@ def _dispatch(args) -> dict:
             edge_kinds=edge_kinds,
             node_mode=getattr(args, "node_mode", "all"),
             compact=getattr(args, "compact", False) and not getattr(args, "no_compact", False),
+            max_nodes=getattr(args, "max_nodes", 500),
         )
     elif args.command == "batch-query":
         _ensure_connectors_ran(args.repo)
@@ -501,7 +544,8 @@ def _ensure_connectors_ran(repo: str | None) -> None:
     ensuring frontend↔backend API edges are always available.
     """
     try:
-        from .graph import GraphStore
+        import sqlite3
+
         from .incremental import find_project_root, get_db_path
 
         root = Path(repo) if repo else find_project_root()
@@ -509,13 +553,17 @@ def _ensure_connectors_ran(repo: str | None) -> None:
         if not db_path.exists():
             return
 
-        store = GraphStore(db_path)
+        # Plain read-only connection: this only reads one metadata row, so it
+        # must not pay GraphStore's schema-init/PRAGMA/commit on every open.
+        conn = sqlite3.connect(str(db_path))
         try:
-            last_run = store.get_metadata("last_connect_api_run")
-            if last_run is not None:
+            row = conn.execute(
+                "SELECT value FROM metadata WHERE key=?", ("last_connect_api_run",)
+            ).fetchone()
+            if row is not None:
                 return  # Already ran — fast exit
         finally:
-            store.close()
+            conn.close()
 
         # Never ran — execute connectors now
         logger.info("API connectors never ran on this graph. Running now...")
@@ -595,7 +643,8 @@ def _generate_build_suggestions(config: dict, build_result: dict) -> list[str]:
 
         if not has_config:
             suggestions.append(
-                "No project-config.json found. Create one in docs/ or .claude/ "
+                "No project config found (docs/project-config.json, or the path "
+                ".claude/.ck.json names in portability.projectConfigPath). Add one "
                 "with graphConnectors.implicitConnections for framework-specific "
                 "edges (message bus, entity events, CQRS dispatch)."
             )

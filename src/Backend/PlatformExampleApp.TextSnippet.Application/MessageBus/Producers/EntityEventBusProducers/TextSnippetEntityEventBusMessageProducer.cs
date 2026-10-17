@@ -1,7 +1,9 @@
 using Easy.Platform.Application.MessageBus.Producers;
 using Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.EntityEventBusProducers;
@@ -9,6 +11,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.Entity
 public class TextSnippetEntityEventBusMessageProducer
     : PlatformCqrsEntityEventBusMessageProducer<TextSnippetEntityEventBusMessage, TextSnippetEntity, string>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public TextSnippetEntityEventBusMessageProducer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager unitOfWorkManager,

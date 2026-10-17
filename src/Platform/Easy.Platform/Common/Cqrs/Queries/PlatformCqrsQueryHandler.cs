@@ -30,10 +30,10 @@ namespace Easy.Platform.Common.Cqrs.Queries;
 /// - Support for paged and non-paged results
 /// 
 /// Used extensively across platform services:
-/// - Growth service: Employee queries, leave request lookups, attendance data
-/// - Employee service: Payroll queries, employee profile data
-/// - Talents service: Candidate searches, hiring pipeline queries
-/// - Permission Provider: Subscription queries, usage limit checks
+/// - Entity lookups over a consuming service's own data
+/// - Profile / detail queries
+/// - Search and pipeline-style list queries
+/// - Subscription queries and usage-limit checks
 /// 
 /// Handler discovery and registration is automatic through MediatR conventions.
 /// All queries should implement cache key building for optimal performance.

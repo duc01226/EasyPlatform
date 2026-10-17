@@ -5,6 +5,7 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import { resolvePythonCommand } from '../../../hooks/tests/lib/python-command.cjs';
 
 import { checkMainContentBeforeSyncBlocks } from '../verify-skill-protocol-compliance.mjs';
 
@@ -20,10 +21,10 @@ const goldenSkillFile = path.join(goldenSkillDir, 'SKILL.md');
 
 const normalizeEol = s => s.replace(/\r\n/g, '\n');
 
-test('TC-SLT-001: migrator docstring flags fence-blindness with story citation', async () => {
+test('TC-SLT-001: migrator docstring flags fence-blindness with a concrete fence-internal citation', async () => {
     const content = await fs.readFile(migratorScript, 'utf8');
     assert.match(content, /NOT\s+fence-aware/, "missing 'NOT fence-aware' caveat");
-    assert.ok(content.includes('story/SKILL.md'), 'missing story/SKILL.md citation');
+    assert.ok(content.includes('work-item/references/mode-story.md'), 'missing work-item/references/mode-story.md citation');
 });
 
 test('TC-SLT-005: migrator transforms indented input → canonical (round-trip)', async t => {
@@ -35,7 +36,10 @@ test('TC-SLT-005: migrator transforms indented input → canonical (round-trip)'
         await fs.rm(goldenSkillDir, { recursive: true, force: true });
     });
 
-    await execFileAsync('python', [migratorScript, '--only=__golden__'], { cwd: repoRoot });
+    const python = resolvePythonCommand({ cwd: repoRoot });
+    await execFileAsync(python.command, [...python.baseArgs, migratorScript, '--only=__golden__'], {
+        cwd: repoRoot, timeout: 10000, windowsHide: true
+    });
 
     const migrated = normalizeEol(await fs.readFile(goldenSkillFile, 'utf8'));
     const canonical = normalizeEol(await fs.readFile(canonicalPath, 'utf8'));

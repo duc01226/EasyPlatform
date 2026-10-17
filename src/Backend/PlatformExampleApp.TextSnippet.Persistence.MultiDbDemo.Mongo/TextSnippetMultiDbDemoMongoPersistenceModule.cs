@@ -14,6 +14,12 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo;
 /// </summary>
 public class TextSnippetMultiDbDemoMongoPersistenceModule : PlatformMongoDbPersistenceModule<TextSnippetMultiDbDemoDbContext>
 {
+    /// <summary>
+    /// This context is an application-internal multi-database demo. It owns repositories and migrations but has no
+    /// independent application lane, so it must not be inferred as a message-bus store in a strict composite root.
+    /// </summary>
+    public override bool EnableMessageBusStoreContribution => false;
+
     public TextSnippetMultiDbDemoMongoPersistenceModule(
         IServiceProvider serviceProvider,
         IConfiguration configuration) : base(serviceProvider, configuration)

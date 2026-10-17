@@ -25,10 +25,10 @@ namespace Easy.Platform.Common.Diagnostics;
 public static class PlatformMeter
 {
     /// <summary>
-    /// Canonical Meter name. MUST match the literal string passed to <c>AddMeter(...)</c> in
-    /// <c>BravoSuite.ServiceDefaults/Extensions.cs</c> <c>ConfigureOpenTelemetry</c> — drift causes
-    /// silent telemetry loss (OTel SDK simply does not subscribe to a meter whose name does not
-    /// match the literal). Edit BOTH sites together.
+    /// Canonical Meter name. The HOST APPLICATION must pass this exact literal to <c>AddMeter(...)</c> where it
+    /// configures OpenTelemetry — drift causes silent telemetry loss (the OTel SDK simply does not subscribe to a
+    /// meter whose name does not match the literal). Whenever this constant changes, every host that hard-codes the
+    /// string must change with it.
     /// </summary>
     public const string MeterName = "Easy.Platform";
 

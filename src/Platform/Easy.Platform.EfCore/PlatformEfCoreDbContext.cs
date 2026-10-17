@@ -902,6 +902,12 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                 // constraint-name inspection still see everything they did before.
                 catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
                 {
+                    // A failed insert/update remains tracked by EF as Added/Modified. Clear the failed state before
+                    // translating the exception so callers that intentionally recover from a duplicate-key race do
+                    // not cause the parent unit of work to retry the same write during completion.
+                    MappedUnitOfWork?.ClearCachedExistingOriginalEntity();
+                    ChangeTracker.Clear();
+
                     // No provider text is interpolated into the message, unlike the row-version sibling above. This
                     // message is copied VERBATIM into the HTTP 400 body (PlatformAspNetMvcErrorInfo.FromDomainException)
                     // and reaches the UI, and the Mongo half of this same exception type already carries no provider
@@ -2190,8 +2196,8 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
     /// <remarks>
     /// <para><strong>Recursive Navigation Property Detection:</strong></para>
     /// <list type="bullet">
-    /// <item><description>Recursively traverses navigation properties to handle nested chains (e.g., TimeLog.Employee.User)</description></item>
-    /// <item><description>Uses path-based keys to track navigation property hierarchy (e.g., "Employee", "Employee.User")</description></item>
+    /// <item><description>Recursively traverses navigation properties to handle nested chains (e.g., Order.Owner.User)</description></item>
+    /// <item><description>Uses path-based keys to track navigation property hierarchy (e.g., "Owner", "Owner.User")</description></item>
     /// <item><description>Prevents infinite recursion with visited entity tracking and configurable max depth</description></item>
     /// <item><description>Handles complex entity relationships and circular references safely</description></item>
     /// </list>

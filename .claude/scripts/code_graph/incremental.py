@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import fnmatch
 import hashlib
+import json
 import logging
 import os
 import subprocess
@@ -19,49 +20,252 @@ from .graph import GraphStore
 from .parser import CodeParser
 
 
-def find_project_config(root: Path) -> Optional[Path]:
-    """Find project-config.json by searching common locations.
+# ---------------------------------------------------------------------------
+# Project config location — the SAME resolution the hooks use.
+#
+# Mirrors `.claude/hooks/lib/ck-config-loader.cjs` (`loadConfig` layer order and
+# `sanitizeConfig`) and `.claude/hooks/lib/project-config-loader.cjs`
+# (`getConfiguredProjectConfigPath`, `getProjectConfigStatus`). Two readers of
+# one setting must agree, or the CLI answers graph queries in a project whose
+# hooks treat the graph as off. The cross-language parity suite
+# `.claude/hooks/tests/suites/code-graph-config-agreement.test.cjs` pins both.
+# ---------------------------------------------------------------------------
 
-    Searches in order: docs/, .claude/, project root, .ai/.
-    Returns the first match or None. Works for any project structure.
+DEFAULT_PROJECT_CONFIG_PATH = "docs/project-config.json"
+
+# Lowest priority first: user-global, project, project-local override.
+_CK_CONFIG_LAYERS = (
+    lambda root: Path.home() / ".claude" / ".ck.json",
+    lambda root: root / ".claude" / ".ck.json",
+    lambda root: root / ".claude" / ".ck.local.json",
+)
+
+
+def _reject_json_constant(name: str):
+    # JSON.parse rejects NaN/Infinity; json.loads accepts them unless told otherwise.
+    raise ValueError(f"invalid JSON constant {name}")
+
+
+def _read_json_file(path: Path):
+    """`loadConfigFromPath`: parsed JSON, or None when absent or unreadable."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        return json.loads(text, parse_constant=_reject_json_constant)
+    except (OSError, ValueError):
+        return None
+
+
+def _node_is_absolute(value: str) -> bool:
+    """`path.isAbsolute` of the host OS (Python 3.13 no longer treats a rooted Windows path as absolute)."""
+    if os.name == "nt":
+        return value[:1] in ("/", "\\") or (
+            len(value) >= 3 and value[0].isalpha() and value[1] == ":" and value[2] in ("/", "\\")
+        )
+    return value.startswith("/")
+
+
+def _sanitize_path(value, project_root: str) -> Optional[str]:
+    """`ck-path-utils.sanitizePath`: keep absolute values, reject relative values that escape the root."""
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().rstrip("/\\")
+    if not normalized or "\x00" in normalized:
+        return None
+    if _node_is_absolute(normalized):
+        return normalized
+    resolved = os.path.abspath(os.path.join(project_root, normalized))
+    if resolved != project_root and not resolved.startswith(project_root + os.sep):
+        return None
+    return normalized
+
+
+def configured_project_config_path(root: Path) -> Path:
+    """The project config path the hooks resolve, whether or not the file exists.
+
+    Precedence (highest first): `.claude/.ck.local.json`, `.claude/.ck.json`,
+    `~/.claude/.ck.json` — key `portability.projectConfigPath` — then the
+    default `docs/project-config.json`. A value that is not a string, is blank,
+    or is relative and escapes the project root falls back to the default.
     """
-    for subdir in ["docs", ".claude", ".", ".ai"]:
-        candidate = root / subdir / "project-config.json"
-        if candidate.is_file():
-            return candidate
-    return None
+    project_root = os.path.abspath(str(root))
+    declared = DEFAULT_PROJECT_CONFIG_PATH
+    portability_is_object = True
+    for layer_path in _CK_CONFIG_LAYERS:
+        layer = _read_json_file(layer_path(root))
+        # deepMerge ignores a falsy, primitive or array layer for the `portability` key.
+        if not isinstance(layer, dict) or "portability" not in layer:
+            continue
+        section = layer["portability"]
+        if isinstance(section, dict):
+            if "projectConfigPath" in section:
+                declared = section["projectConfigPath"]
+            elif not portability_is_object:
+                declared = None
+            portability_is_object = True
+        else:
+            # A non-object `portability` replaces the merged section; sanitizeConfig then
+            # finds no projectConfigPath and restores the default.
+            portability_is_object = False
+            declared = None
+    if not _sanitize_path(declared, project_root):
+        declared = DEFAULT_PROJECT_CONFIG_PATH
+    if _node_is_absolute(declared):
+        return Path(declared)
+    return Path(os.path.normpath(project_root + os.sep + declared))
+
+
+def find_project_config(root: Path) -> Optional[Path]:
+    """The configured project config file, or None when it does not exist."""
+    candidate = configured_project_config_path(root)
+    return candidate if candidate.is_file() else None
+
+
+_PROJECT_CONFIG_CACHE: dict[str, tuple[float, dict]] = {}
 
 
 def load_project_config(root: Path) -> dict:
-    """Load project-config.json if it exists. Returns {} if not found."""
-    import json
+    """Load the configured project config. Returns {} when missing, unreadable or not an object.
+
+    Cached per resolved path and mtime so the 2-3 reads in one invocation
+    parse the file once; a changed file (new mtime) is always re-read.
+    """
     config_path = find_project_config(root)
     if not config_path:
         return {}
     try:
-        return json.loads(config_path.read_text(encoding="utf-8", errors="replace"))
-    except (json.JSONDecodeError, OSError):
+        mtime = config_path.stat().st_mtime
+    except OSError:
         return {}
+    cache_key = str(config_path)
+    cached = _PROJECT_CONFIG_CACHE.get(cache_key)
+    if cached is not None and cached[0] == mtime:
+        return cached[1]
+    data = _read_json_file(config_path)
+    if not isinstance(data, dict):
+        return {}
+    _PROJECT_CONFIG_CACHE[cache_key] = (mtime, data)
+    return data
+
+
+def _call_noise_extra(repo_root: Path) -> Optional[dict]:
+    """Extract graphSettings.callNoiseFilter as {lang: frozenset} or None."""
+    config = load_project_config(repo_root)
+    noise_config = config.get("graphSettings", {}).get("callNoiseFilter", {})
+    if not noise_config:
+        return None
+    extra_noise = {
+        lang: frozenset(entries)
+        for lang, entries in noise_config.items()
+        if isinstance(entries, list) and entries
+    }
+    return extra_noise or None
+
+
+def _resolver_snapshot(repo_root: Path) -> Optional[dict]:
+    """Picklable module-resolution snapshot (aliases + workspace packages)."""
+    try:
+        from .resolver import build_resolver_snapshot
+        return build_resolver_snapshot(repo_root, load_project_config(repo_root))
+    except Exception as exc:  # noqa: BLE001 - resolution is best-effort
+        logger.warning("Module resolver unavailable (%s); using relative-only resolution", exc)
+        return None
 
 
 def _make_parser(repo_root: Path) -> CodeParser:
-    """Create a CodeParser with project-specific call noise filter.
+    """Create a CodeParser with project-specific call noise + module resolver.
 
-    Reads optional graphSettings.callNoiseFilter from project-config.json
-    and passes extra entries to the parser. Falls back to engine defaults
-    if no config exists.
+    Reads optional graphSettings.callNoiseFilter and discovers tsconfig path
+    aliases / workspace packages so imported symbols resolve to real files.
+    Falls back to engine defaults if no config exists.
     """
-    config = load_project_config(repo_root)
-    noise_config = config.get("graphSettings", {}).get("callNoiseFilter", {})
-    # Build dict[str, frozenset] from all language keys in config
-    extra_noise: dict[str, frozenset[str]] | None = None
-    if noise_config:
-        extra_noise = {
-            lang: frozenset(entries)
-            for lang, entries in noise_config.items()
-            if isinstance(entries, list) and entries
-        }
-    return CodeParser(call_noise_extra=extra_noise or None)
+    from .resolver import ModuleResolver
+
+    snapshot = _resolver_snapshot(repo_root)
+    resolver = ModuleResolver.from_snapshot(snapshot)
+    return CodeParser(
+        call_noise_extra=_call_noise_extra(repo_root),
+        module_resolver=resolver,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Parallel file parsing (F8)
+# ---------------------------------------------------------------------------
+
+_WORKER_NOISE: Optional[dict] = None
+_WORKER_RESOLVER_SNAPSHOT: Optional[dict] = None
+
+
+def _init_parse_worker(noise_extra: Optional[dict], resolver_snapshot: Optional[dict] = None) -> None:
+    global _WORKER_NOISE, _WORKER_RESOLVER_SNAPSHOT
+    _WORKER_NOISE = noise_extra
+    _WORKER_RESOLVER_SNAPSHOT = resolver_snapshot
+
+
+def _parse_job(job: tuple[str, str, Optional[str]]) -> tuple:
+    """Parse one file in a worker process.
+
+    Returns ``(rel_path, fhash, nodes, edges, error)``. When ``expected_hash``
+    matches the file's content hash, ``nodes``/``edges`` are ``None`` to signal
+    "unchanged, skip storing". The tree-sitter parser is created lazily inside
+    the worker (native objects are not picklable).
+    """
+    rel_path, abs_path, expected_hash = job
+    try:
+        from .parser import CodeParser  # lazy: workers only pay this when parsing
+        from .resolver import ModuleResolver
+
+        resolver = ModuleResolver.from_snapshot(_WORKER_RESOLVER_SNAPSHOT)
+        parser = CodeParser(call_noise_extra=_WORKER_NOISE, module_resolver=resolver)
+        path = Path(abs_path)
+        source = path.read_bytes()
+        fhash = hashlib.sha256(source).hexdigest()
+        if expected_hash is not None and fhash == expected_hash:
+            return (rel_path, fhash, None, None, None)
+        nodes, edges = parser.parse_bytes(path, source)
+        return (rel_path, fhash, nodes, edges, None)
+    except (OSError, PermissionError) as e:
+        return (rel_path, None, None, None, str(e))
+    except Exception as e:  # noqa: BLE001 - isolate a bad file from the batch
+        return (rel_path, None, None, None, str(e))
+
+
+def _parse_workers(n_jobs: int) -> int:
+    """Bounded worker count; ``CRG_PARSE_WORKERS`` overrides (1 disables)."""
+    raw = os.environ.get("CRG_PARSE_WORKERS")
+    if raw is not None:
+        try:
+            return max(1, int(raw))
+        except ValueError:
+            return 1
+    if n_jobs < 200:
+        return 1
+    return min(4, os.cpu_count() or 1)
+
+
+def _run_parse_jobs(
+    jobs: list[tuple],
+    noise_extra: Optional[dict],
+    resolver_snapshot: Optional[dict] = None,
+) -> list[tuple]:
+    """Run parse jobs with a bounded process pool, falling back to serial."""
+    workers = _parse_workers(len(jobs))
+    if workers <= 1:
+        _init_parse_worker(noise_extra, resolver_snapshot)
+        return [_parse_job(j) for j in jobs]
+    try:
+        from concurrent.futures import ProcessPoolExecutor
+
+        with ProcessPoolExecutor(
+            max_workers=workers,
+            initializer=_init_parse_worker,
+            initargs=(noise_extra, resolver_snapshot),
+        ) as executor:
+            return list(executor.map(_parse_job, jobs))
+    except Exception as exc:  # pragma: no cover - environment dependent
+        logger.warning("Parallel parse unavailable (%s); falling back to serial", exc)
+        _init_parse_worker(noise_extra, resolver_snapshot)
+        return [_parse_job(j) for j in jobs]
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +315,29 @@ def find_project_root(start: Path | None = None) -> Path:
     return start or Path.cwd()
 
 
+_INNER_GITIGNORE_CONTENT = (
+    "# Auto-generated by code-graph — do not commit database files.\n"
+    "# The graph.db contains repo-relative paths and code structure metadata.\n"
+    "*\n"
+)
+
+
+def _ensure_inner_gitignore(inner_gitignore: Path) -> None:
+    """Create the owned ignore file as UTF-8 and repair malformed legacy copies."""
+    if inner_gitignore.exists():
+        try:
+            inner_gitignore.read_bytes().decode("utf-8")
+            return
+        except UnicodeDecodeError:
+            pass
+
+    inner_gitignore.write_text(
+        _INNER_GITIGNORE_CONTENT,
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
 def get_db_path(repo_root: Path) -> Path:
     """Determine the database path for a repository.
 
@@ -125,14 +352,10 @@ def get_db_path(repo_root: Path) -> Path:
     # Ensure directory exists
     crg_dir.mkdir(exist_ok=True)
 
-    # Auto-create .gitignore inside the directory (idempotent)
+    # Auto-create .gitignore inside the directory and self-heal legacy files
+    # written with a Windows locale encoding.
     inner_gitignore = crg_dir / ".gitignore"
-    if not inner_gitignore.exists():
-        inner_gitignore.write_text(
-            "# Auto-generated by code-graph — do not commit database files.\n"
-            "# The graph.db contains repo-relative paths and code structure metadata.\n"
-            "*\n"
-        )
+    _ensure_inner_gitignore(inner_gitignore)
 
     # Migrate legacy database if present
     legacy_db = repo_root / ".code-graph.db"
@@ -167,7 +390,8 @@ def _should_ignore(path: str, patterns: list[str]) -> bool:
 def _is_binary(path: Path) -> bool:
     """Quick heuristic: check if file appears to be binary."""
     try:
-        chunk = path.read_bytes()[:8192]
+        with path.open("rb") as fh:
+            chunk = fh.read(8192)
         return b"\x00" in chunk
     except (OSError, PermissionError):
         return True
@@ -303,8 +527,9 @@ def find_dependents(store: GraphStore, file_path: str) -> list[str]:
 
 def full_build(repo_root: Path, store: GraphStore) -> dict:
     """Full rebuild of the entire graph."""
-    parser = _make_parser(repo_root)
     files = collect_all_files(repo_root)
+    noise_extra = _call_noise_extra(repo_root)
+    resolver_snapshot = _resolver_snapshot(repo_root)
 
     # Purge stale data from files no longer on disk
     existing_files = set(store.get_all_files())
@@ -312,27 +537,24 @@ def full_build(repo_root: Path, store: GraphStore) -> dict:
     for stale in existing_files - current_files:
         store.remove_file_data(stale)
 
+    jobs = [
+        (rel_path.replace("\\", "/"), str(repo_root / rel_path), None)
+        for rel_path in files
+    ]
+    results = _run_parse_jobs(jobs, noise_extra, resolver_snapshot)
+
     total_nodes = 0
     total_edges = 0
     errors = []
-    file_count = len(files)
-
-    for i, rel_path in enumerate(files, 1):
-        full_path = repo_root / rel_path
-        try:
-            source = full_path.read_bytes()
-            fhash = hashlib.sha256(source).hexdigest()
-            nodes, edges = parser.parse_bytes(full_path, source)
-            store.store_file_nodes_edges(rel_path.replace("\\", "/"), nodes, edges, fhash)
-            total_nodes += len(nodes)
-            total_edges += len(edges)
-        except (OSError, PermissionError) as e:
-            errors.append({"file": rel_path, "error": str(e)})
-        except Exception as e:
-            logger.warning("Error parsing %s: %s", rel_path, e)
-            errors.append({"file": rel_path, "error": str(e)})
-        if i % 50 == 0 or i == file_count:
-            logger.info("Progress: %d/%d files parsed", i, file_count)
+    for rel_path, fhash, nodes, edges, err in results:
+        if err:
+            logger.warning("Error parsing %s: %s", rel_path, err)
+            errors.append({"file": rel_path, "error": err})
+            continue
+        store.store_file_nodes_edges(rel_path, nodes or [], edges or [], fhash or "")
+        total_nodes += len(nodes or [])
+        total_edges += len(edges or [])
+    logger.info("Full build: %d/%d files stored", len(files) - len(errors), len(files))
 
     store.set_metadata("last_updated", time.strftime("%Y-%m-%dT%H:%M:%S"))
     store.set_metadata("last_build_type", "full")
@@ -390,7 +612,11 @@ def incremental_update(
     total_nodes = 0
     total_edges = 0
     errors = []
+    reparsed_files: set[str] = set()
 
+    noise_extra = _call_noise_extra(repo_root)
+    resolver_snapshot = _resolver_snapshot(repo_root)
+    jobs = []
     for rel_path in all_files:
         if _should_ignore(rel_path, ignore_patterns):
             continue
@@ -401,25 +627,24 @@ def incremental_update(
             continue
         if parser.detect_language(abs_path) is None:
             continue
+        jobs.append((
+            rel_path.replace("\\", "/"),
+            str(abs_path),
+            store.get_file_hash(rel_path.replace("\\", "/")),
+        ))
 
-        try:
-            source = abs_path.read_bytes()
-            fhash = hashlib.sha256(source).hexdigest()
-            # Check if file actually changed (compare against stored file_hash column)
-            existing_nodes = store.get_nodes_by_file(rel_path.replace("\\", "/"))
-            if existing_nodes and existing_nodes[0].file_hash == fhash:
-                # Skip unchanged files (hash match)
-                continue
-
-            nodes, edges = parser.parse_bytes(abs_path, source)
-            store.store_file_nodes_edges(rel_path.replace("\\", "/"), nodes, edges, fhash)
-            total_nodes += len(nodes)
-            total_edges += len(edges)
-        except (OSError, PermissionError) as e:
-            errors.append({"file": rel_path, "error": str(e)})
-        except Exception as e:
-            logger.warning("Error parsing %s: %s", rel_path, e)
-            errors.append({"file": rel_path, "error": str(e)})
+    for rel_path, fhash, nodes, edges, err in _run_parse_jobs(jobs, noise_extra, resolver_snapshot):
+        if err:
+            logger.warning("Error parsing %s: %s", rel_path, err)
+            errors.append({"file": rel_path, "error": err})
+            continue
+        if nodes is None:
+            # Unchanged file (content hash matched) — skip storing
+            continue
+        store.store_file_nodes_edges(rel_path, nodes, edges or [], fhash or "")
+        total_nodes += len(nodes)
+        total_edges += len(edges or [])
+        reparsed_files.add(rel_path)
 
     store.set_metadata("last_updated", time.strftime("%Y-%m-%dT%H:%M:%S"))
     store.set_metadata("last_build_type", "incremental")
@@ -428,11 +653,12 @@ def incremental_update(
         store.set_metadata("last_synced_commit", head)
     store.commit()
 
-    # Post-build: resolve bare CALLS targets against global node table
-    resolution_stats = store.resolve_bare_calls()
+    # Post-update: resolve bare CALLS, scoped to the files actually re-parsed
+    resolution_stats = store.resolve_bare_calls(reparsed_files)
 
     return {
         "files_updated": len(all_files),
+        "files_reparsed": len(reparsed_files),
         "total_nodes": total_nodes,
         "total_edges": total_edges,
         "changed_files": list(changed_files),
@@ -553,21 +779,23 @@ def sync_with_git(repo_root: Path, store: GraphStore) -> dict:
                     "synced_commit": current_head, "files_synced": 0}
         # Parse untracked files
         total_nodes, total_edges, errors = 0, 0, []
+        jobs = []
         for rel_path in untracked:
             if _should_ignore(rel_path, ignore_patterns):
                 continue
             abs_path = repo_root / rel_path
             if not abs_path.is_file() or parser.detect_language(abs_path) is None:
                 continue
-            try:
-                source = abs_path.read_bytes()
-                fhash = hashlib.sha256(source).hexdigest()
-                nodes, edges = parser.parse_bytes(abs_path, source)
-                store.store_file_nodes_edges(rel_path.replace("\\", "/"), nodes, edges, fhash)
-                total_nodes += len(nodes)
-                total_edges += len(edges)
-            except Exception as e:
-                errors.append({"file": rel_path, "error": str(e)})
+            jobs.append((rel_path.replace("\\", "/"), str(abs_path), None))
+        for rel_path, fhash, nodes, edges, err in _run_parse_jobs(
+            jobs, _call_noise_extra(repo_root), _resolver_snapshot(repo_root)
+        ):
+            if err:
+                errors.append({"file": rel_path, "error": err})
+                continue
+            store.store_file_nodes_edges(rel_path, nodes or [], edges or [], fhash or "")
+            total_nodes += len(nodes or [])
+            total_edges += len(edges or [])
         store.set_metadata("last_synced_commit", current_head)
         store.set_metadata("last_updated", time.strftime("%Y-%m-%dT%H:%M:%S"))
         store.commit()
@@ -605,6 +833,7 @@ def sync_with_git(repo_root: Path, store: GraphStore) -> dict:
 
     all_changed = diff["added"] + diff["modified"]
     total_nodes, total_edges, errors = 0, 0, []
+    reparsed_files: set[str] = set()
 
     # Remove deleted files from graph
     for rel_path in diff["deleted"]:
@@ -621,6 +850,7 @@ def sync_with_git(repo_root: Path, store: GraphStore) -> dict:
     all_to_parse = set(all_changed) | dependent_files
 
     # Parse changed/added/dependent files
+    jobs = []
     for rel_path in all_to_parse:
         if _should_ignore(rel_path, ignore_patterns):
             continue
@@ -629,19 +859,23 @@ def sync_with_git(repo_root: Path, store: GraphStore) -> dict:
             continue
         if parser.detect_language(abs_path) is None:
             continue
-        try:
-            source = abs_path.read_bytes()
-            fhash = hashlib.sha256(source).hexdigest()
-            # Hash-based skip — don't re-parse if content unchanged
-            existing = store.get_nodes_by_file(rel_path.replace("\\", "/"))
-            if existing and existing[0].file_hash == fhash:
-                continue
-            nodes, edges = parser.parse_bytes(abs_path, source)
-            store.store_file_nodes_edges(rel_path.replace("\\", "/"), nodes, edges, fhash)
-            total_nodes += len(nodes)
-            total_edges += len(edges)
-        except Exception as e:
-            errors.append({"file": rel_path, "error": str(e)})
+        jobs.append((
+            rel_path.replace("\\", "/"),
+            str(abs_path),
+            store.get_file_hash(rel_path.replace("\\", "/")),
+        ))
+    for rel_path, fhash, nodes, edges, err in _run_parse_jobs(
+        jobs, _call_noise_extra(repo_root), _resolver_snapshot(repo_root)
+    ):
+        if err:
+            errors.append({"file": rel_path, "error": err})
+            continue
+        if nodes is None:
+            continue  # unchanged (hash match)
+        store.store_file_nodes_edges(rel_path, nodes, edges or [], fhash or "")
+        total_nodes += len(nodes)
+        total_edges += len(edges or [])
+        reparsed_files.add(rel_path)
 
     store.set_metadata("last_synced_commit", current_head)
     store.set_metadata("last_updated", time.strftime("%Y-%m-%dT%H:%M:%S"))
@@ -650,8 +884,8 @@ def sync_with_git(repo_root: Path, store: GraphStore) -> dict:
 
     files_synced = len(all_changed) + len(diff["deleted"])
 
-    # Post-sync: resolve bare CALLS targets
-    resolution_stats = store.resolve_bare_calls() if files_synced > 0 else {}
+    # Post-sync: resolve bare CALLS, scoped to the files actually re-parsed
+    resolution_stats = store.resolve_bare_calls(reparsed_files) if reparsed_files else {}
     result = {
         "status": "ok", "reason": "synced",
         "synced_commit": current_head, "previous_commit": last_synced,
@@ -794,5 +1028,4 @@ def watch(repo_root: Path, store: GraphStore) -> None:
         observer.stop()
     observer.join()
     logger.info("Watch stopped.")
-
 

@@ -1,6 +1,8 @@
 using Easy.Platform.Application.MessageBus.Consumers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Application.MessageBus.FreeFormatMessages.RequestMessages;
 
 namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.FreeFormatConsumers.RequestHandlerConsumers;
@@ -16,6 +18,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.FreeFo
 /// </summary>
 internal sealed class DemoAskDoSomethingRequestBusMessageConsumer : PlatformApplicationMessageBusConsumer<DemoAskDoSomethingRequestBusMessage>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public DemoAskDoSomethingRequestBusMessageConsumer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager uowManager,

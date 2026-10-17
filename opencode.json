@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "opencode-go": {
+      "models": {
+        "deepseek-v4.1-flash": {
+          "options": {
+            "reasoningEffort": "high"
+          }
+        }
+      }
+    }
+  },
+  "model": "opencode-go/deepseek-v4.1-flash",
+  "compaction": {
+    "auto": true
+  },
+  "permission": {
+    "skill": {
+      "custom-agent": "deny",
+      "custom-prompt": "deny",
+      "docx-convert": "deny",
+      "git-developer-performance": "deny",
+      "pdf-convert": "deny",
+      "playwright-cli": "deny",
+      "presentation-builder": "deny",
+      "product-roadmap": "deny",
+      "project-help": "deny",
+      "remotion": "deny",
+      "scan-codebase-health": "deny",
+      "skill-creator": "deny",
+      "sync-opencode": "deny",
+      "sync-skills-shared-protocols": "deny",
+      "workflow-big-feature": "ask",
+      "workflow-greenfield-init": "ask",
+      "release-doc": "deny",
+      "task-track": "deny"
+    }
+  }
+}

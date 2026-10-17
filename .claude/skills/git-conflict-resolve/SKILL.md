@@ -1,13 +1,14 @@
 ---
 name: git-conflict-resolve
-version: 1.0.0
-description: '[Git] Use when you need to resolve git merge/cherry-pick/rebase conflicts with backup, analysis, and reporting.'
-disable-model-invocation: false
+version: 1.0.1
+description: '[Git] Use when resolving git merge, cherry-pick, rebase or stash-apply conflicts, with backup and analysis.'
 ---
 
 ## Quick Summary
 
 **Goal:** Resolve git merge/cherry-pick/rebase conflicts with backup, analysis, and structured reporting.
+
+**Summary:** Detect the operation and conflict paths → back up distinct paths → analyze both sides and callers → resolve → verify → hand off or continue under caller authority → report → final review. Preserve recovery files and the owning review/commit gate.
 
 **Workflow:**
 
@@ -24,6 +25,16 @@ disable-model-invocation: false
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Purpose](#purpose)
+- [Variables](#variables)
+- [Workflow](#workflow)
+- [Resolution Decision Framework](#resolution-decision-framework)
+- [Notes](#notes)
+- [Closing Reminders](#closing-reminders)
+
 ## Purpose
 
 Systematically resolve git conflicts (merge, cherry-pick, rebase) with:
@@ -36,8 +47,8 @@ Systematically resolve git conflicts (merge, cherry-pick, rebase) with:
 ## Variables
 
 OPERATION: auto-detect (cherry-pick, merge, rebase) from git state
-REPORT_PATH: `plans/reports/conflict-resolution-{date}-{operation}-{source}.md`
-BACKUP_PATH: `.ai/workspace/conflict-backups-{date}/`
+REPORT_PATH: `tmp/reports/conflict-resolution-{date}-{operation}-{source}.md`
+BACKUP_PATH: `tmp/conflict-backups-{date}/`
 
 ## Workflow
 
@@ -51,6 +62,8 @@ git status  # Check for "cherry-pick in progress", "merge in progress", etc.
 git diff --name-only --diff-filter=U  # Unmerged files (both modified)
 git status --short | grep "^DU\|^UD\|^UU\|^AA\|^DD"  # All conflict types
 ```
+
+**Which side is which.** The flags `--ours`/`--theirs`, and this skill's *target*/*source*, map by operation. Merge: ours = the branch you are on (target), theirs = the branch merged in (source). Cherry-pick and rebase: ours = the branch being built on (for a rebase, the upstream you replay onto), theirs = the commit being applied. Stash apply/pop: ours = the current branch, theirs = the stashed changes. A stash conflict shows no in-progress marker in `git status`, so take the operation from the caller. Choose what to keep from what each side holds, never from the flag name.
 
 Classify each conflict:
 
@@ -66,10 +79,9 @@ Classify each conflict:
 
 ```bash
 mkdir -p {BACKUP_PATH}
-
-# For each conflicted file, copy WITH conflict markers preserved
-cp <conflicted-file> {BACKUP_PATH}/<filename>.conflict
 ```
+
+Use the host's file APIs to copy each conflicted file's exact bytes, including markers, to `{BACKUP_PATH}/<repository-relative-path>.conflict`. Create its parent directories first and refuse to overwrite an existing backup. Preserve the full relative path: `src/a/config.json` and `src/b/config.json` must have separate backups. If a conflicted working-tree file is absent, record that absence and preserve the available index-stage versions before resolving it. Verify every saved copy before editing; a missing/failed backup blocks resolution. Use a new run directory when a prior backup already occupies the destination.
 
 Create a TaskCreate item for each conflicted file PLUS report and review tasks.
 
@@ -92,9 +104,11 @@ For each conflicted file, perform this analysis:
 git show <source-commit>:<file-path>
 
 # Optionally extract clean versions
-git show HEAD:<file-path> > {BACKUP_PATH}/<filename>.ours
-git show <source-commit>:<file-path> > {BACKUP_PATH}/<filename>.theirs
+git show HEAD:<file-path> > {BACKUP_PATH}/<repository-relative-path>.ours
+git show <source-commit>:<file-path> > {BACKUP_PATH}/<repository-relative-path>.theirs
 ```
+
+Create parent directories and reserve distinct, nonexisting paths before extracting these optional versions. Use host file/process APIs on Windows rather than assuming POSIX `mkdir` or redirection; a failed extraction is not a valid backup.
 
 #### 3c. Analyze dependencies
 
@@ -147,18 +161,11 @@ git diff --check
 git status
 ```
 
-### Step 6: Complete the operation
+### Step 6: Hand off or complete under Git authority
 
-```bash
-# For cherry-pick
-git cherry-pick --continue --no-edit
+Determine the owning caller and its authorized operation before any continuation that changes history. When invoked by `/pull-request` or another caller requiring review before commit, return the resolved/staged candidate, operation markers, exact scope, HEAD and pending continuation; leave HEAD unchanged until the caller’s review/commit gate. Conflict-resolution authorization alone never overrides that gate.
 
-# For merge
-git commit  # (merge commit is auto-prepared)
-
-# For rebase
-git rebase --continue
-```
+Standalone: confirm the existing user authorization covers the exact history-changing operation; if absent, report the ready candidate and request the missing authorization. Route a merge commit through `/commit` and its candidate-review/receipt contract, never raw `git commit`. For an authorized cherry-pick/rebase continuation, satisfy the owning review/candidate authority first; use a noninteractive editor (`GIT_EDITOR=true git cherry-pick --continue` or `GIT_EDITOR=true git rebase --continue` on POSIX; equivalent process environment on Windows), inspect exit status and operation markers after each continuation, and stop to resolve any new conflicts. Do not claim completion while an operation marker remains. Stash conflicts have no continue command; report resolved state without inventing one.
 
 ### Step 7: Generate report
 
@@ -222,93 +229,38 @@ Create a comprehensive report at `{REPORT_PATH}` with:
 
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ATTENTION ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting. This prevents context loss from long files. Keep task depth proportional to the work.
 
 **Prerequisites:** **MUST ATTENTION READ** before executing:
 
-<!-- SYNC:ai-mistake-prevention -->
+<!-- PROTOCOL-GUIDES:START -->
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
-<!-- /SYNC:ai-mistake-prevention -->
+- `understand-code-first` — Read and trace the target and existing patterns before changing code; planning or editing code → .claude/skills/shared/protocols/understand-code-first.md
 
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:understand-code-first -->
-
-> **Understand Code First** — HARD-GATE: Do NOT write, plan, or fix until you READ existing code.
->
-> 1. Search 3+ similar patterns (`grep`/`glob`) — cite `file:line` evidence
-> 2. Read existing files in target area — understand structure, base classes, conventions
-> 3. Run `python .claude/scripts/code_graph trace <file> --direction both --json` when `.code-graph/graph.db` exists
-> 4. Map dependencies via `connections` or `callers_of` — know what depends on your target
-> 5. Write investigation to `.ai/workspace/analysis/` for non-trivial tasks (3+ files)
-> 6. Re-read analysis file before implementing — never work from memory alone. — why: long context drifts from the file; the file is ground truth
-> 7. NEVER invent new patterns when existing ones work — match exactly or document deviation. — why: divergent patterns fragment the codebase and slow every future reader
->
-> **BLOCKED until:** `- [ ]` Read target files `- [ ]` Grep 3+ patterns `- [ ]` Graph trace (if graph.db exists) `- [ ]` Assumptions verified with evidence
-
-<!-- /SYNC:understand-code-first -->
+<!-- PROTOCOL-GUIDES:END -->
 
 <!-- SYNC:understand-code-first:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** search 3+ existing patterns and read code BEFORE any modification. Run graph trace when graph.db exists.
-  <!-- /SYNC:understand-code-first:reminder -->
+**IMPORTANT MUST ATTENTION** for code work, read the target and relevant conventions before planning or editing; seek 3+ fitting examples when available and record fewer/none. Do not impose code discovery on work with no code surface. The code graph is optional, stale-able advice for high-risk impact, never a requirement.
+
+<!-- /SYNC:understand-code-first:reminder -->
 
 <!-- SYNC:evidence-based-reasoning:reminder -->
 
-- **MANDATORY IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim. Confidence >80% to act, <60% = do NOT recommend.
-  <!-- /SYNC:evidence-based-reasoning:reminder -->
+**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim; never speculate. Confidence >80% to act, <60% = do NOT recommend; "not enough evidence" is valid output.
 
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
+<!-- /SYNC:evidence-based-reasoning:reminder -->
 
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Goal:** Resolve git merge/cherry-pick/rebase conflicts with backup, analysis, and structured reporting.
 
+**MUST ATTENTION Route:** detect → verify path-preserving backups → analyze both sides/callers → resolve → verify → authorized handoff/continuation → report → final review. Never overwrite recovery data or bypass the caller's review/commit gate.
+
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Critical Thinking:** critical + sequential thinking, traced proof, confidence >80% to act.
 - **Understand Code First:** search 3+ patterns and read code before any modification.
 
 - **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting

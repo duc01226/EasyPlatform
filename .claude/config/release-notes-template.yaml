@@ -1,14 +1,13 @@
 # Release Notes Template Configuration
 # Single source of truth for Claude skills
-# No generator script — when commit_mapping or sections change here, hand-sync .claude/skills/release-notes/README.md to match.
+# No generator script — when commit_mapping or sections change here, hand-sync .claude/skills/release-doc/README.md to match.
 
 version: 1.0.0
 
 metadata:
   output_dir: docs/release-notes
   filename_format: "YYMMDD-{slug}.md"
-  changelog_file: CHANGELOG.md
-  auto_save: true  # Both individual note and CHANGELOG are saved automatically
+  auto_save: true  # The release note is written to output_dir automatically
   legacy_dir: release-notes  # Historical notes location
 
 sections:

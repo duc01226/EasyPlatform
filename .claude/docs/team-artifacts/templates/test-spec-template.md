@@ -1,13 +1,13 @@
 ---
 id: TS-{YYMMDD}-{NNN}
 feature: '{Feature name}'
-source_pbi: '{PBI-XXXXXX-NNN}'
+source_task: '{TASK-XXXXXX-NNN}'
 author: '{QA Engineer name}'
 created: { YYYY-MM-DD }
 updated: { YYYY-MM-DD }
 status: draft | review | approved | executed
 coverage: { percentage }
-template_version: '1.0'
+template_version: '1.1'
 ---
 
 # Test Specification: {Feature Name}

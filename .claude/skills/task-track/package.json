@@ -1,0 +1,9 @@
+{
+  "name": "framework-task-track",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Optional offline work tracking tools and local workspace",
+  "engines": { "node": ">=18.0.0" },
+  "dependencies": { "yaml": "2.9.1" },
+  "devDependencies": { "playwright": "1.63.0" }
+}

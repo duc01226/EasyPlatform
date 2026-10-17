@@ -1,0 +1,633 @@
+{
+  "_description": "Delivery groups for the shared protocols in sync-inline-versions.md. Each canonical base tag belongs to exactly one group and carries a one-line summary and a when line, the text of a skill's guide line. node .claude/scripts/build-protocol-projection.cjs reads this file and writes .claude/skills/shared/protocols/<tag>.md plus protocols/index.json; --check fails when the projection is stale. A tag with no group, a group entry naming a tag the canonical file does not define, or a tag in two groups fails the build. universal is the hook-delivered bundle: its bins entry lists the ordered tags of each delivery message, and no skill or agent carries a universal tag. inlineSkills is empty: all skill entrypoints, including review-family skills, use protocol guides with full-text delivery and a required published-file fallback. A future full-body exception requires an explicit owner decision; guide mode never converts a listed exception and hooks never repeat its carried body. Agents, mode-reference SYNC carriers and fresh reviewer prompts retain their full protocol bodies. A tag entry may name a trigger (\"trigger\": \"<name>\") defined under deliveryTriggers: the protocol hooks then deliver the full text only when the trigger applies to the load (a skill listed in the trigger skills, a pattern match in the event text or the session prompts, a pathPattern match in the recent transcript), and the skill guide line stays the path otherwise; an unknown trigger name or an unusable pattern delivers unconditionally. A summary must not contain a semicolon, and neither line may contain the arrow character or a line break, because the guide line is '- `tag` — summary; when → path'.",
+  "version": 1,
+  "binChars": 9500,
+  "deliveryTriggers": {
+    "review-dispatch": {
+      "pattern": "\\b(?:spawn(?:ing)?|delegat(?:e|ed|ing|ion)|fresh reviewer|sub[- ]?agents?|parallel reviewers?)\\b",
+      "skills": [
+        "workflow-review-changes",
+        "changes-review"
+      ]
+    },
+    "capacity": {
+      "pattern": "\\b(?:performance|latency|throughput|bottlenecks?|capacity|scal(?:e|ing|ability)|cach(?:e|es|ing)|load[- ]test(?:s|ing)?|stress[- ]test(?:s|ing)?|rps|qps|concurrent users?|headroom)\\b",
+      "skills": [
+        "performance-review",
+        "performance-test",
+        "architecture",
+        "production-readiness-review"
+      ]
+    },
+    "ui": {
+      "pattern": "\\b(?:ui|ux|gui|front-?end|screens?|layouts?|css|scss|stylesheets?|html|widgets?|dialogs?|modals?|mockups?|wireframes?|visual|landing page|dashboard|responsive|typography|themes?|theming|dark mode|accessibility|a11y|buttons?|forms?|pages?|navigation|menus?|sidebars?|toolbars?|icons?|tooltips?|animations?|carousels?|hero|spinners?|skeleton (?:loaders?|loading|ui|placeholders?)|nav ?bars?|drop-?downs?|toasts?|snackbars?|tables?|grids?|charts?|cards?|components?|mobile|tab bar|tab panels?|tabbed|avatars?|badges?|design[- ]system|design[- ]spec|web ?pages?|user interface)\\b|\\.(?:tsx|jsx|vue|svelte|scss|sass|less|css|html?|razor|cshtml|xaml|axml|storyboard|xib)\\b",
+      "pathPattern": "\\.(?:tsx|jsx|vue|svelte|scss|sass|less|css|html?|razor|cshtml|xaml|axml|storyboard|xib)\\b|[\\\\/]res[\\\\/]layout",
+      "skills": [
+        "design-spec",
+        "feature-presentation",
+        "presentation-builder",
+        "ui-design",
+        "web-design-guidelines",
+        "workflow-spec-to-mockup"
+      ]
+    },
+    "domain-model": {
+      "pattern": "\\b(?:entit(?:y|ies)|aggregates?|value[- ]?objects?|domain[- ](?:models?|entit\\w*|events?|logic)|ddd|domain[- ]driven|bounded[- ]contexts?)\\b",
+      "pathPattern": "[\\\\/](?:domain|entities|aggregates|value[-_]?objects)[\\\\/]",
+      "skills": [
+        "domain-analysis"
+      ]
+    },
+    "documentation": {
+      "pattern": "\\b(?:(?:writ(?:e|ing)|creat(?:e|ing)|updat(?:e|ing)|edit(?:ing)?|audit(?:ing)?|review(?:ing)?|enhanc(?:e|ing))\\b[\\s\\S]{0,100}\\b(?:docs?|documentation|markdown|readme|reference[- ](?:docs?|documents?)|skills?)|table of contents|toc)\\b",
+      "skills": [
+        "ai-context-refresh",
+        "demo-guide",
+        "docs-manager",
+        "prompt-enhance",
+        "scan",
+        "scan-all",
+        "scan-codebase-health",
+        "skill-creator",
+        "understand"
+      ]
+    },
+    "review-operation": {
+      "pattern": "\\b(?:review|audit|auditing|assess(?:ment)?|findings?|readiness|challenge|dor|fix-loop|report-only|validate-findings)\\b",
+      "skills": []
+    },
+    "debug-operation": {
+      "pattern": "\\b(?:bugs?|bugfix|fix(?:es|ing)?|debug(?:ger|ging)?|regressions?|fail(?:ed|ure|ures|ing)?|errors?|crash(?:es|ing)?|root[- ]cause|behavio[u]?r[- ]chang(?:e|es|ing)|unclear (?:code )?flow|unexpected (?:output|behavior)|upstream[- ]first)\\b",
+      "skills": []
+    },
+    "service-boundary": {
+      "pattern": "\\b(?:microservices?|cross[- ]service|event[- ]driven|message[- ]bus|brokers?|sagas?|grpc|webhooks?|distributed|service[- ]to[- ]service|downstream consumers?)\\b",
+      "pathPattern": "\\.proto\\b|[\\\\/](?:consumers|sagas)[\\\\/]",
+      "skills": []
+    },
+    "stack-boundary": {
+      "pattern": "\\b(?:front-?end|back-?end|client|server|api|endpoints?|dto|http|request|response|cross[- ]stack|cross[- ]tier)\\b",
+      "skills": []
+    },
+    "graph-work": {
+      "pattern": "\\b(?:code[- ]graph|graph-code|blast[- ]radius|dependency graph|callers?|importers?|cross[- ]module|high[- ]risk|public[- ](?:api|contract))\\b",
+      "pathPattern": "[\\\\/]\\.code-graph[\\\\/]graph\\.db\\b",
+      "skills": []
+    },
+    "translation": {
+      "pattern": "\\b(?:translations?|translat(?:e|ing)|i18n|l10n|locali[sz](?:ation|e|ing)|multilingual|locales?)\\b",
+      "pathPattern": "[\\\\/](?:locales?|translations?|i18n|l10n)[\\\\/]",
+      "skills": []
+    },
+    "protocol-work": {
+      "pattern": "\\bprotocols?\\b|SYNC:|sync-inline-versions\\.md",
+      "skills": [
+        "sync-skills-shared-protocols"
+      ]
+    },
+    "ai-feature": {
+      "pattern": "\\b(?:llms?|rag|embeddings?|vector (?:stores?|search|db)|mcp|prompt[- ]injection|system prompts?|guardrails?|tool[- ]calling|function[- ]calling|ai[- ](?:features?|agents?|models?|assistants?)|openai|anthropic|gemini|chat ?bot|agentic|hallucinat\\w*|evals?|(?:chat)?gpt\\w*|copilot|claude (?:api|sdk|models?|sonnet|opus|haiku)|(?:using|with|via|calling) claude\\b(?! code)|(?<!sub[- ])agents? (?:using|with|calling)|models? (?:calls?|providers?|prompts?)|token budgets?|(?:chat|text|llm) completions?|completions? api)\\b",
+      "pathPattern": "[\\\\/](?:prompts?|llm|rag|embeddings?|guardrails?|mcp)[\\\\/]",
+      "skills": [
+        "ai-engineering-review"
+      ]
+    }
+  },
+  "groups": {
+    "review": {
+      "description": "How to run a review, rate findings and converge the fix and re-review loop.",
+      "tags": {
+        "behavioral-delta-matrix": {
+          "summary": "Before and after behavior table required before a bugfix review verdict",
+          "when": "reviewing a bugfix plan or change",
+          "trigger": "debug-operation"
+        },
+        "bug-detection": {
+          "summary": "Four bug-detection categories checked on every review",
+          "when": "reviewing code for defects"
+        },
+        "category-review-thinking": {
+          "summary": "Derive review concerns per category of changed files from domain knowledge",
+          "when": "reviewing a changeset that spans several file categories"
+        },
+        "cross-stack-impact-trace": {
+          "summary": "Trace the changed area end to end across the client-server seam before judging files",
+          "when": "starting a review of a diff that touches more than one tier",
+          "trigger": "stack-boundary"
+        },
+        "logic-and-intention-review": {
+          "summary": "Check that what the code does matches why it changed, with happy and error path traces",
+          "when": "reviewing a code change against its stated intent"
+        },
+        "review-decision-autonomy": {
+          "summary": "Choose supported review decisions and ask before extending the round budget",
+          "when": "running any review or audit skill or mode",
+          "trigger": "review-operation"
+        },
+        "review-policy": {
+          "summary": "Review-only or a three-round fix loop with explicit extension and fresh post-fix evidence",
+          "when": "deciding round eligibility, blocking findings or review state",
+          "trigger": "review-operation"
+        },
+        "review-principle-awareness": {
+          "summary": "Classify the change context first, then apply the current principles that fit it",
+          "when": "starting any review"
+        },
+        "review-protocol-injection": {
+          "summary": "Verbatim template and protocol blocks for every fresh sub-agent review prompt",
+          "when": "spawning a fresh sub-agent to review",
+          "trigger": "review-dispatch"
+        },
+        "severity-rubric": {
+          "summary": "One consequence-based Critical, High, Medium, Low scale for every finding and gate",
+          "when": "classifying a finding or deciding whether a review round passes"
+        },
+        "systematic-review-batching": {
+          "summary": "Triage all files and plan adaptive review with complete coverage and no fixed size caps",
+          "when": "choosing review assignments or handling working-set overflow"
+        },
+        "translation-sync-check": {
+          "summary": "Multilingual UI changes must include translation updates or an explicit user decision",
+          "when": "reviewing a change that touches user-visible text in a multilingual project",
+          "trigger": "translation"
+        },
+        "whole-diff-correctness": {
+          "summary": "Read a behavior-changing diff once as one change and hunt cross-file defects through real situations",
+          "when": "reviewing a behavior-changing diff"
+        }
+      }
+    },
+    "evidence-trace": {
+      "description": "Evidence, investigation, debugging, code-graph use and reasoning integrity.",
+      "tags": {
+        "cross-service-check": {
+          "summary": "Scan producers, consumers, sagas and shared contracts for cross-service impact",
+          "when": "concluding an investigation, plan or spec in a service-based system",
+          "trigger": "service-boundary"
+        },
+        "end-to-start-debugger-trace": {
+          "summary": "Walk backward from the observed end state through every feeder path before fixing",
+          "when": "investigating non-trivial bugs or failed verification, changing code behavior, or tracing unclear code flow",
+          "trigger": "debug-operation"
+        },
+        "environment-fault-hypothesis": {
+          "summary": "Weigh the environment as a competing cause, with a named discriminator",
+          "when": "judging a bug report, failing test, error or unexpected output"
+        },
+        "evidence-based-reasoning": {
+          "summary": "Ground every material claim in file:line, config or source evidence, with stated confidence",
+          "when": "making any claim, finding or recommendation"
+        },
+        "fix-layer-accountability": {
+          "summary": "Fix at the component that owns the violated contract, not at the crash site",
+          "when": "choosing where to apply a fix",
+          "trigger": "debug-operation"
+        },
+        "graph-assisted-investigation": {
+          "summary": "Optional hint: a code-graph query can add callers and dependents when grep may miss a high-risk blast radius, and it can be stale",
+          "when": "a high-risk change where grep and reading alone may miss the blast radius",
+          "trigger": "graph-work"
+        },
+        "graph-impact-analysis": {
+          "summary": "Optional blast-radius query that suggests files a high-risk change may affect, a hint that can be stale and never proof",
+          "when": "assessing the impact of a high-risk change while the code graph exists",
+          "trigger": "graph-work"
+        },
+        "judgement-integrity": {
+          "summary": "Anti-confirmation-bias gate for answers that confirm, refute, judge or hunt for gaps",
+          "when": "answering with a verdict, an evaluation or a root cause"
+        },
+        "knowledge-graph-template": {
+          "summary": "Per-file analysis record: type, pattern, symbols, dependencies and evidence",
+          "when": "documenting analyzed files during an investigation"
+        },
+        "rationalization-prevention": {
+          "summary": "Recognize and reject the evasions used to skip required steps",
+          "when": "tempted to skip a step, a test or a review"
+        },
+        "red-flag-stop-conditions": {
+          "summary": "Conditions that require stopping and escalating to the user",
+          "when": "debugging or testing stalls or the risk rises"
+        },
+        "root-cause-debugging": {
+          "summary": "Systematic root-cause debugging, never guess-and-check",
+          "when": "debugging a failure",
+          "trigger": "debug-operation"
+        },
+        "sequential-thinking-protocol": {
+          "summary": "Structured multi-step reasoning with revision, branch and hypothesis markers",
+          "when": "planning, debugging or reviewing complex or ambiguous work"
+        },
+        "trade-off-interrogation-gate": {
+          "summary": "Three trade-off questions before any verdict, score or recommendation",
+          "when": "rendering a verdict or recommending an option"
+        },
+        "understand-code-first": {
+          "summary": "Read and trace the target and existing patterns before changing code",
+          "when": "planning or editing code"
+        },
+        "web-research": {
+          "summary": "Structured web search for evidence gathering",
+          "when": "gathering external evidence from the web"
+        }
+      }
+    },
+    "workflow-task": {
+      "description": "Task tracking, planning, workflow execution, sub-agent orchestration, persistence and prompt craft.",
+      "tags": {
+        "agent-bootstrap": {
+          "summary": "Plan tasks first, keep one in progress and keep a progress file for long work",
+          "when": "an agent starts a task"
+        },
+        "context-engineering-principles": {
+          "summary": "Prompt clarity and semantic retention principles",
+          "when": "writing or enhancing prompts, skills or agents"
+        },
+        "decision-interview": {
+          "summary": "Brief the user, then ask every material decision as a decision card in dependency-ordered rounds",
+          "when": "asking the user to confirm, choose or validate decisions"
+        },
+        "estimation-framework": {
+          "summary": "Bottom-up estimation with derived effort points and a min-max range",
+          "when": "estimating effort"
+        },
+        "goal-contract-satisfaction-loop": {
+          "summary": "Save the goal in a file and loop until every saved criterion passes",
+          "when": "executing work against a user goal"
+        },
+        "incremental-persistence": {
+          "summary": "Persist results per file or section while the work proceeds",
+          "when": "a sub-agent or heavy step processes more than three files"
+        },
+        "iterative-phase-quality": {
+          "summary": "Use outcome phases for real boundaries, then review and verify once on the settled tree",
+          "when": "starting a plan"
+        },
+        "output-quality-principles": {
+          "summary": "Readable guidance and verified contents for long skill/doc files",
+          "when": "writing, updating or auditing a skill or reference document, or another Markdown artifact over 200 lines",
+          "trigger": "documentation"
+        },
+        "parallel-phase-advancement": {
+          "summary": "Run a declared parallel batch together and advance only after every member returns",
+          "when": "a workflow declares parallel steps"
+        },
+        "plan-granularity": {
+          "summary": "Outcome phases name decisions, boundaries and bounded discovery without replaying implementation",
+          "when": "breaking a plan into phases"
+        },
+        "plan-quality": {
+          "summary": "Plans decide direction, affected owners, risks and final proof without pre-writing implementation",
+          "when": "writing or reviewing a plan"
+        },
+        "preservation-inventory": {
+          "summary": "Table of behavior a bugfix plan must preserve, written before the implementation steps",
+          "when": "writing a bugfix plan",
+          "trigger": "debug-operation"
+        },
+        "prompt-enhancement-transforms-base": {
+          "summary": "Base transforms shared by every prompt-enhance operation",
+          "when": "running prompt-enhance"
+        },
+        "session-goal-ledger": {
+          "summary": "Keep the original goal and every user prompt of the session",
+          "when": "running a long or multi-prompt session"
+        },
+        "shared-protocol-duplication-policy": {
+          "summary": "Protocol copies in carriers are intentional: edit the canonical source, then propagate",
+          "when": "editing a shared protocol or its carriers",
+          "trigger": "protocol-work"
+        },
+        "sub-agent-selection": {
+          "summary": "Pick the sub-agent type from the routing guide",
+          "when": "choosing which sub-agent to spawn"
+        },
+        "subagent-return-contract": {
+          "summary": "Sub-agents return a structured envelope and a report path, never an inline report",
+          "when": "spawning a sub-agent"
+        },
+        "task-tracking-external-report": {
+          "summary": "Task breakdown before the work and report files written incrementally",
+          "when": "starting any multi-step skill, plan or review"
+        },
+        "workflow-registry-binding": {
+          "summary": "Read the workflow registry entry and the workflow skill together, since they must agree",
+          "when": "executing or editing a workflow"
+        }
+      }
+    },
+    "spec-test": {
+      "description": "Specs, test cases, tests and their execution, spec-test-code sync, requirement readiness and reference docs.",
+      "tags": {
+        "ai-sdd-artifact-contract": {
+          "summary": "Shared spec-driven development rules stay portable and source-owned",
+          "when": "authoring spec-driven artifacts"
+        },
+        "ba-team-decision-model": {
+          "summary": "Two-of-three BA vote and its escalation path",
+          "when": "a BA team must reach a decision"
+        },
+        "e2e-visual-design-contract": {
+          "summary": "Evidence and baseline rules for visual review in E2E and human QC",
+          "when": "handling visual-review evidence or visual baseline updates",
+          "trigger": "ui"
+        },
+        "experience-acceptance-contract": {
+          "summary": "Review and evidence contract for a user-facing or observable surface",
+          "when": "a change creates or changes a user-facing or observable surface"
+        },
+        "integration-test-execution-discipline": {
+          "summary": "How integration tests are written, reviewed, run, diagnosed and cleared",
+          "when": "working in the integration-test skill family"
+        },
+        "integration-test-sync-check": {
+          "summary": "Changed business logic has matching tests",
+          "when": "reviewing changed business logic"
+        },
+        "module-detection": {
+          "summary": "Detect the target module from keywords against the business spec root",
+          "when": "refining a task or an initiative"
+        },
+        "real-world-fidelity-testing": {
+          "summary": "Integration, E2E and system tests exercise real boundaries",
+          "when": "authoring, reviewing or repairing integration, E2E or system tests"
+        },
+        "refinement-dor-checklist": {
+          "summary": "Eight readiness-check criteria before planning",
+          "when": "challenging or refining a task"
+        },
+        "repeatable-test-principle": {
+          "summary": "Same contract result across fresh runs and supported concurrency",
+          "when": "writing or reviewing tests"
+        },
+        "scan-and-update-reference-doc": {
+          "summary": "Baseline-safe updates with semantic retention and truthful freshness",
+          "when": "scanning or updating a reference doc"
+        },
+        "source-test-drift-check": {
+          "summary": "When source behavior changes, reconcile the affected tests from evidence",
+          "when": "code, fix, test or review work changes behavior"
+        },
+        "spec-drift-adjudication": {
+          "summary": "Decide code-wrong versus spec-stale from evidence, never silently",
+          "when": "behavior diverges from its spec"
+        },
+        "spec-loop-discipline": {
+          "summary": "Spec, test and code loop discipline shared by the spec-driven workflows",
+          "when": "running a spec-driven workflow"
+        },
+        "spec-tests-code-triangulation": {
+          "summary": "Review spec, tests and code together for mutual consistency first",
+          "when": "reviewing behavior that has a spec"
+        },
+        "tc-test-join-evidence": {
+          "summary": "Prove that a test case resolves to an executing test",
+          "when": "linking test cases to test evidence"
+        },
+        "test-architecture-execution-contract": {
+          "summary": "Testability as an architecture condition: required test types and execution modes",
+          "when": "setting up or reviewing a test architecture"
+        },
+        "verify-last-order": {
+          "summary": "Build all phases and write tests, review statically, then verify once with a mutation check",
+          "when": "planning or running any code-changing task"
+        },
+        "test-data-isolation": {
+          "summary": "Tests stay independent across the supported concurrency modes",
+          "when": "writing stateful tests"
+        },
+        "test-failure-fault-adjudication": {
+          "summary": "Decide whether the source or the test is at fault before editing either",
+          "when": "a test fails",
+          "trigger": "debug-operation"
+        },
+        "test-spec-verification": {
+          "summary": "Map changed code to its test specifications",
+          "when": "reviewing or verifying changed behavior"
+        }
+      }
+    },
+    "design": {
+      "description": "Architecture and code design quality, engineering foundations and UI/UX design.",
+      "tags": {
+        "measured-capacity-engineering": {
+          "summary": "Model demand, reduce measured work safely and prove capacity before scaling",
+          "when": "planning, building, testing or reviewing hot paths, caches or capacity",
+          "trigger": "capacity"
+        },
+        "agent-code-standards": {
+          "summary": "Development rules: YAGNI, KISS, DRY, and read the pattern docs first",
+          "when": "an agent writes or changes code"
+        },
+        "ai-agent-as-user-access": {
+          "summary": "Treat an AI agent as a first-class machine actor with its own identity and authority",
+          "when": "creating a greenfield system or reviewing actor-facing architecture"
+        },
+        "ai-engineering-gate": {
+          "summary": "Thirty-eight AI-engineering clauses, AE-1.1 to AE-9.4: prompt contract, security, agents, retrieval, reliability, evals, operations, governance, UX",
+          "when": "planning, building or reviewing a feature that calls a model",
+          "trigger": "ai-feature"
+        },
+        "ai-feature-framing-gate": {
+          "summary": "Plan-time AI-feature framing AF-1 to AF-6: job and fit, eval first, blast radius, autonomy, data boundaries, operations",
+          "when": "planning or specifying a feature that uses an LLM, agent, RAG or ML model"
+        },
+        "ai-review-checklist": {
+          "summary": "Executable AI-feature review protocol AR-1 to AR-6: context, evidence, severity, sweeps, report, triage",
+          "when": "reviewing a plan or code that calls a model"
+        },
+        "complexity-prevention": {
+          "summary": "Change-cost lens on complexity (Ousterhout)",
+          "when": "designing or reviewing code"
+        },
+        "core-engineering-principles": {
+          "summary": "Core quality gate: easy to change, easy to scale, easy to maintain, judged by future change cost",
+          "when": "planning, implementing or reviewing any change"
+        },
+        "cross-cutting-quality": {
+          "summary": "Check cross-cutting concerns on changed paths against the declared architecture",
+          "when": "reviewing operational and cross-cutting concerns"
+        },
+        "design-distinctiveness-gate": {
+          "summary": "Design identity gate DD-1 to DD-8: subject, design plan, generic test, restraint",
+          "when": "designing, implementing or reviewing a visual surface",
+          "trigger": "ui"
+        },
+        "design-patterns-quality": {
+          "summary": "Design quality: one owner per rule, fitted patterns, no speculative abstraction",
+          "when": "designing or reviewing code structure"
+        },
+        "design-review-checklist": {
+          "summary": "Executable front-end design review protocol CL-1 to CL-6",
+          "when": "reviewing, planning or building front-end work",
+          "trigger": "ui"
+        },
+        "design-system-check": {
+          "summary": "Resolve design, accessibility and component references before UI work",
+          "when": "starting UI work"
+        },
+        "domain-entity-change-gate": {
+          "summary": "DDD entity, value object and aggregate change gate",
+          "when": "planning, implementing or reviewing a domain model change",
+          "trigger": "domain-model"
+        },
+        "engineering-foundation-gate": {
+          "summary": "Seven engineering-foundation dimensions judged by project profile",
+          "when": "creating or reviewing how a project is built, run, tested or checked"
+        },
+        "existing-ui-research": {
+          "summary": "Study the existing UI before designing or specifying a screen",
+          "when": "designing or specifying a new or updated screen"
+        },
+        "harness-setup": {
+          "summary": "Agent quality harness: feedforward guides and feedback sensors",
+          "when": "setting up an agent quality harness"
+        },
+        "scaffold-production-readiness": {
+          "summary": "Foundation areas a scaffold must cover or mark not applicable",
+          "when": "scaffolding a project foundation"
+        },
+        "scale-ready-foundation": {
+          "summary": "Scale-ready foundation and brownfield fit",
+          "when": "running greenfield init or a big feature"
+        },
+        "scale-technique-gate": {
+          "summary": "Which scale techniques a system warrants, and which it does not",
+          "when": "reviewing architecture or production readiness"
+        },
+        "scenario-stress-eval": {
+          "summary": "Judge the system under concrete failure and load scenarios",
+          "when": "evaluating resilience or production readiness"
+        },
+        "ui-copywriting": {
+          "summary": "User-visible strings are design content",
+          "when": "writing or reviewing UI text",
+          "trigger": "ui"
+        },
+        "ui-intent-layer": {
+          "summary": "Tech-agnostic UI intent layer in every UI-bearing spec",
+          "when": "writing a spec for a feature with a user interface",
+          "trigger": "ui"
+        },
+        "ui-system-context": {
+          "summary": "Resolve the project's UI conventions before a UI change",
+          "when": "changing a user-interface surface",
+          "trigger": "ui"
+        },
+        "ui-ux-design-principles": {
+          "summary": "Forty usability and accessibility clauses, UI-1.1 to UI-9.4",
+          "when": "designing, building or reviewing a user-facing interface",
+          "trigger": "ui"
+        },
+        "ui-wireframe": {
+          "summary": "Wireframe from the design inputs using the project's component owners",
+          "when": "sketching a user interface",
+          "trigger": "ui"
+        },
+        "ui-wireframe-protocol": {
+          "summary": "Wireframe protocol: inputs, representation and component inventory",
+          "when": "writing the wireframe of a design spec"
+        },
+        "ux-journey-gate": {
+          "summary": "Journey-first UX gate UX-1 to UX-11: report journeys, read the design authority, generate, then check every UI/UX gate",
+          "when": "generating, specifying, planning, mocking up or reviewing a user-facing surface",
+          "trigger": "ui"
+        },
+        "concise-agent-core": {
+          "summary": "Consolidated essential working and discovery contract",
+          "when": "concise universal delivery"
+        },
+        "concise-workflow-route": {
+          "summary": "Compact routing authority and catalog retrieval cues",
+          "when": "concise route delivery"
+        }
+      }
+    },
+    "universal": {
+      "description": "The universal bundle: the framework rules every task follows. No skill, agent, root instruction file or mirror carries it; the universal hook delivers it on the first prompt of a session, again after about 150K tokens of growth or a compaction, and at every sub-agent start. bins is the authored delivery layout: one entry per hook process, each the ordered tags of one message; the build fails when a bin overflows binChars, a tag is missing or a tag is listed twice.",
+      "bins": [
+        [
+          "critical-thinking-mindset",
+          "discovery-and-first-principles",
+          "project-reference-docs-guide",
+          "code-responsibility-hierarchy"
+        ],
+        [
+          "ai-mistake-prevention"
+        ],
+        [
+          "task-planning-rules",
+          "artifact-storage",
+          "workflow-step-advancement",
+          "evidence-investigation",
+          "canonical-ownership"
+        ],
+        [
+          "project-protocol-overlay",
+          "lesson-extraction-gate",
+          "quality-skill-routing",
+          "universal-closing-reminders"
+        ]
+      ],
+      "tags": {
+        "critical-thinking-mindset": {
+          "summary": "Critical and sequential thinking with traced proof for every claim",
+          "when": "delivered by the universal hook"
+        },
+        "ai-mistake-prevention": {
+          "summary": "Failure modes to avoid on every task",
+          "when": "delivered by the universal hook"
+        },
+        "discovery-and-first-principles": {
+          "summary": "Discovery order, search-first rule and first principles",
+          "when": "delivered by the universal hook"
+        },
+        "project-reference-docs-guide": {
+          "summary": "Read the project config and the right reference docs just in time",
+          "when": "delivered by the universal hook"
+        },
+        "code-responsibility-hierarchy": {
+          "summary": "Place logic with the owner the project architecture selects",
+          "when": "delivered by the universal hook"
+        },
+        "task-planning-rules": {
+          "summary": "Task breakdown, task-graph analysis and the session goal ledger",
+          "when": "delivered by the universal hook"
+        },
+        "artifact-storage": {
+          "summary": "Disposable generated output goes under the workspace tmp directory",
+          "when": "delivered by the universal hook"
+        },
+        "workflow-step-advancement": {
+          "summary": "Model-driven step advancement and the parallel-phase barrier",
+          "when": "delivered by the universal hook"
+        },
+        "evidence-investigation": {
+          "summary": "Evidence, confidence and investigation rules for every claim",
+          "when": "delivered by the universal hook"
+        },
+        "canonical-ownership": {
+          "summary": "Edit sources, never generated mirrors",
+          "when": "delivered by the universal hook"
+        },
+        "project-protocol-overlay": {
+          "summary": "Resolve the additive project overlays for the running skill",
+          "when": "delivered by the universal hook"
+        },
+        "lesson-extraction-gate": {
+          "summary": "Extract root-cause lessons at the end of a non-trivial task",
+          "when": "delivered by the universal hook"
+        },
+        "quality-skill-routing": {
+          "summary": "Route review, test and failure work to the project's registered skills first",
+          "when": "delivered by the universal hook"
+        },
+        "universal-closing-reminders": {
+          "summary": "Closing reminders that restate the universal rules",
+          "when": "delivered by the universal hook"
+        }
+      }
+    }
+  },
+  "inlineSkills": []
+}

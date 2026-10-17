@@ -216,9 +216,9 @@ public class PlatformApplicationMessageBusConsumerDefaultsTests : PlatformUnitTe
         // concrete consumer's `override` targeted the redeclared slot, while CheckHandleWhen — the method the pipeline
         // actually calls at PlatformMessageBusConsumer.cs:381 — is compiled inside PlatformMessageBusConsumer<TMessage>
         // and bound the ORIGINAL slot, whose body is the unconditional `return true` (:422).
-        // Real consequence, now fixed: entity-event consumers that filter (for example
-        // src/Services/CandidateApp/.../InvitationEntityEventBusConsumer.cs:49-52, which intends to handle only
-        // CrudAction == Updated) had their filter bypassed and handled Created and Deleted events too. Nothing threw;
+        // Real consequence, now fixed: any consuming service's entity-event consumer that filters (for example one
+        // that overrides HandleWhen to accept only CrudAction == Updated) had its filter bypassed and handled Created
+        // and Deleted events too. Nothing threw;
         // the filter was simply inert — which is precisely why only a test like this one can catch it.
         // The consumer below declares the filter as emphatically as possible — it ALWAYS says no — so a gate that
         // returned true could not be explained by anything except dispatching through the wrong slot.

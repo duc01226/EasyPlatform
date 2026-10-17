@@ -3,11 +3,26 @@
  * Provides async and sync methods for hook execution
  */
 
-const { spawn, execSync } = require('child_process');
+const { spawn, spawnSync, execSync } = require('child_process');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
+
+// .claude/hooks/tests/lib -> repository root (owner of the generated `.codex/hooks.json` mirror).
+const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+const HOOKS_DIR = path.resolve(__dirname, '..', '..');
 
 // Default timeout for hook execution (10 seconds)
 const DEFAULT_TIMEOUT = 10000;
+
+/**
+ * A test cwd is an explicit fixture boundary.  Do not walk above it looking for
+ * a user-level `.claude` directory: that would make a copied-hook test mutate
+ * the host repository instead of the fixture under test.
+ */
+function fixtureProjectRoot(cwd) {
+  return path.resolve(cwd);
+}
 
 /**
  * Run a hook asynchronously with JSON input via stdin
@@ -23,9 +38,19 @@ async function runHook(hookPath, input, options = {}) {
   const timeout = options.timeout || DEFAULT_TIMEOUT;
 
   return new Promise((resolve) => {
-    const env = { ...process.env, ...options.env };
+    // A suite may execute a copied hook with `cwd` set to an isolated fixture
+    // while the runner process itself has a framework-level CLAUDE_PROJECT_DIR.
+    // The explicit fixture boundary wins; never inherit or discover a user-level
+    // `.claude` ancestor, otherwise cleanup tests mutate the host repository.
+    const cwd = options.cwd || process.cwd();
+    const fixtureRoot = fixtureProjectRoot(cwd);
+    const env = {
+      ...process.env,
+      ...(options.cwd ? { CLAUDE_PROJECT_DIR: fixtureRoot } : {}),
+      ...options.env
+    };
     const proc = spawn('node', [hookPath], {
-      cwd: options.cwd || process.cwd(),
+      cwd,
       env,
       stdio: ['pipe', 'pipe', 'pipe']
     });
@@ -101,7 +126,11 @@ function runHookSync(hookPath, input, options = {}) {
   try {
     const stdout = execSync(`node "${hookPath}"`, {
       cwd: options.cwd || process.cwd(),
-      env: { ...process.env, ...options.env },
+      env: {
+        ...process.env,
+        ...(options.cwd ? { CLAUDE_PROJECT_DIR: fixtureProjectRoot(options.cwd) } : {}),
+        ...options.env
+      },
       input: inputJson,
       timeout,
       encoding: 'utf8',
@@ -156,7 +185,7 @@ async function runHooksParallel(hooks, options = {}) {
 
 /**
  * Get the absolute path to a hook in the hooks directory
- * @param {string} hookName - Hook filename (e.g., 'privacy-block.cjs')
+ * @param {string} hookName - Hook filename (e.g., 'doc-sync-gate.cjs')
  * @returns {string} Absolute path to the hook
  */
 function getHookPath(hookName) {
@@ -261,6 +290,107 @@ function createSessionEndInput(source) {
   };
 }
 
+/**
+ * The exact command string the generated Codex mirror (`.codex/hooks.json`) runs for `hookFile`:
+ * `node -e "…require(path.join(root, hookPath))" -- <hookPath>`, where `require.main` is undefined.
+ * @param {string} hookFile - Hook filename under `.claude/hooks/` (e.g. 'review-commit-gate.cjs')
+ * @returns {string|null} The first mirrored command wiring that hook, or null when none does
+ */
+function codexLauncherCommand(hookFile) {
+  const codexHooks = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, '.codex', 'hooks.json'), 'utf8'));
+  const commands = Object.values(codexHooks.hooks || {})
+    .flat()
+    .flatMap(group => (group.hooks || []).map(h => h.command || ''));
+  return commands.find(c => c.includes(`.claude/hooks/${hookFile}`)) || null;
+}
+
+/**
+ * Run a hook through the Codex launcher shape. The launcher resolves the project root as the
+ * nearest `.claude` ancestor of `cwd`, chdirs there and requires `<root>/.claude/hooks/<hookFile>`,
+ * so `cwd` selects WHICH hook tree runs (the repository by default, or a fixture project).
+ * @param {string} hookFile - Hook filename under `.claude/hooks/`
+ * @param {string} stdin - Raw stdin payload (usually JSON)
+ * @param {object} [options] - { cwd, env, timeout }
+ * @returns {{code: number|null, stdout: string, stderr: string, command: string}}
+ */
+function runCodexLauncher(hookFile, stdin, options = {}) {
+  const command = codexLauncherCommand(hookFile);
+  if (!command) throw new Error(`.codex/hooks.json must wire ${hookFile}`);
+  if (!command.includes('node -e')) throw new Error(`Codex command for ${hookFile} is not the node -e launcher: ${command}`);
+  const result = spawnSync(command, {
+    cwd: options.cwd || REPO_ROOT,
+    env: childEnv(options.env),
+    input: stdin,
+    encoding: 'utf8',
+    shell: true,
+    windowsHide: true,
+    timeout: options.timeout || 30000
+  });
+  return { code: result.status, stdout: result.stdout || '', stderr: result.stderr || '', command };
+}
+
+/**
+ * A child-process environment: `base` overlaid by `overrides`, where an `undefined` override DELETES the key
+ * instead of passing it on. Windows env names are case-insensitive, so a deletion there removes every casing.
+ * Tests use it to keep a developer's own switches (e.g. `CK_COMMIT_SKILL_ROUTE=0`) out of a child hook.
+ * @param {object} [overrides] - Keys to set, or to delete when the value is `undefined`
+ * @param {object} [base] - Environment to start from (defaults to `process.env`)
+ * @returns {object} A fresh environment object
+ */
+function childEnv(overrides = {}, base = process.env) {
+  const env = { ...base };
+  const sameName = (a, b) => (process.platform === 'win32' ? a.toUpperCase() === b.toUpperCase() : a === b);
+  for (const [key, value] of Object.entries(overrides || {})) {
+    for (const existing of Object.keys(env)) {
+      if (sameName(existing, key)) delete env[existing];
+    }
+    if (value !== undefined) env[key] = value;
+  }
+  return env;
+}
+
+/**
+ * A temp project root holding a COPY of the hook tree (no suites, notifications or node_modules) at
+ * `.claude/hooks`. The Codex launcher runs the tree under the nearest `.claude` ancestor of its cwd and sets
+ * CLAUDE_PROJECT_DIR to it, so a launcher run from this root never reads the repository's own settings.
+ * @param {string} prefix - Temp directory name fragment
+ * @returns {string} The fixture root; remove it with `removeTempDir`
+ */
+function makeHookTreeProject(prefix) {
+  const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), `codex-launcher-${prefix}-`)));
+  const skip = new Set(['tests', 'notifications', 'node_modules']);
+  fs.cpSync(HOOKS_DIR, path.join(root, '.claude', 'hooks'), {
+    recursive: true,
+    filter: source => !skip.has(path.basename(source)) || path.dirname(source) !== HOOKS_DIR
+  });
+  // Prompt routers share the runtime preference resolver with the script surfaces.
+  fs.cpSync(path.join(REPO_ROOT, '.claude', 'scripts', 'lib'), path.join(root, '.claude', 'scripts', 'lib'), { recursive: true });
+  return root;
+}
+
+/** Remove a directory created under the OS temp root; anything outside it is left untouched. */
+function removeTempDir(dir) {
+  if (!dir) return;
+  let resolvedDir;
+  try { resolvedDir = fs.realpathSync.native(dir); } catch { return; }
+  const tempRoot = fs.realpathSync.native(os.tmpdir());
+  const relative = path.relative(tempRoot, resolvedDir);
+  if (relative && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative)) {
+    fs.rmSync(resolvedDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  }
+}
+
+/**
+ * Record `prompts` (oldest first) as the session's user prompts in the project's prompt ledger, the
+ * store the prompt routers read at sub-agent start and after a compaction.
+ */
+function recordUserPrompts(projectDir, sessionId, prompts) {
+  const store = require('../../lib/prompt-ledger-store.cjs');
+  let ledger = null;
+  for (const prompt of prompts) ledger = store.appendPrompt(ledger, prompt, { sessionId }).ledger;
+  store.writeLedger(store.sessionDir(store.storeRoot({}, projectDir), sessionId), ledger);
+}
+
 module.exports = {
   runHook,
   runHookSync,
@@ -274,5 +404,11 @@ module.exports = {
   createSubagentStartInput,
   createPreCompactInput,
   createSessionEndInput,
+  codexLauncherCommand,
+  runCodexLauncher,
+  childEnv,
+  makeHookTreeProject,
+  removeTempDir,
+  recordUserPrompts,
   DEFAULT_TIMEOUT
 };

@@ -17,12 +17,14 @@ public class PlatformInboxConfig
     public double RetryProcessFailedMessageInSecondsUnit { get; set; } = PlatformInboxBusMessage.DefaultRetryProcessFailedMessageInSecondsUnit;
 
     /// <summary>
-    /// To config how long a processed message can live in the database in seconds. Default is one week (14 days);
+    /// Retains processed messages for this many seconds after successful consumption. Default is 14 days.
+    /// Configure a window longer than the maximum expected redelivery/retry horizon to preserve deduplication.
     /// </summary>
     public double DeleteProcessedMessageInSeconds { get; set; } = TimeSpan.FromDays(14).TotalSeconds;
 
     /// <summary>
-    /// To config max store processed message count. Will delete old messages of maximum messages happened
+    /// Legacy configuration member retained for compatibility. Inbox cleanup ignores this count so high throughput
+    /// cannot shorten deduplication retention. Use <see cref="DeleteProcessedMessageInSeconds"/> instead.
     /// </summary>
     public int MaxStoreProcessedMessageCount { get; set; } = 100;
 

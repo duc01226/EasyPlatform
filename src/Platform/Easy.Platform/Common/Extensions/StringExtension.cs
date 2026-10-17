@@ -258,7 +258,7 @@ public static class StringExtension
     /// Unmatched placeholders are left as-is.
     /// </summary>
     /// <example>
-    /// "Dear {{Candidate_Name}}".ReplacePlaceholders(new() { ["Candidate_Name"] = "John" })
+    /// "Dear {{Recipient_Name}}".ReplacePlaceholders(new() { ["Recipient_Name"] = "John" })
     /// → "Dear John"
     /// </example>
     private static readonly Regex PlaceholderRegex = new(@"\{\{\s*([^}]+?)\s*\}\}", RegexOptions.Compiled);

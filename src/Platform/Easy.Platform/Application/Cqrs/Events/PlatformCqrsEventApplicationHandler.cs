@@ -1,8 +1,11 @@
 #region
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Easy.Platform.Application.Cqrs.Events.InboxSupport;
 using Easy.Platform.Application.MessageBus.InboxPattern;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Cqrs.Events;
@@ -972,36 +975,44 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
                         if (@event is IPlatformUowEvent && eventSourceUow != null && !eventSourceUow.IsPseudoTransactionUow())
                         {
+                            var (routeConfig, routeRepository, routeRepositoryFactory, routeStoreKey, routeApplicationName) =
+                                ResolveInboxMessageBusRoute(ServiceProvider);
+
                             await HandleExecutingInboxConsumerAsync(
                                 @event,
                                 ServiceProvider,
-                                ServiceProvider.GetRequiredService<PlatformInboxConfig>(),
-                                ServiceProvider.GetRequiredService<IPlatformInboxBusMessageRepository>(),
+                                routeConfig,
+                                routeRepository,
                                 ServiceProvider.GetRequiredService<IPlatformApplicationSettingContext>(),
                                 currentBusMessageIdentity,
                                 eventSourceUow,
-                                cancellationToken
+                                cancellationToken,
+                                messageBusStoreKey: routeStoreKey,
+                                messageBusApplicationName: routeApplicationName,
+                                inboxBusMessageRepositoryFactory: routeRepositoryFactory
                             );
                         }
                         else
                         {
-                            await ServiceProvider.ExecuteInjectScopedAsync((
-                                    IServiceProvider serviceProvider,
-                                    PlatformInboxConfig inboxConfig,
-                                    IPlatformInboxBusMessageRepository inboxMessageRepository,
-                                    IPlatformApplicationSettingContext applicationSettingContext
-                                ) =>
-                                HandleExecutingInboxConsumerAsync(
+                            await ServiceProvider.ExecuteInjectScopedAsync((IServiceProvider serviceProvider) =>
+                            {
+                                var (routeConfig, routeRepository, routeRepositoryFactory, routeStoreKey, routeApplicationName) =
+                                    ResolveInboxMessageBusRoute(serviceProvider);
+
+                                return HandleExecutingInboxConsumerAsync(
                                     @event,
                                     serviceProvider,
-                                    inboxConfig,
-                                    inboxMessageRepository,
-                                    applicationSettingContext,
+                                    routeConfig,
+                                    routeRepository,
+                                    serviceProvider.GetRequiredService<IPlatformApplicationSettingContext>(),
                                     currentBusMessageIdentity,
                                     null,
-                                    cancellationToken
-                                )
-                            );
+                                    cancellationToken,
+                                    messageBusStoreKey: routeStoreKey,
+                                    messageBusApplicationName: routeApplicationName,
+                                    inboxBusMessageRepositoryFactory: routeRepositoryFactory
+                                );
+                            });
                         }
                     }
                     else
@@ -1711,7 +1722,69 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     /// <returns><c>true</c> if inbox message support is enabled; otherwise, <c>false</c>.</returns>
     protected bool HasInboxMessageSupport()
     {
-        return RootServiceProvider.CheckHasRegisteredScopedService<IPlatformInboxBusMessageRepository>() && EnableInboxEventBusMessage;
+        // Check the opt-in flag first: handlers that never use the inbox must not require a store route.
+        if (!EnableInboxEventBusMessage)
+            return false;
+
+        var messageBusRoute = ResolveMessageBusRoute();
+
+        return messageBusRoute.HasValue
+            ? messageBusRoute.Value.Descriptor.IsInboxEnabled
+            : RootServiceProvider.CheckHasRegisteredScopedService<IPlatformInboxBusMessageRepository>();
+    }
+
+    /// <summary>
+    /// Resolves the message-bus descriptor and lane that own this event handler. The handler assembly is the
+    /// application ownership boundary used by module composition validation and avoids the process-wide default
+    /// store when several application modules share one API host.
+    /// </summary>
+    private (PlatformMessageBusStoreDescriptor Descriptor, PlatformMessageBusApplicationLaneRegistration Lane)? ResolveMessageBusRoute()
+    {
+        // Hot path: HasInboxMessageSupport / RetryOnFailedDelaySeconds / inbox routing all ask for the route per event.
+        // The per-instance holder makes repeated calls on one handler free (legacy hosts cache "no route" too), and the
+        // per-registry table shares resolution across transient handler instances. Keying by registry instance keeps
+        // hosts and tests with different registries isolated. A failed resolution throws and is never cached.
+        var cachedRoute = resolvedMessageBusRoute;
+        if (cachedRoute != null)
+            return cachedRoute.Route;
+
+        cachedRoute = PlatformCqrsEventHandlerMessageBusRouteCache.Resolve(
+            RootServiceProvider.GetService<IPlatformMessageBusStoreRegistry>(),
+            GetType());
+
+        resolvedMessageBusRoute = cachedRoute;
+
+        return cachedRoute.Route;
+    }
+
+    private PlatformCqrsEventHandlerMessageBusRouteCache.RouteHolder? resolvedMessageBusRoute;
+
+    private (
+        PlatformInboxConfig Config,
+        IPlatformInboxBusMessageRepository Repository,
+        Func<IServiceProvider, IPlatformInboxBusMessageRepository> RepositoryFactory,
+        PlatformMessageBusStoreKey? StoreKey,
+        string ApplicationName) ResolveInboxMessageBusRoute(IServiceProvider serviceProvider)
+    {
+        var messageBusRoute = ResolveMessageBusRoute();
+
+        if (!messageBusRoute.HasValue)
+            return (
+                serviceProvider.GetRequiredService<PlatformInboxConfig>(),
+                serviceProvider.GetRequiredService<IPlatformInboxBusMessageRepository>(),
+                null,
+                null,
+                ApplicationSettingContext.ApplicationName);
+
+        var descriptor = messageBusRoute.Value.Descriptor;
+        var lane = messageBusRoute.Value.Lane;
+
+        return (
+            PlatformCqrsEventHandlerMessageBusRouteCache.ResolveLaneInboxConfig(descriptor, lane, serviceProvider),
+            descriptor.ResolveInboxRepository(serviceProvider),
+            descriptor.IsInboxEnabled ? descriptor.InboxRepositoryFactory : null,
+            descriptor.StoreKey,
+            lane.ApplicationName);
     }
 
     /// <summary>
@@ -1733,7 +1806,10 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
         IPlatformApplicationSettingContext applicationSettingContext,
         PlatformBusMessageIdentity currentBusMessageIdentity,
         IPlatformUnitOfWork eventSourceUow,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        PlatformMessageBusStoreKey? messageBusStoreKey = null,
+        string messageBusApplicationName = null,
+        Func<IServiceProvider, IPlatformInboxBusMessageRepository> inboxBusMessageRepositoryFactory = null
     )
     {
         var eventSubQueuePrefix = @event.As<IPlatformSubMessageQueuePrefixSupport>()?.SubQueuePrefix();
@@ -1747,9 +1823,16 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                     inboxBusMessageRepository: inboxMessageRepository,
                     inboxConfig: inboxConfig,
                     applicationSettingContext: applicationSettingContext,
-                    message: CqrsEventInboxBusMessage(@event, eventHandlerType: GetType(), applicationSettingContext, currentBusMessageIdentity),
-                    forApplicationName: ApplicationSettingContext.ApplicationName,
-                    routingKey: PlatformBusMessageRoutingKey.BuildDefaultRoutingKey(@event.GetType(), applicationSettingContext.ApplicationName),
+                    message: CqrsEventInboxBusMessage(
+                        @event,
+                        eventHandlerType: GetType(),
+                        applicationSettingContext,
+                        currentBusMessageIdentity,
+                        messageBusApplicationName),
+                    forApplicationName: messageBusApplicationName ?? ApplicationSettingContext.ApplicationName,
+                    routingKey: PlatformBusMessageRoutingKey.BuildDefaultRoutingKey(
+                        @event.GetType(),
+                        messageBusApplicationName ?? applicationSettingContext.ApplicationName),
                     loggerFactory: CreateGlobalLogger,
                     retryProcessFailedMessageInSecondsUnit: PlatformInboxBusMessage.DefaultRetryProcessFailedMessageInSecondsUnit,
                     handleExistingInboxMessage: null,
@@ -1762,7 +1845,10 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                     needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage: eventSubQueuePrefix.IsNotNullOrEmpty(),
                     allowHandleNewInboxMessageInBackground: true,
                     allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage: false,
-                    cancellationToken: cancellationToken
+                    cancellationToken: cancellationToken,
+                    inboxBusMessageRepositoryFactory: inboxBusMessageRepositoryFactory,
+                    selectedMessageBusStoreKey: messageBusStoreKey,
+                    selectedMessageBusApplicationName: messageBusApplicationName
                 ),
             retryCount: RetryEventInboxBusMessageConsumerMaxCount,
             sleepDurationProvider: retryAttempt =>
@@ -1817,14 +1903,15 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
         TEvent @event,
         Type eventHandlerType,
         IPlatformApplicationSettingContext applicationSettingContext,
-        PlatformBusMessageIdentity currentBusMessageIdentity
+        PlatformBusMessageIdentity currentBusMessageIdentity,
+        string messageBusApplicationName = null
     )
     {
         return PlatformBusMessage<PlatformCqrsEventBusMessagePayload>.New<PlatformBusMessage<PlatformCqrsEventBusMessagePayload>>(
             trackId: @event.Id,
             payload: PlatformCqrsEventBusMessagePayload.New(@event, eventHandlerType.FullName),
             identity: currentBusMessageIdentity,
-            producerContext: applicationSettingContext.ApplicationName,
+            producerContext: messageBusApplicationName ?? applicationSettingContext.ApplicationName,
             messageGroup: nameof(PlatformCqrsEvent),
             messageAction: @event.EventAction,
             requestContext: @event.RequestContext
@@ -1866,5 +1953,68 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     public ILogger CreateGlobalLogger()
     {
         return CreateLogger(RootServiceProvider.GetRequiredService<ILoggerFactory>());
+    }
+}
+
+/// <summary>
+/// Process-wide cache for CQRS event handler message-bus routes. Kept outside the generic handler so one table serves
+/// every closed handler type. Registry instances are immutable singletons after host build, and weak keys let a
+/// disposed host/test registry (and its lanes) be collected, so hosts with different registries never share entries.
+/// </summary>
+internal static class PlatformCqrsEventHandlerMessageBusRouteCache
+{
+    private static readonly ConditionalWeakTable<IPlatformMessageBusStoreRegistry, ConcurrentDictionary<Type, RouteHolder>> RoutesByRegistry = [];
+
+    private static readonly ConditionalWeakTable<PlatformMessageBusApplicationLaneRegistration, PlatformInboxConfig> InboxConfigByLane = [];
+
+    /// <summary>
+    /// Resolves the handler-assembly route. Hosts without runtime store composition get the shared no-route holder, so
+    /// the legacy path is a cheap early return. A failed composed resolution throws and is never cached.
+    /// </summary>
+    public static RouteHolder Resolve(IPlatformMessageBusStoreRegistry registry, Type handlerType)
+    {
+        if (registry?.HasRuntimeStoreComposition != true)
+            return RouteHolder.NoRoute;
+
+        return RoutesByRegistry
+            .GetValue(registry, _ => [])
+            .GetOrAdd(handlerType, type => ResolveComposed(registry, type));
+    }
+
+    /// <summary>
+    /// Lane inbox config providers are singleton-scoped (the unqualified PlatformInboxConfig is registered as a singleton
+    /// from the same provider), so they are resolved once per lane registration instead of once per handled event.
+    /// </summary>
+    public static PlatformInboxConfig ResolveLaneInboxConfig(
+        PlatformMessageBusStoreDescriptor descriptor,
+        PlatformMessageBusApplicationLaneRegistration lane,
+        IServiceProvider serviceProvider)
+    {
+        if (InboxConfigByLane.TryGetValue(lane, out var inboxConfig))
+            return inboxConfig;
+
+        return InboxConfigByLane.GetValue(lane, _ => descriptor.ResolveInboxConfig(serviceProvider, lane.ApplicationModuleType));
+    }
+
+    private static RouteHolder ResolveComposed(IPlatformMessageBusStoreRegistry registry, Type handlerType)
+    {
+        var descriptor = registry.GetForApplication(handlerType.Assembly);
+
+        return new RouteHolder((descriptor, descriptor.GetApplicationLane(handlerType.Assembly)));
+    }
+
+    /// <summary>
+    /// Reference wrapper so "resolved, no route" (legacy host) is distinguishable from "not resolved yet".
+    /// </summary>
+    public sealed class RouteHolder
+    {
+        public static readonly RouteHolder NoRoute = new(null);
+
+        public RouteHolder((PlatformMessageBusStoreDescriptor Descriptor, PlatformMessageBusApplicationLaneRegistration Lane)? route)
+        {
+            Route = route;
+        }
+
+        public (PlatformMessageBusStoreDescriptor Descriptor, PlatformMessageBusApplicationLaneRegistration Lane)? Route { get; }
     }
 }

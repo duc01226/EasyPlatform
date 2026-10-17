@@ -1,12 +1,14 @@
 ---
+# Work-record fields (id, title, intent, status) follow .claude/skills/task-track/references/integration-guide.md, section "Records another skill authors".
 id: US-{YYMMDD}-{NNN}
-parent_pbi: '{PBI-XXXXXX-NNN}'
 title: '{As a... I want... So that...}'
+intent: '{One sentence: what the persona can do after this story}'
+status: draft
+parent_task: '{TASK-XXXXXX-NNN}'
 persona: '{User persona}'
-priority: P1 | P2 | P3
+priority_label: P1 | P2 | P3
 effort: 1 | 2 | 3 | 5 | 8 | 13
-status: draft | ready | in_progress | done
-template_version: '1.0'
+template_version: '1.2'
 ---
 
 # User Story
@@ -64,4 +66,4 @@ Then {error handling}
 
 ---
 
-_Generated from PBI: {parent_pbi}_
+_Generated from task: {parent_task}_

@@ -29,10 +29,10 @@ namespace Easy.Platform.Common.Cqrs.Commands;
 /// - Cancellation token support for responsive operations
 /// 
 /// Used extensively across platform services:
-/// - Growth service: Leave request processing, attendance management
-/// - Employee service: Payroll operations, employee lifecycle management
-/// - Talents service: Talent acquisition workflows
-/// - Permission Provider: Subscription and usage management
+/// - Request/approval processing
+/// - Batch operations and entity lifecycle management
+/// - Multi-step business workflows
+/// - Subscription and usage management
 /// 
 /// Handler discovery and registration is automatic through MediatR conventions.
 /// </remarks>

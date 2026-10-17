@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const verifierPath = path.resolve(thisDir, '..', 'verify-no-project-residue.mjs');
-const { findProjectSymbolViolations, genericSourceRoots, managedBlockRanges, projectSymbolDenylist, projectSymbolAllowlist, projectSymbolScanRoots } =
+const { findProjectSymbolViolations, forbiddenTerms, genericSourceRoots, managedBlockRanges, projectSymbolDenylist, projectSymbolAllowlist, projectSymbolScanRoots } =
     await import(pathToFileURL(verifierPath).href);
 
 // TC-SKILLFIX-010 — a denylisted project symbol in a NON-allowlisted generic skill is flagged.
@@ -20,7 +20,7 @@ test('TC-SKILLFIX-010: flags a denylisted project symbol in a non-allowlisted fi
 // TC-SKILLFIX-011 — the SAME symbol is exempt in an allowlisted file (per-file exemption).
 test('TC-SKILLFIX-011: allowlisted file+symbol is not flagged', () => {
     const content = '- API services MUST extend `PlatformApiService` (BLOCKED)';
-    const violations = findProjectSymbolViolations(content, '.claude/skills/architecture-review/SKILL.md');
+    const violations = findProjectSymbolViolations(content, '.claude/skills/architecture/references/mode-review.md');
     assert.equal(violations.length, 0);
 });
 
@@ -79,10 +79,22 @@ test('TC-SKILLFIX-013e: forbidden-term scan covers portable hook config', () => 
     assert.ok(genericSourceRoots.includes('.claude/hooks/config'), 'generic hook config must be scanned for project residue');
 });
 
-test('TC-SKILLFIX-013f: prompt protocol mirrors are not exempt from project-term residue checks', () => {
-    assert.equal(
-        managedBlockRanges.some(range => range.start === '<!-- PROMPT-PROTOCOLS:START -->'),
-        false,
-        'PROMPT-PROTOCOLS is generated portable context and must not hide project-specific lesson bodies'
+test('TC-SKILLFIX-013f: no generated block is exempt from project-term residue checks', () => {
+    assert.deepEqual(
+        managedBlockRanges,
+        [],
+        'generated portable context must never hide project-specific text behind a managed-block exemption'
     );
+});
+
+// TC-SKILLFIX-013g — every consuming-project NAME must be denied. The Orient entries were added
+// after that project's spec paths and package names reached .claude/scripts/codex/tests: the scan
+// already covered that directory, so what failed was the term list. Terms are split here for the
+// same reason they are split in the verifier -- this test file sits inside the scanned tree and
+// would otherwise flag itself.
+test('TC-SKILLFIX-013g: the forbidden-term list denies every known consuming-project name', () => {
+    const lowered = forbiddenTerms.map(term => term.toLowerCase());
+    for (const name of ['br' + 'avo', 'Orient' + 'Software', 'Orient' + ' One', 'orient' + '-one']) {
+        assert.ok(lowered.includes(name.toLowerCase()), `consuming-project name is not denied: ${name}`);
+    }
 });

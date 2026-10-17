@@ -11,4 +11,5 @@ if _parent not in sys.path:
 # Use absolute import to avoid __package__ deprecation warning
 from code_graph.cli import main
 
-main()
+if __name__ == "__main__":
+    main()

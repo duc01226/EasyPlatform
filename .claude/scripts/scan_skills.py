@@ -3,19 +3,88 @@
 Scan .claude/skills directory and extract skill metadata.
 """
 
+import os
 import re
 import sys
-import io
 from pathlib import Path
 from typing import Dict, List
-import yaml
+from win_compat import ensure_utf8_stderr, ensure_utf8_stdout
 
-# Windows UTF-8 compatibility
-if sys.platform == 'win32':
-    if hasattr(sys.stdout, 'buffer'):
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    if hasattr(sys.stderr, 'buffer'):
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+ensure_utf8_stdout()
+ensure_utf8_stderr()
+
+# After the stream setup: on Windows the install hint must print a non-ASCII path verbatim.
+try:
+    import yaml
+except ModuleNotFoundError as error:
+    # Recover the declared PyYAML dependency before printing an actionable diagnostic.
+    # Any other missing module is a different fault and re-raises.
+    if error.name != 'yaml':
+        raise
+    _requirements = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'requirements.txt')
+    try:
+        from lib.python_dependencies import ensure_pyyaml
+    except ModuleNotFoundError as helper_error:
+        # A standalone copied script retains its actionable diagnostic.
+        if helper_error.name not in ('lib', 'lib.python_dependencies'):
+            raise
+        _recovered = False
+    else:
+        _recovered = ensure_pyyaml(_requirements)
+    if _recovered:
+        import yaml
+    else:
+        # Quoted for the shell it names, so the hint still pastes when a path holds a space or a
+        # metacharacter such as '&'. On Windows that is PowerShell: list2cmdline renders C-runtime
+        # arguments and leaves '&' bare for the shell. A PowerShell single-quoted string is literal
+        # except for its quote characters, which are doubled. U+2018-U+201B are quote characters too
+        # (language spec 2.3.5.2, single-quote-character): left bare, one would end the literal.
+        if os.name == 'nt':
+            import re
+            def _quote(part):
+                if re.fullmatch(r'[A-Za-z0-9._-]+', part):
+                    return part
+                return "'" + re.sub("(['\u2018\u2019\u201a\u201b])", r'\1\1', part) + "'"
+            def _command(argv):
+                return '& ' + ' '.join(_quote(part) for part in argv)
+            _shell = 'from PowerShell '
+        else:
+            import shlex
+            def _command(argv):
+                # shlex.join is 3.8+; the installers advertise Python 3.7+, so quote by hand.
+                return ' '.join(shlex.quote(part) for part in argv)
+            _shell = ''
+        _install = ['-m', 'pip', 'install', '-r', _requirements]
+        # pip refuses to install into an interpreter marked EXTERNALLY-MANAGED (PEP 668) unless it
+        # runs inside a virtual environment, so that host gets a venv recipe instead. Same rule as pip.
+        # The probe is advisory: if sysconfig cannot answer, fall back to the plain pip hint rather
+        # than replace the message this block exists to print with a traceback.
+        try:
+            import sysconfig
+            _managed = sys.prefix == getattr(sys, 'base_prefix', sys.prefix) and os.path.isfile(
+                os.path.join(sysconfig.get_path('stdlib'), 'EXTERNALLY-MANAGED'))
+        except Exception:
+            _managed = False
+        if _managed:
+            # The framework's shared venv; hooks/lib/graph-utils.cjs creates the same one.
+            _project = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            _venv = os.path.join(_project, 'tmp', 'claude-temp', '.venv')
+            _bin = os.path.join(_venv, 'Scripts' if os.name == 'nt' else 'bin')
+            _venv_python = os.path.join(_bin, 'python.exe' if os.name == 'nt' else 'python')
+            if os.name == 'nt':
+                _path = f"$env:Path = {_quote(_bin + ';')} + $env:Path"
+            else:
+                _path = f'export PATH={shlex.quote(_bin)}:"$PATH"'
+            _hint = (
+                "This Python is externally managed (PEP 668), so pip will not install into it.\n"
+                f"Create a virtual environment {_shell}with: {_command([sys.executable, '-m', 'venv', _venv])}\n"
+                f"Install it {_shell}with: {_command([_venv_python] + _install)}\n"
+                f"Then put the environment first on PATH: {_path}\n"
+            )
+        else:
+            _hint = f"Install it {_shell}with: {_command([sys.executable] + _install)}\n"
+        sys.stderr.write(f"{os.path.basename(__file__)} requires PyYAML, declared in {_requirements}.\n" + _hint)
+        sys.exit(3)
 
 def extract_frontmatter(content: str) -> Dict:
     """Extract YAML frontmatter from markdown content."""
@@ -106,8 +175,12 @@ def scan_skills(base_path: Path) -> List[Dict]:
                 'path': skill_file.relative_to(base_path).as_posix(),
                 'description': description,
                 'category': category,
-                'has_scripts': (skill_dir / 'scripts').exists(),
-                'has_references': (skill_dir / 'references').exists(),
+                # Empty directories are absent from Git and export payloads. Report a capability
+                # only when at least one file can actually travel with the copied framework.
+                'has_scripts': any(path.is_file() for path in (skill_dir / 'scripts').rglob('*'))
+                if (skill_dir / 'scripts').is_dir() else False,
+                'has_references': any(path.is_file() for path in (skill_dir / 'references').rglob('*'))
+                if (skill_dir / 'references').is_dir() else False,
                 'status': status,
                 'deprecated_by': frontmatter.get('deprecated_by'),
                 'deprecated_since': normalize_date(frontmatter.get('deprecated_since')),
@@ -127,9 +200,9 @@ DESCRIPTION_PREFIX_TO_CATEGORY = {
 def name_matches(lower_name: str, keyword: str) -> bool:
     """Match a category keyword against a hyphen/underscore-delimited skill name.
 
-    A bare keyword must match a whole name token, so 'ui' matches `test-ui` but
+    A bare keyword must match a whole name token, so 'ui' matches `ui-design` but
     not `demo-guide`. Keywords that are themselves prefixes ('ai-') or already
-    hyphenated ('claude-code') keep substring semantics.
+    hyphenated ('skill-creator') keep substring semantics.
     """
     if keyword.endswith('-'):
         return lower_name.startswith(keyword)
@@ -154,7 +227,7 @@ def categorize_skill(name: str, description: str, content: str) -> str:
         return 'ai-ml'
 
     # Frontend
-    if any(name_matches(lower_name, x) for x in ['frontend', 'ui', 'design', 'aesthetic', 'threejs']):
+    if any(name_matches(lower_name, x) for x in ['frontend', 'ui', 'design', 'aesthetic']):
         return 'frontend'
 
     # Backend
@@ -170,7 +243,7 @@ def categorize_skill(name: str, description: str, content: str) -> str:
         return 'database'
 
     # Development Tools
-    if any(name_matches(lower_name, x) for x in ['mcp', 'skill-creator', 'claude-code', 'repomix', 'docs-seeker']):
+    if any(name_matches(lower_name, x) for x in ['mcp', 'skill-creator', 'repomix']):
         return 'dev-tools'
 
     # Multimedia
@@ -182,7 +255,7 @@ def categorize_skill(name: str, description: str, content: str) -> str:
         return 'frameworks'
 
     # Utilities
-    if any(name_matches(lower_name, x) for x in ['debug', 'problem', 'code-review', 'plan', 'research', 'sequential']):
+    if any(name_matches(lower_name, x) for x in ['debug', 'problem', 'code-quality-review', 'plan', 'research', 'source-deep-dive', 'sequential']):
         return 'utilities'
 
     return 'other'
@@ -237,7 +310,11 @@ def main():
 
     # Output YAML for processing (generate_catalogs.py reads YAML)
     output_path = Path('.claude/scripts/skills_data.yaml')
-    output_path.write_text(yaml.dump(skills, allow_unicode=True, default_flow_style=False), encoding='utf-8')
+    # newline='' writes yaml.dump's '\n' verbatim. Default text mode translates it to os.linesep,
+    # so on Windows every rescan rewrote this LF-committed catalog as CRLF — a whole-file diff that
+    # buries the actual skill-entry changes. Same rule as generate_catalogs.py's writers.
+    with output_path.open('w', encoding='utf-8', newline='') as handle:
+        handle.write(yaml.dump(skills, allow_unicode=True, default_flow_style=False))
     print(f"\n✓ Saved metadata to {output_path}")
 
 if __name__ == '__main__':

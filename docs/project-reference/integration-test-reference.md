@@ -7,6 +7,18 @@
 
 **Purpose:** Let any AI/dev write a correct, isolated, repeatable integration test on the first try — pick the right base class + style, assert real DB state via polling (not smoke), and keep tests collision-free across runs. — why: integration tests run against live infra with no DB reset; wrong base class, missing `[Collection]`, or non-unique data silently corrupts other tests.
 
+## Contents
+
+- [Test Architecture](#test-architecture)
+- [Test Base Classes](#test-base-classes)
+- [Fixtures & Factories](#fixtures--factories)
+- [WebApplicationFactory Testing (HTTP-level)](#webapplicationfactory-testing-http-level)
+- [Test Helpers](#test-helpers)
+- [Service-Specific Setup](#service-specific-setup)
+- [Test Data Patterns](#test-data-patterns)
+- [Running Tests](#running-tests)
+- [New Test Quickstart](#new-test-quickstart)
+
 ## Test Architecture
 
 | Aspect      | Value                                                                                                                                                                            |
@@ -14,8 +26,8 @@
 | Framework   | xUnit 2.9.3 + FluentAssertions 7.0.0 + Microsoft.AspNetCore.Mvc.Testing 9.0.4 (`Xunit.DependencyInjection` 9.7.0 transitive via Easy.Platform.AutomationTest)                    |
 | Approach    | Subcutaneous — real CQRS pipeline, real DI, real database, NO HTTP (default). HTTP-level path available via `WebApplicationFactory<Program>` (see WebApplicationFactory Testing) |
 | Module init | Mirrors production: `module.InitializeAsync()` in fixture `InitializeAsync()`                                                                                                    |
-| Isolation   | xUnit `[Collection]` — sequential within a collection; 3 independent collections (CQRS / WebAppFactory / CrossService) run in parallel across, serial within                     |
-| Config      | `appsettings.json` in test project — separate DB name (`TextSnippetApi_IntegrationTest`)                                                                                         |
+| Isolation   | xUnit `[Collection]` — sequential within each collection; distinct collection fixtures may run concurrently, using unique test data                     |
+| Config      | `appsettings.json` in test project — default Mongo database `TextSnippetApi`; specialized host fixtures override with unique database names                                                                                         |
 
 **Infrastructure MUST be running:**
 
@@ -115,7 +127,9 @@ public class TextSnippetIntegrationTestCollection
 }
 ```
 
-The fixture uses `TextSnippetIntegrationTestAspNetCoreModule` (`TextSnippetIntegrationTestAspNetCoreModule.cs:10`), a test subclass of `TextSnippetApiAspNetCoreModule` that overrides `EnableAutomaticDataSeedingOnInit => false` (`:15`) so fixture init does not run the slow production data-seeding pass. A no-op `Startup` class (`Startup.cs:15`) satisfies the `Xunit.DependencyInjection` `[assembly: StartupType]` requirement without registering services — tests use the `ICollectionFixture` pattern instead.
+The fixture uses `TextSnippetIntegrationTestAspNetCoreModule` (`TextSnippetIntegrationTestAspNetCoreModule.cs:10`), a test subclass of `TextSnippetApiAspNetCoreModule` that overrides `EnableAutomaticDataSeedingOnInit => false` (`:15`) so fixture init does not run the slow production data-seeding pass. Paged-job tests use `BackgroundJobs/PagedJobIntegrationTestFixture.cs`: a distinct module type keeps its static DI provider separate, and unique Mongo database names isolate the global page from accumulated shared-suite rows. The generic `TextSnippetIntegrationTestBase<TServiceModule>` shares repository and request-context setup with the default base. Before executing an explicit page, assert that its target records belong to that page; a unique row ID alone does not prove page membership. The collection serializes its host graph, and teardown does not reset shared data.
+
+A no-op `Startup` class (`Startup.cs:15`) satisfies the `Xunit.DependencyInjection` `[assembly: StartupType]` requirement without registering services — tests use the `ICollectionFixture` pattern instead.
 
 ### User Context Factory
 
@@ -345,7 +359,8 @@ var batchParam = new PlatformBatchScrollingJobParam<string, DemoBatchScrollingPa
 };
 await ExecuteBackgroundJobWithParamAsync<DemoBatchScrollingBackgroundJobExecutor>(batchParam);
 
-// Paged job — MUST pass Skip/Take (master mode silently does nothing in tests)
+// Paged job — use the isolated paged fixture and assert target-page membership first.
+// MUST pass Skip/Take (master mode silently does nothing in tests)
 var pagedParam = new PlatformApplicationPagedBackgroundJobParam<DemoPagedParam>
 {
     Skip = 0, Take = 200,
@@ -354,4 +369,4 @@ var pagedParam = new PlatformApplicationPagedBackgroundJobParam<DemoPagedParam>
 await ExecuteBackgroundJobWithParamAsync<DemoPagedBackgroundJobExecutor>(pagedParam);
 ```
 
-**CRITICAL: DEFAULT path = subcutaneous CQRS through real DI (no HTTP); HTTP-level path = `WebApplicationFactory<Program>` for Autofac-DI services or full-pipeline assertions. MUST extend service-specific test base (subcutaneous). MUST use a `[Collection]` attribute. MUST use `IntegrationTestHelper.UniqueName()`. PREFER `AssertValidationFailsAsync` over raw `Assert.ThrowsAsync<PlatformValidationException>`. Batch/Paged jobs MUST pass explicit params (master mode silently does nothing in tests). Direct repo setup is a documented EXCEPTION — only when the command path cannot produce the state, with a docstring citing the constraint.**
+**CRITICAL: DEFAULT path = subcutaneous CQRS through real DI (no HTTP); HTTP-level path = `WebApplicationFactory<Program>` for Autofac-DI services or full-pipeline assertions. MUST extend service-specific test base (subcutaneous). MUST use a `[Collection]` attribute. MUST use `IntegrationTestHelper.UniqueName()`. PREFER `AssertValidationFailsAsync` over raw `Assert.ThrowsAsync<PlatformValidationException>`. Batch/Paged jobs MUST pass explicit params (master mode silently does nothing in tests). Paged tests must isolate their data and prove requested-page membership. Direct repo setup is a documented EXCEPTION — only when the command path cannot produce the state, with a docstring citing the constraint.**

@@ -15,8 +15,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { TaskItemDataModel, TaskItemPriority, TaskItemStatus } from '@libs/apps-domains/text-snippet-domain';
-import { PlatformCoreModule } from '@libs/platform-core';
-import { AppBaseVmStoreComponent } from '../../base';
+import { PlatformCoreModule, PlatformVmStoreComponent } from '@libs/platform-core';
 
 import { TaskListStore, TaskListVm } from './task-list.store';
 
@@ -56,7 +55,7 @@ import { TaskListStore, TaskListVm } from './task-list.store';
     ],
     providers: [TaskListStore]
 })
-export class TaskListComponent extends AppBaseVmStoreComponent<TaskListVm, TaskListStore> {
+export class TaskListComponent extends PlatformVmStoreComponent<TaskListVm, TaskListStore> {
     // Event emitters for parent component communication
     @Output() public taskSelected = new EventEmitter<TaskItemDataModel>();
     @Output() public createTask = new EventEmitter<void>();

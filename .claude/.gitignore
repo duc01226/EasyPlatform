@@ -44,11 +44,24 @@ coverage/
 # Local Settings (developer-specific overrides)
 # -----------------------------------------------------------------------------
 *.local.json
+/.ck.local.json
+
+# -----------------------------------------------------------------------------
+# Local Checkouts (developer-specific worktrees)
+# -----------------------------------------------------------------------------
+/worktrees/
+
+# -----------------------------------------------------------------------------
+# Agent Memory (notes sub-agents write for this checkout; never shipped)
+# -----------------------------------------------------------------------------
+/agent-memory/
+/agent-memory-local/
 
 # -----------------------------------------------------------------------------
 # Package Manager Lock Files
 # -----------------------------------------------------------------------------
 package-lock.json
+!skills/task-track/package-lock.json
 yarn.lock
 pnpm-lock.yaml
 

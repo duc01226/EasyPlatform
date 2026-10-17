@@ -6,8 +6,8 @@
 // asserts that — and its own `.prettierignore`. So a test asserting what easy-claude's npm scripts or
 // prettier config say is a SELF-CHECK of this repo, not part of the portable contract.
 //
-// Left unconditional, those self-checks aborted the sync pipeline at its OWN test stage (stage 4 of
-// 16) in every adopting project — after stages 1-3 had already written `.agents/`, `.codex/` and
+// Left unconditional, those self-checks aborted the sync pipeline at its OWN test stage (stage 5 of
+// 19) in every adopting project — after stages 1-4 had already written `.agents/`, `.codex/` and
 // `AGENTS.md`, leaving the target half-synced. Measured on a real `export-claude` payload: 10 failures
 // with no root package.json, 9 with a typical adopting project's package.json.
 //

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Team work</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#view">Skip to work</a>
+  <header class="app-bar">
+    <div class="band app-bar-row">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24" focusable="false"><path d="M6 16v-3a5 5 0 0 1 5-5h4"/><circle cx="6" cy="18.5" r="2.4"/><circle class="solid" cx="18" cy="8" r="2.4"/></svg>
+        </span>
+        <div class="brand-text">
+          <h1 id="project-name">Team work</h1>
+          <p id="root-context"><bdi>Waiting for the selected checkout…</bdi></p>
+        </div>
+      </div>
+      <div id="source-context" class="source-bar">Opening the selected project…</div>
+      <div id="session-tools" class="session-tools"></div>
+      <div id="actor-context" class="actor">Checking this workspace session…</div>
+    </div>
+    <div id="source-panel" class="band source-panel" hidden></div>
+  </header>
+  <nav class="tab-bar" aria-label="Team work views" hidden>
+    <div id="navigation" class="band tabs"></div>
+  </nav>
+  <section id="notices" class="band notices" aria-label="Source conditions" hidden></section>
+  <div id="feedback" class="band" role="status" aria-live="polite" aria-atomic="true"></div>
+  <main id="view" class="band" tabindex="-1" aria-busy="true">
+    <h2>Opening project</h2>
+    <p>Reading work from this checkout. No changes are being saved.</p>
+  </main>
+  <dialog id="draft-checkpoint" aria-labelledby="checkpoint-title" aria-describedby="checkpoint-copy">
+    <h2 id="checkpoint-title">Keep your draft?</h2>
+    <p id="checkpoint-copy">This change has not been saved. Your draft stays in this open page only. Closing or reloading the page loses it.</p>
+    <div class="actions">
+      <button id="checkpoint-return" class="primary" type="button" autofocus>Return to draft</button>
+      <button id="checkpoint-keep" type="button">Keep draft and continue</button>
+      <button id="checkpoint-discard" class="caution" type="button">Discard draft and continue</button>
+    </div>
+  </dialog>
+  <noscript><p class="band notice">This managed workspace needs JavaScript to read or change records. Use the project’s prompt or command tools to inspect work.</p></noscript>
+</body>
+</html>

@@ -7,7 +7,7 @@
  * Provides functions to load, save, and manage workflow state in a session-specific
  * temp file that survives context compaction events.
  *
- * Storage: /tmp/ck/workflow-{sessionId}.json
+ * Storage: CK_TMP_DIR/workflow/{sessionId}.json (an OS-temp directory; see ck-paths.cjs)
  *
  * @module workflow-state
  */

@@ -2,6 +2,7 @@
 
 #region
 
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
@@ -10,6 +11,7 @@ using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.Exceptions;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Infrastructures.MessageBus;
 using Easy.Platform.Persistence;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +29,10 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
 {
     private readonly SemaphoreSlim maxIntervalProcessTriggeredLock;
     private readonly SemaphoreSlim processMessageParallelLimitLock;
+    private readonly IPlatformMessageBusStoreRegistry messageBusStoreRegistry;
+    private readonly AsyncLocal<OutboxProcessingState> currentProcessingState = new();
+    private readonly PlatformOutboxConfig legacyOutboxConfig;
+    private readonly PlatformMessageBusStoreRuntimeStateCache<OutboxProcessingState> processingStates;
     private DateTime? firstTimeProcessDate;
     private bool isFirstTimeProcess = true;
 
@@ -35,16 +41,19 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
         ILoggerFactory loggerFactory,
         IPlatformApplicationSettingContext applicationSettingContext,
         PlatformOutboxConfig outboxConfig,
-        IPlatformRootServiceProvider rootServiceProvider
+        IPlatformRootServiceProvider rootServiceProvider,
+        IPlatformMessageBusStoreRegistry messageBusStoreRegistry = null
     )
         : base(serviceProvider, loggerFactory)
     {
         ApplicationSettingContext = applicationSettingContext;
-        OutboxConfig = outboxConfig;
+        legacyOutboxConfig = outboxConfig;
         RootServiceProvider = rootServiceProvider;
+        this.messageBusStoreRegistry = messageBusStoreRegistry;
+        processingStates = new PlatformMessageBusStoreRuntimeStateCache<OutboxProcessingState>(BuildProcessingStates);
 
-        processMessageParallelLimitLock = new SemaphoreSlim(OutboxConfig.MaxParallelProcessingMessagesCount, OutboxConfig.MaxParallelProcessingMessagesCount);
-        maxIntervalProcessTriggeredLock = new SemaphoreSlim(OutboxConfig.MaxParallelProcessingMessagesCount, OutboxConfig.MaxParallelProcessingMessagesCount);
+        processMessageParallelLimitLock = new SemaphoreSlim(legacyOutboxConfig.MaxParallelProcessingMessagesCount, legacyOutboxConfig.MaxParallelProcessingMessagesCount);
+        maxIntervalProcessTriggeredLock = new SemaphoreSlim(legacyOutboxConfig.MaxParallelProcessingMessagesCount, legacyOutboxConfig.MaxParallelProcessingMessagesCount);
     }
 
     /// <summary>
@@ -60,12 +69,58 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
     /// <summary>
     /// Gets the configuration for the outbox pattern.
     /// </summary>
-    protected PlatformOutboxConfig OutboxConfig { get; }
+    protected PlatformOutboxConfig OutboxConfig => currentProcessingState.Value?.Config ?? legacyOutboxConfig;
 
     /// <summary>
     /// Gets the root service provider.
     /// </summary>
     protected IPlatformRootServiceProvider RootServiceProvider { get; }
+
+    private SemaphoreSlim CurrentProcessMessageParallelLimitLock =>
+        currentProcessingState.Value?.ProcessMessageParallelLimitLock ?? processMessageParallelLimitLock;
+
+    private SemaphoreSlim CurrentMaxIntervalProcessTriggeredLock =>
+        currentProcessingState.Value?.MaxIntervalProcessTriggeredLock ?? maxIntervalProcessTriggeredLock;
+
+    private bool IsFirstTimeProcess
+    {
+        get => currentProcessingState.Value?.IsFirstTimeProcess ?? isFirstTimeProcess;
+        set
+        {
+            if (currentProcessingState.Value != null)
+                currentProcessingState.Value.IsFirstTimeProcess = value;
+            else
+                isFirstTimeProcess = value;
+        }
+    }
+
+    private DateTime? FirstTimeProcessDate
+    {
+        get => currentProcessingState.Value?.FirstTimeProcessDate ?? firstTimeProcessDate;
+        set
+        {
+            if (currentProcessingState.Value != null)
+                currentProcessingState.Value.FirstTimeProcessDate = value;
+            else
+                firstTimeProcessDate = value;
+        }
+    }
+
+    private Func<IServiceProvider, IPlatformOutboxBusMessageRepository> CurrentOutboxRepositoryFactory =>
+        currentProcessingState.Value?.Descriptor.OutboxRepositoryFactory;
+
+    private string ProcessingStoreKey => currentProcessingState.Value?.Descriptor.StoreKey.Value ?? "Legacy";
+
+    private string ProcessingApplicationLane =>
+        currentProcessingState.Value?.ApplicationLane ?? ApplicationSettingContext.ApplicationName;
+
+    private string ProcessingPersistenceOwnerType =>
+        currentProcessingState.Value?.Descriptor.PersistenceOwnerType?.FullName
+        ?? ApplicationSettingContext.ApplicationAssembly?.FullName
+        ?? "Legacy";
+
+    private string ProcessingPersistenceContextType =>
+        currentProcessingState.Value?.Descriptor.PersistenceContextType?.FullName ?? "Legacy";
 
     /// <summary>
     /// Determines the interval at which the background processing should be triggered.
@@ -73,7 +128,19 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
     /// <returns>A <see cref="TimeSpan" /> representing the interval.</returns>
     protected override TimeSpan ProcessTriggerIntervalTime()
     {
-        return OutboxConfig.CheckToProcessTriggerIntervalTimeSeconds.Seconds();
+        if (HasRegistryComposition)
+        {
+            var configuredStates = GetProcessingStates();
+            if (configuredStates.Count > 0)
+                return configuredStates.Min(state => state.Config.CheckToProcessTriggerIntervalTimeSeconds).Seconds();
+        }
+
+        return legacyOutboxConfig.CheckToProcessTriggerIntervalTimeSeconds.Seconds();
+    }
+
+    protected override TimeSpan FallbackProcessTriggerIntervalTime()
+    {
+        return legacyOutboxConfig.CheckToProcessTriggerIntervalTimeSeconds.Seconds();
     }
 
     /// <summary>
@@ -86,59 +153,86 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
         // Wait for all required modules to be initialized before processing messages.
         await IPlatformModule.WaitForAllModulesInitializedAsync(ServiceProvider, typeof(IPlatformPersistenceModule), Logger, $"process {GetType().Name}");
 
-        // If the outbox message repository is not registered or processing is already in progress, skip processing.
+        if (HasRegistryComposition)
+        {
+            foreach (var processingState in GetProcessingStates())
+            {
+                Util.TaskRunner.QueueActionInBackground(
+                    () => ProcessOutboxMessagesForStateAsync(processingState, cancellationToken),
+                    cancellationToken: cancellationToken);
+            }
+
+            return;
+        }
+
+        // If the legacy outbox repository is not registered, skip processing.
         if (!HasOutboxEventBusMessageRepositoryRegistered())
             return;
 
         Util.TaskRunner.QueueActionInBackground(
-            async () =>
+            () => ProcessOutboxMessagesForStateAsync(null, cancellationToken),
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task ProcessOutboxMessagesForStateAsync(OutboxProcessingState processingState, CancellationToken cancellationToken)
+    {
+        var previousProcessingState = currentProcessingState.Value;
+        currentProcessingState.Value = processingState;
+
+        try
+        {
+            if (CurrentProcessMessageParallelLimitLock.CurrentCount == 0 || CurrentMaxIntervalProcessTriggeredLock.CurrentCount == 0)
+                return;
+
+            try
             {
-                if (processMessageParallelLimitLock.CurrentCount == 0 || maxIntervalProcessTriggeredLock.CurrentCount == 0)
-                    return;
+                await CurrentMaxIntervalProcessTriggeredLock.WaitAsync(cancellationToken);
 
-                try
-                {
-                    await maxIntervalProcessTriggeredLock.WaitAsync(cancellationToken);
-
-                    // Retry sending outbox messages in case of transient errors, such as database connection issues.
-                    await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                        () => SendOutboxEventBusMessages(cancellationToken),
-                        retryAttempt => OutboxConfig.ProcessSendMessageRetryDelaySeconds.Seconds(),
-                        retryCount: OutboxConfig.ProcessSendMessageRetryCount,
-                        onRetry: (ex, timeSpan, currentRetry, ctx) =>
+                // Retry sending outbox messages in case of transient errors, such as database connection issues.
+                await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+                    () => SendOutboxEventBusMessages(cancellationToken),
+                    retryAttempt => OutboxConfig.ProcessSendMessageRetryDelaySeconds.Seconds(),
+                    retryCount: OutboxConfig.ProcessSendMessageRetryCount,
+                    onRetry: (ex, timeSpan, currentRetry, ctx) =>
+                    {
+                        if (currentRetry >= OutboxConfig.MinimumRetrySendOutboxMessageTimesToLogError)
                         {
-                            // Log an error if the retry count exceeds a certain threshold.
-                            if (currentRetry >= OutboxConfig.MinimumRetrySendOutboxMessageTimesToLogError)
-                            {
-                                Logger.LogError(
-                                    "Retry SendOutboxEventBusMessages {CurrentRetry} time(s) failed: {Error}. [ApplicationName:{ApplicationName}]. [ApplicationAssembly:{ApplicationAssembly}]",
-                                    currentRetry,
-                                    ex.Message,
-                                    ApplicationSettingContext.ApplicationName,
-                                    ApplicationSettingContext.ApplicationAssembly.FullName
-                                );
-                            }
-                        },
-                        cancellationToken: cancellationToken
-                    );
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(
-                        ex.BeautifyStackTrace(),
-                        "SendOutboxEventBusMessages failed. [[Error:{Error}]]. [ApplicationName:{ApplicationName}]. [ApplicationAssembly:{ApplicationAssembly}]",
-                        ex.Message,
-                        ApplicationSettingContext.ApplicationName,
-                        ApplicationSettingContext.ApplicationAssembly.FullName
-                    );
-                }
-                finally
-                {
-                    maxIntervalProcessTriggeredLock.TryRelease();
-                }
-            },
-            cancellationToken: cancellationToken
-        );
+                            Logger.LogError(
+                                "Retry SendOutboxEventBusMessages {CurrentRetry} time(s) failed: {Error}. " +
+                                "[StoreKey:{StoreKey}]. [ApplicationLane:{ApplicationLane}]. " +
+                                "[PersistenceOwnerType:{PersistenceOwnerType}]. [PersistenceContextType:{PersistenceContextType}]",
+                                currentRetry,
+                                ex.Message,
+                                ProcessingStoreKey,
+                                ProcessingApplicationLane,
+                                ProcessingPersistenceOwnerType,
+                                ProcessingPersistenceContextType);
+                        }
+                    },
+                    cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(
+                    ex.BeautifyStackTrace(),
+                    "SendOutboxEventBusMessages failed. [[Error:{Error}]]. " +
+                    "[StoreKey:{StoreKey}]. [ApplicationLane:{ApplicationLane}]. " +
+                    "[PersistenceOwnerType:{PersistenceOwnerType}]. [PersistenceContextType:{PersistenceContextType}]",
+                    ex.Message,
+                    ProcessingStoreKey,
+                    ProcessingApplicationLane,
+                    ProcessingPersistenceOwnerType,
+                    ProcessingPersistenceContextType);
+            }
+            finally
+            {
+                CurrentMaxIntervalProcessTriggeredLock.TryRelease();
+            }
+        }
+        finally
+        {
+            currentProcessingState.Value = previousProcessingState;
+        }
     }
 
     /// <summary>
@@ -148,15 +242,15 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     protected virtual async Task SendOutboxEventBusMessages(CancellationToken cancellationToken)
     {
-        if (isFirstTimeProcess) firstTimeProcessDate = Clock.UtcNow;
+        if (IsFirstTimeProcess) FirstTimeProcessDate = Clock.UtcNow;
 
-        await ServiceProvider.ExecuteInjectScopedAsync(async (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
+        await ExecuteWithOutboxRepositoryAsync(outboxBusMessageRepository =>
         {
             // Use a pager to process messages in batches.
-            await Util.Pager.ExecuteScrollingPagingAsync(
+            return Util.Pager.ExecuteScrollingPagingAsync(
                 async () =>
                 {
-                    if (processMessageParallelLimitLock.CurrentCount == 0)
+                    if (CurrentProcessMessageParallelLimitLock.CurrentCount == 0)
                         return [];
 
                     // Retrieve a page of message IDs that are eligible for processing.
@@ -166,11 +260,13 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                                     .CanHandleMessagesQueryBuilder(
                                         query,
                                         OutboxConfig.GetCanHandleMessageGroupedByTypeIdPrefixesPageSize,
-                                        retryFailedMessageImmediately: isFirstTimeProcess,
-                                        firstTimeProcessDate: firstTimeProcessDate)
+                                        retryFailedMessageImmediately: IsFirstTimeProcess,
+                                        firstTimeProcessDate: FirstTimeProcessDate)
                                     .Select(p => p.Id),
                             cancellationToken: cancellationToken)
                         .Then(messageIds => messageIds.GroupBy(PlatformOutboxBusMessage.GetIdPrefix).ToList());
+
+                    var claimedMessageCount = 0;
 
                     // Process each message prefix in parallel.
                     await pagedCanHandleMessageGroupedByTypeIdPrefixes.ParallelAsync(
@@ -182,9 +278,9 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                             // (I)
                             // If there's no sub-queue prefix (hasSubQueuePrefix == false), process messages in parallel. => customPageSize is null (get many messages)
                             // Otherwise, process messages sequentially. (hasSubQueuePrefix == true) => customPageSize is one to allow process once at a time
-                            var popToHandleInboxEventBusMessagesPageSize = hasSubQueuePrefix || processMessageParallelLimitLock.CurrentCount == 0
+                            var popToHandleInboxEventBusMessagesPageSize = hasSubQueuePrefix || CurrentProcessMessageParallelLimitLock.CurrentCount == 0
                                 ? 1
-                                : processMessageParallelLimitLock.CurrentCount;
+                                : CurrentProcessMessageParallelLimitLock.CurrentCount;
 
                             for (var i = 0; i <= messageGroupedByConsumerIdPrefixGroup.Count() / popToHandleInboxEventBusMessagesPageSize; i++)
                             {
@@ -196,13 +292,16 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                                 );
                                 if (toHandleMessages.IsEmpty()) break;
 
+                                Interlocked.Add(ref claimedMessageCount, toHandleMessages.Count);
+
                                 using (var startIntervalPingProcessingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                                 {
                                     PlatformOutboxMessageBusProducerHelper.StartIntervalPingProcessing(
                                         toHandleMessages,
                                         RootServiceProvider,
                                         () => Logger,
-                                        startIntervalPingProcessingCts.Token);
+                                        startIntervalPingProcessingCts.Token,
+                                        CurrentOutboxRepositoryFactory);
 
                                     try
                                     {
@@ -217,7 +316,15 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                                         }
                                         catch (Exception ex)
                                         {
-                                            Logger.LogWarning(ex, "Error cancelling ping processing for outbox messages batch");
+                                            Logger.LogWarning(
+                                                ex,
+                                                "Error cancelling ping processing for outbox messages batch. " +
+                                                "[StoreKey:{StoreKey}]. [ApplicationLane:{ApplicationLane}]. " +
+                                                "[PersistenceOwnerType:{PersistenceOwnerType}]. [PersistenceContextType:{PersistenceContextType}]",
+                                                ProcessingStoreKey,
+                                                ProcessingApplicationLane,
+                                                ProcessingPersistenceOwnerType,
+                                                ProcessingPersistenceContextType);
                                         }
                                     }
                                 }
@@ -226,9 +333,11 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                         OutboxConfig.MaxParallelProcessingMessagesCount
                     );
 
-                    isFirstTimeProcess = false;
+                    IsFirstTimeProcess = false;
 
-                    return pagedCanHandleMessageGroupedByTypeIdPrefixes;
+                    // Eligible followers can remain blocked by an earlier subqueue message. Yield to the next
+                    // timed trigger if no group claimed work; selected groups alone do not prove drain progress.
+                    return claimedMessageCount > 0 ? pagedCanHandleMessageGroupedByTypeIdPrefixes : [];
                 },
                 maxExecutionCount: OutboxConfig.GetCanHandleMessageGroupedByTypeIdPrefixesPageSize,
                 cancellationToken: cancellationToken
@@ -240,13 +349,13 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
         {
             try
             {
-                await processMessageParallelLimitLock.WaitAsync(cancellationToken);
+                await CurrentProcessMessageParallelLimitLock.WaitAsync(cancellationToken);
 
                 using (var scope = ServiceProvider.CreateTrackedScope()) await SendMessageToBusAsync(scope, toHandleOutboxMessage, cancellationToken);
             }
             finally
             {
-                processMessageParallelLimitLock.TryRelease();
+                CurrentProcessMessageParallelLimitLock.TryRelease();
             }
         }
     }
@@ -294,8 +403,8 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
             query,
             int.MaxValue, // No specific limit for this method
             messageGroupedByTypeIdPrefix,
-            retryFailedMessageImmediately: isFirstTimeProcess,
-            firstTimeProcessDate: firstTimeProcessDate
+            retryFailedMessageImmediately: IsFirstTimeProcess,
+            firstTimeProcessDate: FirstTimeProcessDate
         );
     }
 
@@ -328,7 +437,9 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                     autoDeleteProcessedMessage: OutboxConfig.AutoDeleteProcessedMessage,
                     handleExistingOutboxMessage: toHandleOutboxMessage,
                     sourceOutboxUowId: null,
-                    cancellationToken
+                    cancellationToken,
+                    outboxBusMessageRepositoryFactory: CurrentOutboxRepositoryFactory,
+                    selectedOutboxConfig: OutboxConfig
                 );
             }
             else
@@ -342,7 +453,8 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                     ),
                     OutboxConfig.RetryProcessFailedMessageInSecondsUnit,
                     cancellationToken,
-                    Logger
+                    Logger,
+                    CurrentOutboxRepositoryFactory
                 );
             }
         });
@@ -362,7 +474,7 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
     {
         try
         {
-            return await ServiceProvider.ExecuteInjectScopedAsync<List<PlatformOutboxBusMessage>>((IPlatformOutboxBusMessageRepository outboxEventBusMessageRepo) =>
+            return await ExecuteWithOutboxRepositoryAsync<List<PlatformOutboxBusMessage>>(outboxEventBusMessageRepo =>
                 outboxEventBusMessageRepo
                     .UowManager()
                     .ExecuteUowTask(async () =>
@@ -373,7 +485,7 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
 
                         // Retrieve a batch of messages to handle.
                         var toHandleMessages = await outboxEventBusMessageRepo.GetAllAsync(
-                            queryBuilder: query =>
+                                queryBuilder: query =>
                                 CanHandleMessagesByTypeIdPrefixQueryBuilder(query, messageGroupedByTypeIdPrefix)
                                     .Take(customPageSize ?? OutboxConfig.MaxParallelProcessingMessagesCount),
                             cancellationToken
@@ -421,7 +533,14 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
             // This is expected in a multi-instance environment, so retry retrieving messages.
             Logger.LogDebug(
                 conflictDomainException,
-                "Some other producer instance has been handling some outbox messages, which lead to row version conflict (support multi service instance running concurrently). This is as expected."
+                "Some other producer instance has been handling some outbox messages, which lead to row version conflict " +
+                "(support multi service instance running concurrently). This is as expected. " +
+                "[StoreKey:{StoreKey}]. [ApplicationLane:{ApplicationLane}]. " +
+                "[PersistenceOwnerType:{PersistenceOwnerType}]. [PersistenceContextType:{PersistenceContextType}]",
+                ProcessingStoreKey,
+                ProcessingApplicationLane,
+                ProcessingPersistenceOwnerType,
+                ProcessingPersistenceContextType
             );
 
             return await PopToHandleOutboxEventBusMessages(messageGroupedByTypeIdPrefix, customPageSize, cancellationToken);
@@ -443,8 +562,8 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
             query,
             int.MaxValue, // No specific limit for this method
             messageGroupedByTypeIdPrefix,
-            retryFailedMessageImmediately: isFirstTimeProcess,
-            firstTimeProcessDate: firstTimeProcessDate
+            retryFailedMessageImmediately: IsFirstTimeProcess,
+            firstTimeProcessDate: FirstTimeProcessDate
         );
     }
 
@@ -454,6 +573,119 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
     /// <returns>True if the repository is registered; otherwise, false.</returns>
     protected bool HasOutboxEventBusMessageRepositoryRegistered()
     {
+        if (HasRegistryComposition)
+            return GetProcessingStates().Count > 0;
+
         return ServiceProvider.ExecuteScoped(scope => scope.ServiceProvider.GetService<IPlatformOutboxBusMessageRepository>() != null);
+    }
+
+    private bool HasRegistryComposition => messageBusStoreRegistry?.HasRuntimeStoreComposition == true;
+
+    private IReadOnlyList<OutboxProcessingState> GetProcessingStates()
+    {
+        return HasRegistryComposition ? processingStates.Get() : [];
+    }
+
+    // One state per store: outbox rows carry no lane identity, so a store shared by several lanes is sent once.
+    private ReadOnlyCollection<OutboxProcessingState> BuildProcessingStates()
+    {
+        return PlatformMessageBusStoreRuntimeDescriptors
+            .Resolve(messageBusStoreRegistry, descriptor => descriptor.IsOutboxEnabled)
+            .Select(descriptor => new OutboxProcessingState(
+                descriptor,
+                PlatformMessageBusStoreRuntimeDescriptors.ResolveSharedStoreConfig(
+                    descriptor,
+                    lane => descriptor.ResolveOutboxConfig(ServiceProvider, lane.ApplicationModuleType),
+                    SendSettingsUsed,
+                    Logger,
+                    GetType().Name)))
+            .ToList()
+            .AsReadOnly();
+    }
+
+    private static object SendSettingsUsed(PlatformOutboxConfig config)
+    {
+        return (
+            config.MaxParallelProcessingMessagesCount,
+            config.CheckToProcessTriggerIntervalTimeSeconds,
+            config.GetCanHandleMessageGroupedByTypeIdPrefixesPageSize,
+            config.ProcessSendMessageRetryCount,
+            config.ProcessSendMessageRetryDelaySeconds,
+            config.MinimumRetrySendOutboxMessageTimesToLogError,
+            config.RetryProcessFailedMessageInSecondsUnit,
+            config.AutoDeleteProcessedMessage);
+    }
+
+    private async Task ExecuteWithOutboxRepositoryAsync(Func<IPlatformOutboxBusMessageRepository, Task> action)
+    {
+        var repositoryFactory = CurrentOutboxRepositoryFactory;
+
+        if (repositoryFactory == null)
+        {
+            await ServiceProvider.ExecuteInjectScopedAsync(action);
+            return;
+        }
+
+        Func<IServiceProvider, Task> scopedAction = scopedServiceProvider =>
+            action(repositoryFactory(scopedServiceProvider));
+        await ServiceProvider.ExecuteInjectScopedAsync(
+            scopedAction);
+    }
+
+    private async Task<TResult> ExecuteWithOutboxRepositoryAsync<TResult>(
+        Func<IPlatformOutboxBusMessageRepository, Task<TResult>> action)
+    {
+        var repositoryFactory = CurrentOutboxRepositoryFactory;
+
+        if (repositoryFactory == null)
+            return await ServiceProvider.ExecuteInjectScopedAsync<TResult>(action);
+
+        Func<IServiceProvider, Task<TResult>> scopedAction = scopedServiceProvider =>
+            action(repositoryFactory(scopedServiceProvider));
+        return await ServiceProvider.ExecuteInjectScopedAsync<TResult>(
+            scopedAction);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            processMessageParallelLimitLock.Dispose();
+            maxIntervalProcessTriggeredLock.Dispose();
+
+            if (processingStates.BuiltStates != null)
+            {
+                foreach (var processingState in processingStates.BuiltStates)
+                    processingState.Dispose();
+            }
+        }
+
+        base.Dispose(disposing);
+    }
+
+    private sealed class OutboxProcessingState : IDisposable
+    {
+        public OutboxProcessingState(PlatformMessageBusStoreDescriptor descriptor, PlatformOutboxConfig config)
+        {
+            Descriptor = descriptor;
+            Config = config;
+            ProcessMessageParallelLimitLock = new SemaphoreSlim(config.MaxParallelProcessingMessagesCount, config.MaxParallelProcessingMessagesCount);
+            MaxIntervalProcessTriggeredLock = new SemaphoreSlim(config.MaxParallelProcessingMessagesCount, config.MaxParallelProcessingMessagesCount);
+        }
+
+        public PlatformMessageBusStoreDescriptor Descriptor { get; }
+        public PlatformOutboxConfig Config { get; }
+        public SemaphoreSlim ProcessMessageParallelLimitLock { get; }
+        public SemaphoreSlim MaxIntervalProcessTriggeredLock { get; }
+        public bool IsFirstTimeProcess { get; set; } = true;
+        public DateTime? FirstTimeProcessDate { get; set; }
+
+        public string ApplicationLane => string.Join(",", Descriptor.ApplicationLanes.Select(lane => lane.ApplicationName));
+
+        public void Dispose()
+        {
+            ProcessMessageParallelLimitLock.Dispose();
+            MaxIntervalProcessTriggeredLock.Dispose();
+        }
     }
 }

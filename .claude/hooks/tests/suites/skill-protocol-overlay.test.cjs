@@ -1,8 +1,9 @@
 /**
- * Skill Protocol Overlay Test Suite (Plane 3 accelerator)
+ * Skill Protocol Overlay Test Suite
  *
- * Covers the resolver and injection builder in lib/skill-protocol-overlay.cjs.
- * TC-PSP-040..043 mirror the normative cases in
+ * Covers the resolver and reminder builder in lib/skill-protocol-overlay.cjs, which
+ * skill-overlay-remind.cjs calls when a skill activates (the real-process tests of the hook are in
+ * skill-overlay-remind.test.cjs). TC-PSP-040..043 mirror the normative cases in
  * .claude/skills/project-skill-protocol/references/registry.md §3 one-for-one, so the code
  * resolver and the written algorithm cannot drift apart unnoticed.
  *
@@ -20,12 +21,11 @@ const path = require('path');
 
 const LIB_PATH = path.resolve(__dirname, '../../lib/skill-protocol-overlay.cjs');
 const {
-    parseSkillName,
     readRegistry,
     resolveOverlays,
-    buildInjection,
-    buildOverlayContext,
-    MAX_INJECTION_BYTES
+    resolveOverlayFiles,
+    buildOverlayReminder,
+    MAX_REMINDER_PATHS
 } = require(LIB_PATH);
 
 function assertTrue(condition, message) {
@@ -36,6 +36,10 @@ function assertEqual(actual, expected, message) {
     if (actual !== expected) {
         throw new Error(`${message}\n  expected: ${JSON.stringify(expected)}\n  actual:   ${JSON.stringify(actual)}`);
     }
+}
+
+function assertFiles(actual, expected, message) {
+    assertEqual(JSON.stringify(actual), JSON.stringify(expected), message);
 }
 
 /**
@@ -65,16 +69,23 @@ function withEnv(vars, fn) {
 function withFixture(spec, fn) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'psp-overlay-'));
     try {
-        const refDir = path.join(dir, 'docs', 'project-reference');
-        const bodyDir = path.join(dir, 'docs', 'project-protocols');
+        const refDir = path.join(dir, ...(spec.referenceRoot || 'docs/project-reference').split(/[\\/]/));
+        const bodyDir = path.join(dir, ...(spec.bodyRoot || 'docs/project-protocols').split(/[\\/]/));
         fs.mkdirSync(refDir, { recursive: true });
         fs.mkdirSync(bodyDir, { recursive: true });
 
         if (spec.index !== undefined && spec.index !== null) {
-            fs.writeFileSync(path.join(refDir, 'skill-protocols-reference.md'), spec.index, 'utf8');
+            const indexPath = path.join(refDir, ...(spec.indexFilename || 'skill-protocols-reference.md').split(/[\\/]/));
+            fs.mkdirSync(path.dirname(indexPath), { recursive: true });
+            fs.writeFileSync(indexPath, spec.index, 'utf8');
         }
         for (const [name, content] of Object.entries(spec.bodies || {})) {
             fs.writeFileSync(path.join(bodyDir, `${name}.md`), content, 'utf8');
+        }
+        for (const [relativePath, content] of Object.entries(spec.extraFiles || {})) {
+            const targetPath = path.join(dir, ...relativePath.split(/[\\/]/));
+            fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+            fs.writeFileSync(targetPath, content, 'utf8');
         }
         return fn(dir);
     } finally {
@@ -82,11 +93,11 @@ function withFixture(spec, fn) {
     }
 }
 
-function indexWith(rows) {
+function indexWith(rows, protocolsDirectory = 'docs/project-protocols/') {
     const header = [
         '# Skill Protocol Overlays — Project Registry',
         '',
-        '**Protocols directory:** `docs/project-protocols/`',
+        `**Protocols directory:** \`${protocolsDirectory}\``,
         '',
         '## Registry',
         '',
@@ -112,39 +123,125 @@ const THREE_TIER_BODIES = {
     'house-style': '## Rules\n\n1. Prefer kebab-case filenames.\n'
 };
 
+const DEFAULT_BODY_ROOT = 'docs/project-protocols';
+
 const tests = [
     {
+        // P13: task-specific referenceDocs selection cannot disable the independent overlay registry.
+        name: '[skill-protocol-overlay] TC-PSP-050 docsRoots relocates the registry and explicit referenceDocs [] keeps default lookup',
+        fn: () => {
+            const config = {
+                docsRoots: { projectReference: { path: 'portable/reference' } },
+                referenceDocs: []
+            };
+            withFixture({
+                referenceRoot: 'portable/reference',
+                index: indexWith([THREE_TIER[0]]),
+                bodies: { 'plan-ctx': THREE_TIER_BODIES['plan-ctx'] }
+            }, (dir) => {
+                assertFiles(resolveOverlayFiles('plan', dir, config), [`${DEFAULT_BODY_ROOT}/plan-ctx.md`],
+                    'the registry under configured docsRoots must resolve even when referenceDocs is explicitly empty');
+            });
+        }
+    },
+    {
+        name: '[skill-protocol-overlay] TC-PSP-051 a matching referenceDocs filename relocates the registry beneath docsRoots',
+        fn: () => {
+            const config = {
+                docsRoots: { projectReference: { path: 'handbook/reference' } },
+                referenceDocs: [{ filename: 'registries/skill-protocols-reference.md', purpose: 'Skill protocol registry.' }]
+            };
+            withFixture({
+                referenceRoot: 'handbook/reference',
+                indexFilename: 'registries/skill-protocols-reference.md',
+                index: indexWith([THREE_TIER[0]]),
+                bodies: { 'plan-ctx': THREE_TIER_BODIES['plan-ctx'] }
+            }, (dir) => {
+                assertFiles(resolveOverlayFiles('plan', dir, config), [`${DEFAULT_BODY_ROOT}/plan-ctx.md`], 'the matching configured index file must be read');
+            });
+        }
+    },
+    {
+        name: '[skill-protocol-overlay] TC-PSP-052 the registry header selects a project-relative body directory',
+        fn: () => {
+            const bodyRoot = 'project-rules/skill-overlays';
+            withFixture({
+                bodyRoot,
+                index: indexWith([THREE_TIER[0]], `${bodyRoot}/`),
+                bodies: { 'plan-ctx': '## Rules\n\n1. CUSTOM-BODY-ROOT-RULE\n' }
+            }, (dir) => {
+                assertFiles(resolveOverlayFiles('plan', dir, {}), [`${bodyRoot}/plan-ctx.md`], 'the body must be derived inside the configured project-relative directory');
+            });
+        }
+    },
+    {
+        name: '[skill-protocol-overlay] TC-PSP-053 an unsafe configured registry filename is rejected without reading it',
+        fn: () => {
+            const config = {
+                docsRoots: { projectReference: { path: 'docs/project-reference' } },
+                referenceDocs: [{ filename: '../outside/skill-protocols-reference.md', purpose: 'Unsafe test fixture.' }]
+            };
+            withFixture({
+                index: null,
+                extraFiles: {
+                    'outside/skill-protocols-reference.md': indexWith([THREE_TIER[0]], 'outside/bodies'),
+                    'outside/bodies/plan-ctx.md': '## Rules\n\n1. TOP-SECRET-CANARY\n'
+                }
+            }, (dir) => {
+                // The traversal target exists: only the rejection keeps it out of the result.
+                assertFiles(resolveOverlayFiles('plan', dir, config), [], 'the traversal target must not be read or named');
+                assertEqual(buildOverlayReminder('plan', dir, config), '', 'no reminder for an unsafe registry filename');
+            });
+        }
+    },
+    {
+        name: '[skill-protocol-overlay] TC-PSP-054 an unsafe protocols-directory header refuses all body reads',
+        fn: () => {
+            const unsafeIndex = indexWith([THREE_TIER[0]], '../../canary');
+            withFixture({
+                index: unsafeIndex,
+                bodies: { 'plan-ctx': '## Rules\n\n1. TOP-SECRET-CANARY\n' }
+            }, (dir) => {
+                assertFiles(resolveOverlayFiles('plan', dir, {}), [], 'no body may be named under an unsafe header');
+            });
+        }
+    },
+    {
+        name: '[skill-protocol-overlay] TC-PSP-055 an unavailable required config blocks overlay reads',
+        fn: () => {
+            withFixture({ index: indexWith([THREE_TIER[0]]), bodies: { 'plan-ctx': THREE_TIER_BODIES['plan-ctx'] } }, (dir) => {
+                assertFiles(resolveOverlayFiles('plan', dir, null), [], 'a missing or invalid required config must read no registry');
+                assertEqual(buildOverlayReminder('plan', dir, null), '', 'and emit no reminder');
+                // Boundary: a valid (here empty) config resolves the same registry, so the silence above was not vacuous.
+                assertFiles(resolveOverlayFiles('plan', dir, {}), [`${DEFAULT_BODY_ROOT}/plan-ctx.md`], 'the registry resolves with a usable config');
+            });
+        }
+    },
+    {
         // TC-PSP-040
-        name: '[skill-protocol-overlay] TC-PSP-040 exact tier wins outright — /plan injects only plan-ctx',
+        name: '[skill-protocol-overlay] TC-PSP-040 exact tier wins outright — plan resolves only plan-ctx',
         fn: () => {
             withFixture({ index: indexWith(THREE_TIER), bodies: THREE_TIER_BODIES }, (dir) => {
-                const out = buildOverlayContext('/plan do X', dir);
-                assertTrue(out.includes('bounded context'), 'plan-ctx body must be injected');
-                assertTrue(!out.includes('file:line'), 'the glob overlay must NOT be injected');
-                assertTrue(!out.includes('kebab-case'), 'the `*` overlay must NOT be injected');
+                assertFiles(resolveOverlayFiles('plan', dir, {}), [`${DEFAULT_BODY_ROOT}/plan-ctx.md`], 'only the exact overlay applies');
             });
         }
     },
     {
         // TC-PSP-041
-        name: '[skill-protocol-overlay] TC-PSP-041 glob tier wins — /plan-review injects only review-ev',
+        name: '[skill-protocol-overlay] TC-PSP-041 glob tier wins — plan-design-review resolves only review-ev',
         fn: () => {
             withFixture({ index: indexWith(THREE_TIER), bodies: THREE_TIER_BODIES }, (dir) => {
-                const out = buildOverlayContext('/plan-review the auth change', dir);
-                assertTrue(out.includes('file:line'), 'review-ev body must be injected');
-                assertTrue(!out.includes('bounded context'), 'exact `plan` must NOT match `plan-review`');
-                assertTrue(!out.includes('kebab-case'), 'the `*` overlay must NOT be injected');
+                assertFiles(resolveOverlayFiles('plan-design-review', dir, {}), [`${DEFAULT_BODY_ROOT}/review-ev.md`],
+                    'exact `plan` must NOT match `plan-design-review`, and the `*` overlay must NOT apply');
             });
         }
     },
     {
         // TC-PSP-042
-        name: '[skill-protocol-overlay] TC-PSP-042 all tier is the last resort — /commit injects only house-style',
+        name: '[skill-protocol-overlay] TC-PSP-042 all tier is the last resort — commit resolves only house-style',
         fn: () => {
             withFixture({ index: indexWith(THREE_TIER), bodies: THREE_TIER_BODIES }, (dir) => {
-                const out = buildOverlayContext('/commit', dir);
-                assertTrue(out.includes('kebab-case'), 'the `*` overlay must be injected');
-                assertTrue(!out.includes('bounded context') && !out.includes('file:line'), 'no other tier may apply');
+                assertFiles(resolveOverlayFiles('commit', dir, {}), [`${DEFAULT_BODY_ROOT}/house-style.md`], 'no other tier may apply');
             });
         }
     },
@@ -154,19 +251,20 @@ const tests = [
         fn: () => {
             const rows = [{ target: 'plan', scope: 'exact', name: 'plan-ctx' }];
             withFixture({ index: indexWith(rows), bodies: { 'plan-ctx': '## Rules\n\n1. X\n' } }, (dir) => {
-                assertEqual(buildOverlayContext('/commit', dir), '', 'An unmatched skill must emit nothing');
+                assertFiles(resolveOverlayFiles('commit', dir, {}), [], 'An unmatched skill must resolve nothing');
+                assertEqual(buildOverlayReminder('commit', dir, {}), '', 'An unmatched skill must emit nothing');
             });
         }
     },
     {
         // TC-PSP-044
-        name: '[skill-protocol-overlay] TC-PSP-044 a prompt with no leading slash is a no-op',
+        name: '[skill-protocol-overlay] TC-PSP-044 a skill name that is not a bare slug resolves nothing',
         fn: () => {
-            assertEqual(parseSkillName('fix the auth bug'), null, 'no leading slash -> no skill name');
-            assertEqual(parseSkillName('see /plan for details'), null, 'a mid-prompt slash must not trigger');
-            assertEqual(parseSkillName('  /plan-review x'), 'plan-review', 'leading whitespace is tolerated');
             withFixture({ index: indexWith(THREE_TIER), bodies: THREE_TIER_BODIES }, (dir) => {
-                assertEqual(buildOverlayContext('fix the auth bug', dir), '', 'no slash -> no injection');
+                for (const name of ['', '../plan', 'Plan', 'plan review', '/plan', null, undefined, 7]) {
+                    assertFiles(resolveOverlayFiles(name, dir, {}), [], `name ${JSON.stringify(name)} must resolve nothing`);
+                }
+                assertFiles(resolveOverlayFiles('plan-design-review', dir, {}), [`${DEFAULT_BODY_ROOT}/review-ev.md`], 'a bare slug with hyphens resolves');
             });
         }
     },
@@ -176,7 +274,7 @@ const tests = [
         fn: () => {
             withFixture({ index: null }, (dir) => {
                 assertEqual(readRegistry(dir).length, 0, 'absent index -> empty registry');
-                assertEqual(buildOverlayContext('/plan', dir), '', 'absent index -> no injection');
+                assertEqual(buildOverlayReminder('plan', dir, {}), '', 'absent index -> no reminder');
             });
             // A directory that does not exist at all must behave identically.
             assertEqual(readRegistry(path.join(os.tmpdir(), 'psp-does-not-exist-xyz')).length, 0, 'missing dir -> []');
@@ -196,50 +294,41 @@ const tests = [
             ].join('\n');
             withFixture({ index: sentinel }, (dir) => {
                 assertEqual(readRegistry(dir).length, 0, 'the sentinel row is not an overlay');
-                assertEqual(buildOverlayContext('/plan', dir), '', 'sentinel-only -> no injection');
+                assertEqual(buildOverlayReminder('plan', dir, {}), '', 'sentinel-only -> no reminder');
             });
         }
     },
     {
         // TC-PSP-046
-        name: '[skill-protocol-overlay] TC-PSP-046 a missing body is named and skipped, never fabricated',
+        name: '[skill-protocol-overlay] TC-PSP-046 a missing body is skipped, never named or fabricated',
         fn: () => {
             const rows = [
                 { target: '*-review', scope: 'glob', name: 'review-ev' },
                 { target: 'plan-*', scope: 'glob', name: 'ghost' }
             ];
             withFixture({ index: indexWith(rows), bodies: { 'review-ev': '## Rules\n\n1. Cite file:line.\n' } }, (dir) => {
-                const out = buildOverlayContext('/plan-review x', dir);
-                assertTrue(out.includes('file:line'), 'the present body must still be injected');
-                assertTrue(out.includes('ghost'), 'the missing overlay must be named');
-                assertTrue(out.includes('SKIPPED, not reconstructed'), 'the skip must be explicit');
-                // Non-fabrication: `ghost` may appear ONLY in the NOTE line, never as an injected
-                // overlay section — an injected section is what a fabricated body would look like.
-                assertTrue(
-                    !out.includes('--- overlay: ghost'),
-                    'a missing body must never be emitted as an overlay section (i.e. fabricated)'
-                );
-                const ghostLines = out.split('\n').filter((l) => l.includes('ghost'));
-                assertEqual(ghostLines.length, 1, `ghost must appear exactly once, in the NOTE; got:\n${ghostLines.join('\n')}`);
-                assertTrue(ghostLines[0].startsWith('NOTE:'), 'the sole ghost mention must be the skip NOTE');
+                // `plan-design-review` matches both globs; only the body that exists is named.
+                assertFiles(resolveOverlayFiles('plan-design-review', dir, {}), [`${DEFAULT_BODY_ROOT}/review-ev.md`], 'the present body is named, the missing one is not');
+                const reminder = buildOverlayReminder('plan-design-review', dir, {});
+                assertTrue(!reminder.includes('ghost'), 'a missing body must never be named in the reminder');
+                // A skill whose only matching body is missing gets no reminder at all.
+                assertEqual(buildOverlayReminder('plan-other', dir, {}), '', 'only a missing body -> no reminder');
             });
         }
     },
     {
         // TC-PSP-047
-        name: '[skill-protocol-overlay] TC-PSP-047 bodies over the byte cap degrade to paths, never a truncated rule',
+        name: '[skill-protocol-overlay] TC-PSP-047 the reminder names at most eight files and counts the rest',
         fn: () => {
-            const big = '## Rules\n\n1. ' + 'x'.repeat(MAX_INJECTION_BYTES) + '\n';
-            const rows = [{ target: '*', scope: 'all', name: 'huge' }];
-            withFixture({ index: indexWith(rows), bodies: { huge: big } }, (dir) => {
-                const out = buildOverlayContext('/anything', dir);
-                assertTrue(out.includes('exceed'), 'the cap notice must be present');
-                assertTrue(out.includes('docs/project-protocols/huge.md'), 'the body PATH must be listed');
-                assertTrue(!out.includes('xxxxxxxxxx'), 'no body text may be emitted past the cap');
-                assertTrue(
-                    Buffer.byteLength(out, 'utf8') < MAX_INJECTION_BYTES,
-                    'the degraded output must be far under the cap'
-                );
+            assertEqual(MAX_REMINDER_PATHS, 8, 'the bound is eight');
+            const rows = Array.from({ length: 10 }, (_, i) => ({ target: '*', scope: 'all', name: `rule-${i}` }));
+            const bodies = Object.fromEntries(rows.map((r) => [r.name, '## Rules\n\n1. X\n']));
+            withFixture({ index: indexWith(rows), bodies }, (dir) => {
+                const reminder = buildOverlayReminder('anything', dir, {});
+                const named = reminder.match(/docs\/project-protocols\/rule-\d\.md/g) || [];
+                assertEqual(named.length, 8, 'eight paths are named');
+                assertTrue(reminder.includes('(+2 more in the overlay registry)'), 'the rest is counted');
+                assertEqual(resolveOverlayFiles('anything', dir, {}).length, 10, 'the resolver still returns every file');
             });
         }
     },
@@ -257,7 +346,7 @@ const tests = [
             ].join('\n');
             withFixture({ index: malformed }, (dir) => {
                 assertEqual(readRegistry(dir).length, 0, 'a short data row is dropped, not parsed');
-                assertEqual(buildOverlayContext('/plan', dir), '', 'no injection from a malformed table');
+                assertEqual(buildOverlayReminder('plan', dir, {}), '', 'no reminder from a malformed table');
             });
 
             // Garbage that is not a table at all must also be tolerated.
@@ -295,42 +384,36 @@ const tests = [
     },
     {
         // TC-PSP-04A
-        name: '[skill-protocol-overlay] TC-PSP-04A the injection header never triggers the Hook context: prefix',
+        name: '[skill-protocol-overlay] TC-PSP-04A the reminder is two plain lines that never open with a JSON bracket',
         fn: () => {
             withFixture({ index: indexWith(THREE_TIER), bodies: THREE_TIER_BODIES }, (dir) => {
-                const out = buildOverlayContext('/plan do X', dir);
-                const head = out.trimStart();
-                assertTrue(
-                    !head.startsWith('{') && !head.startsWith('['),
-                    'emitPromptContext (init-prompt-gate.cjs:58-67) prefixes JSON-looking output with ' +
-                        '"Hook context:" — the header must not start with { or [, or every exact-output ' +
-                        'assertion is written against the wrong string'
-                );
-                assertTrue(head.startsWith('project-protocol-overlay for /plan'), 'header shape is pinned');
+                const reminder = buildOverlayReminder('plan', dir, {});
+                assertTrue(!reminder.startsWith('{') && !reminder.startsWith('['), 'plain text, never JSON-looking');
+                assertEqual(reminder.split('\n').length, 2, 'two lines');
+                assertEqual(reminder.split('\n')[0], `Before executing skill plan: read these project overlay files: ${DEFAULT_BODY_ROOT}/plan-ctx.md.`, 'line one names the skill and the files');
             });
         }
     },
     {
-        // Authority carve-out must ride along on EVERY injection — a hostile body is contradicted
+        // The authority carve-out must ride along on EVERY reminder — a hostile body is contradicted
         // in the same message rather than in a file the model may not read.
-        name: '[skill-protocol-overlay] every injection restates the additive-only + brief-not-authority carve-out',
+        name: '[skill-protocol-overlay] every reminder restates the additive-only carve-out',
         fn: () => {
             withFixture({ index: indexWith(THREE_TIER), bodies: THREE_TIER_BODIES }, (dir) => {
-                const out = buildOverlayContext('/plan', dir);
-                assertTrue(out.includes('ADDITIVE ONLY'), 'additive-only rule must be in the header');
-                assertTrue(out.includes('never replace'), 'the non-replacement clause must be present');
-                assertTrue(out.includes('NEVER an authority escalation'), 'the authority carve-out must be present');
-                assertTrue(out.includes('WORKFLOW-GATE'), 'the gate carve-out must name WORKFLOW-GATE');
+                const reminder = buildOverlayReminder('plan', dir, {});
+                assertTrue(reminder.includes('ADDITIVE ONLY'), 'additive-only rule must be stated');
+                for (const gate of ['workflow route rules', 'git discipline', 'a review gate', 'a user-confirmation gate']) {
+                    assertTrue(reminder.includes(gate), `the carve-out must name ${gate}`);
+                }
             });
         }
     },
     {
         // SECURITY (H1). The index doc is explicitly hand-editable, so its `Body` cell is
         // untrusted input. If resolution followed that link, one plausible-looking table row
-        // would turn every skill invocation into an arbitrary file read whose contents are
-        // injected AS RULES — file disclosure plus instruction injection. The path must be
-        // DERIVED from Name and confined to docs/project-protocols/.
-        name: '[skill-protocol-overlay] TC-PSP-04B a Body link pointing outside the protocols dir reads NOTHING',
+        // would turn every skill activation into an arbitrary file path the model is told to read
+        // as rules. The path must be DERIVED from Name and confined to the protocols directory.
+        name: '[skill-protocol-overlay] TC-PSP-04B a Body link pointing outside the protocols dir is never followed',
         fn: () => {
             const rows = [
                 { target: 'plan', scope: 'exact', name: 'good' },
@@ -342,15 +425,12 @@ const tests = [
                 '[evil.md](../../canary/stolen.txt)'
             );
             withFixture({ index, bodies: { good: '## Rules\n\n1. LEGIT-RULE\n' } }, (dir) => {
-                const canaryDir = path.join(dir, 'canary');
-                fs.mkdirSync(canaryDir, { recursive: true });
-                fs.writeFileSync(path.join(canaryDir, 'stolen.txt'), 'TOP-SECRET-CANARY\n', 'utf8');
+                fs.mkdirSync(path.join(dir, 'canary'), { recursive: true });
+                fs.writeFileSync(path.join(dir, 'canary', 'stolen.txt'), 'TOP-SECRET-CANARY\n', 'utf8');
 
-                const out = buildOverlayContext('/plan', dir);
-                assertTrue(!out.includes('TOP-SECRET-CANARY'), 'a Body link must NEVER be followed off the protocols dir');
-                assertTrue(out.includes('LEGIT-RULE'), 'a legitimate sibling overlay must still resolve');
-                // Derived path is docs/project-protocols/evil.md, which does not exist -> reported missing.
-                assertTrue(out.includes('`evil`'), 'the rejected row must be reported by name, never silently dropped');
+                // The derived path docs/project-protocols/evil.md does not exist -> skipped; the canary is never named.
+                assertFiles(resolveOverlayFiles('plan', dir, {}), [`${DEFAULT_BODY_ROOT}/good.md`], 'only the legitimate sibling overlay resolves');
+                assertTrue(!buildOverlayReminder('plan', dir, {}).includes('canary'), 'a Body link must NEVER be followed off the protocols dir');
             });
         }
     },
@@ -361,37 +441,32 @@ const tests = [
         fn: () => {
             const index = indexWith([{ target: 'plan', scope: 'exact', name: '../../canary/stolen' }]);
             withFixture({ index }, (dir) => {
-                const canaryDir = path.join(dir, 'canary');
-                fs.mkdirSync(canaryDir, { recursive: true });
-                fs.writeFileSync(path.join(canaryDir, 'stolen.md'), 'TOP-SECRET-CANARY\n', 'utf8');
-                fs.writeFileSync(path.join(canaryDir, 'stolen.txt'), 'TOP-SECRET-CANARY\n', 'utf8');
+                fs.mkdirSync(path.join(dir, 'canary'), { recursive: true });
+                fs.writeFileSync(path.join(dir, 'canary', 'stolen.md'), 'TOP-SECRET-CANARY\n', 'utf8');
+                fs.writeFileSync(path.join(dir, 'canary', 'stolen.txt'), 'TOP-SECRET-CANARY\n', 'utf8');
 
-                const out = buildOverlayContext('/plan', dir);
-                assertTrue(!out.includes('TOP-SECRET-CANARY'), 'a traversal in Name must not reach the filesystem');
-                assertTrue(out.includes('REJECTED as malformed'), 'the row must be reported as malformed, not as merely missing');
+                assertFiles(resolveOverlayFiles('plan', dir, {}), [], 'a traversal in Name must not reach the filesystem or be named');
+                assertEqual(buildOverlayReminder('plan', dir, {}), '', 'and no reminder is emitted for it');
             });
         }
     },
     {
         // MUTATION PROBE for TC-PSP-04B/04C: prove the containment guard is what stops the read,
         // rather than the canary happening to be unreachable in the fixture layout.
-        name: '[skill-protocol-overlay] TC-PSP-04D containment is non-vacuous — a legal slug in the protocols dir IS read',
+        name: '[skill-protocol-overlay] TC-PSP-04D containment is non-vacuous — a legal slug in the protocols dir IS named',
         fn: () => {
             const index = indexWith([{ target: 'plan', scope: 'exact', name: 'in-bounds' }]);
             withFixture({ index, bodies: { 'in-bounds': '## Rules\n\n1. TOP-SECRET-CANARY\n' } }, (dir) => {
-                const out = buildOverlayContext('/plan', dir);
-                assertTrue(
-                    out.includes('TOP-SECRET-CANARY'),
-                    'the same content IS injected when it lives at the derived in-bounds path — so 04B/04C ' +
-                        'are blocked by the containment guard, not by the content being unreadable'
-                );
+                assertFiles(resolveOverlayFiles('plan', dir, {}), [`${DEFAULT_BODY_ROOT}/in-bounds.md`],
+                    'the same file IS named when it lives at the derived in-bounds path — so 04B/04C ' +
+                        'are blocked by the containment guard, not by the file being unreachable');
             });
         }
     },
     {
         // SECURITY (B-M1). Glob matching must not backtrack exponentially. A regex-compiled
         // `*` -> `.*` was measured at 136ms / 1.7s / 42.5s / 472s as stars were added, on a
-        // UserPromptSubmit hook that declares NO timeout — one crafted row would wedge the
+        // hook that may run on every skill activation — one crafted row would wedge the
         // session. Budget is generous so the test measures the complexity class, not the CPU.
         name: '[skill-protocol-overlay] TC-PSP-04E a pathological glob cannot wedge the hook',
         fn: () => {
@@ -434,8 +509,9 @@ const tests = [
         }
     },
     {
-        // Deletability contract — asserted, not merely documented.
-        name: '[skill-protocol-overlay] the accelerator plane is referenced by exactly one production file',
+        // One mechanism: the reminder hook is the only production consumer of the lib, and the
+        // prompt gate no longer injects overlay bodies.
+        name: '[skill-protocol-overlay] the overlay lib has exactly one production consumer: the reminder hook',
         fn: () => {
             const repoRoot = path.resolve(__dirname, '../../../..');
             const hits = [];
@@ -457,10 +533,11 @@ const tests = [
             assertEqual(
                 production.length,
                 1,
-                'Exactly ONE production file may require the accelerator lib, so the plane stays ' +
-                    `deletable in 2 files + 1 line. Found: ${production.join(', ') || '(none)'}`
+                `Exactly ONE production file may require the overlay lib. Found: ${production.join(', ') || '(none)'}`
             );
-            assertEqual(production[0], '.claude/hooks/init-prompt-gate.cjs', 'the single consumer is the prompt gate');
+            assertEqual(production[0], '.claude/hooks/skill-overlay-remind.cjs', 'the single consumer is the reminder hook');
+            assertTrue(!fs.readFileSync(path.join(repoRoot, '.claude', 'hooks', 'init-prompt-gate.cjs'), 'utf8').includes('verlay'),
+                'the prompt gate carries no overlay injection');
         }
     }
 ];

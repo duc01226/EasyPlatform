@@ -1,0 +1,9 @@
+# Candidate evidence for commit review
+
+Read only for `commit-review --fix-loop`. The caller's exact descriptor (including paths and `amend`) defines the whole candidate. Without a descriptor, use the explicitly requested target, defaulting to staged. `--loop-owner=caller` returns findings without fixes or a receipt. Subset, artifact-only and historical reviews cannot issue a receipt.
+
+Before each pass, save the JSON returned by `node .claude/hooks/lib/review-receipt.cjs snapshot --target=<worktree|staged|commit-descriptor>`; for a descriptor, also pass `--descriptor-json=<exact descriptor JSON>`. `ERROR` blocks; `CLEAN` needs no receipt. Inspect the matching diff: staged uses the index, worktree includes tracked and untracked changes, and descriptor mode follows the proposed commit (an amend compares against HEAD's parent). Do not substitute the current worktree for staged content.
+
+Review and validate inline, fix only within existing authority, run applicable checks, then freshly review after any edits. Reuse unchanged passing test evidence. Keep the scope, findings and spent rounds in one brief caller-owned record; no nested reviewers or separate goal/report machinery. Two rounds maximum, including the fresh post-fix pass; unresolved MEDIUM+, failed checks or incomplete coverage stop the commit. LOW-only may be disclosed and deferred.
+
+After the final full pass, issue from its original pre-review snapshot: `node .claude/hooks/lib/review-receipt.cjs issue --kind=commit-review --scope=full-changeset --snapshot-json='<exact saved JSON>'`. Never reconstruct or capture a new snapshot at issuance; candidate drift requires fresh review within the remaining budget. Pass JSON as a literal argument with the host's quoting rules. Report-only and incomplete reviews never issue receipts; a receipt grants no Git authority.

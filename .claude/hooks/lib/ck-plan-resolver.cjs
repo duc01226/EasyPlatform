@@ -12,8 +12,45 @@
 const fs = require('fs');
 const path = require('path');
 const { readSessionState } = require('./ck-session-state.cjs');
-const { normalizePath } = require('./ck-path-utils.cjs');
+const { normalizePath, normalizeRootPath, escapesRepoRoot } = require('./ck-path-utils.cjs');
 const { execSafe, extractSlugFromBranch, extractIssueFromBranch } = require('./ck-git-utils.cjs');
+
+/**
+ * Resolve the plans root with the documented TWO-SOURCE precedence:
+ *
+ *   1. `docsRoots.plans.path` in `docs/project-config.json` — the content-root plane
+ *   2. `paths.plans` in `.ck.json`                          — live legacy consumer, kept working
+ *   3. `'plans'`                                            — framework default
+ *
+ * Project-config wins because content roots belong to the content-root plane, while
+ * `.ck.json` `portability.*` exists to LOCATE `docs/project-config.json` in the first
+ * place. The loader is required LAZILY so this module never participates in the
+ * bootstrap order that resolves that location, and so a missing/unreadable loader
+ * degrades to the `.ck.json` tier instead of throwing.
+ *
+ * ONE helper serves both call sites (`resolvePlanPath`, `getReportsPath`) by design:
+ * two sites reading one function cannot disagree about where plans live.
+ *
+ * @param {object} [pathsConfig] - `.ck.json` `paths` object
+ * @param {object} [projectConfig] - parsed project-config.json; loaded + cached if omitted
+ * @returns {string} plans root without a trailing slash
+ */
+function resolvePlansDir(pathsConfig, projectConfig) {
+  try {
+    const loader = require('./project-config-loader.cjs');
+    const cfg = projectConfig || loader.loadProjectConfig();
+    const declared = normalizeRootPath(cfg?.docsRoots?.plans?.path);
+    if (declared && !escapesRepoRoot(declared)) return declared;
+  } catch {
+    // Fail-soft: fall through to the `.ck.json` tier.
+  }
+  // The `.ck.json` tier keeps its OWN, pre-existing semantics on purpose: `sanitizePath`
+  // deliberately ALLOWS an absolute value there ("user explicitly wants consolidated plans
+  // elsewhere", ck-path-utils.cjs:104-107) and `ck-config-loader.cjs:165-166` already
+  // sanitizes it. Applying the content-root `escapesRepoRoot` guard here would reject that
+  // supported configuration, so only tier 1 carries it.
+  return normalizePath(pathsConfig?.plans) || 'plans';
+}
 
 /**
  * Find most recent plan folder by timestamp prefix
@@ -47,7 +84,7 @@ function findMostRecentPlan(plansDir) {
  * @returns {{ path: string|null, resolvedBy: 'session'|'branch'|null }} Resolution result
  */
 function resolvePlanPath(sessionId, config) {
-  const plansDir = config?.paths?.plans || 'plans';
+  const plansDir = resolvePlansDir(config?.paths);
   const resolution = config?.plan?.resolution || {};
   const order = resolution.order || ['session', 'branch'];
   const branchPattern = resolution.branchPattern;
@@ -101,7 +138,9 @@ function resolvePlanPath(sessionId, config) {
  */
 function getReportsPath(planPath, resolvedBy, planConfig, pathsConfig) {
   const reportsDir = normalizePath(planConfig?.reportsDir) || 'reports';
-  const plansDir = normalizePath(pathsConfig?.plans) || 'plans';
+  // Only plansDir's SOURCE changes here; the `${plansDir}/${reportsDir}/` composition
+  // below — and `tmp/reports` semantics — are unchanged.
+  const plansDir = resolvePlansDir(pathsConfig);
 
   // Only use plan-specific reports path if explicitly active (session state)
   if (planPath && resolvedBy === 'session') {
@@ -189,12 +228,15 @@ function validateNamingPattern(pattern) {
  * @returns {string} Resolved naming pattern with {slug} placeholder
  */
 function resolveNamingPattern(planConfig, gitBranch) {
-  const { namingFormat, dateFormat, issuePrefix } = planConfig;
+  const { namingFormat, dateFormat } = planConfig;
   const formattedDate = formatDate(dateFormat);
 
   // Try to extract issue ID from branch name
   const issueId = extractIssueFromBranch(gitBranch);
-  const fullIssue = issueId && issuePrefix ? `${issuePrefix}${issueId}` : null;
+  // Delegate to formatIssueId so a configured prefix and the documented generic `#`
+  // fallback stay in ONE place; duplicating the rule here silently dropped the
+  // extracted issue whenever no prefix was configured.
+  const fullIssue = formatIssueId(issueId, planConfig);
 
   // Build pattern by substituting {date} and {issue}, keep {slug}
   let pattern = namingFormat;
@@ -228,6 +270,7 @@ function resolveNamingPattern(planConfig, gitBranch) {
 
 module.exports = {
   findMostRecentPlan,
+  resolvePlansDir,
   resolvePlanPath,
   getReportsPath,
   formatIssueId,

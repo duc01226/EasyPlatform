@@ -1,7 +1,9 @@
 using Easy.Platform.Application.MessageBus.Producers;
 using Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Domain.Events;
 
 namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.DomainEventBusProducers;
@@ -9,6 +11,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.Domain
 public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendWithDefaultRoutingKeyEventBusMessageProducer
     : PlatformCqrsDomainEventBusMessageProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendWithDefaultRoutingKeyEventBusMessageProducer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager unitOfWorkManager,

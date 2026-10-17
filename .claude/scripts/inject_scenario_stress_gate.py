@@ -7,19 +7,19 @@ Inserts:
               the reminders region below the main authored content. When a host
               has NO SYNC region (find_sync_region_start returns EOF), the block
               appends at EOF, creating the host's first SYNC region (acceptable —
-              e.g. architecture-scalability-review, solution-architect).
+              e.g. a skill with no SYNC region, solution-architect).
   BOTTOM:     a SYNC:...:reminder block immediately BEFORE `## Closing Reminders`,
               or appended at EOF when no such heading exists.
 
 Host set is hand-picked — the top-down scenario-stress companion to the bottom-up
 SYNC:scale-technique-gate — so this uses explicit name lists rather than the
-inject_review_skill_blocks.py review-batch matrix. Seven hosts total:
+inject_review_skill_blocks.py review-batch matrix. Four hosts total:
 
-  6 skills  — architecture-design (design-time), architecture-review (Cat 11),
-              architecture-scalability-review (scorecard), production-readiness-review
-              (SRE), tech-stack-research (stack selection), performance-review
-              (data-volume + backpressure depth — a scenario host the technique gate
-              does NOT target, hence not in the sibling's SKILL_NAMES).
+  3 skills  — production-readiness-review (SRE), tech-stack-research (stack selection),
+              performance-review (data-volume + backpressure depth — a scenario host the
+              technique gate does NOT target, hence not in the sibling's SKILL_NAMES).
+              The `architecture` skill carries the gate inline in its mode references
+              (design, review, scalability), so it is not an injector target.
   1 agent   — solution-architect. Greenfield inception designs for scenarios up front;
               it authors resilience posture, so the scenario gate belongs in its context.
               The technique gate has no agent hosts; this one does, hence the extra loop.
@@ -34,16 +34,14 @@ import re
 import sys
 from pathlib import Path
 
-from sync_blocks import find_sync_region_start, load_wrapped_sync_block
+from line_endings import read_text, write_text
+from sync_blocks import find_sync_region_start, has_guide_entry, load_wrapped_sync_block
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = PROJECT_ROOT / ".claude" / "skills"
 AGENTS_DIR = PROJECT_ROOT / ".claude" / "agents"
 
 SKILL_NAMES = [
-    "architecture-design",             # "do" — design-time scenario consideration
-    "architecture-review",             # review — Cat 11 scalability & coupling
-    "architecture-scalability-review", # review — scalability scorecard (no SYNC region → EOF append)
     "production-readiness-review",     # review — SRE readiness / resilience
     "tech-stack-research",             # research — scenario-aware stack selection
     "performance-review",              # review — data-volume growth + backpressure depth
@@ -90,6 +88,9 @@ def inject(text: str) -> tuple[str, dict]:
     status = {"top": "skipped", "bottom": "skipped", "already_present": False, "errors": []}
 
     top_present = TOP_OPEN in text
+    # A guide entry (a skill converted to guide lines) carries the protocol like the body:
+    # never insert the body, still keep the reminder.
+    guided = not top_present and has_guide_entry(text, TAG.removeprefix("SYNC:"))
     bottom_present = REMINDER_OPEN in text
 
     if top_present:
@@ -109,7 +110,10 @@ def inject(text: str) -> tuple[str, dict]:
             text = text[: m.start()] + BOTTOM_BLOCK + text[m.end():]
             status["bottom"] = "refreshed"
 
-    if top_present:
+    if top_present or guided:
+        if guided:
+            status["already_present"] = True
+            status["top"] = "guided"
         if not bottom_present:
             m = CLOSING_RE.search(text)
             if m:
@@ -164,7 +168,7 @@ def main() -> int:
         if path is None:
             results.append((name, "MISSING", {}))
             continue
-        original = path.read_text(encoding="utf-8")
+        original, newline = read_text(path)
         new_text, status = inject(original)
         if status.get("errors"):
             results.append((name, "MALFORMED", status))
@@ -178,7 +182,7 @@ def main() -> int:
         if check or dry_run:
             results.append((name, "WOULD-UPDATE" if check else "DRY-RUN", status))
             continue
-        path.write_text(new_text, encoding="utf-8")
+        write_text(path, new_text, newline)
         results.append((name, "UPDATED", status))
 
     print(f"{'HOST':<42} {'STATUS':<18} TOP / BOTTOM")

@@ -20,9 +20,11 @@ version: 1.0.0 # Project convention (non-official)
 ---
 ```
 
-Official fields: `name`, `description`, `argument-hint`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `model`, `context`, `agent`, `hooks`, `license`.
+Official fields: `name`, `description`, `when_to_use`, `argument-hint`, `arguments`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `disallowed-tools`, `model`, `effort`, `context`, `agent`, `background`, `hooks`, `paths`, `shell`, `metadata`, `license`, `compatibility`. The validator's list follows the host's skills reference; re-read it before changing either.
 
-**Project-convention fields are config-driven (portability).** The validator ships generic — it does NOT hardcode any project's non-official fields. Each project declares its accepted conventions in `docs/project-config.json` under `skillConventions`; the validator flags those INFO instead of ERROR. With no config, only the official schema is accepted (strict mode).
+`model` selects a runtime model where the host supports it; it does not declare all compatible or tested models. Document intended models, hosts and test evidence in the body or an evaluation reference linked directly from SKILL.md. Use custom compatibility metadata only when the host/schema accepts it.
+
+**Project-convention fields are config-driven (portability).** The validator ships generic — it does NOT hardcode any project's non-official fields. Each project declares its accepted conventions in `docs/project-config.json` under `skillConventions`; the validator flags those INFO instead of ERROR. With no config, only the official schema is accepted (strict mode). Convention fields stay at the top level because the coding hosts this framework targets ignore unknown keys; before uploading a skill to a host with a strict schema, move them under `metadata`.
 
 ```json
 "skillConventions": {
@@ -64,13 +66,28 @@ Universal defaults (`infer` removable, `tools`→`allowed-tools`) apply even wit
 | ------------------------ | ---------------------------------------------- | -------- |
 | Frontmatter exists       | Must have `---` delimiters                     | Error    |
 | Description single-line  | No literal newlines in description value       | Error    |
-| Description not empty    | Must have description for discoverability      | Warning  |
+| Description not empty     | Must have description for discoverability      | Warning  |
 | Name format              | Lowercase, hyphens, starts letter/num, ≤64     | Error    |
 | Unknown official field   | Field not in official schema                   | Error    |
 | Removable field          | `infer` — ignored by runtime (`--fix` removes) | Warning  |
 | Field typo               | `tools` → `allowed-tools` (`--fix` renames)    | Warning  |
 | Description has category | Should start with `[Category]`                 | Info     |
-| Quick Summary exists     | `## Quick Summary` in first 30 lines           | Warning  |
-| SYNC tag balance         | Every open tag has a matching close tag        | Error    |
+| Quick Summary exists     | Standalone `## Quick Summary` after frontmatter, within physical lines 1–30 (inclusive) | Warning |
+| Contents list            | A file over 100 lines, `SKILL.md` or a bundled Markdown file, has a `Contents` heading within physical lines 1–100, and any list present holds one linked entry per section in document order (`--fix-contents` writes it); `node_modules` is not inspected. Bundled symbolic/non-regular Markdown entries are reported uninspected and never dereferenced; shipped catalogs require regular files. | Warning |
+| SYNC tag balance         | Standalone fences must close in reverse opening order with exactly matching full tags | Error |
 
 `--fix` auto-applies removable/renamable fixes only; structural issues are reported for manual repair.
+
+Missing or late Quick Summary headings produce a warning; warnings alone retain exit code 0. SYNC errors produce exit code 1 and identify the tag and physical line. Inline tag mentions in prose are not fences. Fences begin at column 1 and occupy their own line; body validation starts after the closing frontmatter delimiter.
+
+Nested fences and reminder suffixes are valid when the complete tags match:
+
+```markdown
+<!-- SYNC:example -->
+<!-- SYNC:example:reminder -->
+Reminder content.
+<!-- /SYNC:example:reminder -->
+<!-- /SYNC:example -->
+```
+
+An unclosed opener, stray closer, different closing tag, or crossed pair is an error. The validator reports these issues without inserting, removing, or reordering body content, including in `--fix` mode. The script runs directly from an exported skill directory using Node builtins; no root package or hooks loader is required.

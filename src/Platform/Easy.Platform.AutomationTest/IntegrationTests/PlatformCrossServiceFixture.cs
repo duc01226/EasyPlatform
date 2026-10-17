@@ -19,13 +19,13 @@ namespace Easy.Platform.AutomationTest.IntegrationTests;
 /// public class MyCrossServiceFixture : PlatformCrossServiceFixture
 /// {
 ///     protected override IReadOnlyList&lt;Type&gt; GetFixtureTypes()
-///         =&gt; [typeof(AccountsFixture), typeof(GrowthFixture)];
+///         =&gt; [typeof(UpstreamServiceFixture), typeof(DownstreamServiceFixture)];
 ///
-///     public IServiceProvider AccountsServiceProvider
-///         =&gt; GetFixture&lt;AccountsFixture&gt;().ServiceProvider;
+///     public IServiceProvider UpstreamServiceProvider
+///         =&gt; GetFixture&lt;UpstreamServiceFixture&gt;().ServiceProvider;
 ///
-///     public IServiceProvider GrowthServiceProvider
-///         =&gt; GetFixture&lt;GrowthFixture&gt;().ServiceProvider;
+///     public IServiceProvider DownstreamServiceProvider
+///         =&gt; GetFixture&lt;DownstreamServiceFixture&gt;().ServiceProvider;
 /// }
 ///
 /// [CollectionDefinition("Cross-Service")]
@@ -35,8 +35,8 @@ namespace Easy.Platform.AutomationTest.IntegrationTests;
 /// <para>
 /// <strong>Initialization Order:</strong>
 /// Fixtures are initialized sequentially in the order returned by <see cref="GetFixtureTypes"/>.
-/// Place foundational services (e.g., Accounts) before dependent services (e.g., Growth)
-/// to ensure seed data is available.
+/// Place foundational services before the services that depend on them, so seed data is
+/// available when the dependent fixture boots.
 /// </para>
 /// </summary>
 public abstract class PlatformCrossServiceFixture : IAsyncLifetime, IDisposable

@@ -1,19 +1,24 @@
 ---
 name: scan-codebase-health
 version: 2.0.0
-description: '[Documentation] Use when you need to detect codebase health issues: unused exports, doc count-drift, orphan files, stale config references.'
+description: '[Documentation] Use when detecting codebase health issues: unused exports, doc count-drift, orphan files, stale config references.'
+disable-model-invocation: true
 ---
 
 ## Quick Summary
 
-**Goal:** Detect structural rot in AI-assisted codebases — dead code, count-drift, orphan files, stale configs, dead feature flags, broken cross-references. Works on any project via `docs/project-config.json`.
+> **Review modes:** For review/audit work, standalone defaults to `--review-only` (`--report-only` alias); `--fix-loop` enables review → validate → authorized fix → fresh re-review, default cap 3. `--fix-loop --loop-owner=caller` returns a read-only pass to the caller that owns fixes/re-review. Create triage, review, validation and re-review todo tasks first; apply the carried `review-policy` contract for LOW deferral and user-approved bounded extensions. Non-review modes and terminal findings validation keep their own dispatch.
+
+**Goal:** Detect structural rot — dead code, count-drift, orphan files, stale configs, dead feature flags and broken cross-references — in AI-assisted codebases through `docs/project-config.json`, then report evidence-backed maintenance actions.
+
+**Summary:** Classify scope/tooling → check doc counts, config references, unused exports, orphan files, pattern drift, feature flags and cross-references → fresh-eyes verification → report → actionable summary. Log graph/flag-dependent skips; retain optional CI detection.
 
 **Workflow:**
 
 1. **Classify** — Load config, detect available tooling (graph.db, CI, feature-flag patterns)
 2. **Run Detections** — Execute 7 detection categories (graph-dependent checks skipped if no graph.db)
 3. **Fresh-Eyes Review** — Verify findings before writing report
-4. **Generate Report** — Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`
+4. **Generate Report** — Write to `tmp/reports/codebase-health-scan-{YYMMDD}.md`
 5. **Present Summary** — Show actionable findings with severity levels
 
 **Key Rules:**
@@ -24,6 +29,22 @@ description: '[Documentation] Use when you need to detect codebase health issues
   **MUST ATTENTION** NEVER report a finding without `file:line` proof
 
 ---
+
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Scan Codebase Health](#scan-codebase-health)
+- [Phase 0: Classify & Detect](#phase-0-classify--detect)
+- [Phase 1: Doc Count-Drift Detection (No Graph Required)](#phase-1-doc-count-drift-detection-no-graph-required)
+- [Phase 2: Stale Config Reference Detection (No Graph Required)](#phase-2-stale-config-reference-detection-no-graph-required)
+- [Phase 3: Unused Exports Detection (Graph Required)](#phase-3-unused-exports-detection-graph-required)
+- [Phase 4: Orphan File Detection (Graph Required)](#phase-4-orphan-file-detection-graph-required)
+- [Phase 5: Pattern Drift Detection (No Graph Required)](#phase-5-pattern-drift-detection-no-graph-required)
+- [Phase 6: Dead Feature Flag Detection (If Feature Flags Detected)](#phase-6-dead-feature-flag-detection-if-feature-flags-detected)
+- [Phase 7: Broken Cross-Reference Detection (No Graph Required)](#phase-7-broken-cross-reference-detection-no-graph-required)
+- [Phase 8: Fresh-Eyes Review](#phase-8-fresh-eyes-review)
+- [Phase 9: Generate Report](#phase-9-generate-report)
+- [Closing Reminders](#closing-reminders)
 
 # Scan Codebase Health
 
@@ -61,9 +82,9 @@ If `codebaseHealth` section is missing, discover source roots from project confi
 
 ## Phase 1: Doc Count-Drift Detection (No Graph Required)
 
-**Think:** Which numeric claims in docs can actually be verified? What's the drift threshold that signals a real maintenance problem vs normal growth?
+Verify numeric claims against filesystem evidence; distinguish normal growth from maintenance drift using the thresholds below.
 
-Scan `docs/` **and the AI-harness instruction surface when present** (`.claude/**/*.md`, root `AGENTS.md`, `CLAUDE.md`) for numeric claims: "N files", "N tests", "N hooks", "N services", "N skills", "N components", "N stages", "N verifiers", "N agents", "N workflows". The harness docs embed counts that are directly derivable by globbing `.claude/` (skill dirs, hook entries, `scripts/**/verify-*` scripts, pipeline stages, agent files, `workflows.json` entries) — the highest-drift claims because a new skill/verifier/stage bumps the real count while the prose claim stays frozen. This scope is generic: any project carrying a `.claude/` harness gets it; it hardcodes no project- or framework-specific count.
+Scan `docs/` **and the AI-harness instruction surface when present** (`.claude/**/*.md`, root `AGENTS.md`, `CLAUDE.md`) for numeric claims: "N files", "N tests", "N hooks", "N services", "N skills", "N components", "N stages", "N verifiers", "N agents", "N workflows". Derive harness counts by globbing `.claude/` skill dirs, hook entries, `scripts/**/verify-*` scripts, pipeline stages, agent files and `workflows.json` entries. Prioritize these claims: artifact additions leave prose counts frozen. Apply to any `.claude/` harness; never hardcode project or framework counts.
 For each claim:
 
 1. Extract number and what it counts
@@ -81,7 +102,7 @@ Write findings incrementally to report after each doc scanned. NEVER batch at en
 
 ## Phase 2: Stale Config Reference Detection (No Graph Required)
 
-**Think:** Which config values reference code artifacts (class names, module names, connection strings)? Could those artifacts have been renamed or deleted?
+Check whether configured code artifacts (class names, module names, connection strings) were renamed or deleted.
 
 For each file matching `configPatterns`:
 
@@ -95,7 +116,7 @@ For each file matching `configPatterns`:
 
 **Skip if `.code-graph/graph.db` does not exist — log "Phase 3 skipped: no graph.db".**
 
-**Think:** Which public API surface has zero consumers? Could be dead code, or could be an intentional entry point — distinguish by file type.
+Distinguish dead public API from intentional entry points by file type.
 
 For key exported symbols in source files:
 
@@ -115,9 +136,7 @@ Find source files (.ts,.cs,.py, etc.) with zero inbound edges:
 
 ## Phase 5: Pattern Drift Detection (No Graph Required)
 
-**Think:** Where does the same pattern appear across services/modules? Does it look different in different places? Is that divergence intentional or accidental?
-
-Compare the same pattern across services/modules:
+Compare patterns across services/modules, distinguishing intentional from accidental divergence:
 
 1. Pick a pattern (e.g., repository registration, service configuration, error handling)
 2. Grep across all services/modules
@@ -127,8 +146,6 @@ Compare the same pattern across services/modules:
 
 **Skip if no feature flag patterns found in Phase 0.**
 
-**Think:** Which flags exist in config but have no code references? Which code references flags that no longer exist in config?
-
 1. Grep for feature flag names in config files
 2. Grep for feature flag usage in code
 3. Flag config-only flags (no code usage) as LOW
@@ -136,7 +153,7 @@ Compare the same pattern across services/modules:
 
 ## Phase 7: Broken Cross-Reference Detection (No Graph Required)
 
-**Think:** Which doc links point to files that no longer exist? Which `file:line` references in docs are stale?
+Check doc links and `file:line` references for missing or stale targets.
 
 For docs containing markdown links `[text](path)` or `file:line` references:
 
@@ -153,11 +170,11 @@ For docs containing markdown links `[text](path)` or `file:line` references:
 - Check: is the severity classification justified by the description?
 - Flag false positives (things flagged but actually acceptable)
 
-Max 2 rounds → escalate to user if review finds >30% false positive rate.
+Max 3 review rounds → escalate to user if review finds >30% false positive rate.
 
 ## Phase 9: Generate Report
 
-Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
+Write to `tmp/reports/codebase-health-scan-{YYMMDD}.md`:
 
 ```markdown
 # Codebase Health Scan Report
@@ -201,109 +218,39 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
-<!-- SYNC:critical-thinking-mindset -->
+<!-- PROTOCOL-GUIDES:START -->
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
-<!-- /SYNC:critical-thinking-mindset -->
+- `output-quality-principles` — Readable guidance and verified contents for long skill/doc files; writing, updating or auditing a skill or reference document, or another Markdown artifact over 200 lines → .claude/skills/shared/protocols/output-quality-principles.md
+- `review-decision-autonomy` — Choose supported review decisions and ask before extending the round budget; running any review or audit skill or mode → .claude/skills/shared/protocols/review-decision-autonomy.md
+- `review-policy` — Review-only or a three-round fix loop with explicit extension and fresh post-fix evidence; deciding round eligibility, blocking findings or review state → .claude/skills/shared/protocols/review-policy.md
 
-<!-- SYNC:output-quality-principles -->
-
-> **Output Quality** — Token efficiency without sacrificing quality.
->
-> 1. No inventories/counts — AI can `grep | wc -l`. Counts go stale instantly
-> 2. No directory trees — AI can `glob`/`ls`. Use 1-line path conventions
-> 3. No TOCs — AI reads linearly. TOC wastes tokens
-> 4. No examples that repeat what rules say — one example only if non-obvious
-> 5. Lead with answer, not reasoning. Skip filler words and preamble
-> 6. Sacrifice grammar for concision in reports
-> 7. Unresolved questions at end, if any
-
-<!-- /SYNC:output-quality-principles -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
-
-<!-- /SYNC:ai-mistake-prevention -->
+<!-- PROTOCOL-GUIDES:END -->
 
 <!-- SYNC:output-quality-principles:reminder -->
 
-**IMPORTANT MUST ATTENTION** output quality: no counts/trees/TOCs, 1 example per pattern, lead with answer.
+**IMPORTANT MUST ATTENTION** lead with useful guidance and readable priorities; preserve action-changing conditions/numbers and required structures. When writing, updating or auditing Markdown skill/doc content, verify top, heading-linked contents over 200 lines (stricter owner thresholds remain); refresh after edits and report gaps in read-only audits. Remove report bulk; judge semantic value rather than word counts.
 
 <!-- /SYNC:output-quality-principles:reminder -->
 
-<!-- SYNC:critical-thinking-mindset:reminder -->
+<!-- SYNC:review-decision-autonomy:reminder -->
 
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
+**MUST ATTENTION** Decide supported review choices and recommendations, record the rationale, and finish without routine user questions. Keep round-limit extension, indispensable facts and actual action authority; preserve source coverage, validation, tests, read-only boundaries and budgets. Review decisions do not accept open risks or make a failed gate pass.
 
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- SYNC:parallel-subagent-dispatch -->
-
-> **Parallel Sub-Agent Dispatch** — Plan parallelism the moment a task breakdown exists, BEFORE executing it — running provably independent tasks sequentially wastes wall-clock. Applies to every multi-step job: workflow steps, planning, batch updates, investigation, research, scans, reviews, doc sync. **Plan execution is metadata-gated, NEVER default-parallel** — fan-out follows ONLY what the plan declares (`PAR`/`SEQ` tags + per-phase write set); an untagged plan runs sequentially — why: a derived write set cannot see cascade or generated writes.
->
-> 1. **Tag every task `PAR` or `SEQ`.** `PAR` = inputs exclude every pending task's output AND write set disjoint from every other `PAR`. Else `SEQ` — MUST ATTENTION name the dependency forcing it.
-> 2. **Group `PAR` into waves.** No edge between members. Two writers of one file NEVER share a wave. Read-only work (search, investigation, review, research) parallelizes freely.
-> 3. **Declare before dispatch:** `Parallel plan: wave 1 = [...] · wave 2 = [...] · SEQ = [...] (reason)`.
-> 4. **Spawn each wave in ONE message** — every `Agent` call in one response, NEVER dripped per turn. Route each task to its specialist (`.claude/skills/shared/sub-agent-selection-guide.md`); NEVER `code-reviewer` as catch-all.
-> 5. **Brief each sub-agent self-contained:** goal · scope + owned files · reference docs · return contract (summary + `Full report:` path, per SYNC:subagent-return-contract) · incremental persistence to `plans/reports/` (per SYNC:incremental-persistence).
-> 6. **Barrier per wave.** Advance ONLY after EVERY member returns (a skipped conditional counts as returned). Merge, mark each task completed/skipped, THEN dispatch the next wave. Mutating steps wait for the barrier.
-> 7. **One level deep.** A dispatched sub-agent executes its own brief; further fan-out stays the orchestrator's job unless that agent's `.claude/agents/*.md` definition authorizes it.
->
-> **NEVER parallelize:** tasks sharing a write target · a task consuming a pending task's output · trivial single-file work (dispatch overhead > gain) · an order a skill or workflow explicitly fixes · gates awaiting user approval.
->
-> **Blocked until:** MUST ATTENTION every task tagged PAR/SEQ with a named reason per SEQ · waves declared + write-set disjointness checked · each wave spawned in ONE message · barrier honored before the next wave.
-
-<!-- /SYNC:parallel-subagent-dispatch -->
-
-<!-- SYNC:parallel-subagent-dispatch:reminder -->
-
-- **MANDATORY** After planning tasks, tag each PAR/SEQ and spawn every PAR wave as parallel sub-agents in ONE message — default parallel for workflows, batch updates, investigation, research, reviews; plan execution fans out ONLY on what the plan declares.
-- **MANDATORY** Disjoint write sets per wave · all-return barrier before the next wave · specialist routing · sub-agents NEVER fan out further unless their own agent definition authorizes it.
-
-<!-- /SYNC:parallel-subagent-dispatch:reminder -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
+<!-- /SYNC:review-decision-autonomy:reminder -->
 
 ## Closing Reminders
+
+**IMPORTANT MUST ATTENTION Goal:** Detect structural rot — dead code, count-drift, orphan files, stale configs, dead feature flags and broken cross-references — in AI-assisted codebases through `docs/project-config.json`, then report evidence-backed maintenance actions.
+
+**MUST ATTENTION Main steps:** classify scope/tooling → doc counts → config references → unused exports → orphan files → pattern drift → feature flags → cross-references → fresh-eyes verification → report → actionable summary. Log graph/flag-dependent skips and retain optional CI detection.
 
 **IMPORTANT MUST ATTENTION** break work into small `TaskCreate` tasks BEFORE starting — one per phase
 
 **MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
-- **Critical Thinking:** apply critical+sequential thinking; traced `file:line` proof, >80% to act.
-- **Output Quality:** no counts/trees/TOCs; 1 example per pattern; lead with answer.
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Output Quality:** honor the requested audit output; keep guide content actionable and use examples only when they clarify a necessary distinction.
 - **Parallel Sub-Agent Dispatch:** Tag tasks PAR/SEQ, group PAR into disjoint-write-set waves, spawn each wave in ONE message, barrier before advancing.
 
 **IMPORTANT MUST ATTENTION** detect available tooling in Phase 0 — never assume graph.db exists
@@ -323,3 +270,10 @@ Write to `plans/reports/codebase-health-scan-{YYMMDD}.md`:
 | "Config reference might still exist"         | Grep to verify. Confidence <80% → flag as MEDIUM "unverified" not LOW "probably fine" |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and break into small todo tasks and sub-tasks using TaskCreate.
+
+
+<!-- SYNC:review-policy:reminder -->
+
+**MUST ATTENTION** Triage all targets, plan and create review/validation/fix/fresh re-review tasks first. Review-only reports without edits; fix-loop freshly reviews every repair under one fixing owner. Default cap three rounds: disclose deferred LOWs, ask and wait before a bounded extension for MEDIUM+ or failed required checks. Preserve scope, coverage and actual operation authority.
+
+<!-- /SYNC:review-policy:reminder -->

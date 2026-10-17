@@ -1,23 +1,78 @@
+# =============================================================================
+#  Build-context filter for the Nx playground app. Build context is
+#  `src/PlatformExampleAppWeb` - see src/platform-example-app.docker-compose.yml
+#  (`context: PlatformExampleAppWeb`).
+#
+#  RULE 1 - parity with clean-bravo.cmd: everything that script deletes is
+#  regenerable and must never be uploaded. Section headings below name the
+#  matching `$dirTargets` category; keep the two lists in sync.
+#
+#  RULE 2 - no `!` exception lines. A single `!` anywhere disables Docker's
+#  skip-the-whole-directory fast path, so the walker would have to stat every
+#  file in node_modules, .angular/cache and .nx/cache on every build.
+# =============================================================================
+
+# --- clean-bravo: "web build output" -----------------------------------------
+**/dist
+
+# --- clean-bravo: "tool cache" -----------------------------------------------
+**/.angular
+**/.nx
+**/.vs
+**/.sass-cache
+**/.cache
+
+# --- clean-bravo: "npm packages" ---------------------------------------------
+**/node_modules
+**/packages/
+
+# --- clean-bravo: "build output" ---------------------------------------------
+**/bin
+**/obj
+**/out/
+
+# --- clean-bravo: "test results / crash dumps" -------------------------------
+**/TestResults
+**/testresults
+**/test-results
+**/coverage
+**/*.dmp
+**/*.trx
+
+# --- clean-bravo: "benchmark output" -----------------------------------------
+**/BenchmarkDotNet.Artifacts
+
+# --- Nx scratch output (git-ignored by the root .gitignore `tmp/` rule) ------
+tmp
+
+# --- VCS / IDE / tooling metadata --------------------------------------------
 **/.classpath
-**/.dockerignore
-**/.env
-**/.git
-**/.gitignore
 **/.project
 **/.settings
-**/.toolstarget
-**/.vs
+**/.git
+**/.gitignore
+**/.dockerignore
 **/.vscode
 **/*.*proj.user
+**/.toolstarget
 **/*.dbmdl
 **/*.jfm
-**/azds.yaml
-**/charts
+**/npm-debug.log
+**/yarn-error.log
+
+# --- Docker / deployment definitions (never needed inside an image) ---------
+**/Dockerfile*
 **/docker-compose*
 **/compose*
-**/Dockerfile*
-**/node_modules
-**/npm-debug.log
-**/obj
+**/azds.yaml
+**/charts
 **/secrets.dev.yaml
 **/values.dev.yaml
+
+# --- Local credentials / private key material --------------------------------
+**/.env
+**/.env.*
+**/*.p12
+**/*.pem
+**/*.pfx
+**/*.key

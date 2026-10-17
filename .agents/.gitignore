@@ -1,0 +1,8 @@
+# >>> codex-sync: local install artifacts (generated; the sync rewrites this block)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.venv/
+__pycache__/
+node_modules/
+# <<< codex-sync

@@ -3,8 +3,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
-const rootDir = process.cwd();
+const require = createRequire(import.meta.url);
+const { resolveProjectRoot, isInvokedAsScript } = require('../lib/project-root.cjs');
+const rootResolution = resolveProjectRoot({
+    cwd: process.cwd(),
+    scriptPath: fileURLToPath(import.meta.url),
+    env: process.env,
+});
+const rootDir = rootResolution.rootDir;
 const scanRoots = ['.codex', '.agents', '.claude/scripts/codex'];
 // Forbidden-TERM scan roots (project name leakage). Hook tests are deliberately ABSENT because
 // fixtures may reference this project's service names. Hook config is included because portable
@@ -12,7 +20,8 @@ const scanRoots = ['.codex', '.agents', '.claude/scripts/codex'];
 export const genericSourceRoots = ['.claude/skills', '.claude/hooks/config'];
 const genericSourceFiles = [
     '.claude/.ck.json',
-    '.claude/hooks/lib/prompt-injections.cjs',
+    '.claude/hooks/lib/universal-delivery.cjs',
+    '.claude/hooks/skill-overlay-remind.cjs',
     '.claude/hooks/session-init-docs.cjs'
 ];
 // Project-SYMBOL scan roots (base-class leakage). Covers source templates and generated mirrors:
@@ -21,7 +30,13 @@ const genericSourceFiles = [
 // scan from forbiddenTerms above: it matches only the unambiguous denylist symbols, so hook
 // config/test fixtures (which carry service NAMES, not base-CLASS symbols) do not trip it.
 export const projectSymbolScanRoots = ['.claude/skills', '.claude/hooks', '.claude/agents', '.codex', '.agents'];
-const forbiddenTerms = ['br' + 'avo', 'Br' + 'avoSuite'];
+// Consuming-project NAMES. Split so this verifier never matches its own source. A consumer
+// project name must never enter the portable bundle: it ships verbatim into every adopting
+// repository, where it is both meaningless and misleading. The Orient entries were added after
+// that project's spec paths, package names and design-doc pointers reached
+// .claude/scripts/codex/tests -- inside this scan scope, yet passing because only the two
+// pre-existing terms were listed. The gap was the term list, not the scope.
+export const forbiddenTerms = ['br' + 'avo', 'Br' + 'avoSuite', 'Orient' + 'Software', 'Orient' + ' One', 'orient' + '-one'];
 
 // Project-specific framework symbols (this codebase's .NET/Angular base classes) that must NOT
 // leak into portable generic skills/hooks as load-bearing rules. Case-SENSITIVE, word-boundary
@@ -35,7 +50,7 @@ const forbiddenTerms = ['br' + 'avo', 'Br' + 'avoSuite'];
 //      `PlatformValidationResult`, `untilDestroyed`) — used as "e.g. on a .NET/Angular project…"
 //      examples in scan/investigate/refactoring/feature/affirmative-rewrite-rubric. A blanket
 //      denylist would force ~10 allowlist entries and fight the framework's example-driven design.
-//      The load-bearing leak (architecture-review asserting them as MUST-rules) is fixed at the
+//      The load-bearing leak (the architecture review mode asserting them as MUST-rules) is fixed at the
 //      source — rules reframed as project-examples routed through reference docs — not by this gate.
 export const projectSymbolDenylist = [
     'AppBaseComponent',
@@ -46,9 +61,9 @@ export const projectSymbolDenylist = [
     'IPlatformRootRepository',
     'ExecuteInjectScopedAsync',
     'ExecuteUowTask',
-    // CQRS entity-event / bus-producer base classes — appear ONLY as architecture-review's marked
+    // CQRS entity-event / bus-producer base classes — appear ONLY as the architecture review mode's marked
 // examples today; denylisted as future-proofing so a NEW skill/hook can't introduce them as an
-// unmarked assertion. architecture-review is allowlisted below for its documented examples.
+// unmarked assertion. The architecture review mode reference is allowlisted below for its documented examples.
     'PlatformCqrsEntityEventApplicationHandler',
     'PlatformCqrsEventBusMessageProducer',
     // Consuming-project directory/solution name. Was hardcoded as a service-derivation
@@ -58,11 +73,11 @@ export const projectSymbolDenylist = [
 ];
 
 // Per-file exemptions: skills that legitimately document THIS project's architecture as marked
-// examples (architecture-review frames these base classes as "e.g. this project" anchors;
-// the seed-test-data scan target greps for them in .NET source). Keyed by repo-relative forward-slash path →
+// examples (the architecture review mode frames these base classes as "e.g. this project" anchors).
+// Keyed by repo-relative forward-slash path →
 // symbols allowed for that file only.
 export const projectSymbolAllowlist = {
-    '.claude/skills/architecture-review/SKILL.md': [
+    '.claude/skills/architecture/references/mode-review.md': [
         'AppBaseComponent',
         'AppBaseVmStoreComponent',
         'AppBaseFormComponent',
@@ -73,7 +88,6 @@ export const projectSymbolAllowlist = {
         'PlatformCqrsEventBusMessageProducer'
     ],
     '.claude/skills/project-config/SKILL.md': ['IPlatformRootRepository'],
-    '.claude/skills/scan/references/targets.md': ['ExecuteInjectScopedAsync', 'ExecuteUowTask'],
     '.claude/skills/shared/affirmative-rewrite-rubric.md': ['PlatformVmStore']
 };
 
@@ -86,13 +100,9 @@ const projectSymbolMatchers = projectSymbolDenylist.map(symbol => ({
 const ignoredParts = new Set(['node_modules', 'plans', '.git', '.venv', '__pycache__', 'tmp']);
 const ignoredExtensions = new Set(['.pyc', '.pyo', '.exe', '.dll', '.png', '.jpg', '.jpeg', '.gif', '.webp']);
 const ignoredFilenamePatterns = [/\.local\.json$/i];
-export const managedBlockRanges = [
-    { start: '<!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->', end: '<!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->' },
-    { start: '<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->', end: '<!-- CODEX:PROJECT-REFERENCE-LOADING:END -->' },
-    // Do NOT exempt PROMPT-PROTOCOLS. It is a generated portable mirror and must stay free of
-    // project-specific lesson bodies; otherwise .codex/CODEX_CONTEXT.md can pass while carrying
-    // terms from docs/project-reference/lessons.md.
-];
+// No generated block is exempt: a mirror carries no protocol blocks, and any text in a mirror must stay
+// free of project-specific terms. The mask machinery stays so a future generated block can be declared.
+export const managedBlockRanges = [];
 
 async function exists(targetPath) {
     try {
@@ -242,6 +252,6 @@ async function main() {
     console.log('[codex-verify-no-project-residue] PASS');
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (isInvokedAsScript(process.argv[1], fileURLToPath(import.meta.url))) {
     await main();
 }

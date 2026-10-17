@@ -6,6 +6,25 @@ import { Dictionary } from '../common-types';
 
 export const PlatformTranslationCurrentLangLocalStorageKey = 'i18n';
 
+export class PlatformTranslateConfig {
+    public static defaultConfig(): PlatformTranslateConfig {
+        return new PlatformTranslateConfig();
+    }
+
+    public defaultLanguage: string = 'en';
+    public slowRequestBreakpoint: number = 500;
+    public availableLangs: PlatformLanguageItem[] = [new PlatformLanguageItem('English', 'en', 'ENG')];
+    public restrictSupportLangs?: string[] | null;
+
+    constructor(data?: Partial<PlatformTranslateConfig>) {
+        if (data == null) return;
+
+        if (data.defaultLanguage != null) this.defaultLanguage = data.defaultLanguage;
+        if (data.slowRequestBreakpoint != null) this.slowRequestBreakpoint = data.slowRequestBreakpoint;
+        if (data.availableLangs != null) this.availableLangs = data.availableLangs;
+    }
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlatformTranslateService {
     /**
@@ -163,24 +182,5 @@ export class PlatformLanguageUtil {
     public static getBrowserLangTranslatedText(value: Dictionary<string>, defaultLang: string) {
         const browserLang = PlatformLanguageUtil.getBrowserLang();
         return value[browserLang] != undefined ? value[browserLang] : value[defaultLang] != undefined ? value[defaultLang] : '';
-    }
-}
-
-export class PlatformTranslateConfig {
-    public static defaultConfig(): PlatformTranslateConfig {
-        return new PlatformTranslateConfig();
-    }
-
-    public defaultLanguage: string = 'en';
-    public slowRequestBreakpoint: number = 500;
-    public availableLangs: PlatformLanguageItem[] = [new PlatformLanguageItem('English', 'en', 'ENG')];
-    public restrictSupportLangs?: string[] | null;
-
-    constructor(data?: Partial<PlatformTranslateConfig>) {
-        if (data == null) return;
-
-        if (data.defaultLanguage != null) this.defaultLanguage = data.defaultLanguage;
-        if (data.slowRequestBreakpoint != null) this.slowRequestBreakpoint = data.slowRequestBreakpoint;
-        if (data.availableLangs != null) this.availableLangs = data.availableLangs;
     }
 }

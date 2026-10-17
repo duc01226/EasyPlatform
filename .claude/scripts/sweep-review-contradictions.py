@@ -95,7 +95,7 @@ REPLACEMENTS = [
         "NEVER reuse sub-agent across rounds. A clean round ENDS the review; a round with issues triggers fix → fresh sub-agent re-review.",
         "seed-test-data:228",
     ),
-    # 8. domain-entities-review.md:18 — embedded in CRITICAL RULES list
+    # 8. domain-analysis --mode=review (mode-review.md) CRITICAL RULES — embedded in CRITICAL RULES list
     (
         r"\(2\) NEVER declare PASS without fresh sub-agent Round 2\.",
         "(2) When Round 1 finds issues, NEVER declare PASS without fresh sub-agent Round 2 after fixing. Clean Round 1 ENDS the review.",

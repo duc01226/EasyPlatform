@@ -4,9 +4,9 @@
 /**
  * ClaudeKit Paths - Centralized path constants for all temporary/runtime files
  *
- * All ClaudeKit temp files consolidated under /tmp/ck/ namespace for:
- * - Cleaner /tmp directory (single namespace)
- * - Easier cleanup (rm -rf /tmp/ck/)
+ * All ClaudeKit temp files consolidated under the OS temp `ck` namespace for:
+ * - Cleaner OS temp directory (single namespace)
+ * - Easier cleanup through the portable cleanAll() helper
  * - Debugging (all state in one place)
  * - No collisions with other tools
  *
@@ -20,6 +20,7 @@
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const { resolveProjectRoot } = require('./project-root.cjs');
 
 // Root directory for all ClaudeKit temp files (OS temp — session-scoped)
 const CK_TMP_DIR = path.join(os.tmpdir(), 'ck');
@@ -29,7 +30,11 @@ const CK_TMP_DIR = path.join(os.tmpdir(), 'ck');
 const SESSION_ID_DEFAULT = 'default';
 
 // Project-scoped runtime data (ephemeral flags, markers — NOT in .claude/ to keep it portable)
-const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+const PROJECT_DIR = resolveProjectRoot({
+    cwd: process.cwd(),
+    scriptPath: __filename,
+    env: process.env,
+}).rootDir;
 const PROJECT_TMP_DIR = path.join(PROJECT_DIR, 'tmp', 'claude-temp');
 
 // Project-scoped runtime file paths (dismiss flags, markers, warnings)
@@ -38,7 +43,15 @@ const AGENT_FILES_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.agent-files-dism
 const SCAN_STALE_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.scan-stale-dismissed');
 const GRAPH_DISMISSED_PATH = path.join(PROJECT_TMP_DIR, '.graph-dismissed');
 const SCAN_STALE_PATH = path.join(PROJECT_TMP_DIR, '.scan-stale');
-const COMMIT_SKILL_MARKER_PATH = path.join(PROJECT_TMP_DIR, '.commit-skill-active');
+// Local freshness ledger: records "this doc was re-verified on DATE and nothing
+// changed", so a scan that correctly writes nothing does not leave the doc looking
+// stale forever. Untracked by design, and that is a REAL trade-off, not a free win:
+// because a no-op scan no longer restamps the doc, the committed `Last scanned` date
+// freezes at the last content change. Freshness is therefore per-workstation — a fresh
+// clone, CI, or a second developer sees the frozen stamp and will warn once the doc
+// passes the staleness window, until a scan runs there too. The gate is warn-only
+// (init-prompt-gate.cjs), so this costs a dismissible notice, never a blocked prompt.
+const SCAN_VERIFIED_PATH = path.join(PROJECT_TMP_DIR, '.scan-verified');
 
 // Session-specific marker files (per-session, no race conditions)
 const MARKERS_DIR = path.join(CK_TMP_DIR, 'markers');
@@ -183,7 +196,7 @@ module.exports = {
     SCAN_STALE_DISMISSED_PATH,
     GRAPH_DISMISSED_PATH,
     SCAN_STALE_PATH,
-    COMMIT_SKILL_MARKER_PATH,
+    SCAN_VERIFIED_PATH,
 
     // Helpers
     ensureDir,

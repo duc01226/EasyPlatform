@@ -9,12 +9,14 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
+from functools import lru_cache
 from pathlib import Path
-from typing import Optional
-
-import tree_sitter_language_pack as tslp
+from typing import TYPE_CHECKING, Optional
 
 from .models import EdgeInfo, NodeInfo, qualify  # noqa: F401 — re-exported
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from .resolver import ModuleResolver
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +139,21 @@ _CALL_TYPES: dict[str, list[str]] = {
     "solidity": ["call_expression"],
 }
 
+
+@lru_cache(maxsize=None)
+def _types_for(language: str) -> tuple[frozenset, frozenset, frozenset, frozenset]:
+    """Return the (class, function, import, call) node-type sets for a language.
+
+    The sets are immutable and identical for every visit to a language's AST,
+    so rebuilding them per node only added allocation churn on large files.
+    """
+    return (
+        frozenset(_CLASS_TYPES.get(language, [])),
+        frozenset(_FUNCTION_TYPES.get(language, [])),
+        frozenset(_IMPORT_TYPES.get(language, [])),
+        frozenset(_CALL_TYPES.get(language, [])),
+    )
+
 # Per-language built-in call noise — names that tree-sitter captures as call
 # expressions but are language keywords, built-in functions, or base-class
 # methods that never correspond to user-defined nodes in the graph.
@@ -230,7 +247,10 @@ _TEST_FILE_PATTERNS = [
 
 
 def _is_test_file(path: str) -> bool:
-    return any(p.search(path) for p in _TEST_FILE_PATTERNS)
+    # Normalize separators so directory-based patterns (tests?/) match on
+    # Windows, where parser file paths carry backslashes.
+    normalized = path.replace("\\", "/")
+    return any(p.search(normalized) for p in _TEST_FILE_PATTERNS)
 
 
 def _is_test_function(name: str, file_path: str) -> bool:
@@ -263,9 +283,16 @@ class CodeParser:
 
     _MODULE_CACHE_MAX = 15_000  # Evict cache to cap memory on huge monorepos
 
-    def __init__(self, call_noise_extra: dict[str, frozenset[str]] | None = None) -> None:
+    def __init__(
+        self,
+        call_noise_extra: dict[str, frozenset[str]] | None = None,
+        module_resolver: "ModuleResolver | None" = None,
+    ) -> None:
         self._parsers: dict[str, object] = {}
         self._module_file_cache: dict[str, Optional[str]] = {}
+        # Optional project-aware resolver for tsconfig aliases + workspace
+        # packages. Without it the parser still resolves relative paths.
+        self._module_resolver = module_resolver
         # Merge engine defaults with optional project-specific noise entries
         # loaded from project-config.json → graphSettings.callNoiseFilter
         self._call_noise: dict[str, frozenset[str]] = {}
@@ -280,6 +307,7 @@ class CodeParser:
     def _get_parser(self, language: str):  # type: ignore[arg-type]
         if language not in self._parsers:
             try:
+                import tree_sitter_language_pack as tslp  # lazy: keep it off the read-only import path
                 self._parsers[language] = tslp.get_parser(language)  # type: ignore[arg-type]
             except Exception:
                 return None
@@ -519,25 +547,34 @@ class CodeParser:
     ) -> None:
         """Generate TESTED_BY reverse edges for test files.
 
-        When a test function calls a production function, create an edge from
-        the production function back to the test. Modifies *edges* in-place.
+        Any call made from a test file to a resolved production function
+        (qualified ``file::symbol`` target) creates an edge from that production
+        function back to the test. Works for anonymous test callbacks
+        (``it(...)``/``test(...)``) because it keys on the call edges rather
+        than on named test nodes. Modifies *edges* in-place.
         """
         if not _is_test_file(file_path):
             return
-        test_qnames = set()
-        for n in nodes:
-            if n.is_test:
-                qn = self._qualify(n.name, n.file_path, n.parent_name)
-                test_qnames.add(qn)
+        seen: set[tuple[str, str]] = set()
         for edge in list(edges):
-            if edge.kind == "CALLS" and edge.source in test_qnames:
-                edges.append(EdgeInfo(
-                    kind="TESTED_BY",
-                    source=edge.target,
-                    target=edge.source,
-                    file_path=edge.file_path,
-                    line=edge.line,
-                ))
+            if edge.kind != "CALLS" or "::" not in edge.target:
+                continue
+            target_file = edge.target.split("::", 1)[0]
+            if not target_file or target_file == file_path:
+                continue
+            if _is_test_file(target_file):
+                continue
+            pair = (edge.target, edge.source)
+            if pair in seen:
+                continue
+            seen.add(pair)
+            edges.append(EdgeInfo(
+                kind="TESTED_BY",
+                source=edge.target,
+                target=edge.source,
+                file_path=edge.file_path,
+                line=edge.line,
+            ))
 
     def _resolve_call_targets(
         self,
@@ -597,10 +634,7 @@ class CodeParser:
         """Recursively walk the AST and extract nodes/edges."""
         if _depth > self._MAX_AST_DEPTH:
             return
-        class_types = set(_CLASS_TYPES.get(language, []))
-        func_types = set(_FUNCTION_TYPES.get(language, []))
-        import_types = set(_IMPORT_TYPES.get(language, []))
-        call_types = set(_CALL_TYPES.get(language, []))
+        class_types, func_types, import_types, call_types = _types_for(language)
 
         for child in root.children:
             node_type = child.type
@@ -717,12 +751,18 @@ class CodeParser:
             if node_type in import_types:
                 imports = self._extract_import(child, language, source)
                 for imp_target in imports:
+                    resolved_target = None
+                    if self._module_resolver is not None:
+                        resolved_target = self._module_resolver.resolve(
+                            imp_target, file_path, language,
+                        )
                     edges.append(EdgeInfo(
                         kind="IMPORTS_FROM",
                         source=file_path,
-                        target=imp_target,
+                        target=resolved_target or imp_target,
                         file_path=file_path,
                         line=child.start_point[0] + 1,
+                        extra=({"specifier": imp_target} if resolved_target else {}),
                     ))
                 continue
 
@@ -1029,7 +1069,10 @@ class CodeParser:
 
         resolved = self._do_resolve_module(module, file_path, language)
         if len(self._module_file_cache) >= self._MODULE_CACHE_MAX:
-            self._module_file_cache.clear()
+            # Evict the oldest ~10% instead of clearing everything, so warm
+            # entries survive a burst of distinct modules on huge repos.
+            for _ in range(max(1, self._MODULE_CACHE_MAX // 10)):
+                self._module_file_cache.pop(next(iter(self._module_file_cache)), None)
         self._module_file_cache[cache_key] = resolved
         return resolved
 
@@ -1038,6 +1081,14 @@ class CodeParser:
     ) -> Optional[str]:
         """Language-aware module-to-file resolution."""
         caller_dir = Path(file_path).parent
+
+        # Project-aware resolution first (tsconfig aliases, workspace packages,
+        # relative paths). Falls through to the language defaults below when no
+        # resolver is configured or nothing matches.
+        if self._module_resolver is not None:
+            resolved = self._module_resolver.resolve(module, file_path, language)
+            if resolved:
+                return resolved
 
         if language == "python":
             rel_path = module.replace(".", "/")

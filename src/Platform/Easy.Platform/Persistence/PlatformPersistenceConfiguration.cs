@@ -13,11 +13,11 @@ namespace Easy.Platform.Persistence;
 /// - Query performance monitoring and warning systems
 /// - Debug logging for development and troubleshooting
 ///
-/// Usage across Platform services:
-/// - Growth service: PostgreSQL persistence with EF Core and bad query monitoring
-/// - Employee service: MongoDB persistence with connection pooling
-/// - Talents service: Multi-database scenarios with cross-db migration support
-/// - Surveys service: MongoDB with custom slow query thresholds
+/// Usage across consuming services:
+/// - Relational persistence via EF Core (any provider) with bad query monitoring
+/// - Document-store persistence with connection pooling
+/// - Multi-database scenarios with cross-db migration support
+/// - Per-service custom slow query thresholds
 ///
 /// Configuration is typically set per service through appsettings.json and can be
 /// overridden in concrete persistence module implementations.
@@ -34,7 +34,7 @@ public interface IPlatformPersistenceConfiguration
     /// </value>
     /// <remarks>
     /// Cross-database migration mode is used when:
-    /// - Migrating data between different database systems (e.g., SQL Server to PostgreSQL)
+    /// - Migrating data between different database systems (e.g., one relational provider to another, or relational to document store)
     /// - Synchronizing data across service boundaries
     /// - Running one-time data transformation operations
     /// - Performing database consolidation tasks
@@ -46,7 +46,7 @@ public interface IPlatformPersistenceConfiguration
     /// - Performance monitoring may be reduced
     ///
     /// Used in scenarios like:
-    /// - Employee service data migration to central Growth database
+    /// - One service's data migration into a peer service's database
     /// - Legacy system data imports
     /// - Cross-service data synchronization tasks
     /// </remarks>

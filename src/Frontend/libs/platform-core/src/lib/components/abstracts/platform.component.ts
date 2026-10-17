@@ -197,10 +197,13 @@ const defaultThrottleDurationMs = 300;
  *       })
  *     );
  *
- *     // Anonymous subscription (auto-cleanup on destroy)
- *     this.subscribeUntilDestroyed(
- *       this.userService.currentUser$,
- *       user => this.currentUser = user
+ *     // Anonymous subscription (auto-cleanup on destroy).
+ *     // subscribeUntilDestroyed is a PIPE OPERATOR, so it must be applied inside .pipe(...) — it subscribes
+ *     // itself once piped, so no trailing .subscribe() is needed. Calling it directly with the Observable as
+ *     // its first argument type-checks but never subscribes: an Observable has no .next, so the callback is
+ *     // never wired and the returned operator is never applied to anything.
+ *     this.userService.currentUser$.pipe(
+ *       this.subscribeUntilDestroyed(user => (this.currentUser = user))
  *     );
  *   }
  *
@@ -253,7 +256,7 @@ export abstract class PlatformComponent implements OnInit, AfterViewInit, OnDest
     public static readonly defaultDetectChangesThrottleTime: number = defaultThrottleDurationMs;
     public static readonly checkLoadingDelayTimeMs = 200;
 
-    private devModeCheckLoadingStateElementTimeoutId?: number;
+    private devModeCheckLoadingStateElementTimeoutId?: ReturnType<typeof setTimeout>;
 
     protected environmentInjector = inject(EnvironmentInjector);
 

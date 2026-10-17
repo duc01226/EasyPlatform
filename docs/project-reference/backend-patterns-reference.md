@@ -6,6 +6,22 @@
 
 **CRITICAL:** Logic MUST live in LOWEST layer: Entity > Service > Handler. DTOs own mapping. Validation uses fluent `PlatformValidationResult`, NEVER throw exceptions — build a result and `.EnsureValid()`. Side effects go in entity event handlers (`UseCaseEvents/`), NEVER in command handlers. Cross-service via RabbitMQ message bus ONLY, NEVER direct DB.
 
+## Contents
+
+- [Entity Patterns](#entity-patterns)
+- [Repository Pattern](#repository-pattern)
+- [CQRS Patterns](#cqrs-patterns)
+- [Validation Patterns](#validation-patterns)
+- [DTO Mapping](#dto-mapping)
+- [Event Handlers (Side Effects)](#event-handlers-side-effects)
+- [Message Bus](#message-bus)
+- [Diagnostics & Observability](#diagnostics--observability)
+- [Persistence Failure Exceptions](#persistence-failure-exceptions)
+- [Background Jobs](#background-jobs)
+- [Migrations](#migrations)
+- [Data Seeding](#data-seeding)
+- [Anti-Patterns (Confirmed Violations)](#anti-patterns-confirmed-violations)
+
 ## Entity Patterns
 
 MUST extend `RootAuditedEntity<TEntity, TPrimaryKey, TUserId>`. MUST override `GetValidator()`. MUST use `[ComputedEntityProperty]` for derived properties (empty setter required for EF Core). MUST use static `Expression<Func<T, bool>>` methods for reusable query filters.
@@ -184,7 +200,7 @@ internal sealed class SaveSnippetTextCommandHandler
 
 ### Query Structure
 
-MUST use `PlatformCqrsQuery<TResult>` or `PlatformCqrsPagedQuery<TResult, TItemDto>` for paged queries. Paged queries get `SkipCount`/`MaxResultCount` automatically.
+MUST use `PlatformCqrsQuery<TResult>` or `PlatformCqrsPagedQuery<TResult, TItemDto>` for paged queries. Paged queries get `SkipCount`/`MaxResultCount` automatically. The example app's exposed snippet/task lists reuse `TextSnippetPagedQuery` for a default20 and accepted sizes1..200, rejecting negative offsets. Shared platform queries retain their documented nullable unlimited contract; do not impose app policy on generic callers.
 
 ```csharp
 // src/Backend/.../UseCaseQueries/SearchSnippetTextQuery.cs:20
@@ -204,7 +220,7 @@ internal sealed class SearchSnippetTextQueryHandler
             builderFn: query => query
                 .Where(p => p.CreatedByUserId == RequestContext.UserId())
                 .PipeIf(request.SearchText.IsNotNullOrEmpty(),
-                    _ => fullTextSearchPersistenceService.Search(query, request.SearchText, ...))
+                    filteredQuery => fullTextSearchPersistenceService.Search(filteredQuery, request.SearchText, ...))
                 .WhereIf(request.SearchId != null, p => p.Id == request.SearchId));
 
         var (pagedEntities, totalCount) = await Util.TaskRunner.WhenAll(

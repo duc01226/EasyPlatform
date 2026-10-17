@@ -1,0 +1,5 @@
+> **Whole-Target Correctness** — Understand the change as a connected behavior, then verify each affected flow from trigger through callers, boundaries and outputs. File-by-file and specialist checks add depth; the final verdict must also account for their interactions.
+>
+> Trace supported success, failure, empty/boundary states, alternate roles/clients, retries and concurrency where applicable. Read surrounding source, governing rules and relevant history. Decide whether to review together or group connected flows from actual risk and context headroom; record cross-group obligations and inspect them before concluding.
+>
+> Keep findings supported by a reachable trigger, consequence and evidence (confidence ≥85). Confidence measures whether the issue is real; severity measures its impact. An unsettled claim with possible MEDIUM+ impact stays `NOT VERIFIABLE`, with the missing proof named; lower-impact uncertainty is an observation. No complete verdict while an affected flow, required rule or interaction remains unreviewed.

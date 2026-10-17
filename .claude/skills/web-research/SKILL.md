@@ -1,13 +1,13 @@
 ---
 name: web-research
 version: 1.0.0
-description: '[Research] Use when starting a web research task — discover, gather, and triage candidate sources on a topic to feed deeper investigation.'
+description: '[Research] Use when a workflow step or the user asks for web source discovery and triage into a source map and gaps. --chain=deep-dive also builds a cross-validated evidence base.'
 ---
 
 <!-- PROMPT-ENHANCE:STEP-TASK-ANCHOR:START -->
 
-> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval.
-> **[BLOCKING]** Before each step or sub-skill call, update task tracking: set `in_progress` when step starts, set `completed` when step ends.
+> **[BLOCKING]** Execute skill steps in declared order. NEVER skip, reorder, or merge steps without explicit user approval. Inside a workflow run, `/start-workflow` → Workflow-step mode bounds this rule.
+> **[BLOCKING]** Before each step or sub-skill call, update todo tracking: set `in_progress` when step starts, set `completed` when step ends.
 > **[BLOCKING]** Every completed/skipped step MUST include brief evidence or explicit skip reason.
 > **[BLOCKING]** If Task tools are unavailable, create and maintain an equivalent step-by-step plan tracker with the same status transitions.
 
@@ -15,24 +15,25 @@ description: '[Research] Use when starting a web research task — discover, gat
 
 ## Quick Summary
 
-**Goal:** Execute broad web search on a topic, collect and classify sources, and produce a tiered, deduplicated source map plus a gap list — the triaged candidate-source feedstock that `deep-research` dives into next — NOT a final research report.
+**Goal:** Run broad web research, classify and deduplicate candidate sources, and produce a tiered source map + gap list for `source-deep-dive`, never a final report.
 
 **Summary:**
 
-- **Purpose:** breadth-first source discovery + triage for `deep-research` — produce a tiered, deduplicated source map, NOT a synthesized report.
-- **Main steps (all 5, in order):** (1) Define scope — parse topic, generate 5-10 angle-varied queries (overview, current-state, comparison, data, expert, criticism); (2) Execute searches — run `WebSearch` per query (≤10 calls), record title/URL/snippet/source-type; (3) Source triage — classify each result Tier 1-4, filter duplicates; (4) Build source map — write to `.claude/tmp/_sources-{slug}.md` (sources table + Gaps Identified); (5) Identify gaps — note underexplored angles for `deep-research`.
-- Hard-cap fan-out at 10 `WebSearch` calls per invocation — generate 5-10 angle-varied queries and stop at the cap; this is breadth-then-triage, not deep-dive.
-- Classify every result into Tier 1-4 (.gov/.edu/official > industry reports > established blogs/Wikipedia > forums/social) and dedupe by URL/syndicated content before it counts as a source.
-- The deliverable is the intermediate source map at `.claude/tmp/_sources-{slug}.md` (sources table + Gaps Identified), NOT a synthesized report — hand it off to `deep-research`.
-- Mine the source set for gaps (missing perspectives, missing quantitative data, stale recency) so the next step knows what to dig deeper on.
+- **Purpose:** Breadth-first discovery + triage for `source-deep-dive`; produce a tiered, deduplicated source map, never synthesis.
+- **Main steps (all 5, in order):** (1) Define scope — parse topic; generate 5-10 angle-varied queries (overview, current-state, comparison, data, expert, criticism); (2) Execute searches — run `WebSearch` per query (≤10 calls); record title/URL/snippet/source type; (3) Triage — classify each result Tier 1-4; dedupe; (4) Build map — write `tmp/research/_sources-{slug}.md` (Sources + Gaps Identified); (5) Identify gaps — note underexplored angles for `source-deep-dive`.
+- Hard-cap fan-out at 10 `WebSearch` calls/invocation; generate 5-10 varied queries, then stop; breadth then triage, not deep-dive.
+- Tier every result (.gov/.edu/official > industry reports > established blogs/Wikipedia > forums/social); dedupe URL/syndicated content before counting.
+- Deliverable: intermediate source map at `tmp/research/_sources-{slug}.md` (Sources + Gaps Identified), not synthesis; hand off to `source-deep-dive`.
+- Mine gaps: missing perspectives, quantitative data, stale recency; guide the next deep dive.
+- **Chain mode (caller-passed `--chain=deep-dive`):** after Step 5, read `references/research-chain.md` and run `source-deep-dive` Steps 1-5 inline, leaving `tmp/research/_evidence-{slug}.md`; without the flag stop at Step 5 exactly as above.
 
 **Workflow:**
 
-1. **Define scope** — Parse topic, generate 5-10 search queries from varied angles
-2. **Execute searches** — Run WebSearch for each query, collect results
-3. **Source triage** — Classify each source by Tier (1-4), filter duplicates
+1. **Define scope** — Parse topic; generate 5-10 varied queries
+2. **Execute searches** — Run `WebSearch`; collect results
+3. **Source triage** — Classify each source Tier 1-4; dedupe
 4. **Build source map** — Write structured source list to working file
-5. **Identify gaps** — Note underexplored angles for deep-research
+5. **Identify gaps** — Note underexplored angles for `source-deep-dive`
 
 **Key Rules:**
 
@@ -40,26 +41,42 @@ description: '[Research] Use when starting a web research task — discover, gat
 - Follow source hierarchy: Official docs (Tier 1) > Peer-reviewed (Tier 2) > Industry blogs (Tier 3) > Forums (Tier 4)
 - Output intermediate source map, not final report
 
-**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+**MUST ATTENTION** Apply skeptical, sequential thinking; trace every claim and state confidence (>80% to act).
+
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Web Research](#web-research)
+- [Knowledge Work Rules (canonical for the research chain)](#knowledge-work-rules-canonical-for-the-research-chain)
+- [Step 1: Define Search Scope](#step-1-define-search-scope)
+- [Step 2: Execute Searches](#step-2-execute-searches)
+- [Step 3: Source Triage](#step-3-source-triage)
+- [Step 4: Build Source Map](#step-4-build-source-map)
+- [Step 5: Identify Gaps](#step-5-identify-gaps)
+- [Chain Mode (`--chain=deep-dive`)](#chain-mode---chaindeep-dive)
+- [Next Steps](#next-steps)
+- [Prompt-Enhance Closing Anchors](#prompt-enhance-closing-anchors)
+- [Closing Reminders](#closing-reminders)
 
 # Web Research
 
-## Knowledge Work Rules (canonical)
+## Knowledge Work Rules (canonical for the research chain)
 
-> **Web Research Protocol** — Every factual claim needs 2+ independent sources. Source tiers: Tier 1 (authoritative .gov/.edu/official docs), Tier 2 (industry reports), Tier 3 (credible blogs — cross-validate), Tier 4 (unverified — NEVER cite as fact). Declare confidence for all findings.
+> **Web Research Protocol** — Factual claims require 2+ independent sources. Rank sources Tier 1 (.gov/.edu/official) > Tier 2 (industry reports) > Tier 3 (credible blogs; cross-validate) > Tier 4 (unverified; NEVER cite as fact). Declare confidence (95/80/60/<60%) for every finding.
 
-1. Follow source hierarchy (official docs > peer-reviewed > industry blogs > forums) for all factual claims
-2. Include source citations with Tier classification (inline `[N]`)
+1. Follow source hierarchy (official docs > peer-reviewed > industry blogs > forums) for factual claims
+2. Cite sources with Tier classification (inline `[N]`)
 3. Cross-validate claims with 2+ independent sources
-4. Declare confidence level (95/80/60/<60%) for all findings
-5. Use enforced template structure — all sections required
-6. Working files → `.claude/tmp/`, final output → `docs/knowledge/`
+4. Declare confidence: 95/80/60/<60%
+5. Use enforced template; include all sections
+6. Working files → `tmp/research/` (project-root, disposable); final output → `docs/knowledge/`
+7. **Query budget — one rule for the chain:** 5-10 angle-varied `WebSearch` queries, at most 10 calls here; `source-deep-dive` then fetches at most 8 sources. `workflow-research` may lower the depth for a Narrow question (3-5 queries) but never raises a cap. The generic `web-research` protocol guide below (3-5 queries) is the floor for ad-hoc lookups in other skills and never overrides these caps.
 
-This protocol is the canonical home for the knowledge-work rules that apply to knowledge/research workspaces; `deep-research` and `knowledge-synthesis` reference it.
+These rules are canonical for the research chain; `source-deep-dive` and `knowledge-synthesis` read them from this file.
 
 ## Step 1: Define Search Scope
 
-Parse user's topic, generate 5-10 search queries covering:
+Parse topic; generate 5-10 queries:
 
 - **Definition/overview** — "what is {topic}"
 - **Current state** — "{topic} 2026" or "{topic} latest"
@@ -72,24 +89,24 @@ Parse user's topic, generate 5-10 search queries covering:
 
 For each query:
 
-1. Run `WebSearch` with the query
-2. Record: title, URL, snippet, apparent source type
-3. Stop at 10 WebSearch calls maximum
+1. Run `WebSearch`.
+2. Record title, URL, snippet, apparent source type.
+3. Stop after 10 calls.
 
 ## Step 3: Source Triage
 
-For each result, classify by Tier:
+For each result, classify Tier:
 
 - **Tier 1:** .gov, .edu, official docs, peer-reviewed
 - **Tier 2:** Industry reports, major publications
 - **Tier 3:** Established blogs, verified experts, Wikipedia
 - **Tier 4:** Forums, personal blogs, social media
 
-Filter out duplicates (same URL or syndicated content).
+Filter duplicate URLs and syndicated content.
 
 ## Step 4: Build Source Map
 
-Write to `.claude/tmp/_sources-{slug}.md`:
+Write to `tmp/research/_sources-{slug}.md`:
 
 ```markdown
 # Source Map: {Topic}
@@ -118,139 +135,81 @@ Review source map for:
 - Missing data types (no quantitative data? need statistics)
 - Recency issues (all sources old? need current data)
 
-Note gaps for the `deep-research` step.
+Note gaps for `source-deep-dive`.
 
----
+## Chain Mode (`--chain=deep-dive`)
 
-## Workflow Recommendation
-
-> **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** If you are NOT already in a workflow, you MUST ATTENTION use `AskUserQuestion` to ask the user. Do NOT judge task complexity or decide this is "simple enough to skip" — the user decides whether to use a workflow, not you:
->
-> 1. **Activate `workflow-research` workflow** (Recommended) — web-research → deep-research → synthesis → review
-> 2. **Execute `/web-research` directly** — run this skill standalone
+**[BLOCKING] MUST ATTENTION** when the caller passed `--chain=deep-dive`, read `references/research-chain.md` now and follow it: it runs `source-deep-dive` Steps 1-5 from that skill's own file and writes the evidence base, then returns. Without the flag, skip this section and the run ends at the source map.
 
 ---
 
 ## Next Steps
 
-**MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS** after completing this skill, you MUST ATTENTION use `AskUserQuestion` to present these options. Do NOT skip because the task seems "simple" or "obvious" — the user decides:
+> **Inside a workflow:** when this skill runs as a step of an active workflow, skip the prompts in this section and return the result — the workflow's next step decides what runs (`/start-workflow` → Step Execution Protocol, Workflow-step mode).
 
-- **"/deep-research (Recommended)"** — Deep-dive into top sources
-- **"/business-evaluation"** — If evaluating business viability
+**Without `--chain=deep-dive` only** (chain mode follows `references/research-chain.md`). **MANDATORY IMPORTANT MUST ATTENTION — NO EXCEPTIONS:** After completion, use `ask user question tool`; user chooses:
+
+- **"/source-deep-dive (Recommended)"** — Deep-dive into top sources
+- **"/market-analysis"** — If sizing the market (TAM/SAM/SOM), competitors, trends — required before `/business-evaluation`
+- **"/business-evaluation"** — If evaluating business viability. **Run `/market-analysis` first** — this skill consumes its sized-market output as evidence and MUST NOT re-derive market sizing.
 - **"Skip, continue manually"** — user decides
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+> **[IMPORTANT MUST ATTENTION]** Use `TaskCreate` to break work into small tasks BEFORE starting.
 
-> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+> **External Memory:** For complex/lengthy research, analysis, scans, or reviews, write intermediate + final results to `tmp/reports/`; prevents context loss and provides deliverable.
 
-> **Evidence Gate:** MANDATORY IMPORTANT MUST ATTENTION — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+> **Evidence Gate:** **MANDATORY IMPORTANT MUST ATTENTION** Every claim, finding, recommendation needs `file:line` proof or traced evidence + confidence (>80% act; <80% verify first).
 
-<!-- SYNC:web-research -->
+<!-- PROTOCOL-GUIDES:START -->
 
-> **Web Research** — Structured web search for evidence gathering.
->
-> 1. Form 3-5 specific search queries (not generic questions)
-> 2. Use WebSearch for each query, collect top 3-5 sources
-> 3. Validate source credibility (official docs > blogs > forums)
-> 4. Cross-validate claims across 2+ sources before citing
-> 5. Write findings to research report with source URLs
->
-> **NEVER cite a single source as authoritative. Always cross-validate.**
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
-<!-- /SYNC:web-research -->
+- `web-research` — Structured web search for evidence gathering; gathering external evidence from the web → .claude/skills/shared/protocols/web-research.md
 
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
-
-<!-- /SYNC:ai-mistake-prevention -->
-
-<!-- SYNC:critical-thinking-mindset -->
-
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-
-<!-- /SYNC:critical-thinking-mindset -->
-
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
+<!-- PROTOCOL-GUIDES:END -->
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:START -->
 
 ## Prompt-Enhance Closing Anchors
 
-**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval
+**IMPORTANT MUST ATTENTION** follow declared step order for this skill; NEVER skip, reorder, or merge steps without explicit user approval; inside a workflow run, `/start-workflow` → Workflow-step mode bounds this
 **IMPORTANT MUST ATTENTION** for every step/sub-skill call: set `in_progress` before execution, set `completed` after execution
 **IMPORTANT MUST ATTENTION** every skipped step MUST include explicit reason; every completed step MUST include concise evidence
 **IMPORTANT MUST ATTENTION** if Task tools unavailable, maintain an equivalent step-by-step plan tracker with synchronized statuses
 
 <!-- PROMPT-ENHANCE:STEP-TASK-CLOSING:END -->
 
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
-
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** Produce a tiered, deduplicated source map plus a gap list — the triaged candidate-source feedstock that `deep-research` dives into next — NOT a final research report.
+**IMPORTANT MUST ATTENTION Goal:** Run broad web research, classify and deduplicate candidate sources, and produce a tiered source map + gap list for `source-deep-dive`, never a final report.
 
 **IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
 - **Web Research:** Cross-validate every claim across 2+ credible sources; NEVER cite one source as authoritative.
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Critical Thinking:** Traced proof per claim, confidence >80% to act; NEVER present guess as fact.
 
-**IMPORTANT MUST ATTENTION** run ALL 5 main steps in order — (1) define scope + generate 5-10 angle-varied queries → (2) execute `WebSearch` (≤10 calls), record title/URL/snippet/type → (3) triage each result Tier 1-4 + dedupe → (4) build source map at `.claude/tmp/_sources-{slug}.md` → (5) identify gaps for `deep-research` — why: skipping a step (esp. triage or gaps) yields untiered, gap-blind feedstock that breaks the next stage.
+**IMPORTANT MUST ATTENTION** run ALL 5 main steps in order — (1) define scope + generate 5-10 angle-varied queries → (2) execute `WebSearch` (≤10 calls), record title/URL/snippet/type → (3) triage each result Tier 1-4 + dedupe → (4) build source map at `tmp/research/_sources-{slug}.md` → (5) identify gaps for `source-deep-dive` — why: skipping a step (esp. triage or gaps) yields untiered, gap-blind feedstock that breaks the next stage.
 **IMPORTANT MUST ATTENTION** cap WebSearch at 10 calls per invocation; generate 5-10 angle-varied queries (overview, current-state, comparison, data, expert, criticism) then stop at the cap — why: bounded fan-out keeps this breadth-then-triage, not a deep-dive into one angle.
-**IMPORTANT MUST ATTENTION** rank every source by tier (Tier 1 .gov/.edu/official > Tier 2 industry reports > Tier 3 established blogs/Wikipedia > Tier 4 forums/social) and dedupe by URL/syndicated content before it counts — why: tier ranking + dedupe keep the feedstock high-signal for deep-research.
+**IMPORTANT MUST ATTENTION** rank every source by tier (Tier 1 .gov/.edu/official > Tier 2 industry reports > Tier 3 established blogs/Wikipedia > Tier 4 forums/social) and dedupe by URL/syndicated content before it counts — why: tier ranking + dedupe keep the feedstock high-signal for source-deep-dive.
 **MANDATORY IMPORTANT MUST ATTENTION** NEVER cite a Tier 4 / single source as authoritative — cross-validate every factual claim against 2+ independent sources and declare confidence (95/80/60/<60%) — why: one unverified source = a hallucination-amplifier downstream.
-**MANDATORY IMPORTANT MUST ATTENTION** the deliverable is the intermediate source map at `.claude/tmp/_sources-{slug}.md` (sources table + Gaps Identified), NOT a synthesized report — hand it off to `deep-research`; mine the set for gaps (missing perspectives, missing quantitative data, stale recency) so the next step knows where to dig.
+**MANDATORY IMPORTANT MUST ATTENTION** the deliverable is the intermediate source map at `tmp/research/_sources-{slug}.md` (sources table + Gaps Identified), NOT a synthesized report — hand it off to `source-deep-dive`; mine the set for gaps (missing perspectives, missing quantitative data, stale recency) so the next step knows where to dig.
+**IMPORTANT MUST ATTENTION** with `--chain=deep-dive`, after Step 5 read `references/research-chain.md` and run `source-deep-dive` Steps 1-5 from its own SKILL.md (never from memory); without the flag stop at the source map — why: the flag is the only contract that lets one step own both halves while each skill still works alone.
 **MANDATORY IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting; add a final review todo task to verify work quality; transition one task at a time.
-**IMPORTANT MUST ATTENTION** persist intermediate findings/results to a report file in `plans/reports/` for complex or lengthy work — why: external memory prevents context loss and is itself the deliverable.
-**MANDATORY IMPORTANT MUST ATTENTION** if NOT already in a workflow, validate the route with the user via `AskUserQuestion` — NEVER auto-decide "simple enough to skip"; the user decides workflow vs. standalone `/web-research`.
+**IMPORTANT MUST ATTENTION** persist intermediate findings/results to a report file in `tmp/reports/` for complex or lengthy work — why: external memory prevents context loss and is itself the deliverable.
+**IMPORTANT MUST ATTENTION** a direct `/web-research` call is an explicit skill request: run it with no routing question and NEVER start a workflow from inside this skill; only the post-completion Next Steps question uses `ask user question tool`.
 **IMPORTANT MUST ATTENTION** every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% verify first) — NEVER speculate without proof.
 
 **Anti-Rationalization:**
 
-| Evasion                                | Rebuttal                                                                             |
-| -------------------------------------- | ------------------------------------------------------------------------------------ |
-| "One strong source is enough"          | NEVER — cross-validate against 2+ independent sources; Tier 4 is never authoritative |
-| "I'll just write the report now"       | Out of scope — output the source map + gaps; `deep-research` synthesizes, not this   |
-| "Keep searching, more results help"    | Hard-cap is 10 WebSearch calls — breadth then triage, never an unbounded crawl       |
-| "Topic is simple, skip tiering/dedupe" | Tier + dedupe every source — untiered feedstock degrades every downstream step       |
-| "Just do it, skip task tracking"       | Skip depth, never skip tracking — `TaskCreate` first, one task in progress           |
+| Evasion                                      | Rebuttal                                                                            |
+| -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| "One strong source is enough"                | NEVER — cross-validate against 2+ independent sources; Tier 4 is never authoritative |
+| "I'll just write the report now"             | Out of scope — output the source map + gaps; `source-deep-dive` synthesizes, not this  |
+| "Keep searching, more results help"          | Hard-cap is 10 WebSearch calls — breadth then triage, never an unbounded crawl      |
+| "Topic is simple, skip tiering/dedupe"       | Tier + dedupe every source — untiered feedstock degrades every downstream step      |
+| "Just do it, skip task tracking"             | Skip depth, never skip tracking — `TaskCreate` first, one task in progress          |
 
 **[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
 
-**IMPORTANT MUST ATTENTION Goal:** triaged, tiered, deduplicated source map + gap list as feedstock for `deep-research` — NOT a final report.
+**IMPORTANT MUST ATTENTION Goal:** triaged, tiered, deduplicated source map + gap list as feedstock for `source-deep-dive` — NOT a final report.
 **IMPORTANT MUST ATTENTION** cap WebSearch at 10; cross-validate every claim with 2+ sources; NEVER cite Tier 4 as fact.
 **IMPORTANT MUST ATTENTION** `TaskCreate` to break ALL work into small tasks BEFORE starting — this is very important.

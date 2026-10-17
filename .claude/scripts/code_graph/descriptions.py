@@ -20,6 +20,7 @@ COMMAND_DESCRIPTIONS: dict[str, dict] = {
             "--depth": "BFS hops, default 3. Use 1-2 for focused, 4-5 for deep chains.",
             "--edge-kinds": "Comma-separated: CALLS,IMPORTS_FROM,INHERITS,MESSAGE_BUS,TRIGGERS_EVENT,PRODUCES_EVENT,TRIGGERS_COMMAND_EVENT,API_ENDPOINT. Default: all except CONTAINS and TESTED_BY.",
             "--node-mode": "file (file-level overview, reduces noise 10-30x), function (function detail), class, all (default)",
+            "--max-nodes": "Cap on total nodes reached; bounds fan-out on dense graphs so an unbounded BFS cannot exhaust memory or the output size.",
         },
         "output": "Multi-level tree grouped by BFS depth. Each level has nodes[] and edges[].",
         "examples": [

@@ -44,8 +44,16 @@ import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
-const rootDir = process.cwd();
+const require = createRequire(import.meta.url);
+const { resolveProjectRoot, isInvokedAsScript } = require('../lib/project-root.cjs');
+const rootResolution = resolveProjectRoot({
+  cwd: process.cwd(),
+  scriptPath: fileURLToPath(import.meta.url),
+  env: process.env,
+});
+const rootDir = rootResolution.rootDir;
 
 const CATALOG_PATH = path.join('.claude', 'docs', 'architecture-knowledge.md');
 
@@ -279,7 +287,7 @@ export function parseConsumers(content) {
  * A consumer is GUARD-BEARING when one of its lines ties this catalog to a guarded section — that is
  * what a provenance guard looks like structurally. Detected per line (not per file) so a skill that
  * merely mentions the catalog elsewhere, or that mentions `§3` of an unrelated document, is not caught:
- * `architecture-review-full` is exactly that case (its catalog pointers target §20, and its `§3/§4/§8`
+ * A whole-project audit skill is exactly that case (its catalog pointers target §20, and its `§3/§4/§8`
  * hits are Feature Spec sections).
  */
 function isGuardBearing(skillBody) {
@@ -292,27 +300,54 @@ function isGuardBearing(skillBody) {
 /**
  * Check 6 — every guard-bearing consumer still carries the literal `— VERIFY` token.
  *
- * `readSkill(name)` returns the skill body, or null when it cannot be read (then the consumer is
- * skipped — same fail-soft policy as an absent catalog, so a partial `.claude` copy still syncs).
+ * `readSkill(name)` returns independent { path, body } records (or a single body for existing
+ * callers), or null when it cannot be read. Unreadable consumers retain the partial-copy policy.
+ * A sibling mode's token cannot protect a body that an invocation loads independently.
  */
 export function findConsumerViolations(content, readSkill) {
     const violations = [];
 
     for (const skillName of parseConsumers(content)) {
-        const body = readSkill(skillName);
-        if (body === null || body === undefined) continue; // fail-soft: consumer not present
-        if (!isGuardBearing(body)) continue; // no provenance guard to keep — nothing to assert
-        if (body.includes('— VERIFY')) continue;
+        const bodies = readSkill(skillName);
+        if (bodies === null || bodies === undefined) continue; // fail-soft: consumer not present
+        const records = typeof bodies === 'string'
+            ? [{ path: `.claude/skills/${skillName}/SKILL.md`, body: bodies }]
+            : bodies;
+        for (const { path: filePath, body } of records) {
+            if (!isGuardBearing(body)) continue; // no provenance guard to keep
+            if (body.includes('— VERIFY')) continue;
 
-        violations.push(
-            `.claude/skills/${skillName}/SKILL.md: consumer references ${normalize(CATALOG_PATH)} ` +
-            `§${GUARDED_SECTIONS.join('/§')} but no longer contains the literal \`— VERIFY\` token — ` +
-            `the catalog's markers are inert without it, so a reworded guard silently disarms every ` +
-            `provenance rule while the catalog itself still passes`
-        );
+            violations.push(
+                `${normalize(filePath)}: consumer references ${normalize(CATALOG_PATH)} ` +
+                `§${GUARDED_SECTIONS.join('/§')} but no longer contains the literal \`— VERIFY\` token — ` +
+                `the catalog's markers are inert without it, so a reworded guard silently disarms every ` +
+                `provenance rule while the catalog itself still passes`
+            );
+        }
     }
 
     return violations;
+}
+
+/** Read independent skill/reference contracts without letting sibling modes mask a lost guard. */
+export function readConsumerBodies(skillName, root = rootDir) {
+    const skillDir = path.join(root, '.claude', 'skills', skillName);
+    try {
+        const read = (filePath) => ({
+            path: normalize(path.relative(root, filePath)),
+            body: fsSync.readFileSync(filePath, 'utf8')
+        });
+        const bodies = [read(path.join(skillDir, 'SKILL.md'))];
+        const referencesDir = path.join(skillDir, 'references');
+        if (fsSync.existsSync(referencesDir)) {
+            for (const entry of fsSync.readdirSync(referencesDir).sort()) {
+                if (entry.endsWith('.md')) bodies.push(read(path.join(referencesDir, entry)));
+            }
+        }
+        return bodies;
+    } catch {
+        return null; // preserve the existing fail-soft policy for partial copies
+    }
 }
 
 async function main() {
@@ -328,19 +363,10 @@ async function main() {
         return;
     }
 
-    const readSkill = (skillName) => {
-        const skillPath = path.join(rootDir, '.claude', 'skills', skillName, 'SKILL.md');
-        try {
-            return fsSync.readFileSync(skillPath, 'utf8');
-        } catch {
-            return null;
-        }
-    };
-
     const failures = [
         ...findMarkerViolations(content),
         ...findBannerViolations(content),
-        ...findConsumerViolations(content, readSkill)
+        ...findConsumerViolations(content, readConsumerBodies)
     ];
 
     if (failures.length > 0) {
@@ -355,6 +381,6 @@ async function main() {
     console.log('[codex-verify-provenance-markers] PASS');
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (isInvokedAsScript(process.argv[1], fileURLToPath(import.meta.url))) {
     await main();
 }

@@ -29,8 +29,15 @@ public class PlatformAutoClearDeprecatedGlobalRequestCachedKeysBackgroundService
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
             async () =>
             {
-                await (cacheRepositoryProvider.TryGet(PlatformCacheRepositoryType.Distributed)?.ProcessClearDeprecatedGlobalRequestCachedKeys() ?? Task.CompletedTask);
-                await (cacheRepositoryProvider.TryGet(PlatformCacheRepositoryType.Hybrid)?.ProcessClearDeprecatedGlobalRequestCachedKeys() ?? Task.CompletedTask);
+                // TryGet can fall back to the same Memory instance for several types. Sweep each actual
+                // repository once, including Memory when Distributed and Hybrid are both registered.
+                var repositories = new[] { PlatformCacheRepositoryType.Distributed, PlatformCacheRepositoryType.Hybrid, PlatformCacheRepositoryType.Memory }
+                    .Select(cacheRepositoryProvider.TryGet)
+                    .OfType<IPlatformCacheRepository>()
+                    .Distinct<IPlatformCacheRepository>(ReferenceEqualityComparer.Instance);
+
+                foreach (var repository in repositories)
+                    await repository.ProcessClearDeprecatedGlobalRequestCachedKeys();
             },
             cancellationToken: cancellationToken);
     }

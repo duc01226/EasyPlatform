@@ -65,6 +65,10 @@ public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPers
 
         PlatformJsonSerializer.AdditionalDefaultConverters.TryAdd(typeof(PlatformILazyLoadingJsonConverter).FullName, new PlatformILazyLoadingJsonConverter());
         PlatformJsonSerializer.AdditionalDefaultConverters.TryAdd(typeof(PlatformLazyLoadingJsonConverter).FullName, new PlatformLazyLoadingJsonConverter());
+
+        RegisterMessageBusStoreContribution(
+            serviceCollection,
+            ForCrossDbMigrationOnly ? null : typeof(IPlatformEfCorePersistenceUnitOfWork<TDbContext>));
     }
 
     protected override void RegisterDbContextPool(IServiceCollection serviceCollection)
@@ -108,6 +112,7 @@ public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPers
         {
             serviceCollection.RegisterAllForImplementation<PlatformDefaultEfCoreInboxBusMessageRepository<TDbContext>>();
             serviceCollection.Register<IPlatformInboxBusMessageRepository, PlatformDefaultEfCoreInboxBusMessageRepository<TDbContext>>();
+            serviceCollection.Register<IPlatformInboxBusMessageRepository<TDbContext>, PlatformDefaultEfCoreInboxBusMessageRepository<TDbContext>>();
         }
     }
 
@@ -123,6 +128,7 @@ public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPers
         {
             serviceCollection.RegisterAllForImplementation<PlatformDefaultEfCoreOutboxBusMessageRepository<TDbContext>>();
             serviceCollection.Register<IPlatformOutboxBusMessageRepository, PlatformDefaultEfCoreOutboxBusMessageRepository<TDbContext>>();
+            serviceCollection.Register<IPlatformOutboxBusMessageRepository<TDbContext>, PlatformDefaultEfCoreOutboxBusMessageRepository<TDbContext>>();
         }
     }
 

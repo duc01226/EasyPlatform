@@ -35,15 +35,6 @@
         ],
         "sharedGlobals": []
     },
-    "plugins": [
-        {
-            "plugin": "nx-stylelint/plugin",
-            "options": {
-                "targetName": "stylelint",
-                "extensions": ["css", "scss"]
-            }
-        }
-    ],
     "targetDefaults": {
         "@nx/jest:jest": {
             "cache": true,
@@ -64,10 +55,6 @@
         },
         "lint": {
             "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
-        },
-        "stylelint": {
-            "inputs": ["default", "{workspaceRoot}/.stylelintrc.json"],
-            "cache": true
         }
     },
     "tasksRunnerOptions": {

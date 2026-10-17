@@ -1,39 +1,39 @@
-<!-- GENERIC SOURCE — bootstrapped into docs/project-reference/feature-spec-reference.md on first SessionStart if that file is absent.
-     Contains ONLY the project-agnostic Feature Spec contract. Project-specific inventory (app-to-service map,
-     feature-code registry, gold-standard doc paths, thin-index list) is filled BELOW the SCAN-MANAGED boundary
-     by /scan --target=feature-spec — never author project domain in this generic source. -->
-
-<!-- CRITICAL RULES (primacy anchor):
-1. MUST ATTENTION use the tech-free 8-section Feature Spec template for all business feature docs
-2. MUST ATTENTION include business test specifications (Section 8) with TC-{FEATURE}-{NNN} format, Business Intent / Invariant Guarded, Evidence, and CoveredBy fields
-3. MUST ATTENTION study gold standard docs before writing new feature docs
--->
-
-> **[IMPORTANT]** MUST ATTENTION use the tech-free 8-section Feature Spec template · MUST ATTENTION include demoable business `TC-{FEATURE}-{NNN}` test cases (Section 8) with `Business Intent / Invariant Guarded`, `Evidence: [Source: namespace/service/id]`, and `CoveredBy:` (abstract anchor — legacy `[Source: FilePath:Line]` and `IntegrationTest:` are migration inputs only) · MUST ATTENTION study gold standard docs before writing.
+<!-- Generic bootstrap source for `feature-spec-reference.md`. Project-specific examples and mappings belong in the adopter project. -->
 
 # Feature Documentation Reference
 
 ## Quick Summary
 
-**Goal:** All business feature docs follow the tech-free 8-section Feature Spec template — a single doc a BA, QA/QC, or AI fully understands from one read — with correct business test spec format and verifiable code evidence.
+**Goal:** Guide feature-spec authoring through the project-configured profile or the strict portable default while preserving shared SDD quality rules and traceable evidence.
 
-**Key Rules:**
+**Summary:**
 
-- MUST ATTENTION follow the 8-section structure in exact order (see below); §1-7 prose is STRICTLY tech-free
-- MUST ATTENTION include Section 8 (Test Specifications) with demoable business `TC-{FEATURE}-{NNN}` IDs, `Business Intent / Invariant Guarded`, `Evidence: [Source: namespace/service/id]`, and `CoveredBy:` (abstract anchor; legacy `[Source: FilePath:Line]` and `IntegrationTest:` are migration inputs only)
-- MUST ATTENTION study gold standard docs before writing any new feature doc
-- MUST keep feature doc path: `docs/specs/{Bucket}/README.{FeatureName}.md`
-- MUST NOT apply line-count caps to Feature Specs; split the capability only when TCs>40 or distinct module-level capabilities emerge
+- MUST ATTENTION resolve the business root, local feature template, and optional `specArtifacts` profile before applying format rules.
+- MUST ATTENTION with a profile use its section roles, identifier grammars, and evidence carriers; NEVER add a duplicate TC registry or Section 8.
+- MUST ATTENTION without a profile follow the strict 8-section and `TC-{FEATURE}-{NNN}` contract below.
+- MUST ATTENTION apply the shared M1-M7 contract in either branch; identifiers and matching text NEVER prove the behavior ran.
 
----
+> **Shared SDD contract:** Every profile preserves its applicable M1-M7 and invariant, evidence, execution, and review obligations. MUST ATTENTION READ `.claude/skills/shared/sdd-artifact-contract.md` for the complete rules.
+
+## Configured Artifact Profile
+
+Read and validate `docs/project-config.json` before authoring or reviewing a feature spec. When `specArtifacts` is present:
+
+- MUST ATTENTION resolve the business root from project configuration and the feature shape from `workflowPatterns.featureDocTemplate` or the project reference.
+- MUST ATTENTION use `specArtifacts.sections` to classify `intent`, `contracts`, and `evidence`; unknown headings have no implicit role. Follow the project verifier for unknown-heading handling.
+- MUST ATTENTION use the configured `requirement`, `acceptance`, and `scenario` prefixes and grammars, plus the declared `carriers` roots, extensions, and mapped fields. Trace every reported test outcome to its actual assertion or structured evidence row.
+- MUST ATTENTION keep applicable shared M1-M7 obligations intact. A section or carrier mapping does not waive semantic, evidence, execution, or review requirements. Read `.claude/skills/shared/sdd-artifact-contract.md` for the full contract.
+- MUST ATTENTION treat a declared but invalid profile as a configuration error; NEVER fall back silently to `TC` rules.
+
+> **Default-profile boundary:** MUST ATTENTION apply the 8-section layout, `TC-*` registry, `CoveredBy` format, and scan-managed feature-code tables below only when `specArtifacts` is absent. Resolve roots and templates from configuration in both branches.
 
 ## Directory Convention
 
-Feature docs path: `docs/specs/{Bucket}/README.{FeatureName}.md` (no line-count cap; split when TCs>40 or distinct module-level capabilities emerge). Each bucket also includes `INDEX.md`. The spec root is fixed at `docs/specs/` for all projects.
+Feature docs path: `{Bucket}/README.{FeatureName}.md` inside the business spec root — default `docs/specs`; a `specRoots.business.path` entry in `docs/project-config.json` overrides the path (no line-count cap; split when TCs>40 or distinct module-level capabilities emerge). Each bucket also includes `INDEX.md`. The bucket layout under the resolved root is identical for every project.
 
 ## Template Paths
 
-- **Master template:** your configured `workflowPatterns.featureDocTemplate` (default `docs/templates/detailed-feature-spec-template.md`, tech-free 8-section, v4.1). Generated on first SessionStart from `.claude/templates/detailed-feature-spec-template.md` if absent.
+- **Master template:** your configured `workflowPatterns.featureDocTemplate` in `docs/project-config.json` (default `detailed-feature-spec-template.md` in the templates root, itself defaulting to `docs/templates` unless a `docsRoots.templates.path` entry overrides it; tech-free 8-section, v4.1). Generated on first SessionStart from `.claude/templates/detailed-feature-spec-template.md` if absent.
 - ~~AI companion template~~ — Deprecated. Single doc per feature.
 
 ## 8-Section Structure
@@ -102,7 +102,7 @@ The abstract `[Source: namespace/service/id]` form is canonical (see `.claude/sk
 
 > _Filled by `/scan --target=feature-spec`._ MUST ATTENTION study before writing new feature docs. Until populated, study the master template structure.
 
-- `docs/specs/{Bucket}/README.{Exemplar}Feature.md` (worked proof)
+- `{Bucket}/README.{Exemplar}Feature.md` in the business spec root (worked proof)
 
 ## Feature Code Registry
 
@@ -128,9 +128,9 @@ The abstract `[Source: namespace/service/id]` form is canonical (see `.claude/sk
 
 ## Closing Reminders
 
-- **IMPORTANT MUST ATTENTION** use the tech-free 8-section Feature Spec template in exact order for ALL business feature docs — §1-7 strictly tech-free, no technical sections (code is the technical source of truth; technical views are derived under the configured technical root)
-- **IMPORTANT MUST ATTENTION** Section 8 (Test Specifications) MUST include demoable business `TC-{FEATURE}-{NNN}` IDs, `Business Intent / Invariant Guarded`, `Evidence: [Source: namespace/service/id]`, and `CoveredBy:` for every test case (legacy `[Source: FilePath:Line]` and `IntegrationTest:` are migration inputs only)
-- **IMPORTANT MUST ATTENTION** study gold standard docs (below the SCAN-MANAGED boundary) before writing any new feature doc
-- **IMPORTANT MUST ATTENTION** do not apply line-count caps to Feature Specs; split only when TCs>40 or distinct module-level capabilities emerge — not shorter stubs, not sprawling dumps
-- **IMPORTANT MUST ATTENTION** NEVER ship docs with `TBD` Evidence placeholders — every TC requires a canonical `[Source: namespace/service/id]` anchor (legacy `FilePath:Line` DEPRECATED)
-- **IMPORTANT MUST ATTENTION** add final review task to verify all 8 sections present, §1-7 tech-free, all TCs have Business Intent / Invariant Guarded and Evidence fields, and no line-count cap was applied
+**IMPORTANT MUST ATTENTION Goal:** Guide feature-spec authoring through the project-configured profile or the strict portable default while preserving shared SDD quality rules and traceable evidence.
+
+- MUST ATTENTION resolve the business root, feature template, and `specArtifacts` profile before choosing a format.
+- MUST ATTENTION with a profile use its section roles, IDs, and evidence carriers; without one, follow the strict default 8-section/TC contract.
+- MUST ATTENTION preserve shared M1-M7 obligations, inspect real assertions, and keep conditional outcomes conditional.
+- MUST ATTENTION use project-owned references and templates; never invent paths, IDs, proof, or project-specific inventory.

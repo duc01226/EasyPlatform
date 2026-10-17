@@ -24,14 +24,15 @@ Every prohibition occurrence is class **A**, **B**, or **C**. Only B/C are edite
 ## Affirmative phrasing patterns (B rewrites)
 
 State the destination, then optionally the hazard. The action must be unambiguous on its own.
+Technology, layer, and pattern names in examples are illustrative only; apply them as rules only when project config/reference docs and relevant code show that the pattern exists.
 
 | ❌ Prohibition-only (B)                   | ✅ Affirmative (+ optional why)                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| "Don't map in handlers."                  | "Map in the DTO via `MapToEntity()` — handlers stay mapping-free. — why: one mapping site, no drift."                                           |
-| "Avoid manual signals."                   | "Use the project's view-model store + reactive-effect pattern for state. — why: manual signals bypass lifecycle teardown → leaks."              |
+| "Don't map in handlers."                  | "Place a transformation at the contract owner documented by this project; check current callers before moving it. — why: one evidenced owner prevents drift without assuming a DTO/handler architecture." |
+| "Avoid manual signals."                   | "Use the project's documented state-management lifecycle; when none exists, follow the relevant code and preserve its cleanup behavior. — why: matching local ownership avoids leaks without prescribing a store." |
 | "Do not skip reproduction."               | "Reproduce with evidence first (error/stack/screenshot), then isolate. — why: a fix without a repro can't be verified."                         |
 | "Don't work from memory alone."           | "Re-read the analysis file before implementing. — why: memory drifts across long context; the file is ground truth."                            |
-| "Avoid direct DB access across services." | "Cross-boundary reads go through the configured integration boundary. — why: direct DB access couples services and breaks ownership."           |
+| "Avoid direct DB access across services." | "At an evidenced service boundary, use the integration boundary documented by the project; where that boundary is absent, mark this example N/A. — why: configured ownership keeps cross-service data access consistent." |
 | "Do not assume the first hypothesis."     | "Verify each hypothesis against an actual code trace before acting. — why: the first guess is often the nearest-attention trap, not the cause." |
 
 ## Keep-NEVER criteria (class A — never soften)
@@ -67,12 +68,12 @@ For class A, the enhancement is ADDITIVE only: pair the `NEVER X` with the posit
 ## Worked BAD → GOOD (full-line, in-context)
 
 ```
-BAD:   > **NEVER** map entities in command handlers.
-GOOD:  > **NEVER** map entities in command handlers — map in the DTO via `MapToEntity()`. — why: one mapping site prevents field drift across handlers.
+BAD:   > **NEVER** commit a secret.
+GOOD:  > **NEVER** commit a secret — load it from the project's approved secret source. — why: committed credentials can escape their intended environment.
        (class A: prohibition kept verbatim, positive path + why ADDED)
 
-BAD:   - Avoid putting business logic in components.
-GOOD:  - Place business logic in the entity/model (lowest layer); components only handle UI events. — why: logic in components duplicates across every consumer.
+BAD:   - Avoid placing shared rules in one-off consumers.
+GOOD:  - Place each invariant in the module or boundary that owns it under the documented project architecture; trace callers when ownership is unclear. — why: one evidence-backed owner prevents drift without imposing a layer order.
        (class B: rewritten affirmative + why; no uppercase token was present)
 
 BAD:   > Do not skip steps.

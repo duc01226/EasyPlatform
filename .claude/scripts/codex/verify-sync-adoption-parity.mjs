@@ -18,7 +18,10 @@
 // Three assertions over every (tag, skill) pair in the parsed matrix:
 //   1. DECLARED-BUT-MISSING (FAIL) — a declared carrier MUST contain exactly one main block
 //      pair (`<!-- SYNC:tag -->` / `<!-- /SYNC:tag -->`) AND exactly one `:reminder` pair.
-//      A declared carrier missing either pair has silently lost the protocol.
+//      A declared carrier missing either pair has silently lost the protocol. A GUIDE CARRIER
+//      counts for the main pair: no main block, a guide entry for the tag (the shared P25
+//      recognizer, `../lib/protocol-guide-carrier.cjs`) and an existing projection file
+//      `.claude/skills/shared/protocols/<tag>.md`. The `:reminder` pair stays required.
 //   2. UNDECLARED CARRIER (FAIL) — a skill carrying a matrix tag while absent from that tag's
 //      list. This is the drift that already happened twice: the injector will never refresh
 //      such a block when canonical changes, so it fossilizes at whatever text it was born with.
@@ -30,15 +33,31 @@
 // unexpected file cannot crash the sync pipeline; only a real parity gap is a hard failure.
 
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
-const rootDir = process.cwd();
+const require = createRequire(import.meta.url);
+const { resolveProjectRoot, isInvokedAsScript } = require('../lib/project-root.cjs');
+const rootDir = resolveProjectRoot({
+    cwd: process.cwd(),
+    scriptPath: fileURLToPath(import.meta.url),
+    env: process.env,
+}).rootDir;
 const TAG = '[codex-verify-sync-adoption-parity]';
 
 const INJECTOR = path.join(rootDir, '.claude', 'scripts', 'inject_review_skill_blocks.py');
 const CANONICAL = path.join(rootDir, '.claude', 'skills', 'shared', 'sync-inline-versions.md');
 const SKILLS_DIR = path.join(rootDir, '.claude', 'skills');
+const PROTOCOLS_DIR = path.join(SKILLS_DIR, 'shared', 'protocols');
+const PROTOCOL_TAG_RE = /^[a-z0-9][a-z0-9-]*$/;
+
+// Loaded lazily — only when a declared carrier has no main block — because this verifier is also
+// copied into isolated roots with only its root resolver beside it (`verifier-root-contract.test.mjs`).
+let guideCarrier = null;
+const recognizerHasGuideEntry = (text, tag) =>
+    (guideCarrier ??= require('../lib/protocol-guide-carrier.cjs')).hasGuideEntry(text, tag);
 
 const normalizeEol = (s) => s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
@@ -118,10 +137,21 @@ export function blockPairs(md, tag) {
 /**
  * PURE parity check — all three assertions, no I/O.
  *
- * @param {{matrix: Array, canonicalMd: string, skillText: Map<string,string>}} input
+ * `hasGuideEntry(text, baseTag)` is the shared recognizer (default: lazily loaded) and
+ * `projectionExists(baseTag)` reports whether `shared/protocols/<baseTag>.md` exists (default: no,
+ * so a caller that cannot see projections never accepts a guide).
+ *
+ * @param {{matrix: Array, canonicalMd: string, skillText: Map<string,string>,
+ *          hasGuideEntry?: (text: string, tag: string) => boolean, projectionExists?: (tag: string) => boolean}} input
  * @returns {{missing: string[], undeclared: string[], drifted: string[], warnings: string[], pairsChecked: number}}
  */
-export function findParityViolations({ matrix, canonicalMd, skillText }) {
+export function findParityViolations({
+    matrix,
+    canonicalMd,
+    skillText,
+    hasGuideEntry = recognizerHasGuideEntry,
+    projectionExists = () => false,
+}) {
     const missing = [];
     const undeclared = [];
     const drifted = [];
@@ -151,6 +181,16 @@ export function findParityViolations({ matrix, canonicalMd, skillText }) {
             pairsChecked += 1;
             for (const [t, want] of [[tag, wantMain], [reminderTag, wantReminder]]) {
                 const found = blockPairs(md, t);
+                // Guide carrier for the MAIN block only; parity (3) then applies to the reminder.
+                if (t === tag && found.length === 0) {
+                    const baseTag = tag.replace(/^SYNC:/, '');
+                    if (PROTOCOL_TAG_RE.test(baseTag) && hasGuideEntry(md, baseTag)) {
+                        if (!projectionExists(baseTag)) {
+                            missing.push(`${skill} :: ${t} — guide entry present but its projection file shared/protocols/${baseTag}.md is missing  [declared in ${listName}]`);
+                        }
+                        continue;
+                    }
+                }
                 if (found.length !== 1 || found[0].unterminated) {
                     missing.push(
                         `${skill} :: ${t} — expected exactly 1 complete block, found ${found.length}` +
@@ -221,8 +261,12 @@ async function main() {
         if (md !== null) skillText.set(name, md);
     }
 
+    // The tag is validated before it is joined under the projection directory; a path is never
+    // taken from a guide line.
+    const projectionExists = (baseTag) =>
+        PROTOCOL_TAG_RE.test(baseTag) && fsSync.existsSync(path.join(PROTOCOLS_DIR, `${baseTag}.md`));
     const { missing, undeclared, drifted, warnings, pairsChecked } =
-        findParityViolations({ matrix, canonicalMd, skillText });
+        findParityViolations({ matrix, canonicalMd, skillText, projectionExists });
 
     for (const w of warnings) console.warn(`${TAG} WARN — ${w}`);
 
@@ -255,7 +299,7 @@ async function main() {
 
 // Run ONLY when invoked directly. Importing this module (tests reuse the pure helpers above)
 // must not execute the verification — matches verify-review-validate-coverage.mjs.
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (isInvokedAsScript(process.argv[1], fileURLToPath(import.meta.url))) {
     await main().then(
         (code) => process.exit(code),
         (err) => {

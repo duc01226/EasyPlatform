@@ -801,12 +801,15 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
 
     public virtual async Task InitializeAsync(IApplicationBuilder currentApp = null)
     {
+        var initLockAcquired = false;
+
         try
         {
             if (currentApp != null)
                 CurrentAppBuilder = currentApp;
 
             await InitLockAsync.WaitAsync();
+            initLockAcquired = true;
 
             if (InitExecuted)
                 return;
@@ -815,11 +818,25 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
 
             ServiceCollection ??= CurrentAppBuilder?.ApplicationServices.GetRequiredService<IServiceCollection>();
 
-            await InitializeDependentModulesAsync();
-            await InitPerformanceProfiling();
+            await RunInitStageAsync(
+                PlatformModuleInitializationStage.CompositionValidation,
+                () =>
+                {
+                    ValidateComposition();
+                    return Task.CompletedTask;
+                });
 
-            using (var scope = ServiceProvider.CreateTrackedScope())
-                await InternalInit(scope);
+            await RunInitStageAsync(PlatformModuleInitializationStage.DependencyInitialization, InitializeDependentModulesAsync);
+
+            await RunInitStageAsync(PlatformModuleInitializationStage.PerformanceProfiling, InitPerformanceProfiling);
+
+            await RunInitStageAsync(
+                PlatformModuleInitializationStage.InternalInitialization,
+                async () =>
+                {
+                    using (var scope = ServiceProvider.CreateTrackedScope())
+                        await InternalInit(scope);
+                });
 
             InitExecuted = true;
 
@@ -827,7 +844,32 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
         }
         finally
         {
-            InitLockAsync.Release();
+            if (initLockAcquired)
+                InitLockAsync.Release();
+        }
+    }
+
+    private async Task RunInitStageAsync(PlatformModuleInitializationStage stage, Func<Task> stageAction)
+    {
+        try
+        {
+            await stageAction();
+        }
+        catch (Exception exception)
+        {
+            // Log the original failure once, at the module where it originated. Ancestor modules still wrap the
+            // child's typed exception so the inner-exception chain records every failed stage, but they do not
+            // re-log the same failure.
+            if (exception is not PlatformModuleInitializationException)
+            {
+                Logger?.LogError(
+                    exception,
+                    "[PlatformModule] {Module} Init FAILED at {Stage}",
+                    GetType().FullName,
+                    stage);
+            }
+
+            throw new PlatformModuleInitializationException(GetType(), stage, exception);
         }
     }
 
@@ -1035,6 +1077,15 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
     /// Derived classes should override this method to register their specific services.
     /// </remarks>
     protected virtual void InternalRegister(IServiceCollection serviceCollection) { }
+
+    /// <summary>
+    /// Validates the complete root composition after dependent registrations are present and before readiness.
+    /// </summary>
+    /// <remarks>
+    /// The base module is provider-neutral and performs no validation by default. Hosting adapters can supply
+    /// framework-specific metadata while preserving the stage-labelled initialization boundary.
+    /// </remarks>
+    protected virtual void ValidateComposition() { }
 
     protected virtual Task InternalInit(IServiceScope serviceScope)
     {

@@ -31,9 +31,46 @@ const SESSION_END = getHookPath('session-end.cjs');
 // session-init/session-end/prettier all spawn node subprocesses (session-init alone
 // spawns 3 git/python grandchildren); under full-suite resource contention a spawn can
 // exceed hook-runner's 10s default and hit SIGKILL — a flaky, environmental timeout
-// (see plans/reports/debug-investigate-260711-lifecycle-timeouts.md). Give every
+// (see tmp/reports/debug-investigate-260711-lifecycle-timeouts.md). Give every
 // spawn-based test in this file a wider per-call ceiling, matching test-all-hooks.cjs:334/348.
 const SPAWN_TIMEOUT_MS = 20000;
+
+function writeLocalPrettierCommand(tmpDir, entryPoint) {
+    const binDir = path.join(tmpDir, 'node_modules', '.bin');
+    fs.mkdirSync(binDir, { recursive: true });
+
+    if (process.platform === 'win32') {
+        const commandFile = path.join(binDir, 'prettier.cmd');
+        fs.writeFileSync(commandFile, `@echo off\r\n"${process.execPath}" "${entryPoint}" %*\r\n`);
+        return commandFile;
+    }
+
+    const commandFile = path.join(binDir, 'prettier');
+    fs.writeFileSync(commandFile, `#!/usr/bin/env node\nrequire(${JSON.stringify(entryPoint)});\n`);
+    fs.chmodSync(commandFile, 0o755);
+    return commandFile;
+}
+
+function createLocalPrettierFixture(tmpDir) {
+    return writeLocalPrettierCommand(tmpDir, require.resolve('prettier/bin/prettier.cjs'));
+}
+
+function createSlowPrettierFixture(tmpDir) {
+    const lockFile = path.join(tmpDir, 'formatter-lock.txt');
+    const scriptFile = path.join(tmpDir, 'slow-prettier.cjs');
+    fs.writeFileSync(lockFile, 'held while the formatter is running');
+    fs.writeFileSync(
+        scriptFile,
+        [
+            "const fs = require('fs');",
+            "const path = require('path');",
+            "const handle = fs.openSync(path.join(__dirname, 'formatter-lock.txt'), 'r');",
+            "setTimeout(() => fs.closeSync(handle), 60000);",
+            ''
+        ].join('\n')
+    );
+    return writeLocalPrettierCommand(tmpDir, scriptFile);
+}
 
 // ============================================================================
 // BUG FIX 2: tmpclaude Cleanup in .claude Subdirectories
@@ -178,6 +215,7 @@ const tmpclaudeCleanupTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
+                fs.mkdirSync(path.join(tmpDir, '.claude'));
                 // Create .git directory with a tmpclaude-like file
                 const gitDir = path.join(tmpDir, '.git', 'objects');
                 fs.mkdirSync(gitDir, { recursive: true });
@@ -199,6 +237,7 @@ const tmpclaudeCleanupTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
+                fs.mkdirSync(path.join(tmpDir, '.claude'));
                 // Create tmpclaude file at project root (hex: [a-f0-9]+)
                 const tmpFile = path.join(tmpDir, 'tmpclaude-a00bf11e-cwd');
                 fs.writeFileSync(tmpFile, 'test content');
@@ -245,6 +284,7 @@ const tmpclaudeSessionEndTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
+                fs.mkdirSync(path.join(tmpDir, '.claude'));
                 // Create tmpclaude file at project root
                 const tmpFile = path.join(tmpDir, 'tmpclaude-aabb1122-cwd');
                 fs.writeFileSync(tmpFile, '/some/path');
@@ -266,6 +306,7 @@ const tmpclaudeSessionEndTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
+                fs.mkdirSync(path.join(tmpDir, '.claude'));
                 const tmpFile = path.join(tmpDir, 'tmpclaude-ccdd3344-cwd');
                 fs.writeFileSync(tmpFile, '/some/path');
 
@@ -416,7 +457,9 @@ const prettierSkipPatternTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
-                // Create a .js file in src/ directory (should be formatted if prettier is available)
+                createLocalPrettierFixture(tmpDir);
+
+                // Create a .js file in src/ directory and verify it is formatted.
                 const srcDir = path.join(tmpDir, 'src');
                 fs.mkdirSync(srcDir, { recursive: true });
                 const srcFile = path.join(srcDir, 'app.js');
@@ -431,9 +474,124 @@ const prettierSkipPatternTests = [
                     timeout: SPAWN_TIMEOUT_MS
                 });
 
-                // Should not crash - whether Prettier runs depends on config availability
+                // The local fixture makes this assertion independent of npx/cache state.
                 assertAllowed(result.code, 'Should not crash for regular files');
+                assertEqual(fs.readFileSync(srcFile, 'utf8'), 'const x = 1;\n', 'Regular project file should be formatted');
             } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
+        // The hook is FRAMEWORK code: the formatter must come from the project
+        // config, not from a hardcoded tool. `formatting.command` is the most
+        // explicit form of that, so it is the deterministic one to assert on.
+        name: '[formatter-config] runs the formatter declared in project config',
+        fn: async () => {
+            const tmpDir = createTempDir();
+            try {
+                const markerFile = path.join(tmpDir, 'formatter-ran.txt');
+                const formatterScript = path.join(tmpDir, 'custom-formatter.cjs');
+                fs.writeFileSync(
+                    formatterScript,
+                    [
+                        "const fs = require('fs');",
+                        "const path = require('path');",
+                        "fs.writeFileSync(path.join(__dirname, 'formatter-ran.txt'), process.argv[2] || '');",
+                        ''
+                    ].join('\n')
+                );
+
+                const configDir = path.join(tmpDir, 'docs');
+                fs.mkdirSync(configDir, { recursive: true });
+                fs.writeFileSync(
+                    path.join(configDir, 'project-config.json'),
+                    JSON.stringify({
+                        formatting: {
+                            command: `"${process.execPath}" "${formatterScript}" {file}`
+                        }
+                    })
+                );
+
+                const srcDir = path.join(tmpDir, 'src');
+                fs.mkdirSync(srcDir, { recursive: true });
+                const srcFile = path.join(srcDir, 'app.ts');
+                fs.writeFileSync(srcFile, 'const x=1');
+
+                const input = createPostToolUseInput('Edit', { file_path: srcFile });
+                const result = await runHook(POST_EDIT_PRETTIER, input, {
+                    cwd: tmpDir,
+                    timeout: SPAWN_TIMEOUT_MS
+                });
+
+                assertAllowed(result.code, 'Configured formatting should not crash');
+                assertTrue(fs.existsSync(markerFile), 'The project-configured formatter should have run');
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
+        name: '[formatter-config] skips formatting when formatter is "none"',
+        fn: async () => {
+            const tmpDir = createTempDir();
+            try {
+                // A working local prettier fixture WOULD reformat; `none` must bypass it.
+                createLocalPrettierFixture(tmpDir);
+
+                const configDir = path.join(tmpDir, 'docs');
+                fs.mkdirSync(configDir, { recursive: true });
+                fs.writeFileSync(
+                    path.join(configDir, 'project-config.json'),
+                    JSON.stringify({ formatting: { formatter: 'none' } })
+                );
+
+                const srcDir = path.join(tmpDir, 'src');
+                fs.mkdirSync(srcDir, { recursive: true });
+                const srcFile = path.join(srcDir, 'app.js');
+                fs.writeFileSync(srcFile, 'const x=1;');
+
+                const input = createPostToolUseInput('Edit', { file_path: srcFile });
+                const result = await runHook(POST_EDIT_PRETTIER, input, {
+                    cwd: tmpDir,
+                    timeout: SPAWN_TIMEOUT_MS
+                });
+
+                assertAllowed(result.code, 'Disabled formatting should not crash');
+                assertEqual(
+                    fs.readFileSync(srcFile, 'utf8'),
+                    'const x=1;',
+                    'File must be left untouched when formatting is disabled'
+                );
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
+    },
+    {
+        name: '[prettier-lifecycle] terminates timed-out formatter tree before cleanup',
+        fn: async () => {
+            const tmpDir = createTempDir();
+            try {
+                createSlowPrettierFixture(tmpDir);
+
+                const srcDir = path.join(tmpDir, 'src');
+                fs.mkdirSync(srcDir, { recursive: true });
+                const srcFile = path.join(srcDir, 'app.js');
+                fs.writeFileSync(srcFile, 'const x=1;');
+
+                const input = createPostToolUseInput('Edit', {
+                    file_path: srcFile
+                });
+
+                const result = await runHook(POST_EDIT_PRETTIER, input, {
+                    cwd: tmpDir,
+                    timeout: SPAWN_TIMEOUT_MS
+                });
+
+                assertAllowed(result.code, 'Timed-out formatting should remain non-blocking');
+            } finally {
+                // This must succeed without an EBUSY from a surviving formatter descendant.
                 cleanupTempDir(tmpDir);
             }
         }

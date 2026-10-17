@@ -8,7 +8,7 @@ Sub-agents under ``.claude/agents/*.md`` are wired into block *body* sync
 ``inject_*`` coverage campaigns only ever targeted *skills*. Result: every
 agent carries the same generic baseline and ZERO role-specific rigor -- the
 flagship ``code-reviewer`` agent had none of the 14 review-quality blocks its
-twin ``code-review`` / ``changes-review`` skills carry. This module is the
+twin ``code-quality-review`` / ``changes-review`` skills carry. This module is the
 manifest that closes that gap: per-agent, which QUALITY blocks to ADD.
 
 POLICY: QUALITY propagates, ORCHESTRATION does not
@@ -24,7 +24,7 @@ section 3). Only the first propagates to a headless leaf sub-agent:
   * ORCHESTRATION / INTERACTION  -> do NOT blanket-copy (``EXCLUDED_ORCHESTRATION``
     below). A sub-agent runs headless under a caller: it does not expand workflow
     steps, does not choose/return-contract its own sub-agents, and does not drive
-    the AskUserQuestion dialog. Copying these would tell the agent to perform
+    the ask user question tool dialog. Copying these would tell the agent to perform
     actions it structurally cannot. The ONE exception is curated per-agent in
     ``ORCHESTRATION_WHITELIST`` (framework-maintainer reasons ABOUT sub-agent
     design as its subject matter, so ``sub-agent-selection`` is content for it).
@@ -54,7 +54,11 @@ and a real run inserts zero.
 
 ``validate()`` check (c) warns on the inverse condition: a declared block MISSING
 from its agent, meaning the manifest moved ahead of the agent files and the
-injector has not been run.
+injector has not been run. The skill-connection manifest below is a second,
+explicit link: it tells every agent which canonical skill contract owns the
+role-specific behavior. It is rendered into each agent prompt by
+``inject_agent_skill_connections.py`` so the connection survives Claude/Codex
+mirror generation without blanket-injecting orchestrator instructions.
 
 SPAWN-CAPABILITY GUARD (/why-review F-WR2)
 ------------------------------------------
@@ -87,6 +91,9 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sync_blocks import AGENT_FOLDED_TAGS, has_root_pointer, universal_tags  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -100,15 +107,9 @@ AGENTS_DIR = _CLAUDE_DIR / "agents"
 # Blocks that drive main-loop orchestration / user interaction. A headless leaf
 # sub-agent cannot act on these, so they must NOT propagate into agent files.
 EXCLUDED_ORCHESTRATION = {
-    "nested-task-creation",       # expands a workflow step's child phase tasks
     "sub-agent-selection",        # a dispatcher choosing which sub-agents to spawn
     "subagent-return-contract",   # instructs *its* sub-agents how to return (inverted for a leaf)
     "parallel-phase-advancement", # all-return barrier across a parallel workflow phase group
-    # Orchestrator-only: partitions ITS OWN task list into PAR/SEQ waves and
-    # spawns each wave. A headless leaf sub-agent receives one brief and, by rule
-    # 7 of the block itself, does NOT fan out another wave -- copying it would
-    # instruct the agent to perform the exact action the block forbids it.
-    "parallel-subagent-dispatch",
     # Session-scoped goal-file loop owned by the CALLER, not a leaf agent: step 1
     # resolves the goal from "the current user request" (a sub-agent sees only its
     # task prompt, never the parent conversation), step 6 drives the review->fix
@@ -121,6 +122,33 @@ EXCLUDED_ORCHESTRATION = {
     # sub-agent receives one already-scoped brief whose overlay the dispatching
     # orchestrator already resolved.
     "project-protocol-overlay",
+    # Tracks the USER's prompts for a session: pin the original request, keep the
+    # running P1..Pn list, re-anchor after compaction. A headless leaf sub-agent
+    # never sees the user conversation -- it receives one brief that already carries
+    # the goal verbatim -- and the prompt-ledger hook deliberately delivers nothing
+    # inside a helper agent (spec SessionPromptLedger BR-SPL-06). The orchestrator
+    # carries this block; the leaf would be told to track prompts it cannot see.
+    "session-goal-ledger",
+    # Two-way binding between a workflow SKILL.md and its ``.claude/workflows.json``
+    # entry: whoever RESOLVES a step reads both projections and treats the registry
+    # as authoritative on conflict. A headless leaf sub-agent never resolves a
+    # sequence -- it receives one brief whose step the dispatching orchestrator
+    # already selected and whose applicability it already evaluated.
+    "workflow-registry-binding",
+    # Review-loop orchestration: the round budget and re-review loop, batching,
+    # reviewer-prompt construction and the durable round record belong to the
+    # ORCHESTRATING review skill, which carries them inline. A leaf reviewer gets one
+    # scoped brief with the rules it applies already embedded; carrying these bodies
+    # too cost about 11k tokens per spawn and told a leaf to batch, loop and spawn
+    # reviewers it must not.
+    "systematic-review-batching",
+    "review-protocol-injection",
+    "review-policy",
+    # Ordering of test runs across the steps of a task (build all phases, static review, ONE verify)
+    # is owned by the ORCHESTRATING skill or workflow. A leaf sub-agent receives one brief; the rules
+    # it must obey (a phase executor never runs a test suite, the tester runs once when told to) are
+    # written directly in fullstack-developer.md / frontend-developer.md rather than carried as a block.
+    "verify-last-order",
 }
 
 # Per-agent exceptions: a normally-excluded block IS legitimate content for this
@@ -132,15 +160,12 @@ ORCHESTRATION_WHITELIST = {
 # Blocks whose body literally instructs the agent to spawn Agent/Task sub-agents.
 # An agent assigned one of these MUST have Agent/Task (or an all-tools grant).
 SPAWN_INSTRUCTING_BLOCKS = {
-    "fresh-context-review",
     "review-protocol-injection",
 }
 
 # Review-cycle blocks are only relevant to agents whose primary job includes
 # adversarial review, fix-cycle validation, or review-gate orchestration.
 REVIEW_CYCLE_TAGS = {
-    "fresh-context-review",
-    "double-round-trip-review",
     "review-protocol-injection",
 }
 REVIEW_CYCLE_AGENTS = {
@@ -148,7 +173,6 @@ REVIEW_CYCLE_AGENTS = {
     "code-reviewer",
     "integration-tester",
     "planner",
-    "quality-gate-review",
     "security-auditor",
     "spec-compliance-reviewer",
     "ui-ux-designer",
@@ -165,8 +189,7 @@ CODE_TIER_TAGS = {
     "fix-layer-accountability",
 }
 CORE_ONLY_AGENTS = {
-    "business-analyst", "docs-manager", "git-manager", "journal-writer",
-    "knowledge-worker", "product-owner", "project-manager", "quality-gate-review",
+    "docs-manager", "git-manager", "journal-writer", "knowledge-worker",
 }
 
 # CODE_TIER_TAGS splits on a second axis (agent-universal-rules.test.cjs TC-UAR-004):
@@ -178,7 +201,7 @@ MUTATION_CODE_TAGS = {
     "fix-layer-accountability",
 }
 READONLY_CODE_AGENTS = {
-    "researcher", "scout", "scout-external", "ui-ux-designer",
+    "researcher", "ui-ux-designer",
 }
 
 # Blocks deliberately REMOVED from a carrier as off-role (TC-UAR-016). Re-adding one
@@ -195,61 +218,104 @@ OFF_ROLE_TRIMS = {
 AGENT_QUALITY_BLOCKS = {
     # --- review family ---------------------------------------------------
     "code-reviewer": [
-        "severity-rubric", "systematic-review-batching", "category-review-thinking",
-        "fresh-context-review", "double-round-trip-review", "logic-and-intention-review",
-        "review-protocol-injection", "bug-detection", "complexity-prevention",
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "measured-capacity-engineering",
+        "core-engineering-principles",
+        "whole-diff-correctness",
+        "severity-rubric", "category-review-thinking",
+        "logic-and-intention-review",
+        "bug-detection", "complexity-prevention",
         "design-patterns-quality", "rationalization-prevention",
         "graph-assisted-investigation", "source-test-drift-check", "test-spec-verification",
-        # wave 2 (twin: code-review / changes-review)
+        # Leaf rules the reviewer template used to deliver: `fix` dispatches this agent directly for a
+        # bugfix review, and hosts without a skill preload (Codex, OpenCode) would otherwise lose them.
+        "behavioral-delta-matrix", "spec-tests-code-triangulation",
+        # wave 2 (twin: code-quality-review / changes-review)
         "trade-off-interrogation-gate", "cross-stack-impact-trace", "spec-drift-adjudication",
         "integration-test-sync-check",
         # wave 3 (twin: changes-review Phase 3.8 -- domain entity gate)
         "domain-entity-change-gate",
+        # The front-end review PROCEDURE (twin: changes-review / ui-design --mode=review). changes-review routes
+        # an arbitrary diff here, and a sub-agent inherits nothing but its own .md -- so without
+        # this row a frontend diff reviewed by this agent gets no screen-state or a11y pass at all.
+        # Procedure only: the DD-* taste clauses stay off this agent deliberately, because a
+        # general code reviewer adjudicating visual identity produces noise, not defects. The body
+        # is self-gating on "has a user-facing front-end surface", so a backend diff costs one line.
+        "design-review-checklist",
+        # Test-architecture review is a production-quality concern too: this
+        # agent is the production face of `architecture --mode=full` and the
+        # review owner for seed-test-data.
+        "test-architecture-execution-contract",
+        # An agent that JUDGES a test must adjudicate a RED test on the same
+        # five-way scale the author uses (/why-review F-M2). Without it, this
+        # agent's only nearby rule permits "decide whether the test should
+        # change" with no never-weaken prohibition -- exactly the reasoning the
+        # taxonomy exists to forbid. Read-only role is not a counter-argument:
+        # a reviewer that reaches the WRONG verdict recommends the wrong fix.
+        "test-failure-fault-adjudication",
+        "review-principle-awareness",
+    ],
+    # Expert AI-feature reviewer: plans and code that call models (twin: ai-engineering-review).
+    # Read-only like security-auditor: it carries the three AI protocols in full (agents keep full
+    # protocol text) plus the review-quality set its twin skill carries. It is the ONLY agent that
+    # carries them: every other agent holds one conditional pointer line instead, so a task with no
+    # AI surface pays nothing (guarded by the ai-gate-zero-cost suite).
+    "ai-engineering-reviewer": [
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "measured-capacity-engineering",
+        "core-engineering-principles",
+        "severity-rubric", "category-review-thinking",
+        "graph-assisted-investigation", "incremental-persistence",
+        "source-test-drift-check",
+        "trade-off-interrogation-gate",
+        "review-principle-awareness",
+        # twin: ai-engineering-review -- framing (AF), floor (AE) and procedure (AR)
+        "ai-feature-framing-gate", "ai-engineering-gate", "ai-review-checklist",
     ],
     "security-auditor": [
-        "severity-rubric", "systematic-review-batching", "category-review-thinking",
-        "fresh-context-review", "graph-assisted-investigation", "incremental-persistence",
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "measured-capacity-engineering",
+        "severity-rubric", "category-review-thinking",
+        "graph-assisted-investigation", "incremental-persistence",
         "source-test-drift-check",
-        # wave 2 (twin: security-review)
-        "trade-off-interrogation-gate", "double-round-trip-review",
+        # wave 2 (twin: security-audit)
+        "trade-off-interrogation-gate",
+        "review-principle-awareness",
     ],
     "performance-optimizer": [
-        "severity-rubric", "systematic-review-batching", "category-review-thinking",
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "measured-capacity-engineering",
+        "core-engineering-principles",
+        "severity-rubric", "category-review-thinking",
         "graph-assisted-investigation", "graph-impact-analysis",
         # wave 2 (twin: performance-review)
         "trade-off-interrogation-gate", "scenario-stress-eval",
+        "review-principle-awareness",
     ],
     "spec-compliance-reviewer": [
-        "severity-rubric", "double-round-trip-review", "fresh-context-review",
-        "review-protocol-injection", "behavioral-delta-matrix", "spec-drift-adjudication",
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "severity-rubric",
+        "behavioral-delta-matrix", "spec-drift-adjudication",
         "test-spec-verification",
-        # wave 2 (twin: artifact-review / spec)
+        # wave 2 (twin: work-item --mode=review / spec)
         "trade-off-interrogation-gate", "spec-tests-code-triangulation", "ui-intent-layer",
+        # Judges spec<->test alignment, so it meets red tests and must reach a
+        # verdict on the same five-way scale as the author (/why-review F-M2).
+        "test-failure-fault-adjudication",
+        # Leaf rules the reviewer template delivered before it left agent files: this agent is
+        # dispatched directly too, and no rule may depend on a Claude-only skill preload.
+        "bug-detection", "design-patterns-quality", "graph-assisted-investigation",
+        "logic-and-intention-review", "rationalization-prevention",
+        "review-principle-awareness",
     ],
-    "quality-gate-review": [
-        "severity-rubric", "double-round-trip-review", "fresh-context-review",
-        "review-protocol-injection", "refinement-dor-checklist", "estimation-framework",
-        # wave 2 (twin: quality-gate-review / quality-gate)
-        "trade-off-interrogation-gate", "source-test-drift-check",
-    ],
-
     # --- investigation / research family ---------------------------------
     "debugger": [
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "end-to-start-debugger-trace", "root-cause-debugging", "red-flag-stop-conditions",
         "graph-assisted-investigation", "incremental-persistence",
-        # wave 2 (twin: debug-investigate / investigate)
+        # wave 2 (twin: investigate --mode=debug / investigate)
         "test-failure-fault-adjudication", "source-test-drift-check",
-    ],
-    # NOTE: the `scout` SKILL carries `cross-service-check`, but scout/scout-external
-    # are READONLY_CODE agents -- that tag is a MUTATION_CODE_TAG reserved for
-    # code-mutating agents (TC-UAR-004). Deliberate non-parity; do NOT "fix".
-    "scout": [
-        "graph-assisted-investigation",
-        "incremental-persistence", "rationalization-prevention",
-    ],
-    "scout-external": [
-        "graph-assisted-investigation",
-        "incremental-persistence", "rationalization-prevention",
     ],
     "researcher": [
         "web-research", "incremental-persistence", "output-quality-principles",
@@ -259,84 +325,154 @@ AGENT_QUALITY_BLOCKS = {
         "severity-rubric",
         # wave 2 (twin: knowledge-review)
         "trade-off-interrogation-gate",
+        "review-principle-awareness",
     ],
-
     # --- planning / product / architecture family ------------------------
     "planner": [
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "estimation-framework", "plan-quality", "plan-granularity",
         "iterative-phase-quality", "preservation-inventory", "behavioral-delta-matrix",
-        "severity-rubric", "fresh-context-review", "double-round-trip-review",
-        "graph-assisted-investigation", "review-protocol-injection",
-        # wave 2 (twin: plan-review)
+        "severity-rubric",
+        "graph-assisted-investigation",
+        # decision-quality lens used by planning and explicit plan review
         "trade-off-interrogation-gate",
-        # wave 3 (twin: plan Domain Entity Gate / plan-review Dimension 8)
+        # shared Domain Entity Gate for planning and explicit plan review
         "domain-entity-change-gate",
+        # Leaf rules the reviewer template delivered before it left agent files: this agent is
+        # dispatched directly too, and no rule may depend on a Claude-only skill preload.
+        "bug-detection", "design-patterns-quality", "logic-and-intention-review",
+        "rationalization-prevention", "spec-tests-code-triangulation", "test-spec-verification",
+        "review-principle-awareness",
     ],
     "architect": [
-        "severity-rubric", "systematic-review-batching", "category-review-thinking",
-        "double-round-trip-review", "graph-assisted-investigation",
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "measured-capacity-engineering",
+        "core-engineering-principles",
+        "severity-rubric", "category-review-thinking",
+        "graph-assisted-investigation",
         "design-patterns-quality",
-        # wave 2 (twin: architecture-design / architecture-review)
+        # wave 2 (twin: `architecture --mode=design` / `architecture --mode=review`)
         # NOT source-test-drift-check: an explicit off-role trim for architect
         # (TC-UAR-016, commit 698195a5). Deliberate non-parity; do NOT "fix".
         "trade-off-interrogation-gate", "scale-technique-gate", "scenario-stress-eval",
+        "test-architecture-execution-contract",
+        # wave 3 -- the third gate in the family: the companions judge the running
+        # system's DESIGN, this one judges the project's engineering FOUNDATION
+        # (build/run/test/change). Twin: `architecture --mode=design` / `architecture --mode=full`.
+        "engineering-foundation-gate",
+        # AI agents are a potential system actor; this is relevant to the
+        # `architecture --mode=review` / `architecture --mode=design` agent's evidence-based audit.
+        "ai-agent-as-user-access",
+        "review-principle-awareness",
     ],
     "solution-architect": [
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "design-patterns-quality", "scaffold-production-readiness",
         "estimation-framework", "module-detection",
         # wave 2 -- already carries the companion `scenario-stress-eval`; the base
         # gate it explicitly pairs with was missing (twin: tech-stack-research)
         "scale-technique-gate",
+        "test-architecture-execution-contract",
+        # wave 3 -- greenfield inception CREATES the foundation, so this gate is in
+        # its blocking mode here, not its advisory mode (twin: scaffold).
+        "engineering-foundation-gate",
+        # Greenfield architecture must decide whether and how non-human agents
+        # can use the application before feature fan-out.
+        "ai-agent-as-user-access",
     ],
-    "business-analyst": [
-        "estimation-framework", "refinement-dor-checklist", "ba-team-decision-model",
-        "ai-sdd-artifact-contract", "ui-wireframe",
-    ],
-    "product-owner": [
-        "estimation-framework", "refinement-dor-checklist", "ui-wireframe",
-    ],
-
     # --- test family -----------------------------------------------------
+    "performance-tester": [
+        "agent-code-standards", "agent-bootstrap", "sequential-thinking-protocol",
+        "understand-code-first", "evidence-based-reasoning",
+        "cross-service-check", "fix-layer-accountability",
+        "core-engineering-principles", "measured-capacity-engineering",
+        "real-world-fidelity-testing", "repeatable-test-principle",
+        "test-architecture-execution-contract", "test-failure-fault-adjudication",
+        "environment-fault-hypothesis", "source-test-drift-check",
+        "review-decision-autonomy", "severity-rubric", "review-principle-awareness",
+        "logic-and-intention-review", "bug-detection", "spec-tests-code-triangulation",
+    ],
     "integration-tester": [
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "repeatable-test-principle", "source-test-drift-check", "red-flag-stop-conditions",
         "graph-impact-analysis", "incremental-persistence", "rationalization-prevention",
-        "severity-rubric", "systematic-review-batching", "category-review-thinking",
-        "fresh-context-review", "double-round-trip-review", "review-protocol-injection",
-        # wave 2 (twin: integration-test / integration-test-review)
+        "severity-rubric", "category-review-thinking",
+        # wave 2 (twin: integration-test, incl. its review and verify modes)
         "trade-off-interrogation-gate", "test-failure-fault-adjudication",
         "integration-test-execution-discipline", "spec-tests-code-triangulation",
         "spec-drift-adjudication", "test-data-isolation",
         "real-world-fidelity-testing",
+        "test-architecture-execution-contract",
+        # Leaf rules the reviewer template delivered before it left agent files: this agent is
+        # dispatched directly too, and no rule may depend on a Claude-only skill preload.
+        "behavioral-delta-matrix", "bug-detection", "design-patterns-quality",
+        "graph-assisted-investigation", "logic-and-intention-review", "test-spec-verification",
+        "review-principle-awareness",
     ],
     "tester": [
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "source-test-drift-check", "repeatable-test-principle",
         "test-spec-verification", "red-flag-stop-conditions",
         # wave 2 (twin: test)
         "test-failure-fault-adjudication", "real-world-fidelity-testing",
+        "test-architecture-execution-contract",
+        # Carries "Tests verify intent" (clause 5). A test agent had the rule for
+        # adjudicating a RED test but none for what a GREEN test is worth --
+        # so a suite that mirrors current behavior and protects no invariant read
+        # as success (/why-review F-M1). `integration-tester` already carries it;
+        # this closes the author-side gap on the other two test agents.
+        "logic-and-intention-review",
     ],
     "e2e-runner": [
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "source-test-drift-check", "repeatable-test-principle",
         # wave 2 (twin: e2e-test)
         "test-failure-fault-adjudication", "real-world-fidelity-testing",
+        "test-architecture-execution-contract",
+        # Visual baseline/generation handoff (twin: E2E visual-review skills).
+        "e2e-visual-design-contract",
+        # Same author-side gap as `tester`: clause 5 "Tests verify intent"
+        # (/why-review F-M1).
+        "logic-and-intention-review",
     ],
     "database-admin": [
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "graph-impact-analysis",
         # wave 2 (twin: db-migrate)
         "source-test-drift-check",
     ],
-
     # --- design / craft / docs family ------------------------------------
     "ui-ux-designer": [
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "core-engineering-principles",
         "ui-system-context", "ui-wireframe", "design-system-check",
-        "design-patterns-quality", "severity-rubric", "systematic-review-batching",
-        "category-review-thinking", "double-round-trip-review", "fresh-context-review",
+        "design-patterns-quality", "severity-rubric",
+        "category-review-thinking",
         "source-test-drift-check", "graph-assisted-investigation",
-        # wave 2 (twin: ui-review / design / design-spec)
+        # wave 2 (twin: ui-design / design-spec)
         "trade-off-interrogation-gate", "ui-intent-layer", "existing-ui-research",
-        # UI/UX design principles -- 40 clauses (twin: ui-review / design / design-spec)
+        # UI/UX design principles -- 40 clauses (twin: ui-design / design-spec)
         "ui-ux-design-principles",
+        # Visual IDENTITY, the question the 40 usability clauses do not ask (twin: ui-design /
+        # design-spec). This agent AUTHORS the direction, so it owns both the
+        # design plan + generic test (DD-3) and the interface voice.
+        "design-distinctiveness-gate", "ui-copywriting", "design-review-checklist",
+        "review-principle-awareness",
+        # Journey-first order (twin: ui-design / design-spec / work-item --mode=mockup): this agent
+        # is where a brief turns into a surface, so it must report the main user journeys and
+        # read the project's design authority BEFORE it generates anything.
+        "ux-journey-gate",
     ],
     "code-simplifier": [
+        "core-engineering-principles",
         "complexity-prevention", "design-patterns-quality", "severity-rubric",
         "shared-protocol-duplication-policy",
         # wave 2 (twin: code-simplifier)
@@ -346,37 +482,140 @@ AGENT_QUALITY_BLOCKS = {
         "incremental-persistence",
     ],
     "framework-maintainer": [
+        "review-decision-autonomy",  # Applies only to review/audit decisions.
+        "core-engineering-principles",
         "context-engineering-principles", "sub-agent-selection",  # sub-agent-selection whitelisted
         # wave 2 (twin: skill-creator / custom-agent) -- it EDITS SYNC blocks, so the
         # policy governing inline-protocol duplication is core subject matter for it
         "shared-protocol-duplication-policy", "output-quality-principles",
     ],
-
     # --- implementer family (no review twin -> role-derived blocks) ------
     # `ui-system-context` goes only to the two UI-touching implementers -- its body
     # gates on .ts/.html/.scss/.css work, so it is dead weight on backend-developer.
+    #
+    # All three implementers additionally carry `test-failure-fault-adjudication`
+    # and `logic-and-intention-review` (/why-review F-M3). An implementer is
+    # routed `fix` on a red test, so it is a test ADJUDICATOR in practice whatever
+    # the org chart says -- and without the taxonomy its nearest available rule
+    # permits editing the test to reach green. Reaching the taxonomy through
+    # `.claude/skills/fix/SKILL.md` is exactly the indirection this framework's own
+    # duplication policy calls a compliance loss, and a sub-agent inherits nothing
+    # but its own .md. The precedent is `code-reviewer`, given the test-architecture
+    # contract in this same campaign for the same reason.
     "backend-developer": [
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "design-patterns-quality", "complexity-prevention",
-        # wave 2 (twin: plan-execute / feature-implement)
+        # wave 2 (twin: plan --mode=execute / feature-implement)
         "source-test-drift-check", "graph-assisted-investigation",
         # wave 3 -- authors entities, so it acts on all 6 gate decision points;
         # without it the implementer runs weaker rules than its own reviewer.
         "domain-entity-change-gate",
+        # /why-review F-M3 -- see the family note above.
+        "test-failure-fault-adjudication", "logic-and-intention-review",
     ],
     "frontend-developer": [
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "design-patterns-quality", "complexity-prevention",
-        # wave 2 (twin: plan-execute / feature-implement)
+        # wave 2 (twin: plan --mode=execute / feature-implement)
         "source-test-drift-check", "graph-assisted-investigation", "ui-system-context",
         # UI/UX design principles -- 40 clauses; the implementer gate for user-facing surfaces
         "ui-ux-design-principles",
+        # The implementer is where a design plan silently stops being followed -- raw hex, a
+        # borrowed card kit, a per-section entrance animation. DD-* binds it to the plan it
+        # was handed; ui-copywriting binds the strings it types into templates.
+        "design-distinctiveness-gate", "ui-copywriting", "design-review-checklist",
+        # /why-review F-M3 -- see the family note above.
+        "test-failure-fault-adjudication", "logic-and-intention-review",
     ],
     "fullstack-developer": [
+        "measured-capacity-engineering",
+        "core-engineering-principles",
         "design-patterns-quality", "complexity-prevention",
-        # wave 2 (twin: plan-execute / feature-implement)
+        # wave 2 (twin: plan --mode=execute / feature-implement)
         "source-test-drift-check", "graph-assisted-investigation", "ui-system-context",
         # UI/UX design principles -- 40 clauses; binds FRONTEND phases only (backend-only: N/A)
         "ui-ux-design-principles",
+        # Same implementer rationale as frontend-developer; both blocks carry their own
+        # "skip when there is no user-facing surface" clause, so a backend-only phase costs
+        # one stated line rather than a wrong gate.
+        "design-distinctiveness-gate", "ui-copywriting", "design-review-checklist",
+        # /why-review F-M3 -- see the family note above. This is the agent the
+        # report's concrete error path routed through.
+        "test-failure-fault-adjudication", "logic-and-intention-review",
     ],
+    # --- operations family ------------------------------------------------
+    # These agents still receive the Core-2 tier and have an explicit skill connection.
+    # Empty additive rows are valid when the twin skill has no role-specific
+    # SYNC block; keeping the row makes the all-agent matrix complete and
+    # prevents silent tier drift when a new block is introduced.
+    "git-manager": [],
+    "journal-writer": [],
+}
+
+# ---------------------------------------------------------------------------
+# Agent -> canonical skill-contract connections
+# ---------------------------------------------------------------------------
+# This is routing/evidence metadata, not a request to auto-expand every skill
+# into a leaf agent. Full skill expansion would also copy orchestrator-only
+# instructions; the role-specific quality subset remains controlled by
+# AGENT_QUALITY_BLOCKS. The connection block is rendered into every canonical
+# agent prompt and therefore remains visible in Claude and Codex mirrors.
+AGENT_SKILL_CONNECTIONS = {
+    "ai-engineering-reviewer": ["ai-engineering-review"],
+    "architect": [
+        "architecture", "security-audit", "performance-review",
+    ],
+    "backend-developer": ["feature-implement", "fix"],
+    "code-reviewer": [
+        "code-quality-review", "changes-review", "architecture", "seed-test-data", "ui-design",
+    ],
+    "code-simplifier": ["code-simplifier"],
+    "database-admin": ["db-migrate", "seed-test-data"],
+    "debugger": ["investigate"],
+    "docs-manager": ["docs-manager"],
+    "e2e-runner": ["e2e-test", "workflow-e2e"],
+    "framework-maintainer": ["custom-agent", "skill-creator", "sync-skills-shared-protocols"],
+    "frontend-developer": ["feature-implement", "ui-design"],
+    "fullstack-developer": ["feature-implement"],
+    "git-manager": ["commit"],
+    "integration-tester": [
+        "integration-test",
+        "workflow-integration-test",
+    ],
+    "journal-writer": ["learn"],
+    "knowledge-worker": ["knowledge-review", "knowledge-synthesis"],
+    "performance-optimizer": ["performance-review"],
+    "performance-tester": ["performance-test"],
+    "planner": ["plan"],
+    "researcher": ["web-research"],
+    "security-auditor": ["security-audit"],
+    "solution-architect": [
+        "architecture", "scaffold", "harness-setup",
+        "workflow-greenfield-init", "tech-stack-research",
+    ],
+    "spec-compliance-reviewer": ["work-item", "spec"],
+    "tester": ["test"],
+    "ui-ux-designer": ["ui-design", "design-spec"],
+}
+
+# The test-architecture contract is intentionally connected across the full
+# setup -> author -> verify -> review path. Keep this reverse-coverage set
+# explicit so a future skill addition cannot silently become skill-only.
+TEST_ARCHITECTURE_SKILLS = {
+    "architecture",
+    "scaffold", "harness-setup", "workflow-greenfield-init",
+    "integration-test",
+    "performance-test",
+    "e2e-test", "workflow-e2e",
+    "workflow-integration-test", "test",
+    "seed-test-data",
+}
+TEST_ARCHITECTURE_AGENTS = {
+    "architect", "code-reviewer", "e2e-runner", "integration-tester",
+    "performance-tester",
+    "solution-architect", "tester",
 }
 
 # ---------------------------------------------------------------------------
@@ -385,17 +624,17 @@ AGENT_QUALITY_BLOCKS = {
 # ---------------------------------------------------------------------------
 FAMILIES = {
     "review": [
-        "code-reviewer", "security-auditor", "performance-optimizer",
-        "spec-compliance-reviewer", "quality-gate-review",
+        "code-reviewer", "ai-engineering-reviewer", "security-auditor", "performance-optimizer",
+        "spec-compliance-reviewer",
     ],
     "investigation": [
-        "debugger", "scout", "scout-external", "researcher", "knowledge-worker",
+        "debugger", "researcher", "knowledge-worker",
     ],
     "planning": [
-        "planner", "architect", "solution-architect", "business-analyst", "product-owner",
+        "planner", "architect", "solution-architect",
     ],
     "test": [
-        "integration-tester", "tester", "e2e-runner", "database-admin",
+        "integration-tester", "performance-tester", "tester", "e2e-runner", "database-admin",
     ],
     "craft": [
         "ui-ux-designer", "code-simplifier", "docs-manager", "framework-maintainer",
@@ -403,10 +642,13 @@ FAMILIES = {
     "implementer": [
         "backend-developer", "frontend-developer", "fullstack-developer",
     ],
+    "operations": [
+        "git-manager", "journal-writer",
+    ],
 }
 
-# Agents intentionally OUT of scope (ops agents already at parity for their role).
-EXCLUDED_AGENTS = {"git-manager", "journal-writer", "project-manager"}
+AGENT_SKILL_CONNECTIONS_OPEN = "<!-- AGENT-SKILL-CONNECTIONS:START -->"
+AGENT_SKILL_CONNECTIONS_CLOSE = "<!-- AGENT-SKILL-CONNECTIONS:END -->"
 
 
 # ---------------------------------------------------------------------------
@@ -464,6 +706,69 @@ def agent_tools(agent: str) -> str | None:
     return tm.group(1).strip() if tm else None
 
 
+def agent_universal_problems(agent: str) -> list[str]:
+    """Universal-bundle contract for one agent file: no body or reminder of a universal or
+    agent-folded tag and no retired pointer line (`sync_blocks.strip_universal` owns both)."""
+    f = AGENTS_DIR / f"{agent}.md"
+    if not f.exists():
+        return []
+    text = f.read_text(encoding="utf-8")
+    problems: list[str] = []
+    for tag in [*universal_tags(), *AGENT_FOLDED_TAGS]:
+        for variant in (tag, f"{tag}:reminder"):
+            if re.search(rf"^<!-- SYNC:{re.escape(variant)} -->", text, flags=re.MULTILINE):
+                problems.append(f"SYNC:{variant}")
+    if has_root_pointer(text):
+        problems.append("retired Root-carried protocols pointer line")
+    return problems
+
+
+def disk_agent_names() -> set[str]:
+    """Return canonical agent basenames currently present on disk."""
+    return {p.stem for p in AGENTS_DIR.glob("*.md")}
+
+
+def skill_names() -> set[str]:
+    """Return canonical skill directories that expose a SKILL.md entry point."""
+    return {
+        p.name for p in AGENTS_DIR.parent.joinpath("skills").iterdir()
+        if p.is_dir() and p.joinpath("SKILL.md").exists()
+    }
+
+
+def frontmatter_skills(agent: str) -> list[str]:
+    """Read an optional native ``skills:`` list from one agent frontmatter."""
+    f = AGENTS_DIR / f"{agent}.md"
+    if not f.exists():
+        return []
+    text = f.read_text(encoding="utf-8")
+    m = re.match(r"^---\s*\n(.*?)\n---\s*\n", text, flags=re.DOTALL)
+    frontmatter = m.group(1) if m else ""
+    sm = re.search(r"^skills:\s*(.+)$", frontmatter, flags=re.MULTILINE)
+    if not sm:
+        return []
+    raw = sm.group(1).strip()
+    if raw in {"", "[]"}:
+        return []
+    return [item.strip().strip("'\"") for item in raw.split(",") if item.strip()]
+
+
+def connection_marker_skills(agent: str) -> list[str]:
+    """Read the generated skill names from an agent's explicit connection block."""
+    f = AGENTS_DIR / f"{agent}.md"
+    if not f.exists():
+        return []
+    text = f.read_text(encoding="utf-8")
+    pattern = (
+        rf"{re.escape(AGENT_SKILL_CONNECTIONS_OPEN)}"
+        rf"(.*?){re.escape(AGENT_SKILL_CONNECTIONS_CLOSE)}"
+    )
+    match = re.search(pattern, text, flags=re.DOTALL)
+    if not match:
+        return []
+    return re.findall(r"^- `([a-z0-9-]+)`", match.group(1), flags=re.MULTILINE)
+
+
 def _has_spawn_capability(agent: str) -> bool:
     """True if the agent can spawn Agent/Task sub-agents (all-tools or explicit)."""
     raw = agent_tools(agent)
@@ -515,9 +820,82 @@ def validate() -> tuple[list[str], list[str]]:
             errors.append(f"(partition) agents in matrix but no family: {missing}")
         if extra:
             errors.append(f"(partition) agents in a family but no matrix row: {extra}")
-    overlap = keys & EXCLUDED_AGENTS
-    if overlap:
-        errors.append(f"(partition) excluded ops agent(s) wrongly enhanced: {sorted(overlap)}")
+    on_disk = disk_agent_names()
+
+    # (i) stale-orchestration guard -- HARD FAIL. The injector can reconcile
+    # exact fenced blocks, but a validation run must make the stale carrier
+    # visible instead of allowing an excluded orchestration contract to linger.
+    for agent in sorted(on_disk & set(AGENT_QUALITY_BLOCKS)):
+        stale = sorted((agent_present_tags(agent) & EXCLUDED_ORCHESTRATION) - ORCHESTRATION_WHITELIST.get(agent, set()))
+        if stale:
+            errors.append(
+                f"(i) agent '{agent}' still carries excluded-orchestration block(s) {stale}; "
+                "run inject_agent_protocol_blocks.py to reconcile exact fences"
+            )
+
+    # (j) universal-bundle contract -- HARD FAIL. The universal hook delivers the universal group and
+    # the agent-folded tags live in their folding block, so an agent holds none of their bodies or
+    # reminders and no pointer line, and the matrix never assigns them.
+    for tag in sorted(union_blocks & (set(universal_tags()) | set(AGENT_FOLDED_TAGS))):
+        errors.append(f"(j) matrix assigns universal or agent-folded block '{tag}' to an agent")
+    for agent in sorted(on_disk & set(AGENT_QUALITY_BLOCKS)):
+        problems = agent_universal_problems(agent)
+        if problems:
+            errors.append(
+                f"(j) agent '{agent}' breaks the universal-bundle contract: {problems}; "
+                "run sync-update-blocks.py --mode=strip-root-pointer"
+            )
+
+    # (connection) every canonical agent has an explicit, valid skill link and
+    # every native frontmatter link is represented by that connection. The
+    # marker is generated from this manifest so Codex receives the same link.
+    connection_keys = set(AGENT_SKILL_CONNECTIONS)
+    if connection_keys != on_disk:
+        missing = sorted(on_disk - connection_keys)
+        ghosts = sorted(connection_keys - on_disk)
+        if missing:
+            errors.append(f"(connection) agent(s) on disk missing skill connection(s): {missing}")
+        if ghosts:
+            errors.append(f"(connection) skill connection(s) target missing agent file(s): {ghosts}")
+    known_skills = skill_names()
+    for agent, connected in AGENT_SKILL_CONNECTIONS.items():
+        if not connected:
+            errors.append(f"(connection) agent '{agent}' has no connected skill contract")
+        duplicates = sorted({skill for skill in connected if connected.count(skill) > 1})
+        if duplicates:
+            errors.append(f"(connection) agent '{agent}' repeats skill contract(s): {duplicates}")
+        unknown = sorted(set(connected) - known_skills)
+        if unknown:
+            errors.append(f"(connection) agent '{agent}' links unknown skill(s): {unknown}")
+        marker = connection_marker_skills(agent)
+        if marker != connected:
+            errors.append(
+                f"(connection) agent '{agent}' marker does not match manifest "
+                f"(expected {connected}, found {marker}); run inject_agent_skill_connections.py"
+            )
+        native = frontmatter_skills(agent)
+        native_unknown = sorted(set(native) - known_skills)
+        if native_unknown:
+            errors.append(f"(connection) agent '{agent}' frontmatter links unknown skill(s): {native_unknown}")
+        native_unconnected = sorted(set(native) - set(connected))
+        if native_unconnected:
+            errors.append(
+                f"(connection) agent '{agent}' frontmatter skill(s) not in connection manifest: "
+                f"{native_unconnected}"
+            )
+
+    for skill in sorted(TEST_ARCHITECTURE_SKILLS):
+        owners = sorted(agent for agent, links in AGENT_SKILL_CONNECTIONS.items() if skill in links)
+        if not owners:
+            errors.append(f"(test-architecture) skill '{skill}' has no connected agent owner")
+    for agent in sorted(TEST_ARCHITECTURE_AGENTS):
+        if agent not in AGENT_QUALITY_BLOCKS:
+            errors.append(f"(test-architecture) owner agent '{agent}' has no quality matrix row")
+        elif "test-architecture-execution-contract" not in AGENT_QUALITY_BLOCKS[agent]:
+            errors.append(
+                f"(test-architecture) owner agent '{agent}' lacks "
+                "test-architecture-execution-contract"
+            )
 
     # (c) target-set drift -- WARN ONCE when agent files trail the manifest.
     # Presence is the EXPECTED steady state under the TARGET-SET INVARIANT (the
@@ -618,7 +996,7 @@ def _main(argv: list[str]) -> int:
         f"{n_pending} pending insert(s), "
         f"{len(FAMILIES)} families. All tags canonical; no orchestration leak; "
         f"partition clean; spawn-capability guard clear; tier policy clear; "
-        "review-cycle relevance clear."
+        "review-cycle relevance clear; all-agent skill connections clear."
         + (f" ({len(warnings)} drift warning(s))" if warnings else "")
     )
     return 0

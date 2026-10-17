@@ -182,6 +182,23 @@ public interface IPlatformFileStorageService : IPlatformInfrastructureService
     Task<Uri> CreateSharedAccessUriAsync(string fullFilePath, TimeSpan? expirationTime = null, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Same as <see cref="CreateSharedAccessUriAsync(string, TimeSpan?, CancellationToken)" />, optionally restricting
+    /// the URI to HTTPS requests. The restriction is applied only where the storage endpoint itself is HTTPS — an
+    /// HTTP-only emulator could not serve an HTTPS-only URI.
+    ///
+    /// <para>The default implementation ignores <paramref name="restrictToHttps" />, so a provider without the notion
+    /// (or a test double) keeps working unchanged; providers that support it override this member.</para>
+    /// </summary>
+    Task<Uri> CreateSharedAccessUriAsync(
+        string fullFilePath,
+        TimeSpan? expirationTime,
+        bool restrictToHttps,
+        CancellationToken cancellationToken = default)
+    {
+        return CreateSharedAccessUriAsync(fullFilePath, expirationTime, cancellationToken);
+    }
+
+    /// <summary>
     /// Creates a temporary access URI for non-public content by specifying the root directory and file path separately.
     /// This allows secure, time-limited access to private files without making them permanently public.
     /// </summary>

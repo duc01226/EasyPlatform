@@ -20,8 +20,8 @@ namespace Easy.Platform.Persistence.Domain;
 /// - Enable complex business operations spanning multiple databases
 ///
 /// **Use Cases:**
-/// - Microservices with multiple database technologies (PostgreSQL + MongoDB)
-/// - Cross-database data synchronization operations
+/// - Microservices with multiple database technologies (a relational store alongside a document store)
+/// - Explicitly approved cross-database migration or reconciliation operations
 /// - Complex business transactions requiring ACID properties across databases
 /// - Event sourcing scenarios with multiple persistence stores
 ///
@@ -31,8 +31,9 @@ namespace Easy.Platform.Persistence.Domain;
 /// - Manages pseudo-transaction scenarios for databases without full ACID support
 /// - Handles query-persistent Unit of Work instances for read operations
 ///
-/// Used by services like Employee and Talents that need to coordinate operations
-/// across Growth service (PostgreSQL) and their own databases (MongoDB).
+/// Used to coordinate multiple stores owned by one service or an explicitly approved migration/reconciliation
+/// context. It is not a general runtime peer-database write mechanism: runtime cross-service synchronization uses the
+/// message bus and the owning service's persistence boundary.
 /// </remarks>
 public interface IPlatformAggregatedPersistenceUnitOfWork : IPlatformUnitOfWork
 {
@@ -51,7 +52,7 @@ public interface IPlatformAggregatedPersistenceUnitOfWork : IPlatformUnitOfWork
     /// **Pseudo-Transaction Characteristics:**
     /// - No rollback capability (changes are immediately committed)
     /// - Optimized for high-performance scenarios
-    /// - Used with NoSQL databases like MongoDB in certain configurations
+    /// - Used with non-relational stores that lack full ACID transactions in certain configurations
     /// - Suitable for append-only or event-sourcing patterns
     ///
     /// **Decision Logic:**
@@ -104,9 +105,9 @@ public interface IPlatformAggregatedPersistenceUnitOfWork : IPlatformUnitOfWork
 /// **Architecture Overview:**
 /// ```
 /// PlatformAggregatedPersistenceUnitOfWork
-/// ├── PostgreSQL Unit of Work (Growth service data)
-/// ├── MongoDB Unit of Work (Employee data)
-/// ├── MongoDB Unit of Work (Surveys data)
+/// ├── Relational (EF Core) Unit of Work — this service's own data
+/// ├── Document-store Unit of Work — an approved migration/reconciliation context
+/// ├── Document-store Unit of Work — another store within the service boundary
 /// └── Other database Unit of Work instances
 /// ```
 ///
@@ -131,8 +132,8 @@ public interface IPlatformAggregatedPersistenceUnitOfWork : IPlatformUnitOfWork
 /// 4. Managing compensation actions for pseudo-transactions
 ///
 /// **Use Cases:**
-/// - **Cross-Service Operations**: Employee service updating Growth service user data
-/// - **Data Migration**: Synchronizing data between different database technologies
+/// - **Cross-Database Migration/Reconciliation**: an explicitly approved operation using a migration-only peer context
+/// - **Runtime Cross-Service Changes**: publish a RabbitMQ message and let the owning service update its data
 /// - **Complex Business Logic**: Operations requiring consistency across multiple data stores
 /// - **Reporting**: Generating reports from multiple database sources
 ///
@@ -149,16 +150,15 @@ public interface IPlatformAggregatedPersistenceUnitOfWork : IPlatformUnitOfWork
 ///
 /// **Integration Examples:**
 /// ```csharp
-/// // Coordinate operations across Growth (PostgreSQL) and Employee (MongoDB) services
+/// // Coordinate operations across stores owned by this service, or inside an approved migration.
 /// using var aggregatedUow = uowManager.Begin();
 ///
-/// // Update user in Growth service database
-/// var growthUow = aggregatedUow.GetInnerUnitOfWork&lt;GrowthDbContext&gt;();
-/// growthUow.Repository&lt;User&gt;().Update(user);
+/// // Update a row in this service's own database
+/// var ownUow = aggregatedUow.GetInnerUnitOfWork&lt;MyDbContext&gt;();
+/// ownUow.Repository&lt;User&gt;().Update(user);
 ///
-/// // Update employee in Employee service database
-/// var employeeUow = aggregatedUow.GetInnerUnitOfWork&lt;EmployeeDbContext&gt;();
-/// employeeUow.Repository&lt;Employee&gt;().Update(employee);
+/// // Additional contexts are allowed only for stores owned by this service or an explicitly approved
+/// // migration/reconciliation boundary. A runtime peer-service update must use RabbitMQ instead.
 ///
 /// // Commit changes to both databases
 /// await aggregatedUow.SaveChangesAsync();
@@ -229,7 +229,7 @@ public class PlatformAggregatedPersistenceUnitOfWork : PlatformUnitOfWork, IPlat
     /// Determines whether all inner Unit of Work instances operate in pseudo-transaction mode.
     /// </summary>
     /// <returns>
-    /// <c>true</c> if all inner Unit of Work instances use pseudo-transactions; otherwise, <c>false</c>.
+    /// <c>true</c> if at least one inner Unit of Work exists and all use pseudo-transactions; otherwise, <c>false</c>.
     /// </returns>
     /// <remarks>
     /// This method evaluates the transaction capabilities of the entire aggregated Unit of Work
@@ -239,7 +239,7 @@ public class PlatformAggregatedPersistenceUnitOfWork : PlatformUnitOfWork, IPlat
     /// **Decision Logic:**
     /// - Returns <c>true</c> only when ALL inner Unit of Work instances are pseudo-transactional
     /// - Returns <c>false</c> if ANY inner Unit of Work supports full transactions
-    /// - Empty collection (no inner Unit of Work instances) returns <c>true</c>
+    /// - Empty collection returns <c>false</c> so side effects wait until the lazily initialized UoW saves
     ///
     /// **Impact on Transaction Strategy:**
     /// - **All Pseudo**: Use compensation patterns, no rollback capability
@@ -250,7 +250,8 @@ public class PlatformAggregatedPersistenceUnitOfWork : PlatformUnitOfWork, IPlat
     /// </remarks>
     public override bool IsPseudoTransactionUow()
     {
-        return CachedInnerUowByTypes!.Values.All(p => p.IsPseudoTransactionUow());
+        var innerUows = CachedInnerUowByTypes!.Values;
+        return innerUows.Count > 0 && innerUows.All(p => p.IsPseudoTransactionUow());
     }
 
     /// <summary>

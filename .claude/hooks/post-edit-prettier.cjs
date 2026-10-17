@@ -1,52 +1,87 @@
 #!/usr/bin/env node
 /**
- * Post-Edit Prettier Hook - Automatically formats files after Edit/Write operations
+ * Post-Edit Formatter Hook
  *
  * Fires: PostToolUse for Edit and Write tools
- * Purpose: Run Prettier on edited/written files to maintain consistent formatting
+ * Purpose: Format the edited/written file with the PROJECT's formatter.
+ *
+ * ── PORTABILITY CONTRACT (this file ships inside the reusable `.claude`) ──────
+ * This hook MUST stay project-agnostic. It never names a project's formatter.
+ * The formatter is resolved at runtime from the project config
+ * (`docs/project-config.json` -> `formatting`), so the same `.claude` copied into
+ * ANY repo formats that repo with the tool it actually uses.
+ *
+ * Resolution order for the formatter used on a file:
+ *   1. `formatting.command`      — an explicit command template; `{file}` is
+ *                                  replaced with the path (appended if absent).
+ *   2. `formatting.formatter`    — a known preset id (`prettier`, `biome`, …).
+ *   3. framework DEFAULT         — `prettier` (the portable fallback).
+ *   `formatting.formatter: "none"` / `"off"` disables formatting entirely.
+ *
+ * A project that declares nothing therefore keeps the framework default (Prettier),
+ * which is what every non-configured repo gets.
+ *
+ * Config knobs (all optional, under `formatting` in project-config.json):
+ *   formatter      preset id (`prettier` default, `biome`, or `none`)
+ *   command        explicit command template (overrides `formatter`)
+ *   args           extra CLI args inserted before the file path
+ *   fileExtensions extensions to format (defaults to the preset's own set)
+ *   skipPaths      extra path substrings to skip (added to the built-in skip list)
  *
  * Features:
- *   - Supports common web development file types
- *   - Skips generated/dependency directories
- *   - Auto-discovers Prettier config by walking up directory tree
  *   - Non-blocking: failures are silently ignored (10s timeout)
+ *   - Bounded child lifecycle: a timed-out formatter is killed tree-wide
  *   - Cross-platform: Windows and Unix compatible
  *
  * Exit Codes:
  *   0 - Success (non-blocking, allows continuation)
  */
 
+'use strict';
+
+if ((require.main === module || !require.main) && require('./lib/framework-runtime.cjs').skipHook(module)) return;
+
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { execFile, spawn } = require('child_process');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const SUPPORTED_EXTENSIONS = new Set([
-    '.ts',
-    '.tsx',
-    '.js',
-    '.jsx',
-    '.mjs',
-    '.cjs',
-    '.json',
-    '.jsonc',
-    '.scss',
-    '.css',
-    '.less',
-    '.html',
-    '.htm',
-    '.md',
-    '.mdx',
-    '.yaml',
-    '.yml',
-    '.graphql',
-    '.gql'
-]);
+/**
+ * Formatter presets — the framework's built-in vocabulary of known formatters.
+ *
+ * `package` is used only for the `npx` fallback when no local binary is found.
+ * `extensions` is the set the preset can actually format; a preset asked to
+ * format an unsupported extension is skipped (never an error).
+ */
+const FORMATTER_PRESETS = {
+    prettier: {
+        package: 'prettier',
+        args: ['--write', '--ignore-unknown'],
+        extensions: [
+            '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.jsonc', '.scss',
+            '.css', '.less', '.html', '.htm', '.md', '.mdx', '.yaml', '.yml',
+            '.graphql', '.gql'
+        ]
+    },
+    biome: {
+        package: '@biomejs/biome',
+        args: ['format', '--write'],
+        extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.jsonc', '.css', '.graphql', '.gql']
+    }
+};
 
-const SKIP_PATTERNS = [
+/** The portable fallback when a project configures no formatter. */
+const DEFAULT_FORMATTER = 'prettier';
+
+/** Formatter ids that mean "do not format". */
+const DISABLED_FORMATTERS = new Set(['none', 'off', 'disabled', 'false']);
+
+const PROJECT_CONFIG_MODULE = './lib/project-config-loader.cjs';
+
+const DEFAULT_SKIP_PATTERNS = [
     /node_modules/,
     /\.git\//,
     /dist\//,
@@ -63,58 +98,115 @@ const SKIP_PATTERNS = [
     /[/\\]\.claude[/\\]/
 ];
 
-const PRETTIER_CONFIG_FILES = [
-    '.prettierrc',
-    '.prettierrc.json',
-    '.prettierrc.yml',
-    '.prettierrc.yaml',
-    '.prettierrc.js',
-    '.prettierrc.cjs',
-    '.prettierrc.mjs',
-    'prettier.config.js',
-    'prettier.config.cjs',
-    'prettier.config.mjs'
-];
-
 const TIMEOUT_MS = 10000; // 10 seconds
+const PROCESS_KILL_GRACE_MS = 2000;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
+// PROJECT CONFIG
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Check if a file extension is supported by Prettier
+ * Read this project's `formatting` config. Fail-SOFT: a missing/broken config,
+ * or a missing loader, yields `{}` so the framework default applies. A hook that
+ * threw would block every tool call in the session — a worse failure than a
+ * skipped format.
  */
-function isSupportedExtension(filePath) {
+function loadFormattingConfig() {
+    try {
+        const { loadProjectConfig } = require(PROJECT_CONFIG_MODULE);
+        const config = loadProjectConfig();
+        const formatting = config && config.formatting;
+        return formatting && typeof formatting === 'object' ? formatting : {};
+    } catch {
+        return {};
+    }
+}
+
+/** Built-in skip patterns plus any `formatting.skipPaths` substrings. */
+function buildSkipPatterns(formatting) {
+    const patterns = [...DEFAULT_SKIP_PATTERNS];
+    if (Array.isArray(formatting.skipPaths)) {
+        for (const entry of formatting.skipPaths) {
+            if (typeof entry === 'string' && entry.trim()) {
+                patterns.push(new RegExp(entry.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+            }
+        }
+    }
+    return patterns;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Resolve the formatter invocation for a file, or null to skip.
+ *
+ * @returns {{command: string, args: string[], useShell: boolean} | null}
+ */
+function resolveFormatPlan(filePath, formatting) {
+    const configured = typeof formatting.formatter === 'string' ? formatting.formatter.trim().toLowerCase() : '';
+    if (DISABLED_FORMATTERS.has(configured)) return null;
+
+    // 1. Explicit command template wins outright.
+    if (typeof formatting.command === 'string' && formatting.command.trim()) {
+        const template = formatting.command.trim();
+        const quoted = quoteForShell(filePath);
+        const command = template.includes('{file}')
+            ? template.split('{file}').join(quoted)
+            : `${template} ${quoted}`;
+        return { command, args: [], useShell: true };
+    }
+
+    // 2. Preset id, else 3. the framework default.
+    const presetName = FORMATTER_PRESETS[configured] ? configured : DEFAULT_FORMATTER;
+    const preset = FORMATTER_PRESETS[presetName];
+
+    // Extension gate — never hand a preset a file it cannot format.
+    const extensions = Array.isArray(formatting.fileExtensions) && formatting.fileExtensions.length
+        ? formatting.fileExtensions
+        : preset.extensions;
     const ext = path.extname(filePath).toLowerCase();
-    return SUPPORTED_EXTENSIONS.has(ext);
+    if (extensions.length > 0 && !extensions.includes(ext)) return null;
+
+    const extraArgs = Array.isArray(formatting.args)
+        ? formatting.args.filter(arg => typeof arg === 'string')
+        : [];
+    const tailArgs = [...preset.args, ...extraArgs, filePath];
+
+    const isWindows = process.platform === 'win32';
+    const localBin = findLocalBinary(presetName, path.dirname(filePath));
+
+    if (localBin) {
+        return { command: localBin, args: tailArgs, useShell: isWindows };
+    }
+    return {
+        command: isWindows ? 'npx.cmd' : 'npx',
+        args: [preset.package, ...tailArgs],
+        useShell: isWindows
+    };
+}
+
+/** Quote a single path for a shell command string (custom `command` templates only). */
+function quoteForShell(value) {
+    return process.platform === 'win32'
+        ? `"${String(value).replace(/"/g, '""')}"`
+        : `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
 
 /**
- * Check if file path matches any skip pattern
+ * Find the local formatter binary by walking up to the workspace root's
+ * node_modules/.bin. Returns null when not found (caller falls back to npx).
  */
-function shouldSkipPath(filePath) {
-    const normalizedPath = filePath.replace(/\\/g, '/');
-    return SKIP_PATTERNS.some(pattern => pattern.test(normalizedPath));
-}
-
-/**
- * Find Prettier binary (local node_modules or npx fallback)
- */
-function findPrettierBinary(fileDir) {
+function findLocalBinary(name, fileDir) {
     let currentDir = fileDir;
     const root = path.parse(currentDir).root;
+    const isWindows = process.platform === 'win32';
+    const binName = isWindows ? `${name}.cmd` : name;
 
     while (currentDir !== root) {
-        const isWindows = process.platform === 'win32';
-        const prettierBin = isWindows
-            ? path.join(currentDir, 'node_modules', '.bin', 'prettier.cmd')
-            : path.join(currentDir, 'node_modules', '.bin', 'prettier');
-
-        if (fs.existsSync(prettierBin)) {
-            return prettierBin;
-        }
-
+        const candidate = path.join(currentDir, 'node_modules', '.bin', binName);
+        if (fs.existsSync(candidate)) return candidate;
         currentDir = path.dirname(currentDir);
     }
 
@@ -122,44 +214,72 @@ function findPrettierBinary(fileDir) {
 }
 
 /**
- * Run Prettier on a file with timeout
+ * Terminate a formatter process and all descendants.
+ *
+ * `.cmd` formatters run through a Windows shell, so killing the direct child
+ * alone can leave npx/formatter descendants holding the edited project open.
  */
-function runPrettier(filePath, prettierBin) {
+function terminateProcessTree(child) {
+    if (!child.pid) return Promise.resolve();
+
+    if (process.platform !== 'win32') {
+        if (!child.killed) child.kill('SIGTERM');
+        return Promise.resolve();
+    }
+
     return new Promise(resolve => {
-        const isWindows = process.platform === 'win32';
-        const args = ['--write', '--ignore-unknown', filePath];
+        execFile('taskkill', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true }, error => {
+            if (error && !child.killed) child.kill('SIGTERM');
+            resolve();
+        });
+    });
+}
 
-        let command, spawnArgs;
-
-        if (prettierBin) {
-            command = prettierBin;
-            spawnArgs = args;
-        } else {
-            command = isWindows ? 'npx.cmd' : 'npx';
-            spawnArgs = ['prettier', ...args];
-        }
-
-        const child = spawn(command, spawnArgs, {
+/**
+ * Run the resolved formatter with timeout.
+ */
+function runFormatter(plan) {
+    return new Promise(resolve => {
+        const child = spawn(plan.command, plan.args, {
             stdio: ['ignore', 'ignore', 'ignore'],
-            timeout: TIMEOUT_MS,
             windowsHide: true,
-            shell: isWindows
+            shell: plan.useShell
         });
 
-        const timeout = setTimeout(() => {
-            child.kill('SIGTERM');
-            resolve(false);
-        }, TIMEOUT_MS);
+        let settled = false;
+        let timedOut = false;
+        let timeoutId;
+        let killGraceId;
 
-        child.on('close', code => {
-            clearTimeout(timeout);
-            resolve(code === 0);
-        });
+        const finish = result => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutId);
+            clearTimeout(killGraceId);
+            resolve(result);
+        };
 
-        child.on('error', () => {
-            clearTimeout(timeout);
-            resolve(false);
-        });
+        const timeout = () => {
+            timedOut = true;
+            terminateProcessTree(child).then(() => {
+                if (settled) return;
+
+                // Prefer the close event so the promise represents the full
+                // child lifecycle. The bounded fallback prevents a broken
+                // platform command from hanging the hook forever.
+                if (child.exitCode !== null || child.signalCode !== null) {
+                    finish(false);
+                    return;
+                }
+
+                killGraceId = setTimeout(() => finish(false), PROCESS_KILL_GRACE_MS);
+            });
+        };
+
+        timeoutId = setTimeout(timeout, TIMEOUT_MS);
+
+        child.once('close', code => finish(!timedOut && code === 0));
+        child.once('error', () => finish(false));
     });
 }
 
@@ -174,7 +294,7 @@ function extractFilePath(payload) {
     if (typeof toolInput === 'string') {
         try {
             input = JSON.parse(toolInput);
-        } catch (e) {
+        } catch {
             return null;
         }
     }
@@ -218,24 +338,25 @@ async function main() {
             process.exit(0);
         }
 
-        // Check if extension is supported
-        if (!isSupportedExtension(absolutePath)) {
-            process.exit(0);
-        }
+        const formatting = loadFormattingConfig();
 
         // Check if path should be skipped
-        if (shouldSkipPath(absolutePath)) {
+        const skipPatterns = buildSkipPatterns(formatting);
+        const normalizedPath = absolutePath.replace(/\\/g, '/');
+        if (skipPatterns.some(pattern => pattern.test(normalizedPath))) {
             process.exit(0);
         }
 
-        // Find Prettier binary
-        const fileDir = path.dirname(absolutePath);
-        const prettierBin = findPrettierBinary(fileDir);
+        // Resolve the project's formatter (framework default: prettier)
+        const plan = resolveFormatPlan(absolutePath, formatting);
+        if (!plan) {
+            process.exit(0);
+        }
 
-        // Run Prettier (non-blocking, ignore result)
-        await runPrettier(absolutePath, prettierBin);
+        // Run the formatter (non-blocking, result ignored)
+        await runFormatter(plan);
 
-        process.exit(0);
+        return;
     } catch (error) {
         // Fail silently - formatting is non-critical
         process.exit(0);

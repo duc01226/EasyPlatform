@@ -25,7 +25,6 @@ const { assertEqual, assertAllowed, assertTrue, assertFalse } = require('../lib/
 const {
     createTempDir,
     cleanupTempDir,
-    setupTodoState,
     createMockFile
 } = require('../lib/test-utils.cjs');
 
@@ -35,7 +34,7 @@ const SESSION_END = getHookPath('session-end.cjs');
 
 // session-init spawns 3 git/python grandchildren per run; under full-suite resource
 // contention a single spawn can exceed hook-runner's 10s default and hit SIGKILL —
-// a flaky, environmental timeout (see plans/reports/debug-investigate-260711-lifecycle-timeouts.md).
+// a flaky, environmental timeout (see tmp/reports/debug-investigate-260711-lifecycle-timeouts.md).
 // Give these spawn-based lifecycle tests a wider per-call ceiling, matching the
 // per-call precedent at test-all-hooks.cjs:334/348. Not a global DEFAULT_TIMEOUT change.
 const SPAWN_TIMEOUT_MS = 20000;
@@ -138,6 +137,48 @@ const sessionInitTests = [
                 cleanupTempDir(tmpDir);
             }
         }
+    },
+    {
+        name: '[session-init] relocated docsRoots.plans.path drives CK_PLANS_PATH and CK_REPORTS_PATH',
+        fn: async () => {
+            const tmpDir = createTempDir();
+            try {
+                // Given a project that relocates its plans root via project-config (not .ck.json)
+                fs.mkdirSync(path.join(tmpDir, '.claude'), { recursive: true });
+                fs.mkdirSync(path.join(tmpDir, 'docs'), { recursive: true });
+                fs.writeFileSync(
+                    path.join(tmpDir, 'docs', 'project-config.json'),
+                    JSON.stringify({
+                        schemaVersion: 2,
+                        project: { name: 'Plans Relocation' },
+                        docsRoots: { plans: { path: 'work/plans' } }
+                    })
+                );
+                const envFile = path.join(tmpDir, 'session-env.sh');
+                const input = createSessionStartInput('startup', 'test-session-plans');
+
+                // When session-init writes the session env
+                const result = await runHook(SESSION_INIT, input, {
+                    cwd: tmpDir,
+                    timeout: SPAWN_TIMEOUT_MS,
+                    env: { CLAUDE_ENV_FILE: envFile }
+                });
+                assertAllowed(result.code);
+
+                // Then BOTH plans-derived vars resolve through the relocated root — no default leak
+                const env = fs.readFileSync(envFile, 'utf8');
+                assertTrue(
+                    /export CK_PLANS_PATH="work\/plans"/.test(env),
+                    `CK_PLANS_PATH must honour docsRoots.plans.path. Got:\n${env}`
+                );
+                assertTrue(
+                    /export CK_REPORTS_PATH="work\/plans\/reports\/"/.test(env),
+                    `CK_REPORTS_PATH must honour the relocated root. Got:\n${env}`
+                );
+            } finally {
+                cleanupTempDir(tmpDir);
+            }
+        }
     }
 ];
 
@@ -151,8 +192,6 @@ const sessionEndTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
-                // Create state files
-                setupTodoState(tmpDir, { hasTodos: true, taskCount: 2 });
                 const input = createSessionEndInput('clear');
                 const result = await runHook(SESSION_END, input, { cwd: tmpDir, timeout: SPAWN_TIMEOUT_MS });
                 assertAllowed(result.code);
@@ -439,14 +478,14 @@ const stateIsolationTests = [
             const sessionId = 'sess-072-wf-rename';
             try {
                 const ok1 = saveState(sessionId, {
-                    workflowType: 'bugfix', workflowSteps: ['scout', 'fix'], currentStepIndex: 0,
+                    workflowType: 'bugfix', workflowSteps: ['investigate', 'fix'], currentStepIndex: 0,
                     completedSteps: [], activePlan: null, todos: [], metadata: {}
                 });
                 assertTrue(ok1, 'First saveState must succeed');
 
                 const ok2 = saveState(sessionId, {
-                    workflowType: 'bugfix', workflowSteps: ['scout', 'fix'], currentStepIndex: 1,
-                    completedSteps: ['scout'], activePlan: null, todos: [], metadata: {}
+                    workflowType: 'bugfix', workflowSteps: ['investigate', 'fix'], currentStepIndex: 1,
+                    completedSteps: ['investigate'], activePlan: null, todos: [], metadata: {}
                 });
                 assertTrue(ok2, 'Second saveState must succeed (Windows-safe fallback)');
 

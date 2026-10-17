@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<title>Agent Framework Guide</title>
+<style>
+/* House style shared with the framework's HTML reports: ink on warm paper, one green accent
+   for "does / new", one amber for "gate / blocks". System fonts so the page works offline. */
+:root {
+  --ink: #1c2230; --ink-soft: #4a5263; --muted: #5f6776;
+  --paper: #f6f7f4; --surface: #ffffff; --surface-2: #eef0ec;
+  --accent: #1f6f5c; --accent-soft: #e3f0ec;
+  --flag: #9a5b00; --flag-soft: #fbf0df;
+  --rule: rgba(28, 34, 48, 0.13);
+  --code-bg: rgba(28, 34, 48, 0.07);
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --radius: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #e4e7ec; --ink-soft: #aab2bf; --muted: #97a0ae;
+    --paper: #12161d; --surface: #1a1f28; --surface-2: #212733;
+    --accent: #6cc3a8; --accent-soft: #17322b; --flag: #e0a54a; --flag-soft: #33260f;
+    --rule: rgba(228, 231, 236, 0.13); --code-bg: rgba(228, 231, 236, 0.09);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #e4e7ec; --ink-soft: #aab2bf; --muted: #97a0ae;
+  --paper: #12161d; --surface: #1a1f28; --surface-2: #212733;
+  --accent: #6cc3a8; --accent-soft: #17322b; --flag: #e0a54a; --flag-soft: #33260f;
+  --rule: rgba(228, 231, 236, 0.13); --code-bg: rgba(228, 231, 236, 0.09);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); color: var(--ink); scroll-padding-top: 16px; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--font); }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+h1, h2, h3, h4 { line-height: 1.2; text-wrap: balance; margin: 0; }
+p { margin: 0; max-width: 72ch; }
+ul, ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.skip { position: absolute; left: 16px; top: -100px; background: var(--surface); padding: 8px 14px; z-index: 5; }
+.skip:focus { top: 16px; }
+
+.shell { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 40px 72px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }
+.toc { position: sticky; top: 24px; align-self: start; font-size: 14px; }
+.toc b { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.toc ol { list-style: none; padding: 0; gap: 0; }
+.toc a { display: block; padding: 5px 10px; border-left: 2px solid var(--rule); color: var(--ink-soft); text-decoration: none; }
+.toc a:hover { color: var(--ink); }
+.toc a.on { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+.toc-mobile { display: none; }
+main { min-width: 0; display: grid; gap: 56px; }
+main > section { display: grid; gap: 18px; min-width: 0; }
+main > section > h2 { font-size: 26px; padding-top: 8px; }
+.lead { color: var(--ink-soft); font-size: 17px; }
+@media (max-width: 1000px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .toc { display: none; }
+  .toc-mobile { display: block; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); }
+  .toc-mobile summary { padding: 12px 16px; cursor: pointer; font-weight: 600; min-height: 44px; }
+  .toc-mobile ol { padding: 0 16px 14px 36px; }
+}
+
+/* Hero */
+.hero { display: grid; gap: 18px; }
+.eyebrow-path { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.hero h1 { font-size: clamp(32px, 5vw, 46px); letter-spacing: -0.015em; }
+.hero .lead { font-size: 19px; max-width: 62ch; }
+.stats { display: flex; flex-wrap: wrap; gap: 10px; }
+.stat { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 10px 16px; min-width: 110px; display: grid; }
+.stat b { font-size: 26px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat span { font-size: 13px; color: var(--ink-soft); }
+
+/* Critical rules */
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.rule { background: var(--flag-soft); border: 1px solid var(--flag); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.rule h3 { font-size: 16px; color: var(--ink); }
+.rule p { font-size: 14.5px; color: var(--ink-soft); }
+
+/* Tables */
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 13px; color: var(--muted); font-weight: 600; background: var(--surface-2); }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Pills */
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.gate, .pill.confirm { background: var(--flag-soft); color: var(--flag); border: 1px solid var(--flag); }
+.pill.auto, .pill.core { background: var(--accent-soft); color: var(--accent); border: 1px solid transparent; }
+.pill.opt { background: transparent; color: var(--muted); border: 1px dashed var(--muted); }
+
+/* Architecture layers */
+.layers { display: grid; gap: 8px; }
+.layer { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 12px 16px; }
+.layer b { font-size: 15px; }
+.layer span { color: var(--ink-soft); font-size: 14.5px; }
+.layer.base { background: var(--surface-2); border-style: dashed; }
+.layer.top { border-color: var(--accent); }
+@media (max-width: 560px) { .layer { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+.caption { font-size: 13.5px; color: var(--muted); }
+
+/* Flows */
+.flow { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.flow li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.flow li:not(:last-child)::after { content: "\2192"; color: var(--muted); }
+.node { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 10px; display: grid; }
+.node small { color: var(--muted); font-size: 12px; }
+.node.gate { border-color: var(--flag); box-shadow: inset 3px 0 0 var(--flag); }
+.node.opt { border-style: dashed; color: var(--ink-soft); }
+.node.par { border-color: var(--accent); }
+.seq { display: grid; gap: 6px; }
+.seq h4 { font-size: 15px; }
+
+/* Steps (numbered because they are a real sequence) */
+.steps { counter-reset: s; list-style: none; padding: 0; display: grid; gap: 10px; }
+.steps > li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; }
+.steps > li::before { content: counter(s); width: 30px; height: 30px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 700; display: grid; place-items: center; font-size: 14px; }
+.steps b { display: block; }
+.steps span { color: var(--ink-soft); font-size: 15px; }
+
+/* Cards */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.card h3, .card h4 { font-size: 16px; }
+.card p, .card li { font-size: 14.5px; color: var(--ink-soft); }
+.card .names { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); line-height: 1.7; }
+.callout { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 15px; display: grid; gap: 4px; }
+.callout.warn { border-left-color: var(--flag); background: var(--flag-soft); }
+.callout b { font-size: 14px; }
+
+/* Skill category bars */
+.cats { display: grid; gap: 8px; }
+.cat { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); gap: 4px 14px; align-items: center; }
+.cat-bar { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cat-bar i { display: block; height: 12px; border-radius: 3px; background: var(--accent); flex: none; }
+.cat-bar b { font-variant-numeric: tabular-nums; font-size: 14px; }
+.cat-bar span { font-family: var(--mono); font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+@media (max-width: 560px) { .cat { grid-template-columns: minmax(0, 1fr); } }
+
+/* Hook lifecycle */
+.life { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.ev { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
+.ev h4 { font-size: 14px; font-family: var(--mono); color: var(--accent); }
+.ev ul { padding-left: 16px; gap: 3px; font-size: 13.5px; color: var(--ink-soft); }
+
+/* Catalog filter */
+.filter { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filter input { font: inherit; font-size: 15px; padding: 9px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); color: var(--ink); min-width: 0; width: min(340px, 100%); min-height: 44px; }
+.filter span { font-size: 13px; color: var(--muted); }
+
+footer { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13.5px; color: var(--muted); display: grid; gap: 4px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media print { .toc, .toc-mobile, .filter, .skip { display: none; } .shell { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+  <nav class="toc" aria-label="Contents">
+    <b>Contents</b>
+    <ol id="toc-list">
+      <li><a href="#rules">Critical rules</a></li>
+      <li><a href="#what">What it is</a></li>
+      <li><a href="#use">Everyday use</a></li>
+      <li><a href="#arch">Architecture</a></li>
+      <li><a href="#routing">Routing</a></li>
+      <li><a href="#workflows">Workflows</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#agents">Agents</a></li>
+      <li><a href="#hooks">Hooks &amp; runtime</a></li>
+      <li><a href="#protocols">Shared protocols</a></li>
+      <li><a href="#quality">Review → commit → PR</a></li>
+      <li><a href="#design">Design &amp; UX gates</a></li>
+      <li><a href="#specs">Specs &amp; tests</a></li>
+      <li><a href="#config">Config &amp; context</a></li>
+      <li><a href="#state">State &amp; recovery</a></li>
+      <li><a href="#portability">Portability</a></li>
+      <li><a href="#testing">Testing the framework</a></li>
+      <li><a href="#switches">Switches</a></li>
+      <li><a href="#principles">Principles</a></li>
+      <li><a href="#more">Read more</a></li>
+    </ol>
+  </nav>
+
+  <main id="main">
+    <header class="hero">
+      <span class="eyebrow-path">.claude/docs/claude-ai-agent-framework-guide</span>
+      <h1>Claude AI Agent Framework Guide</h1>
+      <p class="lead">A portable <code>.claude/</code> framework that makes Claude Code project-aware, evidence-driven and gated at every quality step, from idea and spec to reviewed commit and pull request. This page is the map; each topic links to its owner doc.</p>
+      <div class="stats" aria-label="Framework inventory">
+        <div class="stat"><b><!-- COUNT:skills -->104<!-- /COUNT --></b><span>skills</span></div>
+        <div class="stat"><b><!-- COUNT:workflows -->17<!-- /COUNT --></b><span>workflows</span></div>
+        <div class="stat"><b><!-- COUNT:agents -->25<!-- /COUNT --></b><span>agents</span></div>
+        <div class="stat"><b><!-- COUNT:hooks -->36<!-- /COUNT --></b><span>hook files</span></div>
+        <div class="stat"><b><!-- COUNT:lib-modules -->66<!-- /COUNT --></b><span>hook libraries</span></div>
+      </div>
+      <details class="toc-mobile"><summary>Contents</summary><ol id="toc-mobile-list"></ol></details>
+    </header>
+
+    <section id="rules" aria-labelledby="rules-h">
+      <h2 id="rules-h">Critical rules</h2>
+      <div class="rules">
+        <div class="rule"><h3>Route first</h3><p>The first task of a session is routed (direct, custom-simple or a workflow) before any edit. Mid-session, never auto-start a workflow.</p></div>
+        <div class="rule"><h3>Evidence, not memory</h3><p>Project facts come from the project config and reference docs. Cite <code>file:line</code>; below 80% confidence, don't act.</p></div>
+        <div class="rule"><h3>Gates always run</h3><p>Root cause before a fix, a verdict before editing a failed test, review before commit, spec/doc sync when behavior changes.</p></div>
+        <div class="rule"><h3><code>.claude/</code> is the source</h3><p>Mirrors for Codex and OpenCode, <code>AGENTS.md</code> and generated <code>CLAUDE.md</code> blocks are projections. Fix the source and regenerate.</p></div>
+      </div>
+    </section>
+
+    <section id="what" aria-labelledby="what-h">
+      <h2 id="what-h">What the framework is</h2>
+      <p class="lead">A plain agent is capable but forgetful, confident without evidence and unaware of your project. Each layer here removes one of those failure modes.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Failure mode</th><th>What counters it</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td>Picks the wrong process</td><td>Routing gate + workflow catalog injected at prompt time</td><td><code>workflow-route-inject</code>, <code>workflow-catalog-inject</code></td></tr>
+          <tr><td>Skips steps or stops early</td><td>Gate steps, outcome gates, evidence-gated close</td><td><code>workflows.json</code>, <code>workflow-end</code></td></tr>
+          <tr><td>Guesses APIs and facts</td><td>Evidence protocols, project config, reference docs, code graph</td><td>shared protocols, project config</td></tr>
+          <tr><td>Forgets rules in long sessions</td><td>Rules delivered once, re-armed after compaction</td><td>protocol-inject hooks, prompt ledger</td></tr>
+          <tr><td>Ships unreviewed work</td><td>Review fix-loop → receipt → commit gate</td><td><code>review-commit-gate</code>, <code>/commit</code></td></tr>
+          <tr><td>Drifts from the spec</td><td>Spec-first workflows, spec sync, doc-sync warning</td><td><code>spec</code>, <code>docs-manager</code></td></tr>
+          <tr><td>Leaks one project into another</td><td>Portable source, generated mirrors, residue verifiers</td><td><code>/sync-codex</code></td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><b>Design bet</b><span>Hooks put the contract in context at the right moment: the universal rules on the first prompt and to every sub-agent, skill protocols when a skill loads. <code>CLAUDE.md</code> holds project information only. Claude Code, Codex and OpenCode run the same hooks; a host with no hooks is unsupported.</span></div>
+    </section>
+
+    <section id="use" aria-labelledby="use-h">
+      <h2 id="use-h">Everyday use</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>You want to…</th><th>Use</th></tr></thead>
+        <tbody>
+          <tr><td>Build a feature</td><td><code>/workflow-feature</code> · large or unclear: <code>/workflow-big-feature</code></td></tr>
+          <tr><td>Build what a spec already describes</td><td><code>/workflow-implement-spec</code></td></tr>
+          <tr><td>Fix a bug</td><td><code>/workflow-bugfix</code> · known cause: <code>/fix</code></td></tr>
+          <tr><td>Understand code</td><td><code>/investigate</code> (<code>--mode=explain</code>) · <code>/understand</code></td></tr>
+          <tr><td>Refactor safely</td><td><code>/workflow-refactor</code></td></tr>
+          <tr><td>Review your changes</td><td><code>/changes-review</code> · full: <code>/workflow-review-changes --fix-loop</code></td></tr>
+          <tr><td>Commit / open a PR</td><td><code>/commit</code> · <code>/pull-request</code></td></tr>
+          <tr><td>Design or mock up UI</td><td><code>/ui-design</code> · <code>/work-item --mode=mockup --explore</code> · <code>/workflow-spec-to-mockup</code></td></tr>
+          <tr><td>Write or sync a spec</td><td><code>/spec</code> · <code>/workflow-feature-spec</code> · <code>/workflow-spec-sync</code></td></tr>
+          <tr><td>Write or fix tests</td><td><code>/workflow-integration-test</code> (<code>--mode=write</code> · <code>--mode=green</code>) · <code>/workflow-e2e</code></td></tr>
+          <tr><td>Set up a project</td><td><code>/project-init</code>, then <code>/scan-all</code></td></tr>
+          <tr><td>Capture a lesson / ask for help</td><td><code>/learn</code> · <code>/project-help</code></td></tr>
+        </tbody>
+      </table></div>
+      <ol class="flow" aria-label="How a request flows">
+        <li><span class="node">Your prompt</span></li>
+        <li><span class="node">Hooks add routing + context</span></li>
+        <li><span class="node gate">Route declared<small>before any edit</small></span></li>
+        <li><span class="node">One task per phase, a row per step</span></li>
+        <li><span class="node">Steps run inline or as sub-agents</span></li>
+        <li><span class="node gate">Review, tests, outcome gates</span></li>
+        <li><span class="node">Close + summary</span></li>
+      </ol>
+    </section>
+
+    <section id="arch" aria-labelledby="arch-h">
+      <h2 id="arch-h">Architecture — four layers on a static base</h2>
+      <div class="layers" role="img" aria-label="Layers from agents at the top to the static base at the bottom">
+        <div class="layer top"><b>Agents</b><span>Specialist sub-agents with their own context — <code>.claude/agents/*.md</code></span></div>
+        <div class="layer"><b>Workflows</b><span>Ordered, role-tagged skill sequences — <code>.claude/workflows.json</code></span></div>
+        <div class="layer"><b>Skills</b><span>Task protocols — <code>.claude/skills/&lt;name&gt;/SKILL.md</code></span></div>
+        <div class="layer"><b>Hooks</b><span>Lifecycle scripts that route, deliver rules and gate commits — <code>.claude/hooks/*.cjs</code></span></div>
+        <div class="layer base"><b>Static base</b><span><code>CLAUDE.md</code> · <code>docs/project-config.json</code> · project-reference docs · <code>lessons.md</code></span></div>
+      </div>
+      <p class="caption">Read from the bottom: the base is always in context; hooks deliver more of it at the right moment; skills and workflows do the work; agents take specialist slices.</p>
+      <h3>Relocatable roots</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Role</th><th>Default</th><th>Override in <code>docs/project-config.json</code></th></tr></thead>
+        <tbody>
+          <tr><td>Business specs</td><td><code>docs/specs</code></td><td><code>docs/project-config.json</code> → <code>specRoots.business.path</code></td></tr>
+          <tr><td>Project reference docs</td><td><code>docs/project-reference</code></td><td><code>docs/project-config.json</code> → <code>docsRoots.projectReference.path</code></td></tr>
+          <tr><td>ADRs</td><td><code>docs/adr</code></td><td><code>docs/project-config.json</code> → <code>docsRoots.adr.path</code></td></tr>
+          <tr><td>Plans</td><td><code>plans</code></td><td><code>docs/project-config.json</code> → <code>docsRoots.plans.path</code></td></tr>
+          <tr><td>Team artifacts</td><td><code>team-artifacts</code></td><td><code>docs/project-config.json</code> → <code>docsRoots.teamArtifacts.path</code></td></tr>
+          <tr><td>Product roadmap</td><td><code>docs/product-roadmap.md</code></td><td><code>docs/project-config.json</code> → <code>docsRoots.productRoadmap.path</code></td></tr>
+          <tr><td>Disposable output</td><td><code>tmp/</code></td><td>fixed, git-ignored</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="routing" aria-labelledby="routing-h">
+      <h2 id="routing-h">Routing — how a request becomes a route</h2>
+      <p class="lead">The workflow route is delivered only by hooks at prompt time (the gate and the workflow catalog as two hook outputs, in each person's mode: ask, auto or off); no tracked file carries it.</p>
+      <ol class="steps">
+        <li><div><b>Honor explicit requests</b><span>A <code>/skill</code>, <code>/workflow-*</code> or "use a workflow" always runs.</span></div></li>
+        <li><div><b>Assess</b><span>Scope, change type, risk, ambiguity and needed artifacts. Escalate on risk and ambiguity, not file count.</span></div></li>
+        <li><div><b>Pick a route</b><span>Trivial → direct · one module → custom-simple · non-trivial bug → <code>workflow-bugfix</code> · cross-module feature → <code>workflow-feature</code>.</span></div></li>
+        <li><div><b>Check catalog fit</b><span>Keep a workflow only if more than 80% of its unconditional steps do real work. A downgrade still keeps test, review, root cause and spec sync where they apply.</span></div></li>
+        <li><div><b>Declare, ask, then activate</b><span><code>Route: workflow-bugfix — because …</code> before any edit, agent or command. A matched workflow first asks one question: full workflow, slimmer custom route, or direct.</span></div></li>
+      </ol>
+      <div class="grid">
+        <div class="card"><h4><span class="pill auto">auto</span></h4><p>Asks first; recommends the full workflow when it fits the request. Default when a workflow sets no tier.</p></div>
+        <div class="card"><h4><span class="pill confirm">confirm</span></h4><p>Asks first; recommends the full workflow only when no leaner route would do the job.</p></div>
+        <div class="card"><h4><span class="pill opt">manual</span></h4><p>Asks first and never recommends the full workflow; it runs when you pick it. Set per project.</p></div>
+      </div>
+      <p class="caption">Tune tiers with <code>portability.workflowActivation</code> (a <code>default</code> only tightens; an <code>overrides</code> entry may loosen). Set the route mode (ask, auto, off) with <code>portability.workflowRouteMode</code>; a person overrides it in <code>~/.claude/.ck.json</code>, <code>.claude/.ck.local.json</code> or <code>CK_WORKFLOW_ROUTE_MODE</code>.</p>
+    </section>
+
+    <section id="workflows" aria-labelledby="workflows-h">
+      <h2 id="workflows-h">Workflows — guided, gated execution</h2>
+      <p class="lead">A workflow is an intent, a set of outcome gates and an ordered list of steps. Each step has a role.</p>
+      <div class="grid">
+        <div class="card"><h4><span class="pill gate">gate</span></h4><p>Always runs. Never skipped, merged or reordered.</p></div>
+        <div class="card"><h4><span class="pill core">core</span></h4><p>Recommended. May flex with a logged reason while the outcome gates stay reachable.</p></div>
+        <div class="card"><h4><span class="pill opt">optional</span></h4><p>Carries a written <em>when</em> and <em>skip reason</em>; skipped when the rule says it doesn't apply.</p></div>
+      </div>
+      <h3>How a run works</h3>
+      <ol class="steps">
+        <li><div><b>Triage</b><span>Size (XS to XL), change kinds and risk decide the depth.</span></div></li>
+        <li><div><b>Read the guide, create phase tasks</b><span>One task per phase, titled <code>[Workflow] [Phase 1/5: Discover] …</code>, with a row per step showing its role, all before the first starts.</span></div></li>
+        <li><div><b>Run, logging every deviation</b><span>Skips go to <code>tmp/workflow-runs/&lt;runId&gt;/skips.md</code> with evidence; a task is never deleted. Parallel groups run as one wave and wait for every member.</span></div></li>
+        <li><div><b>Close on evidence</b><span><code>workflow-end</code> refuses to close until each outcome gate (root cause traced, plan approved, tests pass, spec synced, review converged) has evidence.</span></div></li>
+      </ol>
+      <div class="callout"><b>Nested workflows</b><span>Run as sub-agents that return a summary — except <code>workflow-review-changes</code>, which always runs inline so its review loop can hold the session open until it converges.</span></div>
+
+      <h3>Workflow catalog</h3>
+      <div class="filter"><label for="wf-filter" class="caption">Filter</label><input id="wf-filter" type="search" placeholder="e.g. spec, test, bug" autocomplete="off" /><span id="wf-count">17 workflows</span></div>
+      <div class="scroll"><table id="wf-table">
+        <thead><tr><th>Workflow</th><th>Tier</th><th>Steps</th><th>Use when</th></tr></thead>
+        <tbody>
+          <tr><td><code>workflow-feature</code></td><td><span class="pill auto">auto</span></td><td class="num">22</td><td>A well-defined feature without a spec for it yet</td></tr>
+          <tr><td><code>workflow-big-feature</code></td><td><span class="pill confirm">confirm</span></td><td class="num">39</td><td>Large, ambiguous or research-heavy feature</td></tr>
+          <tr><td><code>workflow-implement-spec</code></td><td><span class="pill auto">auto</span></td><td class="num">13</td><td>Behavior already written in a canonical spec; a greenfield first slice</td></tr>
+          <tr><td><code>workflow-bugfix</code></td><td><span class="pill auto">auto</span></td><td class="num">15</td><td>A bug, crash, regression or stale output</td></tr>
+          <tr><td><code>workflow-refactor</code></td><td><span class="pill auto">auto</span></td><td class="num">14</td><td>Restructure without changing behavior</td></tr>
+          <tr><td><code>workflow-review-changes</code></td><td><span class="pill auto">auto</span></td><td class="num">14–19</td><td>Review uncommitted changes before commit</td></tr>
+          <tr><td><code>workflow-spec-to-mockup</code></td><td><span class="pill auto">auto</span></td><td class="num">6</td><td>Clickable mockup of a UI spec, 1–3 design directions</td></tr>
+          <tr><td><code>workflow-feature-spec</code></td><td><span class="pill auto">auto</span></td><td class="num">10</td><td>Create or update a canonical feature spec</td></tr>
+          <tr><td><code>workflow-code-to-spec</code></td><td><span class="pill auto">auto</span></td><td class="num">5–9</td><td>Spec prose from existing code: first spec, rewrite, staleness audit</td></tr>
+          <tr><td><code>workflow-spec-sync</code></td><td><span class="pill auto">auto</span></td><td class="num">9</td><td>Code already changed: reconcile cases and tests, prove them green</td></tr>
+          <tr><td><code>workflow-planned-work</code></td><td><span class="pill auto">auto</span></td><td class="num">18–26</td><td>Idea or spec → reviewed spec or ready-to-plan tasks (<code>--from</code>/<code>--to</code>)</td></tr>
+          <tr><td><code>workflow-greenfield-init</code></td><td><span class="pill confirm">confirm</span></td><td class="num">35</td><td>A new project from scratch to a reviewed foundation; first slice via implement-spec</td></tr>
+          <tr><td><code>workflow-integration-test</code></td><td><span class="pill auto">auto</span></td><td class="num">6–10</td><td>Write or update integration tests spec-first, or drive a red suite to green</td></tr>
+          <tr><td><code>workflow-e2e</code></td><td><span class="pill auto">auto</span></td><td class="num">6</td><td>Write, update and verify E2E tests</td></tr>
+          <tr><td><code>workflow-seed-test-data</code></td><td><span class="pill auto">auto</span></td><td class="num">8</td><td>Idempotent seeders and realistic dev data</td></tr>
+          <tr><td><code>workflow-architecture-audit</code></td><td><span class="pill auto">auto</span></td><td class="num">6</td><td>Whole-project architecture and readiness check</td></tr>
+          <tr><td><code>workflow-research</code></td><td><span class="pill auto">auto</span></td><td class="num">5–6</td><td>Web research → synthesis, business, marketing or course</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Key sequences</h3>
+      <p class="caption">Amber edge: always runs. Dashed: optional. Simplified to the main steps.</p>
+      <div class="seq"><h4>Bug fix</h4><ol class="flow">
+        <li><span class="node gate">Find root cause</span></li><li><span class="node opt">Plan</span></li><li><span class="node gate">Regression test</span></li><li><span class="node">Fix</span></li><li><span class="node gate">Review changes</span></li><li><span class="node gate">Verify</span></li><li><span class="node gate">Close</span></li>
+      </ol></div>
+      <div class="seq"><h4>Feature</h4><ol class="flow">
+        <li><span class="node">Investigate</span></li><li><span class="node">Spec</span></li><li><span class="node">Plan + review</span></li><li><span class="node">Test specs</span></li><li><span class="node">Implement</span></li><li><span class="node">Spec sync</span></li><li><span class="node">Integration tests</span></li><li><span class="node gate">Review changes</span></li><li><span class="node gate">Test</span></li><li><span class="node gate">Close</span></li>
+      </ol></div>
+      <div class="seq"><h4>Refactor</h4><ol class="flow">
+        <li><span class="node">Investigate</span></li><li><span class="node gate">Tests green first</span></li><li><span class="node">Plan</span></li><li><span class="node opt">Safety-net tests</span></li><li><span class="node">Execute</span></li><li><span class="node gate">Review changes</span></li><li><span class="node gate">Test</span></li><li><span class="node gate">Close</span></li>
+      </ol></div>
+      <div class="seq"><h4>Review changes</h4><ol class="flow">
+        <li><span class="node gate">changes-review<small>∥ whole-target why-review</small></span></li><li><span class="node par">Specialists<small>only when relevant; test review always</small></span></li><li><span class="node opt">Validate findings</span></li><li><span class="node opt">Trace unexplained defects</span></li><li><span class="node opt">Fix</span></li><li><span class="node opt">Re-review</span></li><li><span class="node">Domain-entity scan → docs update</span></li>
+      </ol>
+      <p class="caption">The domain-entity scan runs only when the final diff changes an entity, data contract, schema or entity-sync evidence; otherwise it is skipped with a cited reason.</p></div>
+    </section>
+
+    <section id="skills" aria-labelledby="skills-h">
+      <h2 id="skills-h">Skills</h2>
+      <p class="lead">A skill is a folder with <code>SKILL.md</code> (name, a <code>[Category] Use when …</code> description, optional flags) plus optional <code>references/</code>, <code>scripts/</code> and <code>tests/</code>.</p>
+      <div class="cats" role="img" aria-label="Skill categories with counts">
+        <div class="cat"><span>Workflows</span><div class="cat-bar"><i style="width:220px"></i><b>22</b><span>workflow-*, start-workflow, workflow-end</span></div></div>
+        <div class="cat"><span>Review &amp; quality</span><div class="cat-bar"><i style="width:80px"></i><b>8</b><span>changes-review, why-review, security-audit</span></div></div>
+        <div class="cat"><span>Planning &amp; architecture</span><div class="cat-bar"><i style="width:70px"></i><b>7</b><span>plan (review, validate, execute modes), scenario</span></div></div>
+        <div class="cat"><span>Understand, fix, debug, graph</span><div class="cat-bar"><i style="width:40px"></i><b>4</b><span>investigate (debug mode), understand, fix, graph-code (export mode)</span></div></div>
+        <div class="cat"><span>Testing</span><div class="cat-bar"><i style="width:60px"></i><b>6</b><span>test, integration-test, e2e-test</span></div></div>
+        <div class="cat"><span>Specs &amp; reference docs</span><div class="cat-bar"><i style="width:60px"></i><b>6</b><span>spec, tech-spec, docs-manager, scan</span></div></div>
+        <div class="cat"><span>Project setup &amp; help</span><div class="cat-bar"><i style="width:90px"></i><b>9</b><span>project-init, ai-context-refresh, learn</span></div></div>
+        <div class="cat"><span>Research &amp; business</span><div class="cat-bar"><i style="width:60px"></i><b>6</b><span>web-research, market-analysis</span></div></div>
+        <div class="cat"><span>Documents &amp; media</span><div class="cat-bar"><i style="width:90px"></i><b>9</b><span>feature-presentation, html-export, watzup</span></div></div>
+        <div class="cat"><span>Product / task</span><div class="cat-bar"><i style="width:40px"></i><b>4</b><span>initiative, work-item (refine, story, mockup, challenge, review, dor modes), prioritize</span></div></div>
+        <div class="cat"><span>Framework maintenance</span><div class="cat-bar"><i style="width:60px"></i><b>6</b><span>sync-codex, skill-creator</span></div></div>
+        <div class="cat"><span>Implementation</span><div class="cat-bar"><i style="width:60px"></i><b>6</b><span>feature-implement, code-simplifier</span></div></div>
+        <div class="cat"><span>Git &amp; delivery</span><div class="cat-bar"><i style="width:50px"></i><b>5</b><span>commit, pull-request</span></div></div>
+        <div class="cat"><span>Design &amp; UI</span><div class="cat-bar"><i style="width:30px"></i><b>3</b><span>design, design-spec, work-item --mode=mockup</span></div></div>
+      </div>
+      <div class="grid">
+        <div class="card"><h4>Who can start a skill</h4><p>Most are model-invocable. 16 are command-only (<code>disable-model-invocation: true</code>): only you start them with <code>/name</code>.</p></div>
+        <div class="card"><h4>Skill profiles</h4><p><code>skillProfile</code> preset <code>full</code> · <code>standard</code> · <code>minimal</code>, plus <code>nameOnly</code>, <code>commandOnly</code>, <code>off</code>. Applied by <code>sync-skill-profile.cjs</code>; hiding a skill a workflow calls is refused.</p></div>
+        <div class="card"><h4>Review modes</h4><p><code>--fix-loop</code> reviews, validates, fixes and re-reviews until converged. <code>--report-only</code> is a silent leaf reviewer for a caller that owns the fixes.</p></div>
+      </div>
+    </section>
+
+    <section id="agents" aria-labelledby="agents-h">
+      <h2 id="agents-h">Agents</h2>
+      <p class="lead">Specialist sub-agents with their own context. They carry their role protocols, receive the universal rules from the <code>SubagentStart</code> hook, start with no conversation context, and return a summary while writing full findings to <code>tmp/reports/</code>.</p>
+      <div class="grid">
+        <div class="card"><h4>Implementation</h4><p class="names">backend-developer · frontend-developer · fullstack-developer · code-simplifier · database-admin</p></div>
+        <div class="card"><h4>Review</h4><p class="names">code-reviewer · architect · security-auditor · performance-optimizer · spec-compliance-reviewer</p></div>
+        <div class="card"><h4>Testing &amp; debugging</h4><p class="names">tester · integration-tester · e2e-runner · debugger</p></div>
+        <div class="card"><h4>Research &amp; planning</h4><p class="names">planner · researcher · knowledge-worker · solution-architect</p></div>
+        <div class="card"><h4>Design · Docs &amp; ops</h4><p class="names">ui-ux-designer · docs-manager · git-manager · journal-writer</p></div>
+        <div class="card"><h4>Framework</h4><p class="names">framework-maintainer</p></div>
+      </div>
+      <p class="caption">Pick by domain with <code>.claude/skills/shared/sub-agent-selection-guide.md</code>; specialist work never goes to the generic code reviewer.</p>
+    </section>
+
+    <section id="hooks" aria-labelledby="hooks-h">
+      <h2 id="hooks-h">Hooks and runtime</h2>
+      <div class="callout warn"><b>Only one hook can stop you</b><span><code>review-commit-gate</code> blocks an agent <code>git commit</code> without a review receipt or skip receipt. <code>init-prompt-gate</code> never blocks a prompt: a missing config gets a daily notice and an invalid or conflicted config adds a warning that its facts are unverified. Everything else is advisory or silent.</span></div>
+      <div class="life">
+        <div class="ev"><h4>SessionStart</h4><ul><li>verify-install</li><li>session-init</li><li>session-init-docs</li><li>graph-session-init</li><li>re-arm conventions + prompt ledger</li></ul></div>
+        <div class="ev"><h4>UserPromptSubmit</h4><ul><li>init-prompt-gate</li><li>workflow-route-inject</li><li>workflow-catalog-inject</li><li>commit / judgement routers</li><li>prompt-ledger</li><li>graph-prompt-sync</li></ul></div>
+        <div class="ev"><h4>Skill loads · SubagentStart</h4><ul><li>six protocol-inject hooks: review, evidence-trace, workflow-task, spec-test, design, universal</li></ul></div>
+        <div class="ev"><h4>PreToolUse</h4><ul><li>doc-sync-gate (warning)</li><li>review-commit-gate</li></ul></div>
+        <div class="ev"><h4>PostToolUse</h4><ul><li>post-edit formatter</li><li>graph-auto-update</li><li>file-convention-inject</li><li>token checkpoint</li></ul></div>
+        <div class="ev"><h4>Stop · SessionEnd</h4><ul><li>turn-complete and question alerts</li><li>session-end cleanup</li></ul></div>
+      </div>
+      <div class="grid">
+        <div class="card"><h4>Routing injection</h4><p>Gate and workflow catalog as two hook outputs, each once per session; re-armed on change, compaction or long growth.</p></div>
+        <div class="card"><h4>Protocol delivery</h4><p>A loading skill's protocols arrive in full, once per session, grouped and size-capped.</p></div>
+        <div class="card"><h4>File conventions</h4><p>Touching a file injects its path rules (opt-in). Shell read: <code>file-conventions.cjs --lookup &lt;path&gt;</code>.</p></div>
+        <div class="card"><h4>Prompt ledger</h4><p>Pins the session goal and every prompt in <code>tmp/prompt-ledger/</code>; re-delivered after compaction.</p></div>
+        <div class="card"><h4>Token checkpoint</h4><p>An advisory note each 500,000 non-cached tokens (configurable).</p></div>
+        <div class="card"><h4>Code graph · alerts</h4><p>Graph is <code>auto</code> by default (on only when built). Desktop alerts on; Discord, Slack, Telegram by env key.</p></div>
+      </div>
+    </section>
+
+    <section id="protocols" aria-labelledby="protocols-h">
+      <h2 id="protocols-h">Shared protocols — one source, hybrid delivery</h2>
+      <p class="lead">About 98 reusable rules are written once as <code>SYNC:&lt;tag&gt;</code> blocks in <code>.claude/skills/shared/sync-inline-versions.md</code> and projected into <code>shared/protocols/</code>.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Carrier</th><th>Holds</th></tr></thead>
+        <tbody>
+          <tr><td>Normal skills</td><td>One guide line per protocol: tag, summary, when, path</td></tr>
+          <tr><td>Protocol-inject hooks</td><td>The full text, delivered when the skill loads</td></tr>
+          <tr><td>Guide line path</td><td>The fallback when a protocol's text is not in context</td></tr>
+          <tr><td>Agents and fresh reviewer prompts</td><td>Full role bodies and the complete reviewer template; review skills retain guide entrypoints</td></tr>
+          <tr><td>Universal hook</td><td>The <code>universal</code> group in four messages (first prompt, every sub-agent)</td></tr>
+        </tbody>
+      </table></div>
+      <p class="caption">Why: a rule already in context beats a rule to go read, but repeating every body everywhere bloats context. After editing a canonical block, run <code>/sync-skills-shared-protocols</code> and rebuild the projection.</p>
+    </section>
+
+    <section id="quality" aria-labelledby="quality-h">
+      <h2 id="quality-h">The quality chain — review, commit, pull request</h2>
+      <ol class="steps">
+        <li><div><b>Review</b><span>Triage all changes and create review tasks first. Standalone reviews default to review-only; the review workflow defaults to fix-loop. Every applied fix needs fresh review; LOW may be deferred without edits. Default cap three rounds; LOW-only at the cap is acceptable, while Critical/High/Medium or failed required checks ask the user for a bounded extension.</span></div></li>
+        <li><div><b>Validate findings</b><span><code>why-review --validate-findings</code> checks each finding against evidence before any fix, and never recurses.</span></div></li>
+        <li><div><b>Fix at the owner</b><span><code>fix --target=review</code> records FIXED / REJECTED / DEFERRED; an unexplained defect is traced first.</span></div></li>
+        <li><div><b>Receipt</b><span>A converged fix-loop mints a receipt for that exact changeset; any later edit invalidates it.</span></div></li>
+        <li><div><b>Commit</b><span><code>/commit</code> decides the test and review gates by risk without asking; the commit gate blocks any agent commit without a receipt.</span></div></li>
+        <li><div><b>Pull request</b><span><code>/pull-request</code> decides tests and the whole-branch review by risk without asking, runs the selected gates, commits, pushes, opens a ready PR and fixes CI until green. It never merges; it force-pushes only its own rebased PR branch, with an explicit lease, when <code>pullRequest.pushedBranchUpdate</code> is <code>rebase</code>.</span></div></li>
+      </ol>
+      <div class="callout"><b>Git discipline</b><span>Never commit, push or stage without an explicit request; branch first on the default branch; never destroy uncommitted work without asking; treat <code>gh</code> writes like a push. Only the literal <code>permissions.ask</code> patterns still prompt; the commit review gate is the one mechanical rule.</span></div>
+    </section>
+
+    <section id="design" aria-labelledby="design-h">
+      <h2 id="design-h">Design and UX gates</h2>
+      <p class="lead">Any task that creates or reshapes a screen runs three rule sets in order, then a review procedure.</p>
+      <ol class="flow">
+        <li><span class="node gate">UX-1–UX-11<small>journeys first</small></span></li>
+        <li><span class="node gate">UI-1.1–UI-9.4<small>usability floor</small></span></li>
+        <li><span class="node gate">DD-1–DD-8<small>product identity</small></span></li>
+        <li><span class="node">CL-1–CL-6<small>review procedure</small></span></li>
+      </ol>
+      <div class="grid">
+        <div class="card"><h4>Journey report first</h4><p>Who uses the screen, their job, the ranked main journeys and each journey's steps — before any mockup or UI code. It ends with a pass/fail gate report.</p></div>
+        <div class="card"><h4>Explore mode</h4><p>Asks for 3, 2, 1 drafts or skip; opens drafts in the browser; recommends one with evidence; builds only the chosen direction.</p></div>
+        <div class="card"><h4>Precedence</h4><p>Your brief → the project's design system and ADRs → these clauses. Genuine conflicts go to you.</p></div>
+      </div>
+    </section>
+
+    <section id="specs" aria-labelledby="specs-h">
+      <h2 id="specs-h">Specs and tests</h2>
+      <div class="grid">
+        <div class="card"><h4>Specs</h4><p>Portable default: an 8-section Feature Spec with test cases <code>TC-{FEATURE}-{NNN}</code> in §8; projects may declare their own profile. <code>spec</code> authors, amends, writes test specs and syncs.</p></div>
+        <div class="card"><h4>Tests verify intent</h4><p>Each test names the rule it protects and must fail when that rule breaks.</p></div>
+        <div class="card"><h4>A failed test gets a verdict first</h4><p>Source wrong · test wrong · test not optimal · environment blocked · ambiguous. Never weaken a test to force green.</p></div>
+      </div>
+    </section>
+
+    <section id="config" aria-labelledby="config-h">
+      <h2 id="config-h">Project config and context</h2>
+      <div class="callout"><b><code>docs/project-config.json</code> is optional</b><span>Absent: portable defaults plus repository evidence. Present: only <code>project.name</code> is required. A declared but malformed section fails closed.</span></div>
+      <div class="scroll"><table>
+        <thead><tr><th>Section</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>project</code>, <code>framework</code>, <code>modules</code></td><td>Identity, stack metadata, module map</td></tr>
+          <tr><td><code>specRoots</code>, <code>docsRoots</code>, <code>referenceDocs</code></td><td>Where specs and docs live; which reference docs apply</td></tr>
+          <tr><td><code>contextGroups</code>, <code>conventionInjection</code></td><td>Per-path conventions and their hook delivery</td></tr>
+          <tr><td><code>designSystem</code>, <code>uiReview</code>, <code>styling</code></td><td>UI capability and review settings</td></tr>
+          <tr><td><code>testing</code>, <code>e2eTesting</code>, <code>experienceVerification</code></td><td>Test commands and evidence contracts</td></tr>
+          <tr><td><code>portability</code></td><td>Routing switches, activation tiers, tooling package name</td></tr>
+          <tr><td><code>hooks</code></td><td>Startup install, code graph, token budget</td></tr>
+          <tr><td><code>commit</code>, <code>pullRequest</code>, <code>skillProfile</code></td><td>Commit trailer, PR target, skill visibility</td></tr>
+        </tbody>
+      </table></div>
+      <div class="grid">
+        <div class="card"><h4>Generated context</h4><p><code>/ai-context-refresh</code> regenerates <code>CLAUDE.md</code> sections from config; <code>AGENTS.md</code> is its projection.</p></div>
+        <div class="card"><h4>Reference docs</h4><p><code>/scan</code> and <code>/scan-all</code> rebuild project-reference docs from evidence.</p></div>
+        <div class="card"><h4>Lessons</h4><p>After non-trivial work Claude names the root-cause failure mode and asks you to run <code>/learn</code> if it would recur.</p></div>
+        <div class="card"><h4>Overlays and prompts</h4><p><code>/project-skill-protocol</code> adds project rules to a skill (additive only); <code>/custom-prompt</code> saves playbooks.</p></div>
+      </div>
+    </section>
+
+    <section id="state" aria-labelledby="state-h">
+      <h2 id="state-h">State, memory and recovery</h2>
+      <div class="grid">
+        <div class="card"><h4>Compaction drops</h4><ul><li>File contents and read state</li><li>Exact tool output</li><li>Details summaries leave out</li></ul></div>
+        <div class="card"><h4>What survives</h4><ul><li>Task list and workflow run record</li><li>Reports and logs in <code>tmp/</code></li><li>Prompt ledger</li></ul></div>
+        <div class="card"><h4>How to recover</h4><ul><li><code>TaskList</code> first</li><li>Re-read <code>CLAUDE.md</code>, plan and target files</li><li>Treat "completed" claims as hypotheses</li></ul></div>
+      </div>
+    </section>
+
+    <section id="portability" aria-labelledby="portability-h">
+      <h2 id="portability-h">Portability — one source, every harness</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Surface</th><th>Status</th><th>Produced by</th></tr></thead>
+        <tbody>
+          <tr><td><code>.claude/**</code>, <code>CLAUDE.md</code> outside markers</td><td>Source</td><td>hand-edited</td></tr>
+          <tr><td><code>.agents/</code>, <code>.codex/</code>, <code>AGENTS.md</code></td><td>Generated</td><td><code>/sync-codex</code> (19 stages)</td></tr>
+          <tr><td><code>.opencode/</code>, <code>opencode.json</code> skill policy</td><td>Generated</td><td><code>/sync-opencode</code></td></tr>
+          <tr><td><code>shared/protocols/</code></td><td>Generated</td><td><code>build-protocol-projection.cjs</code></td></tr>
+        </tbody>
+      </table></div>
+      <p class="caption">Rules: no project names, absolute paths or stack-specific base classes in framework files; state a default with its config key; fix a mirror leak in the source. <code>/sync-codex --verify-only</code> runs the read-only gates.</p>
+    </section>
+
+    <section id="testing" aria-labelledby="testing-h">
+      <h2 id="testing-h">Testing the framework</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Runner</th><th>Tests</th><th>Covers</th></tr></thead>
+        <tbody>
+          <tr><td><code>test-all-hooks.cjs</code> (primary gate)</td><td class="num"><b>133</b></td><td>Hook behaviors and the count guard</td></tr>
+          <tr><td><code>run-all-tests.cjs</code> (full aggregate)</td><td class="num"><b>1571</b></td><td>107 discovered suite files; primary gate runs separately</td></tr>
+          <tr><td><code>node --test .claude/scripts/codex/tests</code></td><td class="num">—</td><td>Mirror generators and verifiers</td></tr>
+          <tr><td><code>run-codex-sync.mjs --verify-only</code></td><td class="num">—</td><td>All read-only gates before a commit</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><b>Portable test contract</b><span>Shipped tests must pass in any project on Windows, macOS and Linux: use a temp fixture project, blank inherited switches, point the home and temp variables at the temp dir, name OS differences, and run the full suite twice.</span></div>
+    </section>
+
+    <section id="switches" aria-labelledby="switches-h">
+      <h2 id="switches-h">Switches at a glance</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Feature</th><th>Key</th><th>Default</th></tr></thead>
+        <tbody>
+          <tr><td>Prompt-time routing mode</td><td><code>portability.workflowRouteMode</code></td><td>ask</td></tr>
+          <tr><td>Activation tiers</td><td><code>portability.workflowActivation</code></td><td>per workflow</td></tr>
+          <tr><td>File-convention injection</td><td><code>conventionInjection.enabled</code></td><td>off</td></tr>
+          <tr><td>Code graph</td><td><code>hooks.codeGraph.enabled</code></td><td><code>auto</code></td></tr>
+          <tr><td>Token checkpoint</td><td><code>hooks.tokenBudget.checkpointTokens</code></td><td>500,000</td></tr>
+          <tr><td>Post-edit formatter</td><td><code>formatting.formatter</code></td><td>Prettier</td></tr>
+          <tr><td>PR target branch</td><td><code>pullRequest.targetBranch</code></td><td><code>main</code></td></tr>
+          <tr><td>PR pushed-branch update</td><td><code>pullRequest.pushedBranchUpdate</code> (<code>merge</code>/<code>rebase</code>)</td><td><code>merge</code></td></tr>
+          <tr><td>Skill visibility</td><td><code>skillProfile.preset</code></td><td><code>full</code></td></tr>
+          <tr><td>Prompt ledger</td><td><code>.ck.json</code> <code>promptLedger.enabled</code></td><td>on</td></tr>
+          <tr><td>Desktop notifications</td><td>env <code>ENABLE_DESKTOP_NOTIFICATIONS</code></td><td>on</td></tr>
+          <tr><td>Framework off for a session</td><td><code>claude --settings .claude/config/vanilla-settings.json --disable-slash-commands</code></td><td>—</td></tr>
+        </tbody>
+      </table></div>
+      <p class="caption">Keys are in <code>docs/project-config.json</code> unless marked <code>.ck.json</code> (<code>.claude/.ck.json</code>) or env.</p>
+    </section>
+
+    <section id="principles" aria-labelledby="principles-h">
+      <h2 id="principles-h">Principles</h2>
+      <div class="grid">
+        <div class="card"><h4>Evidence before conclusion</h4><p>Cite <code>file:line</code>, state confidence, don't recommend below 60%.</p></div>
+        <div class="card"><h4>Root cause at the owner</h4><p>Trace the wrong state to the component that owns the invariant; fix once there.</p></div>
+        <div class="card"><h4>Judgement integrity</h4><p>Treat a prompt's premise as a hypothesis; test it and its opposite. "No issues" is a valid verdict.</p></div>
+        <div class="card"><h4>Hooks deliver the contract</h4><p>Universal rules, route and overlay reminders arrive only through hooks; a host with no hooks is unsupported. An unreadable shipped file yields a one-line notice, and Codex needs the handlers reviewed in <code>/hooks</code>.</p></div>
+        <div class="card"><h4>Context is a budget</h4><p>Deliver rules once, when they apply; write long work to disk.</p></div>
+        <div class="card"><h4>Parallel when independent</h4><p>Tag tasks PAR or SEQ; run independent waves in one message and wait for all.</p></div>
+      </div>
+    </section>
+
+    <section id="more" aria-labelledby="more-h">
+      <h2 id="more-h">Read more</h2>
+      <div class="scroll"><table>
+        <thead><tr><th>Doc</th><th>Read when</th></tr></thead>
+        <tbody>
+          <tr><td><code>.claude/docs/README.md</code></td><td>You need the full framework doc map</td></tr>
+          <tr><td><code>.claude/docs/quick-start.md</code></td><td>First run in a project</td></tr>
+          <tr><td><code>.claude/docs/universal-setup-guide.md</code></td><td>Adopting the framework in another repository</td></tr>
+          <tr><td><code>.claude/docs/configuration/README.md</code></td><td>Any config key and its default</td></tr>
+          <tr><td><code>.claude/docs/hooks/README.md</code></td><td>Hook inventory and exact behavior</td></tr>
+          <tr><td><code>.claude/docs/skills/README.md</code></td><td>Skill anatomy and catalog</td></tr>
+          <tr><td><code>.claude/docs/agents/agent-patterns.md</code></td><td>Writing or changing an agent</td></tr>
+          <tr><td><code>.claude/docs/framework-portability.md</code></td><td>Keeping framework files portable</td></tr>
+          <tr><td><code>.claude/docs/troubleshooting.md</code></td><td>A hook blocked or warned</td></tr>
+          <tr><td><code>.claude/docs/ux-journey-process.md</code></td><td>Any UI or design work</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <footer>
+      <span>Visual companion of <code>.claude/docs/claude-ai-agent-framework-guide.md</code>. When the two differ, the markdown and the owner docs it links to are authoritative.</span>
+    </footer>
+  </main>
+</div>
+<script>
+(function () {
+  try {
+    var list = document.getElementById('toc-list');
+    var mobile = document.getElementById('toc-mobile-list');
+    if (list && mobile) mobile.innerHTML = list.innerHTML;
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc-list a'));
+    if ('IntersectionObserver' in window && links.length) {
+      var byId = {};
+      links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting && byId[e.target.id]) {
+            links.forEach(function (a) { a.classList.remove('on'); });
+            byId[e.target.id].classList.add('on');
+          }
+        });
+      }, { rootMargin: '-15% 0px -75% 0px' });
+      Object.keys(byId).forEach(function (id) { var s = document.getElementById(id); if (s) io.observe(s); });
+    }
+    var input = document.getElementById('wf-filter');
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#wf-table tbody tr'));
+    var count = document.getElementById('wf-count');
+    if (input) input.addEventListener('input', function () {
+      var q = input.value.trim().toLowerCase(), shown = 0;
+      rows.forEach(function (r) { var hit = !q || r.textContent.toLowerCase().indexOf(q) !== -1; r.hidden = !hit; if (hit) shown++; });
+      count.textContent = shown + ' of ' + rows.length + ' workflows';
+    });
+  } catch (err) { /* page stays fully readable without script */ }
+})();
+</script>
+</body>
+</html>

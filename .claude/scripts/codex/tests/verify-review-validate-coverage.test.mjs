@@ -10,7 +10,9 @@ const repoRoot = path.resolve(thisDir, '..', '..', '..', '..');
 const {
     findCoverageViolations,
     REVIEW_FAMILY_SKILLS,
+    REVIEW_MODE_REFERENCES,
     GRADER_SKILLS,
+    GRADER_MODE_REFERENCES,
     VALIDATE_ROUTE_PATTERN,
     FIX_LOOP_BLOCK_PATTERN
 } = await import(pathToFileURL(verifierPath).href);
@@ -55,14 +57,31 @@ test('TC-CONVLOOP-042: all real review-family skills pass both rules', () => {
         const violations = findCoverageViolations(skillName, content, { isGrader: graderSet.has(skillName) });
         for (const v of violations) failures.push(v.message);
     }
+    // The review modes that live in a mode reference are scanned with the same rules.
+    const graderModes = new Set(GRADER_MODE_REFERENCES);
+    for (const relative of [...REVIEW_MODE_REFERENCES, ...GRADER_MODE_REFERENCES]) {
+        const filePath = path.join(repoRoot, '.claude', 'skills', ...relative.split('/'));
+        assert.ok(fs.existsSync(filePath), `review-mode reference missing on disk: ${relative}`);
+        for (const v of findCoverageViolations(relative, fs.readFileSync(filePath, 'utf8'), { isGrader: graderModes.has(relative) })) failures.push(v.message);
+    }
     assert.deepEqual(failures, [], `real review-family skills must have zero gaps:\n${failures.join('\n')}`);
 });
 
-// TC-CONVLOOP-043 — the allow-list is exactly the 14 SC3 review skills; no non-review skill leaks in
-// (so a skill merely using the word "finding"/"Severity" is never scanned = no false positive).
-test('TC-CONVLOOP-043: allow-list is the 14 review-family skills, no non-review skill included', () => {
-    assert.equal(REVIEW_FAMILY_SKILLS.length, 14);
-    for (const nonReview of ['plan', 'investigate', 'scout', 'fix', 'plan-execute', 'why-review']) {
+// TC-CONVLOOP-043 — the allow-list is the finding-producing review skills plus the integration-test, domain-analysis, architecture, ui-design and work-item review mode
+// references (and the architecture scalability grader mode); no non-review skill leaks in (so a skill merely using the word "finding"/"Severity" is never
+// scanned = no false positive).
+test('TC-CONVLOOP-043: allow-list includes the review-family skills plus the review-mode references, no non-review skill included', () => {
+    assert.deepEqual(REVIEW_FAMILY_SKILLS, ['changes-review', 'code-quality-review', 'security-audit', 'performance-review', 'production-readiness-review', 'knowledge-review', 'ai-engineering-review', 'web-design-guidelines']);
+    assert.deepEqual(REVIEW_MODE_REFERENCES, [
+        'integration-test/references/mode-review.md',
+        'domain-analysis/references/mode-review.md',
+        'architecture/references/mode-review.md',
+        'architecture/references/mode-full.md',
+        'ui-design/references/mode-review.md',
+        'work-item/references/mode-review.md'
+    ]);
+    assert.deepEqual(GRADER_MODE_REFERENCES, ['architecture/references/mode-scalability.md']);
+    for (const nonReview of ['plan', 'investigate', 'fix', 'why-review']) {
         assert.ok(!REVIEW_FAMILY_SKILLS.includes(nonReview), `non-review skill must NOT be scanned: ${nonReview}`);
     }
     // Every grader is also a member of the review-family allow-list.
@@ -108,10 +127,10 @@ test('TC-CONVLOOP-046: a grader embedding the fix-loop block fails the negative 
     ].join('\n');
     // Sanity: the fixture does carry the fix-loop marker.
     assert.equal(FIX_LOOP_BLOCK_PATTERN.test(graderWithFixLoop), true);
-    const violations = findCoverageViolations('architecture-scalability-review', graderWithFixLoop, { isGrader: true });
+    const violations = findCoverageViolations('architecture/references/mode-scalability.md', graderWithFixLoop, { isGrader: true });
     assert.equal(violations.length, 1);
     assert.equal(violations[0].rule, 'grader-boundary');
-    assert.match(violations[0].message, /architecture-scalability-review/);
+    assert.match(violations[0].message, /mode-scalability/);
     assert.match(violations[0].message, /double-round-trip-review/);
 });
 
@@ -122,7 +141,7 @@ test('TC-CONVLOOP-046b: the fix-loop block in a non-grader review skill is allow
         FINDINGS_WITH_ROUTE,
         '<!-- SYNC:double-round-trip-review:reminder -->'
     ].join('\n');
-    const violations = findCoverageViolations('integration-test-review', fixerWithFixLoop, { isGrader: false });
+    const violations = findCoverageViolations('integration-test/references/mode-review.md', fixerWithFixLoop, { isGrader: false });
     assert.equal(violations.length, 0);
 });
 
@@ -134,11 +153,8 @@ const ROUTE_MENTIONERS_NOT_SCANNED = new Set([
     'why-review',              // the terminal validator that DEFINES the route
     'sync-codex',              // documents the route inside the verify-coverage sensor description
     'workflow-review-changes', // orchestrator: wires review skills, references the route in prose
-    'workflow-idea-to-pbi',    // workflow orchestrator: references the route in a gate step
-    'plan-review',             // reviews plans via why-review's own recursion engine (not an SC grader)
-    'spec-clarify',            // clarification gate: references the route, not a findings grader
-    'changes-review-loop',     // convergence-loop orchestrator: runs /changes-review report-only + /why-review --validate-findings + /fix; delegates finding-production to changes-review, not itself an SC grader
-    'integration-test-verify-loop' // convergence-loop orchestrator: runs /integration-test-verify + /integration-test-review report-only + /changes-review + /why-review --validate-findings + /fix; delegates finding-production to those reviewers, not itself an SC grader
+    'workflow-code-to-spec',   // workflow orchestrator: its audit mode wires the route as the report gate
+    'fix'                      // its --target=review branch CONSUMES findings already validated by the route; it fixes, it does not grade
 ]);
 
 // TC-CONVLOOP-047 — allow-list COMPLETENESS (closes the allow-list-rot gap). Any skill whose SKILL.md

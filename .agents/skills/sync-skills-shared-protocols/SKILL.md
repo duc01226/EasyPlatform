@@ -1,58 +1,34 @@
 ---
 name: sync-skills-shared-protocols
-description: '[Skill Management] Use when shared protocol checklists change and need propagation across skills.'
+description: '[Skill Management] Use when shared protocol checklists change and need propagating across skills.'
+disable-model-invocation: true
 ---
 
 > Codex compatibility note:
->
-> - Invoke repository skills with `$skill-name` in Codex; this mirrored copy rewrites legacy Claude `/skill-name` references.
-> - Task tracker mandate: BEFORE executing any workflow or skill step, create/update task tracking for all steps and keep it synchronized as progress changes.
-> - User-question prompts mean to ask the user directly in Codex.
-> - Ignore Claude-specific mode-switch instructions when they appear.
-> - Strict execution contract: when a user explicitly invokes a skill, execute that skill protocol as written.
+> - Invoke `$skill-name`: load the registered `.agents/skills/<name>/SKILL.md` and execute it with Codex tools; no separate `Skill` tool or Claude mode switch is needed. Author `.claude/**`; mirrors are generated.
+> - Track steps before execution and keep progress/evidence current. Explicit skill requests execute their protocol. Use the native question tool for required questions.
+> - Map foreign tool names to available host capabilities. A name mismatch needs no approval; an actually unavailable required capability stops with its step/evidence and a user question before adaptation.
 > - Subagent authorization: when a skill is user-invoked or AI-detected and its protocol requires subagents, that skill activation authorizes use of the required `spawn_agent` subagent(s) for that task.
-> - Do not skip, reorder, or merge protocol steps unless the user explicitly approves the deviation first.
-> - For workflow skills, execute each listed child-skill step explicitly and report step-by-step evidence.
-> - If a required step/tool cannot run in this environment, stop and ask the user before adapting.
-
-<!-- CODEX:PROJECT-REFERENCE-LOADING:START -->
-
-## Codex Project-Reference Loading (No Hooks)
-
-Codex uses static project-reference loading instead of runtime-injected project docs.
-When coding, planning, debugging, testing, or reviewing, open project docs explicitly using this routing.
-
-**Always read:**
-
-- `docs/project-config.json` (project-specific paths, commands, modules, and workflow/test settings)
-- `docs/project-reference/docs-index-reference.md` (routes to the full `docs/project-reference/*` catalog)
-- `docs/project-reference/lessons.md` (always-on guardrails and anti-patterns)
-
-**Missing/stale context route:** If `docs/project-config.json`, the docs index, `lessons.md`, `CLAUDE.md`, `AGENTS.md`, or any task-required reference doc is missing or stale, auto-run `$project-init` or the narrow setup route (`$project-config`, `$docs-init`, `$scan-all`, `$scan --target=<key>`, `$claude-md-init`) before ordinary project-specific work. If Codex mirrors or `AGENTS.md` are missing/stale, ask the user to run `$sync-codex`; do not auto-run it.
-
-**Situation-based docs:**
-
-- Project structure/architecture/tech-stack/deployment/setup (any layer — backend, frontend, or infra): `project-structure-reference.md`
-- Backend/CQRS/API/domain/entity changes: `backend-patterns-reference.md`, `domain-entities-reference.md`
-- Frontend/UI/styling/design-system: `frontend-patterns-reference.md`, `scss-styling-guide.md`, `design-system/README.md`
-- Spec authoring, `docs/specs/` pathing, or TC format: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`
-- Behavior/public-contract changes or spec-test-code sync: `workflow-spec-test-code-cycle-reference.md` plus the spec docs above
-- Derived spec indexes/ERDs/reimplementation guides: `spec-system-reference.md` and source Feature Specs under `docs/specs/`
-- Integration test implementation/review: `integration-test-reference.md`
-- E2E test implementation/review: `e2e-test-reference.md`
-- Code review/audit work: `code-review-rules.md` plus domain docs above based on changed files
-
-Do not read all docs blindly. Start from `docs-index-reference.md`, then open only relevant files for the task.
-
-<!-- CODEX:PROJECT-REFERENCE-LOADING:END -->
-
+> - Preserve protocol order unless the user approves a deviation. Workflows use `$start-workflow`: gates stay fixed; other steps may flex with logged reasons and evidence.
 ## Quick Summary
 
-**Goal:** Two operations — (A) propagate updated content for existing SYNC: blocks across all skills, or (B) add a new SYNC: block to all skill/agent files that don't have it yet.
+**Goal:** Propagate canonical protocol updates or new tiered blocks to their declared carriers and published projection, with verified parity.
 
-> **Renamed:** formerly `/sync-protocols` — that name no longer resolves as a slash command; use `$sync-skills-shared-protocols`.
+**Summary:** A: select tags → read canonical → inspect updater dry-run inventory → propagate → rebuild/check projection and carriers → sync reminders only when requested. B: author canonical → update tiers/connections → dry-run → insert → rebuild/check coverage and parity. Preserve guide entrypoints, full-text carriers and dispatch overrides.
 
 **Canonical source:** `.claude/skills/shared/sync-inline-versions.md`
+
+**Key Rules:** Edit the canonical source first; change only SYNC block bodies; sync a `:reminder` block the same mechanical way — by passing the `{tag}:reminder` tag to the script — and only when asked; use the script for bulk insertion; verify balance, parity, and the computed target inventory.
+
+**Workflow:** Choose Operation A or B → follow its canonical-source and target-inventory steps → verify before reporting.
+
+## Contents
+
+- [Quick Summary](#quick-summary)
+- [Workflow](#workflow)
+- [Usage Examples](#usage-examples)
+- [Rules](#rules)
+- [Closing Reminders](#closing-reminders)
 
 ## Workflow
 
@@ -78,30 +54,35 @@ For each tag to sync:
 1. Read `.claude/skills/shared/sync-inline-versions.md`
 2. Extract content under `## SYNC:{tag-name}` heading (everything between that heading and the next `---` or `## SYNC:`)
 
-### Step 3: Find All Skills with Tag
+### Step 3: Inspect the Updater's Carrier Inventory
 
 ```bash
-grep -rl "SYNC:{tag-name}" .claude/skills/*/SKILL.md
+# macOS/Linux; on Windows use py -3 instead of python3
+python3 .claude/scripts/sync-update-blocks.py "{tag-name}" --dry-run
 ```
 
-### Step 4: Replace Content in Each Skill
+The updater discovers skill entrypoints, skill templates, mode references and agents. Inspect its dry-run results before writing; searching only `*/SKILL.md` misses full-text carriers. The helper uses Python 3 and framework-local modules, with no third-party package requirement. Probe it with `--help` when runtime availability is uncertain.
 
-For each file found:
+### Step 4: Propagate with the Owning Helper
 
-1. Find `<!-- SYNC:{tag-name} -->` open tag
-2. Find `<!-- /SYNC:{tag-name} -->` close tag
-3. Replace everything between them with the canonical content
-4. Do NOT touch `:reminder` blocks — those are separate, shorter versions
+```bash
+# macOS/Linux; on Windows use py -3 instead of python3
+python3 .claude/scripts/sync-update-blocks.py "{tag-name}"
+node .claude/scripts/build-protocol-projection.cjs
+```
+
+Require successful exit status; report malformed/missing fences rather than hand-replacing a failed carrier. Keep generated guide entrypoints as guides. A plain tag does not modify its separate `:reminder` fence pair; pass `{tag}:reminder` only when reminders are requested. Preserve the OVERRIDE handling below.
 
 ### Step 5: Verify
 
-Run these checks after all replacements:
+Run these checks after propagation and projection rebuild:
 
-```python
-# 1. SYNC tag balance (all opens have matching closes)
-# 2. Content matches canonical source
-# 3. No content outside SYNC blocks was modified
+```bash
+node .claude/scripts/codex/verify-sync-adoption-parity.mjs
+rg -n "SYNC:{tag-name}" .claude
 ```
+
+Verify balanced fences, exact canonical bodies and unchanged unrelated authored content. Inspect the search for carriers outside the updater's inventory, including framework docs, and reconcile them through their owner. Verify every requested tag and applicable tier; a command success alone is not full coverage. Projection tooling uses Node >=18 built-ins.
 
 Report:
 
@@ -111,7 +92,59 @@ Report:
 
 ### Step 6: Reminder Blocks
 
-`:reminder` blocks (`<!-- SYNC:{tag}:reminder -->`) are 1-line summaries at the bottom of skills for AI recency attention. These are NOT auto-synced — they are hand-written. Skip them unless user explicitly asks to update reminders too.
+`:reminder` blocks (`<!-- SYNC:{tag}:reminder -->`) are 1-line summaries at the bottom of skills for AI recency attention (Primacy-Recency).
+
+**Where a canonical `:reminder` section exists, they ARE mechanically syncable — do NOT hand-edit those.** `sync-update-blocks.py` treats `{tag}:reminder` as an ordinary tag: it reads the `## SYNC:{tag}:reminder` section from the canonical source and replaces the matching fence pair (`sync-update-blocks.py:11-14,25-35`). Hand-writing such a reminder desynchronizes it from the canonical text the very next time the script runs.
+
+> **Coverage is PARTIAL — check before you rely on the script.** The canonical source does NOT yet carry a `:reminder` section for every reminder tag in use: roughly half the live reminder tags have no canonical section, and running the script on one of those fails hard with `ERROR: section not found` (`sync-update-blocks.py:33`) rather than doing nothing. Confirm the section exists first:
+>
+> ```bash
+> grep -n "^## SYNC:{tag}:reminder" .claude/skills/shared/<canonical-source>.md
+> ```
+>
+> **Section present** → sync it with the script; never hand-edit. **Section absent** → the script cannot serve you at all. Add the canonical `## SYNC:{tag}:reminder` section first and then sync, so the reminder becomes managed like the rest. Do not silently hand-edit the fenced body as a workaround: that leaves a fenced block the script believes it owns and will overwrite the moment the section appears.
+
+What is true is that a reminder is a SEPARATE tag from its parent, not a shorter view of it: syncing `foo` never touches `foo:reminder`, because the script's fence regexes require whitespace before the closing marker and so cannot cross between the two (`sync-update-blocks.py:64-66`). Update a reminder by running the script on `{tag}:reminder` explicitly, after editing that section in the canonical source — and only when the user asks for reminders too.
+
+```bash
+# Windows (dry-run first, then the real run)
+py -3 .claude/scripts/sync-update-blocks.py --dry-run {tag}:reminder
+py -3 .claude/scripts/sync-update-blocks.py {tag}:reminder
+# macOS/Linux (dry-run first, then the real run)
+python3 .claude/scripts/sync-update-blocks.py --dry-run {tag}:reminder
+python3 .claude/scripts/sync-update-blocks.py {tag}:reminder
+```
+
+### Step 7: OVERRIDE Blocks — the sanctioned divergence
+
+Not every carrier can take the canonical body verbatim. A review skill that must route its
+sub-agents to a DIFFERENT specialist needs the same protocol substance with a different
+`agent_type`. That is what `<!-- OVERRIDE:{tag} -->` … `<!-- /OVERRIDE:{tag} -->` is for.
+
+**The contract:**
+
+- **`sync-update-blocks.py` does NOT touch an OVERRIDE block.** It is an intentional per-skill
+  divergence, so the equality property that binds `SYNC:` carriers is deliberately not applied.
+- **Divergence is limited to ROUTING, not substance — for `review-protocol-injection`.** The
+  `sync-carrier-parity` suite's OVERRIDE-SUBSTANCE GUARD pins each `OVERRIDE:review-protocol-injection`
+  copy to the canonical protocol COUNT and to each protocol's header AND body verbatim; only the
+  Subagent-Type / Agent-Call / Reference-Docs sections may differ. Silent staleness on substance is
+  the failure mode it exists to catch.
+- **The carrier set is pinned — for that tag only.** The guard asserts exactly 2
+  `OVERRIDE:review-protocol-injection` carriers (`sync-carrier-parity.test.cjs:440-446`), so a new
+  one appearing — or an existing one vanishing — fails the suite rather than passing quietly.
+- **Both markers are recognized as fences.** `check-subagent-routing.cjs` treats `SYNC` and
+  `OVERRIDE` openers/closers identically for balance checking.
+
+**Live carriers (2 files × 1 tag):** `architecture/references/mode-review.md` and `ui-design/references/mode-review.md` each override
+`review-protocol-injection`.
+
+**Maintaining one:** edit the canonical section, run the script for the `SYNC:` carriers, then
+**hand-merge** the same substance change into each OVERRIDE block, preserving its
+`agent_type` customization. The guard detects a missed `review-protocol-injection` carrier.
+
+**Do NOT reach for OVERRIDE to avoid a sync conflict.** It is for a carrier that genuinely must
+dispatch elsewhere. Any other divergence belongs in the canonical source, so every carrier gets it.
 
 ---
 
@@ -119,13 +152,24 @@ Report:
 
 Use when a NEW SYNC: block needs tiered propagation. Derive the on-disk target inventory at runtime; never copy a fixed skill or agent count into this contract.
 
-- `SKILL_BLOCK_ORDER` is the base tier for every skill.
+- `SKILL_BLOCK_ORDER` is the base tier for every skill (empty: the universal protocols are never inserted).
 - `ORCHESTRATOR_SKILL_BLOCK_ORDER` extends that base only for skills in `ORCHESTRATOR_SKILLS`.
 - Agent tiers remain independently governed by the injector's explicit agent sets.
 
+#### Agent quality parity and skill connections
+
+When the new block applies to work performed by a sub-agent, update the canonical agent matrix before injection:
+
+1. Add the applicable quality tag(s) to `AGENT_QUALITY_BLOCKS` in `.claude/scripts/agent_protocol_matrix.py`; keep orchestration-only blocks out of leaf agents.
+2. Confirm every agent has a valid `AGENT_SKILL_CONNECTIONS` entry to its canonical task skill(s), and add the carrier owner for any newly propagated review/test protocol.
+3. Run `py -3 .claude/scripts/agent_protocol_matrix.py --validate` (macOS/Linux: `python3` instead of `py -3`), then run both `inject_agent_protocol_blocks.py` and `inject_agent_skill_connections.py` (dry-run first, real run second).
+4. Verify the generated `AGENT-SKILL-CONNECTIONS` sections and the agent-universal-rules suite before regenerating mirrors.
+
+The connection map is explicit routing metadata. It links the agent prompt to the canonical skill procedure while the matrix injects only applicable quality blocks; do not blanket-copy skill bodies into a leaf agent when that would import caller-owned orchestration.
+
 This is a bulk-insert operation, not a content update. Verify the computed target set before writing so orchestration-only rules never leak into every skill.
 
-**When to use:** A new protocol rule is added to `.claude/skills/shared/sync-inline-versions.md` and should appear in static carriers (`CLAUDE.md`, `AGENTS.md`, Codex, skills, and agents).
+**When to use:** A new protocol rule is added to `.claude/skills/shared/sync-inline-versions.md` and needs declared skill/agent carriers and hook projection. Roots carry project information only; universal protocols remain hook-only.
 
 #### Step B1: Add block content to canonical source
 
@@ -141,72 +185,38 @@ Edit `.claude/skills/shared/sync-inline-versions.md` and add a new section:
 
 #### Step B2: Add block to `sync-hooks-to-skills.py`
 
-Edit `.claude/scripts/sync-hooks-to-skills.py`:
+The script reads every body and reminder it inserts from the canonical file at import time, so no block text is typed here. Edit `.claude/scripts/sync-hooks-to-skills.py`:
 
-1. Add entry to `BLOCKS` dict:
-
-```python
-BLOCKS = {
-    # ... existing blocks ...
-    "new-block-name": """\
-<!-- SYNC:new-block-name -->
-
-> **[Full block content here — exactly as it should appear in files]**
-
-<!-- /SYNC:new-block-name -->""",
-}
-```
-
-2. Add 1-line reminder to `REMINDERS` dict:
+1. Add the tag to `BODY_TAGS` (and to `REMINDER_TAGS` when canonical defines `## SYNC:{new-block-name}:reminder`).
+2. Add the tag to the relevant tier list(s) (controls which targets receive it and the insertion order):
 
 ```python
-REMINDERS = {
-# ... existing reminders ...
-"new-block-name": """\
+# Skills and orchestrators currently carry no default inserted blocks.
+SKILL_BLOCK_ORDER = []
+ORCHESTRATOR_SKILL_BLOCK_ORDER = []
 
-> **[IMPORTANT]** Use task tracking to break ALL work into small tasks BEFORE starting.
+# Core-2: every agent (skills/SKILL.md is unaffected).
+CORE_BLOCK_ORDER = ["sequential-thinking-protocol", "agent-bootstrap"]
 
-<!-- SYNC:new-block-name:reminder -->
-**MUST ATTENTION** [one-line summary of the rule].
-<!-- /SYNC:new-block-name:reminder -->""",
-}
-```
-
-3. Add the block name to the relevant tier list(s) (controls which targets receive it + insertion order):
-
-```python
-# Skills-3: the two universal blocks + the orchestration block. Do NOT add
-# agent-only rules here. `parallel-subagent-dispatch` is deliberately SKILL-ONLY
-# — not because an agent cannot spawn, but because an agent receives ONE brief an
-# orchestrator has ALREADY partitioned, so re-running the partitioning protocol in
-# the leaf re-decides an upstream decision. It is ALSO declared in
-# agent_protocol_matrix.py EXCLUDED_ORCHESTRATION and in the TC-UAR-017
-# AGENT_ADOPTION_EXEMPT set (see "Skill-only blocks" below).
-SKILL_BLOCK_ORDER = ["critical-thinking-mindset", "ai-mistake-prevention",
-                     "parallel-subagent-dispatch"]
-
-# Core-6: every agent (skills/SKILL.md is unaffected).
-CORE_BLOCK_ORDER = ["critical-thinking-mindset", "ai-mistake-prevention",
-                    "sequential-thinking-protocol", "task-tracking-external-report",
-                    "project-reference-docs-guide", "agent-bootstrap"]
-
-# Code-10: Core-6 + code-investigation blocks, for agents that read/review AND fix code.
+# Code-6: Core-2 + code-investigation blocks, for agents that read/review AND fix code.
 CODE_BLOCK_ORDER = CORE_BLOCK_ORDER + ["understand-code-first", "evidence-based-reasoning",
                                        "cross-service-check", "fix-layer-accountability"]
 
-# Readonly-Code-8: Core-6 + reading-discipline blocks only, for read-only/design
+# Readonly-Code-4: Core-2 + reading-discipline blocks only, for read-only/design
 # agents that locate/read/design code but never fix a layer or cross a service
 # boundary (excludes the two mutation-oriented blocks).
 READONLY_CODE_BLOCK_ORDER = CORE_BLOCK_ORDER + ["understand-code-first", "evidence-based-reasoning"]
 ```
 
+**Universal protocols are not tier blocks.** The protocols of the `universal` group in `.claude/skills/shared/protocol-groups.json` are delivered by the universal hook, in the authored `bins` layout of that group; no skill (including any explicitly approved `inlineSkills` exception) and no agent carries a body, `:reminder` or guide line of one. `py -3 .claude/scripts/sync-update-blocks.py --mode=strip-root-pointer` removes any that reappear, together with a retired `Root-carried protocols` pointer line (agents also drop `task-tracking-external-report`, which `agent-bootstrap` states); `sync-hooks-to-skills.py` runs the same step on every target and never inserts a universal block. Never add a universal tag to a tier list, `BODY_TAGS` or `AGENT_QUALITY_BLOCKS`; `agent_protocol_matrix.py --validate` check (j) and TC-UAR-011 fail on it.
+
 **Agent tiering:** agents no longer share one block list. `find_target_files()` classifies each `.claude/agents/*.md` by explicit membership in one of three sets:
 
-- `CODE_AGENTS` (17 code/review/fix agents → `CODE_BLOCK_ORDER`, Code-10).
-- `READONLY_CODE_AGENTS` (4 read-only/design agents — `researcher`, `scout`, `scout-external`, `ui-ux-designer` → `READONLY_CODE_BLOCK_ORDER`, Core-6 + understand-code-first + evidence-based-reasoning; the mutation-oriented `cross-service-check` + `fix-layer-accountability` are deliberately excluded to save tokens on agents that only locate/read/design code).
-- `CORE_ONLY_AGENTS` (8 non-code agents → `CORE_BLOCK_ORDER`, Core-6).
+- `CODE_AGENTS` (code/review/fix agents → `CODE_BLOCK_ORDER`, Code-6).
+- `READONLY_CODE_AGENTS` (2 read-only/design agents — `researcher`, `ui-ux-designer` → `READONLY_CODE_BLOCK_ORDER`, Core-2 + understand-code-first + evidence-based-reasoning; the mutation-oriented `cross-service-check` + `fix-layer-accountability` are deliberately excluded to save tokens on agents that only locate/read/design code).
+- `CORE_ONLY_AGENTS` (non-code agents → `CORE_BLOCK_ORDER`, Core-2).
 
-An agent in **none of the three sets (or in more than one)** raises `SystemExit` — no silent default; classify it before the script will run. Skills always use `SKILL_BLOCK_ORDER`. Pass `--agents-only` to scope a run to agents (skip skills).
+An agent in **none of the three sets (or in more than one)** raises `SystemExit` — no silent default; classify it before the script will run. Skills use `SKILL_BLOCK_ORDER` (`ORCHESTRATOR_SKILL_BLOCK_ORDER` for `ORCHESTRATOR_SKILLS`). Pass `--agents-only` to scope a run to agents (skip skills).
 
 > **Adding a new agent:** add its basename to exactly one of `CODE_AGENTS` / `READONLY_CODE_AGENTS` / `CORE_ONLY_AGENTS` in `sync-hooks-to-skills.py` **and** in the regression suite `.claude/hooks/tests/suites/agent-universal-rules.test.cjs` (TC-UAR-005 fails until both agree). The two enforce one invariant.
 >
@@ -219,7 +229,7 @@ An agent in **none of the three sets (or in more than one)** raises `SystemExit`
 
 > **No cross-check exists.** The two lists are enforced by two SEPARATE mechanisms and nothing verifies they agree — TC-UAR-017 never reads `EXCLUDED_ORCHESTRATION` (it appears in that test file only in a comment and a failure-message string). Keeping them in step is a **convention**, not an enforced invariant: update both by hand in the same change.
 
-The bar for that exemption is caller-side ownership: the block must drive orchestration the leaf either **cannot perform** (it has no access to the parent conversation, workflow state, or the user) or **has no basis to perform** (the decision was already made upstream before its brief was issued). Current members — `nested-task-creation`, `subagent-return-contract`, `sub-agent-selection`, `parallel-phase-advancement`, `parallel-subagent-dispatch`, `goal-contract-satisfaction-loop` — expand workflow steps, choose/brief sub-agents, partition a task list into parallel waves, or drive a user-facing convergence loop. `parallel-subagent-dispatch` is the second kind: an agent CAN spawn (agent files generally carry no `tools:` restriction), but it receives one already-partitioned brief, so re-running PAR/SEQ tagging inside it re-decides upstream's call. An agent that legitimately fans out carries that instruction in its own `.claude/agents/*.md` definition instead.
+The bar for that exemption is caller-side ownership: the block must drive orchestration the leaf either **cannot perform** (it has no access to the parent conversation, workflow state, or the user) or **has no basis to perform** (the decision was already made upstream before its brief was issued). Examples — `subagent-return-contract`, `sub-agent-selection`, `parallel-phase-advancement`, `goal-contract-satisfaction-loop` — govern caller-side briefing, routing, workflow barriers or user-facing convergence. An agent that legitimately fans out carries its scope in its own definition.
 
 #### Step B3: Run the script (dry-run first)
 
@@ -242,8 +252,8 @@ python .claude/scripts/sync-hooks-to-skills.py --verbose
 #                                            exemption lists — see "Skill-only blocks")
 #   - block in SKILL_BLOCK_ORDER + CORE   → every discovered skill + every discovered agent
 #   - block in CORE_BLOCK_ORDER           → every discovered agent (skills excluded)
-#   - block in READONLY_CODE_BLOCK_ORDER  → 21 agents (17 code + 4 readonly-code)
-#   - block in CODE_BLOCK_ORDER           → 17 code agents only
+#   - block in READONLY_CODE_BLOCK_ORDER  → every code and readonly-code agent
+#   - block in CODE_BLOCK_ORDER           → every code agent only
 grep -rl "SYNC:new-block-name" .claude/skills/*/SKILL.md .claude/agents/*.md | wc -l
 
 # Then run the agent-coverage regression suite — it asserts tier membership,
@@ -252,6 +262,8 @@ node .claude/hooks/tests/run-all-tests.cjs --filter=agent-universal
 ```
 
 Check a representative file of each affected tier manually to confirm placement and formatting.
+
+Rebuild the published projection with `node .claude/scripts/build-protocol-projection.cjs`, run `node .claude/scripts/codex/verify-sync-adoption-parity.mjs`, and search `.claude` for out-of-inventory carriers before reporting completion.
 
 ---
 
@@ -267,8 +279,8 @@ $sync-skills-shared-protocols                            # Interactive — asks 
 ## Rules
 
 - ALWAYS edit `sync-inline-versions.md` FIRST, then run this skill
-- NEVER modify content outside `<!-- SYNC:tag -->` boundaries
-- NEVER touch `:reminder` blocks unless explicitly asked
+- For Operation A, preserve unrelated authored content outside the selected SYNC fences; rebuild generated projections through their owner. Operation B inserts only the declared tier blocks and connection metadata.
+- NEVER touch `:reminder` blocks unless explicitly asked — and when asked, sync them WITH THE SCRIPT on the `{tag}:reminder` tag; never hand-write one
 - If close tag is missing in a target file, SKIP that file and report it as an error
 - Use the `Grep` tool (not shell grep) per project conventions
 - Verify tag balance after every sync run
@@ -276,177 +288,33 @@ $sync-skills-shared-protocols                            # Interactive — asks 
 
 ---
 
-<!-- SYNC:critical-thinking-mindset -->
+<!-- PROTOCOL-GUIDES:START -->
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
-<!-- /SYNC:critical-thinking-mindset -->
+- `shared-protocol-duplication-policy` — Protocol copies in carriers are intentional: edit the canonical source, then propagate; editing a shared protocol or its carriers → .claude/skills/shared/protocols/shared-protocol-duplication-policy.md
 
-<!-- SYNC:shared-protocol-duplication-policy -->
-
-> **Shared Protocol Duplication Policy** — Inline protocol content in skills (wrapped in `<!-- SYNC:tag -->`) is INTENTIONAL duplication. Do NOT extract, deduplicate, or replace with file references. AI compliance drops significantly when protocols are behind file-read indirection. To update: edit `.claude/skills/shared/sync-inline-versions.md` first, then grep `SYNC:protocol-name` and update all occurrences.
-
-<!-- /SYNC:shared-protocol-duplication-policy -->
-
-<!-- SYNC:ai-mistake-prevention -->
-
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
-
-<!-- /SYNC:ai-mistake-prevention -->
+<!-- PROTOCOL-GUIDES:END -->
 
 <!-- SYNC:shared-protocol-duplication-policy:reminder -->
 
-**IMPORTANT MUST ATTENTION** follow duplication policy: inline protocols are INTENTIONAL, never extract to file references
+**IMPORTANT** Edit the canonical protocol, propagate skills and agents, then rebuild projections. Keep guides, inline exceptions and role reminders; universal protocols remain hook-only.
 
 <!-- /SYNC:shared-protocol-duplication-policy:reminder -->
 
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
-
 ## Closing Reminders
+
+**IMPORTANT MUST ATTENTION Goal:** Propagate canonical protocol updates or new tiered blocks to their declared carriers and published projection, with verified parity.
+
+**IMPORTANT MUST ATTENTION Workflow:** A: select tags → read canonical → inspect updater dry-run inventory → propagate → rebuild/check projection and all carriers → sync reminders only when requested. B: author canonical → update tiers/connections → dry-run → insert → rebuild/check coverage/parity → report. Preserve guides, full-text carriers, overrides and unrelated authored content.
 
 **Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
 
-- **Critical Thinking:** apply critical+sequential thinking; trace every claim, confidence >80%.
-- **Shared Protocol Duplication:** inline protocols are intentional; never extract to file references.
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
+- **Shared Protocol Duplication:** follow the hybrid duplication policy (`SYNC:shared-protocol-duplication-policy`) — skills keep guide lines, agents and mode-reference SYNC carriers keep full bodies, and every fresh reviewer prompt keeps all 11 bodies VERBATIM, and only the sync tool converts or propagates them.
 
 **IMPORTANT MUST ATTENTION** edit `sync-inline-versions.md` FIRST before syncing to skills
 **IMPORTANT MUST ATTENTION** verify SYNC tag balance after every sync run
-**IMPORTANT MUST ATTENTION** NEVER modify content outside `<!-- SYNC:tag -->` boundaries
+**IMPORTANT MUST ATTENTION** preserve unrelated authored content; projections are regenerated by their owner
 **IMPORTANT MUST ATTENTION** skip files with missing close tags and report as errors
 
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using task tracking.
-
-<!-- CODEX:SYNC-PROMPT-PROTOCOLS:START -->
-
-## Hookless Prompt Protocol Mirror (Auto-Synced)
-
-Source: `.claude/.ck.json` + `.claude/skills/shared/sync-inline-versions.md` (`:full` blocks) + `.claude/scripts/lib/hookless-prompt-protocol.cjs`
-
-## [WORKFLOW-EXECUTION-PROTOCOL] [BLOCKING] Workflow Execution Protocol — MANDATORY IMPORTANT MUST CRITICAL. Do not skip for any reason.
-
-**Generic portability boundary:** Reusable skills and protocol text stay project-neutral; project-specific conventions are discovered from docs/project-config.json and docs/project-reference/. Apply shared AI-SDD from `shared/sdd-artifact-contract.md`. Read `docs/project-config.json` and `docs/project-reference/docs-index-reference.md`, then open the project reference docs named there. For spec, test-case, behavior-change, public-contract, or `docs/specs/` work, route through the local spec docs named by the docs index: `feature-spec-reference.md`, `spec-system-reference.md`, `spec-principles.md`, and `workflow-spec-test-code-cycle-reference.md` when specs/tests/code must stay synchronized. If either file or a required reference doc is missing or stale, auto-run `$project-init` (or the narrow lower-level route such as `$project-config`, `$docs-init`, `$scan-all`, or `$scan --target=<key>`) before ordinary project-specific work. Any supported AI tool may execute when this shared context and local docs are available.
-
-1. **DETECT:** If the prompt starts with an explicit slash skill/workflow command, execute it directly. Otherwise match the prompt against the workflow catalog and skill list.
-2. **ANALYZE:** Choose the best option: execute directly, invoke a skill, activate a standard workflow, or compose a custom step combination.
-3. **AUTO-SELECT:** Pick the best option yourself. Do not ask the user to choose between direct execution, skill, standard workflow, or custom workflow.
-4. **ACTIVATE:** For a selected workflow, call `$start-workflow <workflowId>`; for a selected skill, invoke that skill; for a custom workflow, sequence custom steps directly; for direct execution, proceed with the task.
-5. **CREATE TASKS:** task tracking for ALL workflow/skill/custom steps before execution when the selected path has multiple steps.
-6. **PARALLELIZE:** Before executing the task list, tag each task `PAR` (independent inputs + write set disjoint from every other `PAR` task) or `SEQ` (name the blocking dependency), group `PAR` tasks into waves, declare the wave plan, and spawn each wave's sub-agents in ONE message — all-return barrier per wave, fan-out one level deep unless a sub-agent's own definition authorizes further fan-out. Sequential-by-default is a defect when tasks are independent; do not parallelize shared write targets, output-consuming tasks, trivial single-file work, ordering a skill or workflow explicitly fixes, or user-approval gates.
-7. **EXECUTE:** Advance per the **Workflow Step Advancement & Parallel Phases** rule in your context instructions — model-driven; a sub-agent completion advances a step identically to an inline call; a parallel-phase group is an all-return barrier (advance only after ALL members return, never serialize it)
-
-## Shared AI-SDD Protocol Markers
-
-Source: `.claude/skills/shared/sync-inline-versions.md`
-
-## SYNC:ai-sdd-artifact-contract
-
-> **AI-SDD Artifact Contract** — Shared spec-driven development rules stay portable and source-owned.
->
-> 1. Keep reusable AI-SDD principles in `.claude`; put repository-specific paths, commands, owners, products, and formats in project config/reference docs.
-> 2. Preserve cycle: `spec -> plan -> tasks -> implement -> verify -> update spec/docs`.
-> 3. Trace every requirement or invariant through decision, task, TC/test, source evidence, and docs/spec update.
-> 4. Treat code-to-spec extraction as reference-only until accepted by the canonical spec owner.
-> 5. Any supported AI tool may plan, implement, review, or verify with synced context; using multiple tools is optional.
-> 6. Update `.claude` source first, then sync generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`. — why: mirrors are generated artifacts; hand-edits are overwritten on the next sync
-> 7. If `docs/project-config.json`, root instruction files, or a required project-reference doc is missing or stale, auto-run `$project-init` or the narrow lower-level route before ordinary project-specific work.
->
-> **Active reference:** `shared/sdd-artifact-contract.md` in the active skills root.
-
----
-
-## SYNC:ai-sdd-artifact-contract:reminder
-
-- **MANDATORY** Apply `shared/sdd-artifact-contract.md`; keep reusable AI-SDD in `.claude` and local rules in project docs.
-- **MANDATORY** Code-to-spec extraction is reference-only until canonical acceptance; any supported AI tool may execute with synced context.
-- **MANDATORY** Update `.claude` source before syncing generated mirrors; do not manually edit `.agents`, `.codex`, or `AGENTS.md`.
-- **MANDATORY** Missing or stale project config, root instruction files, or required reference docs route project-specific work through `$project-init` or the narrow setup route automatically.
-  **[TASK-PLANNING] [MANDATORY]** BEFORE executing any workflow or skill step, create/update task tracking for all planned steps, then keep it synchronized as each step starts/completes.
-
-## [LESSON-LEARNED-REMINDER] [BLOCKING] Task Planning & Continuous Improvement — MANDATORY. Do not skip.
-
-Break work into small tasks (task tracking) before starting. Add final task: "Analyze AI mistakes & lessons learned".
-
-**Extract lessons — ROOT CAUSE ONLY, not symptom fixes:**
-
-1. Name the FAILURE MODE (reasoning/assumption failure), not symptom — "assumed API existed without reading source" not "used wrong enum value".
-2. Generality test: does this failure mode apply to ≥3 contexts/codebases? If not, abstract one level up.
-3. Write as a universal rule — strip project-specific names/paths/classes. Useful on any codebase.
-4. Consolidate: multiple mistakes sharing one failure mode → ONE lesson.
-5. **Recurrence gate:** "Would this recur in future session WITHOUT this reminder?" — No → skip `$learn`.
-6. **Auto-fix gate:** "Could `$code-review`/`$code-simplifier`/`$security-review`/`$lint` catch this?" — Yes → improve review skill instead.
-7. BOTH gates pass → ask user to run `$learn`.
-   **[CRITICAL-THINKING-MINDSET]** Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-   **Anti-hallucination principle:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
-   **AI Attention principle (Primacy-Recency):** Put the 3 most critical rules at both top and bottom of long prompts/protocols so instruction adherence survives long context windows.
-   **Goal-driven execution:** Define success criteria first, loop until verified, and stop only when observable checks pass.
-   **Tests verify intent:** Tests must protect business rules/invariants and fail when the protected intent breaks, not only mirror current behavior.
-
-## Common AI Mistake Prevention (System Lessons)
-
-- **Re-read files after context compaction.** Edit requires prior Read in same context; compaction wipes read state. Re-read before editing.
-- **Grep for old terms after bulk replacements.** AI over-trusts find/replace completeness. Grep full repo after bulk edits for missed refs in docs/configs/catalogs.
-- **Check downstream references before deleting.** Deletions cascade doc/code staleness. Map referencing files before removal.
-- **After memory loss, check existing state before creating new.** Compaction wipes prior-work memory. Query current state to resume — never blindly duplicate.
-- **Verify AI-generated content against actual code.** AI hallucinates APIs, class names, method signatures. Grep to confirm existence before documenting/referencing.
-- **Trace full dependency chain after edits.** Changing a definition misses downstream consumers. Trace the full chain.
-- **When renaming, grep ALL consumer file types.** Some file types silently ignore missing refs (no compile error). Search code, templates, configs, generated files.
-- **Trace ALL code paths when verifying correctness.** Code existing ≠ code executing. Trace early exits, error branches, conditional skips — not just happy path.
-- **Update docs that embed canonical data when source changes.** Docs inlining derived data (workflows, schemas, configs) go stale silently. Update all embedding docs alongside source.
-- **Verify sub-agent results after context recovery.** Background agents may finish while parent compacted — grep-verify output, don't trust assumed completion.
-- **Cross-check full target list against sub-agent assignments.** Parallel sub-agents by category miss boundary items. Reconcile union of assignments against target list before proceeding.
-- **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption = permission + knowledge + enforcement (numbered workflow step).
-- **Persist sub-agent findings incrementally, not as a final batch.** Long sub-agents hit cutoffs before final write — findings lost. Instruct append-per-section to report file.
-- **When debugging, ask "whose responsibility?" before fixing.** Trace caller (wrong data) vs callee (wrong handling). Fix at responsible layer — never patch symptom site.
-- **Test failure → record a provisional verdict before trace/edit, then investigate.** Use the full five-way taxonomy: SOURCE-WRONG (production violates intent), TEST-WRONG (assertion/setup is stale), TEST-NOT-OPTIMAL (valid but fragile or low-signal test), ENVIRONMENT-BLOCKED (external state prevents a verdict), or AMBIGUOUS (intent/evidence cannot choose safely). Then trace root cause and triangulate against the governing spec (`docs/specs/**` if one exists) AND source. NEVER weaken an assertion, add a skip, relax a timeout, or change source merely to force green.
-- **Grep ALL removed names after extraction/refactoring.** Primary file "done" ≠ secondary files clean. Grep entire scope for every removed symbol before declaring complete.
-- **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Pattern-matching as "wrong" skips context. Before changing or reporting any constant/limit/flag/cutoff: read comments, git blame, the CALLER's ordering (the guarantee that makes the value correct usually lives in code running immediately BEFORE the cited line), and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard — and in a validation pass, an accurate `file:line` citation proves the transcription, never the defect.
-- **Verify ALL affected outputs, not just the first.** One build green ≠ all green. Multi-stack changes (backend/frontend/tests/docs) require verifying EVERY output.
-- **Evaluate fit before copying a nearby pattern.** Closest example ≠ matching preconditions — verify the new context shares the same constraints, base classes, scope, lifetime.
-- **Holistic-first debugging — resist nearest-attention trap.** Don't dive into first plausible cause. List EVERY precondition (config, env vars, paths, DB, endpoints, creds, versions, DI, data). Verify each against evidence (grep/query — not reasoning). Ask "what would falsify this?" — if nothing, it's not a hypothesis. Most expensive failure: going deeper in "obvious" layer while bug sits in layer never questioned.
-- **Surgical changes — apply the diff test (context-aware).** Two modes: (1) Bug fix → every line traces to the bug; no restyling; orphan cleanup only for imports YOUR changes made unused. (2) Review/enhancement → implement improvements AND announce as "Enhancement beyond main request: [what]". Never silently scope-creep. Diff test: "Would this line exist if I wasn't asked to do X?" — if no, delete or announce.
-- **Surface ambiguity before coding — don't pick silently.** Multiple valid interpretations → present each with effort: "[Request] could mean (1) [N h], (2) [N h]. Which matters?" List scope/format/volume/constraints assumptions first. If simpler path exists, say so. Never silently pick.
-- **[MANDATORY FIRST ACTION] ALWAYS activate a suitable skill or workflow BEFORE responding.** Match task against workflow catalog + skill list; invoke via skill invocation or `$start-workflow <workflowId>`. NEVER answer or write code before checking. Skip = protocol violation.
-- **Why-Review adversarial mindset — apply when reviewing any plan, decision, or design.** Default SKEPTIC not VALIDATOR: steel-man a rejected alternative, invert each stated reason ("what does it sacrifice?"), stress-test top 2-3 assumptions, run pre-mortem ("ships, fails in 3 months — what breaks?"), surface 1-2 alternatives author missed. Section presence ≠ quality; quality = causal reasoning + concrete mitigations + evidence, not "it's better" or "monitor closely".
-- **Front-load report-write in sub-agent prompts for large reviews.** Many-file sub-agents hit budget before final write — findings lost. Design prompts so: (1) report-write is first explicit deliverable, (2) append per-file/section (not batched), (3) scope bounded so reads don't exhaust budget. Truncated mid-sentence with no report file → spawn narrower scope, don't retry same prompt.
-- **After context compaction, re-verify all prior phase outcomes before continuing.** Summaries describe intent, not environment state (git index, filesystem, processes). On resume, FIRST audit: git status, re-read modified files, verify filesystem. Every "completed" claim is an untested hypothesis until evidence confirms.
-- **OOM/memory: check row count before row size.** Triage: (1) Unbounded query — no DB filter for trigger? Push filter to DB; eliminates OOM. (2) Large rows? Projection reduces proportionally. Row reduction > projection in ROI.
-- **Assert the outcome your system OWNS, never the intermediate state your INFRASTRUCTURE owns.** When testing anything asynchronous (queue/broker delivery, retries, background jobs, caches, replication), assert the final business/entity state. NEVER assert the delivery bookkeeping — consume/send status, attempt counts, last-error, row existence or counts in a broker, scheduler, or outbox/inbox table. That bookkeeping lives in shared infrastructure that ANY co-running process (a peer worker, a second replica, a leftover local container) can write, usually under a deterministic shared key, so the assertion silently tests the developer's environment instead of the system: green when run alone, flaky the instant anything else shares that broker + database. Gate question for every assertion: "would this hold no matter WHICH process did the work?" — if no, assert the converged data state instead. Corollary: process-local fault injection and in-process telemetry cannot gate work any process may perform — use them as stress amplifiers (arm → bounded window → disarm → assert convergence), never as preconditions.
-- **Keep domain concepts out of generic/shared/infrastructure layers.** Reusable layer (shared library, framework, infra module) must reference NO consumer-specific domain concept — tenant/customer/product IDs, business entities, feature rules. Leak compiles + runs → passes review silently while coupling the "reusable" layer to one consumer. Keep shared type domain-free; push domain fields/logic down into the consumer via subclass/composition. — why: a layer coupled to one consumer's domain is no longer reusable.
-
-<!-- CODEX:SYNC-PROMPT-PROTOCOLS:END -->
+**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using todo tracking.

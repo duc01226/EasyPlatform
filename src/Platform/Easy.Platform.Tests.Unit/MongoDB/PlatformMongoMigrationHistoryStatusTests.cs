@@ -14,11 +14,11 @@ public class PlatformMongoMigrationHistoryStatusTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <b>Why this test exists.</b> bravoINSIGHTS maps its mongo-migration collection and its data-migration collection to the SAME
-    /// physical collection (<c>AnalyzeDbContext.cs:69,71</c>). One <c>Status</c> field there therefore holds strings written by BOTH
-    /// <see cref="PlatformMongoMigrationHistory.Statuses" /> and <see cref="PlatformDataMigrationHistory.Statuses" />. Nothing in the
-    /// compiler couples the two enums — this test is the only thing that does. Rename a member on either side and reads of that
-    /// collection start failing to parse an unknown string, breaking service startup.
+    /// <b>Why this test exists.</b> A consuming DbContext MAY map its mongo-migration collection and its data-migration collection onto
+    /// the SAME physical collection — it only has to give both the same collection name. One <c>Status</c> field there then holds strings
+    /// written by BOTH <see cref="PlatformMongoMigrationHistory.Statuses" /> and <see cref="PlatformDataMigrationHistory.Statuses" />.
+    /// Nothing in the compiler couples the two enums — this test is the only thing that does. Rename a member on either side and reads of
+    /// that collection start failing to parse an unknown string, breaking service startup.
     /// </para>
     /// <para>
     /// <b>Why names and not ordinal values.</b> The hybrid enum serializer persists <c>value.ToString()</c>, so the stored
@@ -40,8 +40,8 @@ public class PlatformMongoMigrationHistoryStatusTests
 
         mongoStatusNames.Should().BeSubsetOf(
             dataMigrationStatusNames,
-            "both enums persist as strings into ONE shared Status field in bravoINSIGHTS' migrationHistories collection; a mongo-only "
-                + "member name would be an unparseable value for readers of the data-migration type");
+            "both enums may persist as strings into ONE shared Status field when a consuming DbContext maps both ledgers onto the same "
+                + "collection; a mongo-only member name would be an unparseable value for readers of the data-migration type");
     }
 
     /// <summary>

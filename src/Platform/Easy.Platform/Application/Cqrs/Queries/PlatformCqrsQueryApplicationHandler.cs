@@ -119,10 +119,10 @@ public interface IPlatformCqrsQueryApplicationHandler
 /// - Graceful degradation handling
 ///
 /// Used extensively across platform services:
-/// - Growth service: Employee data queries, attendance reports, leave balances
-/// - Employee service: Payroll calculations, employee profiles, hierarchy data
-/// - Talents service: Candidate searches, interview schedules, hiring metrics
-/// - Permission Provider: Subscription queries, usage analytics, limit checks
+/// - Entity data queries and reports
+/// - Calculations, profiles, and hierarchy data
+/// - Searches, schedules, and metrics
+/// - Subscription, usage-analytics and limit-check queries
 ///
 /// Concrete implementations should focus on business logic while leveraging
 /// the comprehensive infrastructure provided by this base class.

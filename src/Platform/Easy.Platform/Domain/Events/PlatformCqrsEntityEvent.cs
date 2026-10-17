@@ -52,9 +52,9 @@ namespace Easy.Platform.Domain.Events;
 ///
 /// <para><strong>Common Use Cases:</strong></para>
 /// <list type="bullet">
-/// <item><description>Entity lifecycle events (EmployeeCreatedEvent, CandidateUpdatedEvent, GoalDeletedEvent)</description></item>
-/// <item><description>Business workflow triggers (PerformanceReviewStartedEvent, AttendanceApprovedEvent)</description></item>
-/// <item><description>Integration events for external systems (UserRegisteredEvent, PayrollProcessedEvent)</description></item>
+/// <item><description>Entity lifecycle events (EntityCreatedEvent, EntityUpdatedEvent, EntityDeletedEvent)</description></item>
+/// <item><description>Business workflow triggers (ReviewStartedEvent, RequestApprovedEvent)</description></item>
+/// <item><description>Integration events for external systems (UserRegisteredEvent, BatchProcessedEvent)</description></item>
 /// <item><description>Audit and compliance events (DataAccessEvent, SecurityViolationEvent)</description></item>
 /// </list>
 /// </remarks>
@@ -89,7 +89,7 @@ public interface IPlatformCqrsEntityEvent : IPlatformCqrsEvent
     /// Restores EntityData and ExistingEntityData references from the original (pre-clone) event.
     /// <br/><br/>
     /// <b>Why needed:</b> When multiple handlers exist for an event, the event is deep-cloned (JSON serialized)
-    /// for handler isolation. This creates NEW instances of all navigation properties (Employee, RequestType, etc.).
+    /// for handler isolation. This creates NEW instances of every navigation property the entity carries.
     /// If the handler runs in the same DbContext scope (MustWaitHandlerExecutionFinishedImmediately=true),
     /// these deserialized instances conflict with entities already tracked by the DbContext
     /// ("another instance with the same key value" error).
@@ -149,7 +149,7 @@ public static class PlatformCqrsDomainEventsSupportEntityEventExtensions
     /// <br />
     /// The method then deserializes the event data into instances of TEvent using the PlatformJsonSerializer.TryDeserializeOrDefault[TEvent] method and returns a list of these instances.
     /// <br />
-    /// This method is useful in scenarios where you need to process specific types of domain events associated with an entity. For example, in the provided code snippets, it is used to find and process events such as User.PropertyRelatedToCustomFieldChangedDomainEvent, User.SetNeedToUpdateConnectionEvent, CandidateEntity.UpsertApplicationsDomainEvent, CandidateEntity.ChangeRejectStatusApplicationDomainEvent, and TextSnippetEntity.EncryptSnippetTextDomainEvent.
+    /// This method is useful in scenarios where you need to process specific types of domain events associated with an entity — for example an entity's own nested domain-event types such as MyEntity.SomePropertyChangedDomainEvent or MyEntity.NeedsReindexDomainEvent, which a handler locates by type rather than by inspecting the raw DomainEvents list.
     /// <br />
     /// This method is a part of the Domain-Driven Design (DDD) approach, where domain events are used to capture side effects resulting from changes to the domain.
     /// </remarks>
@@ -175,7 +175,7 @@ public static class PlatformCqrsDomainEventsSupportEntityEventExtensions
     /// <br />
     /// The method takes an Expression[Func[TEntity, TValue]] as a parameter, which represents a lambda expression that specifies the field of the entity. It then checks the DomainEvents list for a FieldUpdatedDomainEvent that matches the specified field. If such an event is found, it is returned; otherwise, the method returns null.
     /// <br />
-    /// This method is used in event handlers, such as CreateGoalActionHistoryOnUpdateGoalEntityEventHandler and SendEmailOnCreateOrUpdateAttendanceRequestEntityEventHandler, to check if specific fields were updated and to handle these updates accordingly. For example, if the Measurement field of a Goal entity was updated, an action history might be created; or if the Status field of an AttendanceRequest entity was updated, an email notification might be sent.
+    /// This method is used in entity-event handlers to check whether specific fields were updated and to handle those updates accordingly. For example, a handler may write an action-history row only when a tracked measurement field changed, or send a notification only when a Status field changed — reacting to the FIELD rather than to the whole update.
     /// </remarks>
     public static ISupportDomainEventsEntity.FieldUpdatedDomainEvent<TValue>? FindFieldUpdatedEvent<TValue, TEntity>(
         this IPlatformCqrsDomainEventsSupportEntityEvent<TEntity> @event,

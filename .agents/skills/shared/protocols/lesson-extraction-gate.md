@@ -1,0 +1,3 @@
+## Continuous Improvement — Lesson Extraction Gate
+
+Add `Analyze AI mistakes & lessons learned` to non-trivial tasks. Extract the root reasoning failure, generalize to at least three contexts, remove incident specifics and consolidate duplicates. Recommend only a project convention or a universal best-practice protocol worth reading on everyday work — skip rare AI-agent quirks, one-off incidents and details of the current task. Skip nonrecurring lessons; improve the review skill when mechanical review can catch the failure. If valuable, recurring and not mechanically catchable, ask the user to run `$learn`; never silently self-edit instructions.

@@ -377,8 +377,9 @@ internal sealed class SaveSnippetTextCommandHandler : PlatformCqrsCommandApplica
         // TEST DEMO Case update using CreateOrUpdate directly entity is mapped from dto. When update do not get from existing entity still should work normally, should also add domain event
         if (request.Data.HasSubmitId())
         {
+            // The public DTO cannot set ownership; preserve the validated stored creator, including null.
             savedData = await textSnippetEntityRepository.CreateOrUpdateAsync(
-                request.Data.MapToEntity().With(p => p.FullText += " Updated TEST DEMO Case update using CreateOrUpdate"),
+                request.Data.MapToEntity().With(p => p.CreatedByUserId = validToSaveEntity.CreatedByUserId).With(p => p.FullText += " Updated TEST DEMO Case update using CreateOrUpdate"),
                 cancellationToken: cancellationToken);
         }
 

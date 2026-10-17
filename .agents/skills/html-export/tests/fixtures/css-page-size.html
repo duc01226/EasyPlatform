@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CSS page size fixture</title>
+<!--
+  Test input for html-export --to=pdf page-size precedence (tests/to-pdf.test.cjs).
+  It is not a user-facing surface, so the UI/UX and design-distinctiveness gates are skipped on purpose.
+  Its print CSS sets `@page { size: 600px 400px }` (450 x 300 pt). Without --page the PDF page must
+  follow that size; with --page=WxH the explicit flag must win.
+-->
+<style>
+  @page { size: 600px 400px; margin: 0; }
+  html, body { margin: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
+</style>
+</head>
+<body>
+<h1>Page size precedence</h1>
+<p>One short page of print content.</p>
+</body>
+</html>

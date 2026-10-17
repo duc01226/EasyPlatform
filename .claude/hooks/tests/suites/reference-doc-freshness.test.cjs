@@ -22,15 +22,18 @@ const { assertEqual, assertTrue } = require('../lib/assertions.cjs');
 const REPO = path.resolve(__dirname, '..', '..', '..', '..');
 const {
     checkClaims,
-    defaultClaimTargets,
-    SCAN_SKILL_MAP
+    defaultClaimTargets
 } = require(path.join(REPO, '.claude', 'scripts', 'doc-impact-map.cjs'));
 const {
     parseLastScannedDate,
-    REFERENCE_DOCS_DIR
+    REFERENCE_DOCS_DIR,
+    getAlwaysOnReferenceDocs,
+    getReferenceDocs,
+    getReferenceDocScanSkill,
+    getReferenceDocPath
 } = require(path.join(REPO, '.claude', 'hooks', 'lib', 'session-init-helpers.cjs'));
 
-const REF_DIR = path.join(REPO, 'docs', 'project-reference');
+const REF_DIR = REFERENCE_DOCS_DIR;
 const LAST_SCANNED_ANYWHERE = /<!--\s*Last scanned:\s*(\d{4}-\d{2}-\d{2})/;
 
 function referenceDocs() {
@@ -78,10 +81,13 @@ const tests = [
                 .map(d => d && d.filename)
                 .filter(Boolean)
                 .filter(f => !fs.existsSync(path.join(REF_DIR, f)));
+            const absentAlwaysOn = getAlwaysOnReferenceDocs()
+                .map(doc => doc.filename)
+                .filter(filename => !fs.existsSync(path.join(REF_DIR, filename)));
             assertTrue(
-                absent.length === 0,
-                `project-config.json registers reference docs that do not exist: ${absent.join(', ')}.\n` +
-                    'Fix: run the doc\'s scan (/scan --target=<key>) or drop the stale registration via /project-config.'
+                absent.length === 0 && absentAlwaysOn.length === 0,
+                `Configured reference docs missing: ${absent.join(', ') || '(none)'}; always-on owner docs missing: ${absentAlwaysOn.join(', ') || '(none)'}.\n` +
+                    'Fix: materialize always-on project inputs at the configured docs-index owner path, run the relevant scan for selected docs, or remove a stale registration via /project-config.'
             );
         }
     },
@@ -107,15 +113,19 @@ const tests = [
         name: '[reference-doc-freshness] F4 no Last scanned stamp hides beyond its reader window',
         fn: () => {
             // Conditional invariant on purpose: a doc is NOT required to carry a stamp —
-            // getStaleReferenceDocs deliberately skips undated docs ("never block incorrectly") and
-            // 3 SCAN_SKILL_MAP entries legitimately have none. But a stamp that EXISTS must be
+            // getStaleReferenceDocs deliberately skips undated docs ("never block incorrectly").
+            // A stamp that EXISTS must be
             // readable by parseLastScannedDate, which reads only the first 200 bytes. Placing the
             // stamp below a Goal blockquote leaves it visible to a human and invisible to the
             // 60-day rescan gate — silently disabling that gate for the doc.
             const hidden = [];
-            for (const filename of Object.keys(SCAN_SKILL_MAP)) {
+            const trackedDocs = new Map();
+            for (const doc of [...getAlwaysOnReferenceDocs(), ...getReferenceDocs()]) {
+                if (getReferenceDocScanSkill(doc)) trackedDocs.set(doc.filename, doc);
+            }
+            for (const filename of trackedDocs.keys()) {
                 if (!filename.endsWith('.md')) continue;
-                const abs = path.join(REFERENCE_DOCS_DIR, filename);
+                const abs = getReferenceDocPath(filename);
                 if (!fs.existsSync(abs)) continue;
                 const stamped = LAST_SCANNED_ANYWHERE.test(fs.readFileSync(abs, 'utf8'));
                 if (stamped && !parseLastScannedDate(abs)) hidden.push(filename);

@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 import { frameworkPkg, readFrameworkRootFile } from "./framework-repo.helper.mjs";
 
 // Regression lock for the cross-surface mirror-drift class fixed this session:
-//   1. A standalone `prettier --write` reformatted AGENTS.md and drifted its mirror block off
-//      .codex/CODEX_CONTEXT.md, FAILing verify-skill-protocol-compliance.
+//   1. A standalone `prettier --write` reformatted AGENTS.md and drifted its projection off
+//      CLAUDE.md, FAILing the sync-divergence oracle.
 //   2. There was no single entrypoint to sync+verify the codex surfaces, so a one-surface sync
 //      left the others silently stale.
 // These tests fail loudly if either guard is removed — keeping the sync pipeline the sole writer
@@ -43,21 +43,23 @@ test("TC-MWG-002 .prettierignore does NOT exclude CLAUDE.md (it is prettier-mana
   assert.ok(!lines.has("/CLAUDE.md") && !lines.has("CLAUDE.md"), "CLAUDE.md must remain prettier-managed source, not an ignored mirror");
 });
 
-// TC-MWG-003 — the unified sync:all/verify:all entrypoints DELEGATE to the standalone runner instead
-// of embedding an `npm run … && …` chain. This is the portability contract: the full-pipeline logic
-// lives in ONE place inside `.claude` (run-codex-sync.mjs), so a project that only copied `.claude`
-// (no root package.json) runs the identical pipeline, and the npm chain can't drift from the runner.
-// The "spans both surfaces" guarantee now lives on the runner and is locked by PORT-005.
-test("TC-MWG-003 sync:all + verify:all delegate to the standalone .claude runner (no embedded && chain)", () => {
+// TC-MWG-003 — the full pipeline is reachable ONLY from inside `.claude`. The predecessor of this
+// test allowed `sync:all`/`verify:all` as thin delegating npm aliases; they are now forbidden
+// entirely, because a delegating alias is still a second documented interface, and prose that
+// teaches `npm run …` teaches a command absent from a Python repo, a .NET repo, or any project that
+// copied only `.claude`. The runner is the sole orchestrator, and it ships inside the bundle.
+test("TC-MWG-003 the whole pipeline is driven from inside .claude, never from a package.json script", () => {
+  // Runner presence is UNCONDITIONAL — it travels in the bundle.
+  const runnerPath = path.join(repoRoot, ".claude", "skills", "sync-codex", "scripts", "run-codex-sync.mjs");
+  assert.ok(fs.existsSync(runnerPath), "the standalone runner must exist inside .claude");
+  const runner = fs.readFileSync(runnerPath, "utf8");
+  assert.match(runner, /--verify-only/, "the runner must expose the read-only pipeline selector itself");
+  assert.match(runner, /--list-stages/, "the runner must expose its own stage roster for discovery");
+
   const pkg = frameworkPkg(repoRoot);
-  if (!pkg) return; // adopting project: the npm entrypoints are this repo's convenience surface
-  const scripts = pkg.scripts || {};
-  for (const name of ["sync:all", "verify:all"]) {
-    assert.ok(typeof scripts[name] === "string" && scripts[name].length > 0, `package.json must define the "${name}" script`);
-  }
-  const runnerRef = /node\s+\.claude\/skills\/sync-codex\/scripts\/run-codex-sync\.mjs/;
-  for (const name of ["sync:all", "verify:all"]) {
-    assert.match(scripts[name], runnerRef, `${name} must delegate to the standalone runner, not re-encode the chain`);
-    assert.ok(!scripts[name].includes("&&"), `${name} must NOT embed an && chain — orchestration logic belongs in the .claude runner, not package.json`);
-  }
+  if (!pkg) return; // adopting project: its package.json scripts are its own business
+  const offenders = Object.entries(pkg.scripts || {})
+    .filter(([, command]) => /\.claude[\\/]|\.codex[\\/]|run-codex-sync/.test(String(command)))
+    .map(([name]) => name);
+  assert.deepEqual(offenders, [], `no package.json script may drive the framework; found: ${offenders.join(", ")}`);
 });

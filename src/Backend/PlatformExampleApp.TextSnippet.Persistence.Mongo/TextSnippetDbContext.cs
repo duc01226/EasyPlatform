@@ -41,6 +41,7 @@ public sealed class TextSnippetDbContext : PlatformMongoDbContext<TextSnippetDbC
         await Task.WhenAll(
             TextSnippetCollection.Indexes.CreateManyAsync(
             [
+                BuildCreatorSearchIndex(),
                 new CreateIndexModel<TextSnippetEntity>(
                     Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.CreatedBy)),
                 new CreateIndexModel<TextSnippetEntity>(
@@ -57,10 +58,7 @@ public sealed class TextSnippetDbContext : PlatformMongoDbContext<TextSnippetDbC
                     Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.Addresses)),
                 new CreateIndexModel<TextSnippetEntity>(
                     Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.AddressStrings)),
-                new CreateIndexModel<TextSnippetEntity>(
-                    Builders<TextSnippetEntity>.IndexKeys
-                        .Text(p => p.SnippetText)
-                        .Text(p => p.FullText))
+                TextSnippetSearchIndexes.BuildCreatorTextIndex()
             ]),
             TextSnippetCategoryCollection.Indexes.CreateManyAsync(
             [
@@ -73,6 +71,13 @@ public sealed class TextSnippetDbContext : PlatformMongoDbContext<TextSnippetDbC
                 new CreateIndexModel<TextSnippetCategory>(
                     Builders<TextSnippetCategory>.IndexKeys.Ascending(c => c.SortOrder))
             ]));
+    }
+
+    // Shared by fresh initialization and the create-only upgrade for existing databases.
+    internal static CreateIndexModel<TextSnippetEntity> BuildCreatorSearchIndex()
+    {
+        return new CreateIndexModel<TextSnippetEntity>(
+            Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.CreatedByUserId).Descending(p => p.CreatedDate));
     }
 
     public override List<KeyValuePair<Type, string>> EntityTypeToCollectionNameMaps()

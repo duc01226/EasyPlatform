@@ -4,7 +4,21 @@
 
 **Final Purpose:** Give AI an accurate, evidence-cited map of the TextSnippet domain model (entities, value objects, DTOs, relationships, persistence) so generated code reuses the correct base classes, mapping ownership, and naming — never inventing new patterns.
 
-**Critical rules:** All entities MUST extend `RootEntity<TEntity, TPrimaryKey>` or `RootAuditedEntity<TEntity, TPrimaryKey, TUserId>`. DTOs MUST own mapping via `PlatformEntityDto<TEntity, TKey>.MapToEntity()`. Value objects MUST extend `PlatformValueObject<T>` and override `Validate()`. Logic belongs in entity, NOT handler/component.
+**Critical rules:** Aggregate roots MUST extend `RootEntity<TEntity, TPrimaryKey>` or `RootAuditedEntity<TEntity, TPrimaryKey, TUserId>`. DTOs MUST own mapping via `PlatformEntityDto<TEntity, TKey>.MapToEntity()`. Value objects MUST extend `PlatformValueObject<T>` and override `Validate()`. Logic belongs in entity, NOT handler/component. The TaskManagement read projection uses `Entity` + `IRowVersionEntity`.
+
+## Contents
+
+- [Entity Base Class Hierarchy](#entity-base-class-hierarchy)
+- [TextSnippet Service — Entity Catalog](#textsnippet-service--entity-catalog)
+- [TaskManagement Module](#taskmanagement-module)
+- [Entity Relationships](#entity-relationships)
+- [Aggregate Boundaries](#aggregate-boundaries)
+- [DTO Mapping](#dto-mapping)
+- [Cross-Service Entity Map (Message Bus)](#cross-service-entity-map-message-bus)
+- [Persistence](#persistence)
+- [Frontend Data Models](#frontend-data-models)
+- [Naming Conventions](#naming-conventions)
+- [Closing Reminders](#closing-reminders)
 
 ## Entity Base Class Hierarchy
 
@@ -47,6 +61,24 @@ Defined in: `src/Platform/Easy.Platform/Domain/Entities/Entity.cs:759` and `Audi
 
 `TextSnippetAssociatedEntity` extends `TextSnippetEntity` — adds `CreatedByUser` (UserEntity) for joined queries without code duplication. File: `src/Backend/.../Domain/AssociatedEntities/TextSnippetAssociatedEntity.cs:9`
 
+## TaskManagement Module
+
+`TaskBoardItemEntity` owns title validation, the Open/InProgress/Completed/Cancelled transition graph and the aggregate
+concurrency token. Its create factory raises one creation event; reconstitution raises none. It has no TextSnippet
+entity reference. Source: `src/Backend/PlatformExampleApp.TaskManagement.Domain/Entities/TaskBoardItemEntities.cs`.
+
+`TaskBoardItemProjectionEntity` has one deterministic row per TaskId, enforced by the unique TaskId index in
+`src/Backend/PlatformExampleApp.TaskManagement.Persistence.Mongo/TaskManagementDbContext.cs`. Its `ConcurrencyUpdateToken`
+is the projection's own optimistic row version; `TaskConcurrencyUpdateToken` carries the aggregate token exposed by
+`TaskBoardItemDto`. These tokens serve different consistency boundaries and must stay separate.
+
+Every writer calls `TaskBoardItemProjectionRepositoryExtensions.UpsertTaskBoardItemProjectionAsync`. Local delivery
+reads the projection before reloading committed aggregate state; transport delivery reads only the projection.
+Both insert missing rows without upserting and retain the captured row version for updates. Conflicts propagate to
+the caller's bounded retry, which repeats the applicable reads and recomputes. Transport creation can materialize
+a missing row but cannot replace an existing projection. Regression proof:
+`src/Backend/PlatformExampleApp.Tests.Unit/TaskManagement/TaskManagementProjectionConcurrencyTests.cs`.
+
 ## Entity Relationships
 
 ```mermaid
@@ -70,7 +102,7 @@ erDiagram
 
 ## Aggregate Boundaries
 
-Single service: **TextSnippet**. All domain entities live in `PlatformExampleApp.TextSnippet.Domain/Entities/`. Each entity is its own aggregate root (extends `RootEntity`/`RootAuditedEntity`). Cross-entity references use FK IDs, NOT nested aggregates.
+The **TextSnippet** aggregates below live in `PlatformExampleApp.TextSnippet.Domain/Entities/`; TaskManagement is a separate boundary described above. Each entity is its own aggregate root (extends `RootEntity`/`RootAuditedEntity`). Cross-entity references use FK IDs, NOT nested aggregates.
 
 - **TextSnippetEntity** — aggregate root, owns Address (value object), references Category and User by ID
 - **TextSnippetCategory** — aggregate root, self-referencing hierarchy (parent/children)
@@ -109,7 +141,7 @@ public static TextSnippetEntityDto FromEntityWithRelated(
 
 ## Cross-Service Entity Map (Message Bus)
 
-Architecture: single-service (TextSnippet), RabbitMQ message bus for entity-event propagation + free-format messaging. Inbox/Outbox pattern ensures reliable delivery.
+The TextSnippet messaging shown below uses RabbitMQ for entity-event propagation and free-format messaging. TaskManagement's separate keyed transport path is described above. Inbox/Outbox supplies reliable delivery.
 
 | Message                                | Base Class                                                     | Producer                                   | Consumer                                                   | Purpose                   |
 | -------------------------------------- | -------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------- | ------------------------- |
@@ -202,7 +234,7 @@ public interface ITextSnippetRootRepository<TEntity> : IPlatformQueryableRootRep
 ## Closing Reminders
 
 **IMPORTANT MUST ATTENTION Final Purpose:** accurate evidence-cited domain map so AI reuses correct base classes, mapping ownership, naming — never invents patterns.
-**IMPORTANT MUST ATTENTION** Entities MUST extend `RootEntity` or `RootAuditedEntity`; add `IRowVersionEntity` for optimistic concurrency.
+**IMPORTANT MUST ATTENTION** Aggregate roots MUST extend `RootEntity` or `RootAuditedEntity`; the TaskManagement read projection uses `Entity` + `IRowVersionEntity`. Add `IRowVersionEntity` when optimistic concurrency is required.
 **IMPORTANT MUST ATTENTION** DTOs MUST own mapping via `MapToEntity()`/`MapToObject()` — NEVER map in handlers.
 **IMPORTANT MUST ATTENTION** Value objects MUST extend `PlatformValueObject<T>` and override `Validate()` (NOT `GetValidator()`) — e.g. `SubTaskItem`, `ExampleAddressValueObject`.
 **IMPORTANT MUST ATTENTION** Business logic MUST live in entity, NOT handler/component.

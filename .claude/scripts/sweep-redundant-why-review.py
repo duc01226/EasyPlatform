@@ -40,13 +40,13 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 # Review skills that embed the why-review findings-validation gate internally.
 # changes-review is intentionally excluded: the parent changes-review workflow
 # keeps an external why-review gate immediately after its first step.
-# (Verified via grep for validate-findings / double-round-trip-review / Findings
+# (Verified via grep for validate-findings / Findings
 #  Validation Gate across .claude/skills/*. why-review itself is excluded.)
 REVIEW_SKILLS = {
-    "architecture-review", "ui-review", "domain-entities-review",
-    "artifact-review", "plan-review",
-    "knowledge-review", "integration-test-review",
-    "code-review", "production-readiness-review", "security-review", "performance",
+    "architecture --mode=review", "ui-design --mode=review", "ai-engineering-review",
+    "work-item --mode=review",
+    "knowledge-review",
+    "code-quality-review", "production-readiness-review", "security-audit", "performance",
 }
 
 
@@ -139,7 +139,7 @@ POS_ROW_RE = re.compile(
 def primary_steps_tokens(text):
     """Return base-step list from the first markdown step-chain line found."""
     for line in text.splitlines():
-        if ("why-review" in line or "/scout" in line or "$scout" in line) and (
+        if ("why-review" in line or "/investigate" in line or "$investigate" in line) and (
             " → " in line or " -> " in line
         ):
             mstart = re.search(r"[/$][a-z]", line)

@@ -352,6 +352,23 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
             : ToPublicBlobUri(CreateBlobSharedAccessUri(blobClient, expirationTime ?? fileStorageConfiguration.DefaultSharedPrivateFileUriAccessTimeMinutes.Minutes()));
     }
 
+    public async Task<Uri> CreateSharedAccessUriAsync(
+        string fullFilePath,
+        TimeSpan? expirationTime,
+        bool restrictToHttps,
+        CancellationToken cancellationToken = default)
+    {
+        var blobClient = await GetBlobClientAsync(fullFilePath);
+
+        return !await blobClient.ExistsAsync(cancellationToken)
+            ? null
+            : ToPublicBlobUri(
+                CreateBlobSharedAccessUri(
+                    blobClient,
+                    expirationTime ?? fileStorageConfiguration.DefaultSharedPrivateFileUriAccessTimeMinutes.Minutes(),
+                    restrictToHttps));
+    }
+
     public async Task<Uri?> CreateSharedAccessUriAsync(
         string rootDirectory,
         string filePath,
@@ -684,16 +701,24 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
     /// <summary>
     /// Create a Sas Uri for blob for public access
     /// </summary>
+    /// <param name="blobClient">The blob to sign.</param>
+    /// <param name="expirationTime">How long the URI stays valid.</param>
+    /// <param name="restrictToHttps">
+    /// Adds <c>spr=https</c> when the blob endpoint is HTTPS. Ignored for an HTTP endpoint (the local emulator), which
+    /// could not serve such a URI.
+    /// </param>
     public static Uri CreateBlobSharedAccessUri(
         BlobClient blobClient,
-        TimeSpan expirationTime)
+        TimeSpan expirationTime,
+        bool restrictToHttps = false)
     {
         var sasBuilder = new BlobSasBuilder
         {
             BlobContainerName = blobClient.GetParentBlobContainerClient().Name,
             BlobName = blobClient.Name,
             Resource = "b",
-            ExpiresOn = DateTimeOffset.UtcNow.Add(expirationTime)
+            ExpiresOn = DateTimeOffset.UtcNow.Add(expirationTime),
+            Protocol = restrictToHttps && blobClient.Uri.Scheme == Uri.UriSchemeHttps ? SasProtocol.Https : SasProtocol.None
         };
 
         sasBuilder.SetPermissions(BlobAccountSasPermissions.Read);

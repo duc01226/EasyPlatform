@@ -1,69 +1,21 @@
-# Frontend - Angular Frontend
+# PlatformExampleWeb
 
-Angular 19 Nx workspace demonstrating EasyPlatform frontend patterns.
+This project was generated using [Nx](https://nx.dev).
 
-## Workspace Structure
+<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="450"></p>
 
-### Applications (`/apps`)
+🔎 **Smart, Fast and Extensible Build System**
 
-| App                       | Port | Description                              |
-| ------------------------- | ---- | ---------------------------------------- |
-| `playground-text-snippet` | 4001 | Demo app for TextSnippet API integration |
+## Quick Start & Documentation
 
-### Libraries (`/libs`)
+## Generate an application
 
-| Library                   | Purpose                                                          |
-| ------------------------- | ---------------------------------------------------------------- |
-| `platform-core`           | Framework foundation - components, stores, utilities, validators |
-| `apps-domains`            | Domain-specific APIs, repositories, models                       |
-| `apps-domains-components` | Domain-specific UI components                                    |
-| `apps-shared-components`  | Cross-app shared UI components                                   |
-| `platform-components`     | Platform-level reusable components                               |
+Run `ng g @nx/angular:app my-app` to generate an application.
 
-## Development Commands
+> You can use any of the plugins above to generate applications as well.
 
-```bash
-# Install dependencies
-npm install
+When using Nx, you can create multiple applications and libraries in the same workspace.
 
-# Start development server
-ng serve playground-text-snippet
+## Development server
 
-# Build for production
-nx build playground-text-snippet
-
-# Run tests
-nx test platform-core
-
-# Generate new component
-nx g @nx/angular:component my-component --project=platform-core
-```
-
-## Key Patterns
-
-### Component Hierarchy
-
-```
-PlatformComponent              # Base: lifecycle, signals, subscriptions
-├── PlatformVmComponent        # + ViewModel injection
-├── PlatformFormComponent      # + Reactive forms integration
-└── PlatformVmStoreComponent   # + ComponentStore state management
-```
-
-### State Management
-
--   Uses `PlatformVmStore` with ComponentStore pattern
--   Signal-based reactivity
--   Built-in loading/error state tracking
-
-### API Services
-
--   Extends `PlatformApiService` for HTTP operations
--   Built-in caching support
--   Consistent error handling
-
-## Related Documentation
-
--   [Platform-core README](./libs/platform-core/README.md) - Core library details
--   [CLAUDE.md](../../CLAUDE.md) - Complete development patterns
--   [README.md](../../README.md) - Project overview
+Run `ng serve my-app` for a dev server. Navigate to http://localhost:4001/. The app will automatically reload if you change any of the source files.

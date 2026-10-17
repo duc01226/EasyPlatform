@@ -25,7 +25,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries.TaskItem;
 /// - Full-text search integration
 /// - Time-based filtering (overdue, due soon)
 /// </summary>
-public sealed class GetTaskListQuery : PlatformCqrsPagedQuery<GetTaskListQueryResult, TaskItemEntityDto>
+public sealed class GetTaskListQuery : TextSnippetPagedQuery<GetTaskListQueryResult, TaskItemEntityDto>
 {
     /// <summary>
     /// Filter by status(es) - supports multiple statuses

@@ -120,10 +120,11 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
     {
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var transportMessage = message.ToJson(forceUseRuntimeType: true);
             var selectedRoutingKey = routingKey ?? message.As<IPlatformSelfRoutingKeyBusMessage>()?.RoutingKey();
 
-            await PublishMessageToQueueAsync(transportMessage, message, selectedRoutingKey);
+            await PublishMessageToQueueAsync(transportMessage, message, selectedRoutingKey, cancellationToken);
 
             return message;
         }
@@ -136,9 +137,10 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
     /// <param name="transportMessage">Serialized body — goes on the wire, never into a log or trace tag.</param>
     /// <param name="runtimeMessage">The live message — used ONLY to derive a type name for diagnostics.</param>
     /// <param name="routingKey">Resolved routing key.</param>
-    private async Task PublishMessageToQueueAsync(string transportMessage, object runtimeMessage, string routingKey)
+    /// <param name="cancellationToken">The caller's token, retained through readiness and publishing.</param>
+    private async Task PublishMessageToQueueAsync(string transportMessage, object runtimeMessage, string routingKey, CancellationToken cancellationToken)
     {
-        await PublishMessageToQueue(transportMessage, runtimeMessage, routingKey);
+        await PublishMessageToQueue(transportMessage, runtimeMessage, routingKey, cancellationToken);
     }
 
     /// <summary>
@@ -147,6 +149,7 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
     /// <param name="transportMessage">Serialized body — goes on the wire, never into a log or trace tag.</param>
     /// <param name="runtimeMessage">The live message — used ONLY to derive a type name for diagnostics.</param>
     /// <param name="routingKey">Resolved routing key.</param>
+    /// <param name="cancellationToken">Cooperative cancellation; an in-flight publish may already have reached the broker.</param>
     /// <remarks>
     /// The two are separate parameters on purpose. Previously one <c>message</c> string served both, so the trace tag
     /// necessarily carried the same fully serialized body that was being published — every produced message's
@@ -154,7 +157,7 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
     /// representation independent, and makes a future edit that tags <paramref name="transportMessage" /> an obvious
     /// mistake rather than the path of least resistance.
     /// </remarks>
-    private async Task PublishMessageToQueue(string transportMessage, object runtimeMessage, string routingKey)
+    private async Task PublishMessageToQueue(string transportMessage, object runtimeMessage, string routingKey, CancellationToken cancellationToken)
     {
         using (
             var activity = IPlatformMessageBusProducer.ActivitySource.StartActivity(
@@ -173,11 +176,15 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
             {
                 await Util.TaskRunner.WaitUntilAsync(
                     () => InitializerService.IsStarted,
+                    cancellationToken,
                     maxWaitSeconds: MaxWaitProcessInitializerServiceStartedSeconds,
                     waitForMsg: "Rabbitmq started to publish message"
                 );
 
+                cancellationToken.ThrowIfCancellationRequested();
+                // Cold acquisition is synchronous. Observe cancellation again before using the acquired lease.
                 channel = ChannelPool.Get();
+                cancellationToken.ThrowIfCancellationRequested();
 
                 var publishRequestProps = new BasicProperties { Persistent = true };
 
@@ -188,7 +195,8 @@ public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
                     routingKey,
                     body: Encoding.UTF8.GetBytes(transportMessage),
                     basicProperties: publishRequestProps,
-                    mandatory: false
+                    mandatory: false,
+                    cancellationToken: cancellationToken
                 );
             }
             catch (AlreadyClosedException alreadyClosedException)

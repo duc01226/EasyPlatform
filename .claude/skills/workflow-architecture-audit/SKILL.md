@@ -1,220 +1,153 @@
 ---
 name: workflow-architecture-audit
 version: 1.0.0
-description: "[Workflow] Use when activating the Architecture Audit workflow to review the whole project's architecture, run an architecture health check, or check production readiness/scalability in one pass — read-only, produces one consolidated Architecture Health Report."
+description: "[Workflow] Audit project architecture, scalability and production readiness without changing code; deliver one consolidated health report."
 disable-model-invocation: false
 ---
 
+<!-- WORKFLOW-CALLS:START -->
+## Workflow Calls and Todo Bootstrap
+
+Read [the registry](../../../.claude/workflows.json) → `workflows.workflow-architecture-audit` together with this skill. Call [`/start-workflow workflow-architecture-audit`](../start-workflow/SKILL.md) to resolve the selected mode, pre-actions and fingerprint.
+
+**Todo FIRST:** before triage, analysis or step execution, create one todo per phase of the selected mode, in order, listing every occurrence of that phase as a line, including conditional/optional ones (a mode that declares no phases gets one todo per occurrence); preserve occurrence IDs, roles and barrier groups. Use native todo tools or an equivalent persistent ledger. Then mark the first todo `in_progress`; close each step line with its run or skip evidence, and complete a phase todo only when every line is closed and its applicable exit gates hold.
+Mode selection and registry loading prepare tracking; any 'first action' below means the first substantive action after this bootstrap.
+
+**Call each step skill:** read its linked SKILL.md and execute its protocol through the active host with the registry args. Reading or naming a skill alone is not execution. Required gates and core/optional flex follow the linked start-workflow Step Execution Protocol; keep this skill's quality gates, loops and evidence requirements.
+
+**Conditions:** load each occurrence's registry `applicability.when` and `skipReason` verbatim, and record its run/skip evidence through the linked start-workflow protocol. Do not silently omit a todo or turn a conditional skill into an unconditional call; close, in one batch at triage, the todos whose condition is already false there. Declared parallel groups retain their all-return barrier.
+
+Explicit step-skill calls by mode (registry order; roles and conditions remain owned by the registry):
+
+- Mode `default`: [`/investigate`](../investigate/SKILL.md) (optional; conditional) → [`/architecture --mode=full --defer=validate`](../architecture/SKILL.md) (gate) → [`/why-review`](../why-review/SKILL.md) (gate) → [`/docs-manager --mode=update`](../docs-manager/SKILL.md) (optional; conditional) → [`/workflow-end`](../workflow-end/SKILL.md) (gate) → [`/watzup`](../watzup/SKILL.md) (optional; conditional)
+  Phase todos: Discover (1) → Review (3; exit review-converged) → Close (2; exit run-closed)
+<!-- workflow-mode:default fingerprint:d2ba3c5cc58b73dc512e13ce20df04a43946c7d9cc7d817ae131c88480e0107a -->
+
+Regenerate this block with `node .claude/scripts/lib/workflow-skill-contract.cjs --write` after registry edits; [`/sync-codex`](../sync-codex/SKILL.md) refreshes it before mirroring.
+<!-- WORKFLOW-CALLS:END -->
+
 ## Quick Summary
 
-**Goal:** [Workflow] Audit the WHOLE project's architecture, scalability, and production readiness in ONE read-only pass and synthesize a single consolidated Architecture Health Report — three sub-scores and one combined verdict. Findings only; every validated fix routes to a FOLLOW-UP `/plan` or feature workflow.
+**Goal:** Audit architecture, scalability and production readiness without changing code; deliver ONE validated Architecture Health Report with follow-up owners.
 
-**Summary:**
+**Summary:** Triage scope/size/risk → map scope when needed → run the three-face `architecture --mode=full --defer=validate` engine inline → validate its `FINISHED` report once with `/why-review`, face by face → update contradictory docs when applicable → close with the handoff. Retain three sub-scores, the worst-case combined verdict and merged advisory Technique Applicability and Scenario Stress matrices.
 
-- READ-ONLY audit — produces findings + ONE consolidated Architecture Health Report (3 sub-scores + 1 combined verdict); NEVER applies fixes: every validated fix routes to a FOLLOW-UP `/plan` or feature workflow.
-- Core engine `architecture-review-full` runs INLINE (it owns the parallel fan-out + all-return barrier); this workflow declares NO workflow-level parallel groups.
-- FINAL `/why-review` gate (step 3) = the machine-visible guarantee no audit finding ships unvalidated — every PRIOR step routes its output into it; `docs-update` runs AFTER the gate and self-validates its own doc diff.
-- Main steps in order: **1** Scout scope → **2** Architecture-Review-Full (fan out 3 non-overlapping reviewers → progressive dedup synthesis → per-face `/why-review` fix → Finalize verdict) → **3** Why-Review FINAL gate → **4** Docs-Update → **5** Workflow-End → **6** Watzup.
+**Use when:** project/path architecture health, production readiness or scalability/coupling audit. **Adjacent requests:** single-change compliance → `/architecture --mode=review`; standalone consolidated report without run closure → `/architecture --mode=full`; change-set review → `workflow-review-changes`.
 
-**Workflow:**
+**IMPORTANT MANDATORY Steps:** /investigate -> /architecture --mode=full --defer=validate -> /why-review -> /docs-manager --mode=update -> /workflow-end -> /watzup
 
-1. **Scout** — locate the modules, boundaries, and hotspots that scope the audit (whole project / current diff / specific path). **→ On completion, hand its scope map forward to the final `/why-review` (step 3) so the audit scope itself is validated (nothing in-scope missed, nothing out-of-scope pulled in).**
-2. **Architecture-Review-Full** — the core step: runs INLINE (it spawns sub-agents), fans out three non-overlapping reviewers behind an all-return barrier, then PROGRESSIVELY synthesizes each face into ONE report file (status `IN PROGRESS` → `VALIDATING` → `FINISHED`): dedup, a fix-report-per-review `/why-review` gate that walks each of the three faces, and a Finalize step that locks the combined verdict. **→ On completion, hand the FINISHED consolidated report forward to the final `/why-review` (step 3) for report-level validation.**
-3. **Why-Review (FINAL VALIDATION GATE over the audit findings)** — MANDATORY. Validates the findings AND reviews the results of every PRIOR step it can reach: the scout scope map, the FINISHED consolidated report (verdict-rollup correctness, dedup completeness, cross-review severity consistency), and each of the three review faces' contributions. Every prior step routes its output here; no audit finding ships unvalidated. `docs-update` runs AFTER this gate and is NOT validated by it — it self-validates its own doc diff (see step 4).
-4. **Docs-Update** — refresh any documentation the validated audit shows as stale. **→ Self-validates its own output: re-invoke `/why-review` on the doc diff when docs-update makes non-trivial edits, so the doc changes are reviewed before workflow-end.**
-5. **Workflow-End** — clear workflow state.
-6. **Watzup** — wrap up and summarize.
+**Workflow:** The parsed chain above follows `/start-workflow` → Step Execution Protocol — `gate` steps always run, a step that runs invokes its `Skill` tool, and every other deviation is logged. NEVER batch-complete validation gates.
 
-**Key Rules:**
+**Key Rules:** Keep source/config read-only, validate findings with evidence, and route fixes to follow-up owners. Advisory matrices never change scores, verdicts or gates.
 
-- MUST ATTENTION keep claims evidence-based (`file:line`) with confidence >80% to act.
-- MUST ATTENTION keep task tracking updated as each step starts/completes.
-- MUST ATTENTION treat this as READ-ONLY: produce findings + a verdict; NEVER apply fixes in this workflow — route them to a follow-up plan/feature workflow.
-- MUST ATTENTION run `architecture-review-full` INLINE (it owns the parallel fan-out + all-return barrier); this workflow declares NO workflow-level parallel groups.
-- MUST ATTENTION every PRIOR step routes its output to the FINAL `/why-review` gate (step 3): each producing step hands its findings + results forward, and the final `/why-review` validates the findings AND reviews the results of every prior step before docs-update — it is the final gate over the AUDIT FINDINGS. `docs-update` runs AFTER the gate and owns validation of its own output via an inline `/why-review` on non-trivial doc edits.
-- NEVER skip mandatory workflow or skill gates.
+Activate with `/start-workflow workflow-architecture-audit`, passing the user's prompt as context.
 
-**IMPORTANT MANDATORY Steps:** /scout -> /architecture-review-full -> /why-review -> /docs-update -> /workflow-end -> /watzup
+## Contents
 
-> **[BLOCKING]** Each step MUST ATTENTION invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
+- [Workflow Calls and Todo Bootstrap](#workflow-calls-and-todo-bootstrap)
+- [Quick Summary](#quick-summary)
+- [Scope & Size Triage (first action)](#scope--size-triage-first-action)
+- [Required Quality Gates](#required-quality-gates)
+- [Recommended Skills](#recommended-skills)
+- [Orchestration](#orchestration)
+- [Memory & Reporting](#memory--reporting)
+- [Findings & Fix Path](#findings--fix-path)
+- [Closing Reminders](#closing-reminders)
 
-## Audit Protocol (READ-ONLY, ONE PASS)
+## Scope & Size Triage (first action)
 
-Audits the WHOLE project architecture + scalability + production readiness in one pass, synthesizing ONE consolidated Architecture Health Report.
+Record target scope, size and risk at the top of the workflow report before choosing depth. Escalate on risk and ambiguity; size bands guide depth.
 
-Core step `architecture-review-full` runs INLINE in the main session (it SPAWNS sub-agents). It:
+| Axis                  | Values                                                                             | Effect                                                                                                                                                                                                                                        |
+| --------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scope                 | whole project · current diff · specific path · greenfield foundation (`mode=init`) | Passed to `architecture --mode=full` scope resolution; ask only when the prompt names none.                                                                                                                                                   |
+| Size (files in scope) | **XS** 1–3 · **S** ≤15 · **M** ≤60 · **L** ≤300 · **XL** >300                      | XS/S with a pinned scope: `/investigate` has no work to do, keep child briefs narrow. M: defaults. L/XL: `/investigate` maps modules and hotspots first; the reviewers batch per module (`systematic-review-batching`), one report per batch. |
+| Risk                  | production-critical path · data integrity · security/PII · multi-service seams     | Raise depth: full-scope reviewers, explicit cross-service seam checks, and name specialist follow-ups (`/security-audit`, `/performance-review`) in the handoff.                                                                             |
 
-1. **Resolves scope** — whole project / current diff / specific path.
-2. **Fans out three deliberately-non-overlapping reviewers** as PARALLEL read-only sub-agents in one message behind an all-return barrier:
-    - `architecture-scalability-review` (architect, scorecard /20)
-    - `architecture-review` (architect, 13-category PASS/WARN/BLOCKED)
-    - `production-readiness-review` (code-reviewer, SRE /24 + 8-item gate)
-3. **Progressive synthesis (`IN PROGRESS`)** — opens ONE consolidated report file at status `🚧 IN PROGRESS` when fan-out starts, merges + **dedups** each face into it AS that face returns (never held in memory to the end). Siblings route to each other by design, so one underlying issue surfaces from multiple angles; collapse duplicates to one root finding citing every source.
-4. **Fix-report-per-review `/why-review` gate (`VALIDATING`)** — ONE merged `/why-review` pass that WALKS EACH of the three review faces + the dedup and fixes the report in place (revise severities, drop false positives, restore any distinct issue the dedup collapsed).
-5. **Finalize (`FINISHED`)** — locks the combined verdict (worst-case rollup: any BLOCKED / NOT READY / HIGH RISK dominates) and flips the report status to `✅ FINISHED`.
+## Required Quality Gates
 
-Parallelism lives INSIDE `architecture-review-full` (it owns the fan-out + all-return barrier), so this workflow declares NO workflow-level parallel groups.
+Before `/workflow-end`, verify every gate with evidence:
 
-After `architecture-review-full` returns the FINISHED report, the workflow-level **`why-review`** step runs the FINAL VALIDATION GATE over the AUDIT FINDINGS — a distinct altitude from the engine's per-face fix, and the machine-visible guarantee no audit finding ships without a why-review pass. Every PRIOR step routes its output into this gate; the gate BOTH validates findings AND reviews results across the steps it reaches:
+- Consolidated report finished (`review-converged`) — The `architecture --mode=full --defer=validate` report at status `FINISHED`: `Faces merged: 3/3`, three sub-scores, the worst-case combined verdict, the merged advisory matrices, and `Validation: deferred to <occurrence-id>` naming the workflow's `/why-review` gate.
+- Report validated once — The workflow-level `/why-review` record over the FINISHED report: it walks each face's findings (`file:line` proof, severity), then scope (nothing in-scope missed, nothing out-of-scope pulled in), verdict rollup, dedup completeness and cross-face severity consistency, and appends its Why-Review Fix Notes or Validation section. When it demotes or restores a finding, the report is fixed in place.
+- Evidence bar — Every finding carries `file:line` proof and a confidence; findings below 60% are flagged and never recommended.
+- Read-only — This workflow edits no source or config. Every validated finding names its follow-up owner: `/plan` for large or cross-module fixes, a feature or refactor workflow otherwise.
+- Advisory stays advisory — The technique and scenario matrices and any coverage gaps never change a sub-score, the combined verdict, or a gate.
+- Docs truthful (when applicable) — When the audit finds project docs contradicting the code, `/docs-manager --mode=update` ran and its non-trivial doc diff received its own `/why-review`.
+- Run closed (`run-closed`) — `/workflow-end` ran last.
 
-- **Scout scope map** → validate audit scope (nothing in-scope missed, nothing out-of-scope pulled in).
-- **`architecture-review-full` FINISHED report** → validate verdict-rollup correctness, dedup completeness, cross-review severity consistency; confirm each of the three review faces' contributions survived the per-face fix intact.
-- **`docs-update` output** → NOT validated by this gate (docs-update runs AFTER it); `docs-update` self-validates its own doc diff by re-invoking `/why-review` inline on non-trivial edits (see step 4) before workflow-end.
+## Recommended Skills
 
-Each PRIOR step, on completion, hands its findings + results forward to this gate — the AI MUST call the final `/why-review` to validate/review every prior step's output; a prior step is not "done" until routed to the gate. `docs-update`, running after the gate, owns validation of its own output.
+- `/investigate` (optional) — The prompt does not pin the audit scope to an explicit path or the current diff, or the scope is medium or larger (more than about 15 files) so modules, boundaries and hotspots must be mapped before the reviewers fan out. Skip reason: The prompt pins a small audit scope to an explicit path or the current diff, so `architecture --mode=full` resolves the scope itself without a separate map. · Evidence: Scope map for the engine and for the final scope check.
+- `/architecture --mode=full --defer=validate` (gate) — Always. · Evidence: Three non-overlapping faces (`architecture --mode=scalability`, `architecture --mode=review`, `production-readiness-review`), progressive dedup synthesis, finalized verdict → `review-converged`. `--defer=validate` skips the engine's own Step 5 findings validation and hands it to the next gate (`.claude/skills/architecture/references/mode-full.md` → `--defer=validate`).
+- `/why-review` (gate) — Always, after the report is `FINISHED`. · Evidence: The run's one findings validation: it walks each face exactly as the engine's Step 5 describes, then validates the report level, so the merged findings are validated once, never twice.
+- `/docs-manager --mode=update` (optional) — The validated audit found project documentation (reference docs, project config, README, ADR status) that contradicts the audited code. Skip reason: The validated audit found no project documentation contradicting the audited code, and a read-only audit leaves no diff for docs-manager --mode=update to sync. · Evidence: Docs truthful.
+- `/workflow-end` (gate) — Always, last. · Evidence: `run-closed`.
+- `/watzup` (optional) — The user asked for a session report or an HTML wrap-up, or the session spanned several workflows or prompts that need one consolidated handoff. Skip reason: workflow-end printed the recap, or the short handoff when nothing was built, and every applicable outcome gate passed. · Evidence: Session report. Without it, the verdict, sub-scores and follow-up owner per finding live in the `FINISHED` report, and `/workflow-end` prints the short handoff.
 
-READ-ONLY audit: produces findings + a verdict only. Every validated finding routes to a FOLLOW-UP `/plan` or feature workflow owning the fix — no fixes applied in this workflow. After the final `why-review` gate confirms the report, `docs-update` refreshes impacted documentation, then `workflow-end` clears state and `watzup` wraps up.
+## Orchestration
 
-**UNIVERSAL RULES:**
+Choose inline vs sub-agent, batching and ordering for equal quality at lower time/token cost. Registry `stepMeta` defaults: `/investigate` and `/docs-manager --mode=update` delegated; engine and `/why-review` inline.
 
-- Goal-Driven Execution: define success criteria before execution; loop until observable checks pass.
-- Tests Verify Intent: when a finding touches specs/tests, name the protected business intent or invariant and ensure the test would fail if that intent breaks.
+Fixed constraints:
 
-Activate the `workflow-architecture-audit` workflow. Run `/start-workflow workflow-architecture-audit` with the user's prompt as context and the audit protocol above.
+- Run `architecture --mode=full` INLINE: it owns the three-reviewer fan-out and all-return barrier; a sub-agent cannot fan out further. No workflow-level parallel groups.
+- `/why-review` runs only on the `FINISHED` report. `/docs-manager --mode=update` runs after `/why-review`. `/workflow-end` runs last.
 
-**Steps:** /scout → /architecture-review-full → /why-review → /docs-update → /workflow-end → /watzup
+Recommended: XS/S → inline `/investigate` or engine scope resolution; L/XL → provide a module partition for bounded reviewer batches.
 
----
+## Memory & Reporting
 
-**IMPORTANT MANDATORY Steps:** /scout -> /architecture-review-full -> /why-review -> /docs-update -> /workflow-end -> /watzup
+- Create one phase task per phase, one row per selected step. The engine pre-expands its own phases under the parent row.
+- Create the workflow report FIRST at `tmp/reports/workflow-architecture-audit-{YYMMDD}-{HHmm}-{slug}.md`: triage, per-step evidence, deviations, and the path of the engine's consolidated report (`tmp/reports/architecture-full-review-{date}-{slug}.md`). Append after each step.
+- Sub-agent briefs make report writing their first deliverable and return only the `subagent-return-contract` envelope.
+- After compaction, re-read `TaskList`, the workflow report, and the consolidated report's status line before continuing.
 
-<!-- SYNC:ai-mistake-prevention -->
+## Findings & Fix Path
 
-> **AI Mistake Prevention** — Failure modes to avoid on every task:
->
-> **Re-read files after context changes.** Context compaction, resume, or long-running work can make memory stale; verify current files before acting.
-> **Verify generated content against source evidence.** AI hallucinates APIs, names, claims, and document facts. Check the relevant source before documenting or referencing.
-> **Check downstream references before deleting or renaming.** Removing an artifact can stale docs, generated mirrors, configs, and callers; map references first.
-> **Trace the full impact chain after edits.** Changing a definition can miss derived outputs and consumers. Follow the affected chain before declaring done.
-> **Verify ALL affected outputs, not just the first.** One green check is not all green checks; validate every output surface the change can affect.
-> **Assume existing values are intentional — ask WHY before changing OR flagging one as a defect.** Before changing or reporting a constant, limit, flag, cutoff, wording, or pattern, read nearby context and history, the CALLER's ordering, and 2+ sibling call sites of the same convention. A doc stating WHAT without WHY is missing rationale, not proof of a missing guard.
-> **Surface ambiguity before acting — don't pick silently.** Multiple valid interpretations require an explicit question or stated assumption with risk.
-> **Assert the outcome your system owns, not the intermediate state your infrastructure owns.** When verifying async work, assert the final business state — never the delivery/retry bookkeeping held in shared infrastructure that any co-running process can write. Such a check passes when run alone and flakes the moment anything else shares that infrastructure.
-> **Keep shared guidance role-relevant.** Universal guidance must help every receiving skill or agent; code-specific obligations belong only in code-specific protocols.
+- Repair the report only, through the workflow-level `/why-review` that validates it (the engine defers its own validation to that gate). Source fixes belong to follow-up workflows.
+- Validate findings through `/why-review` with evidence. Hand off each with owner, severity and confidence: `/plan` for large, cross-module or ambiguous fixes; feature/refactor workflow for bounded fixes.
+- Loop bounds for the report-level `/why-review`: round 1 exits on zero open findings; from round 2 the bar is zero CRITICAL/HIGH/MEDIUM, with LOWs deferred and listed; cap 3 review rounds; escalate via `ask user question tool` when a round makes no progress.
 
-<!-- /SYNC:ai-mistake-prevention -->
+<!-- PROTOCOL-GUIDES:START -->
 
-<!-- SYNC:nested-task-creation -->
+> **Protocol guides** — Apply each protocol only when its read-when condition holds. If a protocol's text is not in your context, read its file below before you act on it.
 
-> **Nested Task Expansion Contract** — For workflow-step invocation, the `[Workflow] ...` row is only a parent container; the child skill still creates visible phase tasks.
->
-> 1. Call `TaskList` first. If a matching active parent workflow row exists, set `nested=true` and record `parentTaskId`; otherwise run standalone.
-> 2. Create one task per declared phase before phase work. When nested, prefix subjects `[N.M] $skill-name — phase`.
-> 3. When nested, link the parent with `TaskUpdate(parentTaskId, addBlockedBy: [childIds])`.
-> 4. Orchestrators must pre-expand a child skill's phase list and link the workflow row before invoking that child skill or sub-agent.
-> 5. Mark exactly one child `in_progress` before work and `completed` immediately after evidence is written.
-> 6. Complete the parent only after all child tasks are completed or explicitly cancelled with reason.
->
-> **Blocked until:** `TaskList` done, child phases created, parent linked when nested, first child marked `in_progress`.
+- `incremental-persistence` — Persist results per file or section while the work proceeds; a sub-agent or heavy step processes more than three files → .claude/skills/shared/protocols/incremental-persistence.md
+- `review-decision-autonomy` — Choose supported review decisions and ask before extending the round budget; running any review or audit skill or mode → .claude/skills/shared/protocols/review-decision-autonomy.md
+- `session-goal-ledger` — Keep the original goal and every user prompt of the session; running a long or multi-prompt session → .claude/skills/shared/protocols/session-goal-ledger.md
+- `subagent-return-contract` — Sub-agents return a structured envelope and a report path, never an inline report; spawning a sub-agent → .claude/skills/shared/protocols/subagent-return-contract.md
+- `workflow-registry-binding` — Read the workflow registry entry and the workflow skill together, since they must agree; executing or editing a workflow → .claude/skills/shared/protocols/workflow-registry-binding.md
 
-<!-- /SYNC:nested-task-creation -->
+<!-- PROTOCOL-GUIDES:END -->
 
-<!-- SYNC:critical-thinking-mindset -->
 
-> **Critical Thinking Mindset** — Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence >80% to act.
-> **Anti-hallucination:** Never present guess as fact — cite sources for every claim, admit uncertainty freely, self-check output for errors, cross-reference independently, stay skeptical of own confidence — certainty without evidence root of all hallucination.
+<!-- SYNC:session-goal-ledger:reminder -->
 
-<!-- /SYNC:critical-thinking-mindset -->
+- **MANDATORY** Session goal ledger per the `Task Planning Rules`: pin `Original goal:`, keep `User prompts this session: P1…Pn`, and map the result to every prompt before claiming done; full text: `.claude/skills/shared/protocols/session-goal-ledger.md`.
 
-<!-- SYNC:incremental-persistence -->
+<!-- /SYNC:session-goal-ledger:reminder -->
 
-> **Incremental Result Persistence** — MANDATORY for all sub-agents or heavy inline steps processing >3 files.
->
-> 1. **Before starting:** Create report file `plans/reports/{skill}-{date}-{slug}.md`
-> 2. **After each file/section reviewed:** Append findings to report immediately — never hold in memory
-> 3. **Return to main agent:** Summary only (per SYNC:subagent-return-contract) with `Full report:` path
-> 4. **Main agent:** Reads report file only when resolving specific blockers
->
-> **Why:** Context cutoff mid-execution loses ALL in-memory findings. Each disk write survives compaction. Partial results are better than no results.
->
-> **Report naming:** `plans/reports/{skill-name}-{YYMMDD}-{HHmm}-{slug}.md`
+<!-- SYNC:review-decision-autonomy:reminder -->
 
-<!-- /SYNC:incremental-persistence -->
+**MUST ATTENTION** Decide supported review choices and recommendations, record the rationale, and finish without routine user questions. Keep round-limit extension, indispensable facts and actual action authority; preserve source coverage, validation, tests, read-only boundaries and budgets. Review decisions do not accept open risks or make a failed gate pass.
 
-<!-- SYNC:subagent-return-contract -->
-
-> **Sub-Agent Return Contract** — When this skill spawns a sub-agent, the sub-agent MUST return ONLY this structure. Main agent reads only this summary — NEVER requests full sub-agent output inline.
->
-> ```markdown
-> ## Sub-Agent Result: [skill-name]
->
-> Status: ✅ PASS | ⚠️ PARTIAL | ❌ FAIL
-> Confidence: [0-100]%
->
-> ### Findings (Critical/High only — max 10 bullets)
->
-> - [severity] [file:line] [finding]
->
-> ### Actions Taken
->
-> - [file changed] [what changed]
->
-> ### Blockers (if any)
->
-> - [blocker description]
->
-> Full report: plans/reports/[skill-name]-[date]-[slug].md
-> ```
->
-> Main agent reads `Full report` file ONLY when: (a) resolving a specific blocker, or (b) building a fix plan.
-> Sub-agent writes full report incrementally (per SYNC:incremental-persistence) — not held in memory.
->
-> **Context budget** — the return payload is a SUMMARY, not a transcript: ≤10 finding bullets, no raw file contents / full diffs / verbatim logs inline, no re-pasted source. Everything beyond the summary lives in the `Full report` on disk. A sub-agent that would exceed the summary shape MUST write the detail to its report and return only the pointer — the orchestrator's context is the scarce resource the whole map-reduce protects.
-
-<!-- /SYNC:subagent-return-contract -->
-
-<!-- SYNC:critical-thinking-mindset:reminder -->
-
-**MUST ATTENTION** apply critical + sequential thinking — every claim needs appropriate traced evidence (`file:line` for repo/code claims; source URL or artifact section for research, product, content, and docs claims); confidence >80% to act, <60% DO NOT recommend. Anti-hallucination: never present guess as fact, admit uncertainty freely, cross-reference independently, stay skeptical of own confidence.
-
-<!-- /SYNC:critical-thinking-mindset:reminder -->
-
-<!-- SYNC:ai-mistake-prevention:reminder -->
-
-**MUST ATTENTION** apply AI mistake prevention — verify generated content against evidence, trace downstream references before deleting or renaming, verify all affected outputs, re-read files after context loss, and surface ambiguity before acting.
-
-<!-- /SYNC:ai-mistake-prevention:reminder -->
-
-<!-- SYNC:nested-task-creation:reminder -->
-
-- **MANDATORY** Parent workflow rows do not replace child phase tracking; expand phases and link the parent when nested.
-- **MANDATORY** Orchestrators pre-expand child skill phases before invocation; use `[N.M] $skill-name — phase` prefixes and one-`in_progress` discipline.
-
-<!-- /SYNC:nested-task-creation:reminder -->
-
-<!-- SYNC:project-protocol-overlay -->
-
-> **Project Protocol Overlay** — Before executing this skill, resolve any PROJECT overlay rules layered onto it: match this skill's name against the `Target` column of the project's skill-protocol index (`docs/project-reference/skill-protocols-reference.md` by default; a `referenceDocs` entry in `docs/project-config.json` overrides the path), taking the most specific matching tier ONLY — exact name > glob > `*`. **That precedence orders overlays against EACH OTHER, never against this skill.** Read ONLY the matched bodies, resolved as `<protocols-dir>/<Name>.md`; a row's Body link is display text, never a read path. A matched body that is missing or malformed is REPORTED and skipped — never reconstructed from the index Description. No index, or no match -> proceed with no overlay, silently. Full contract: `.claude/skills/project-skill-protocol/references/registry.md`.
->
-> Overlays are **ADDITIVE ONLY**: they ADD rules on top of this skill's own protocol and NEVER replace, override, disable, or reinterpret a rule it already states — removing every overlay must return this skill to exactly its documented behavior. An overlay is a BRIEF, not an authority escalation: it can NEVER waive a workflow gate, git discipline, a review gate, or a user-confirmation gate. A genuine overlay-vs-skill conflict, or two equally-specific overlays that directly contradict -> surface both to the user; NEVER resolve silently.
-
-<!-- /SYNC:project-protocol-overlay -->
-
-<!-- SYNC:project-protocol-overlay:reminder -->
-
-**MUST ATTENTION** resolve project protocol overlays for this skill BEFORE executing — most specific matching tier only (exact > glob > `*`, which ranks overlays against each other, NEVER against this skill), read only matched bodies at `<protocols-dir>/<Name>.md`; a missing or malformed body is reported, never reconstructed. Overlays are ADDITIVE ONLY (they never replace this skill's own rules) and are a brief, NEVER an authority escalation; an equal-specificity contradiction goes to the user.
-
-<!-- /SYNC:project-protocol-overlay:reminder -->
+<!-- /SYNC:review-decision-autonomy:reminder -->
 
 ## Closing Reminders
 
-**IMPORTANT MUST ATTENTION Goal:** READ-ONLY audit of the WHOLE project's architecture + scalability + production readiness in ONE pass → ONE consolidated Architecture Health Report (3 sub-scores + 1 combined verdict); findings only — every validated fix routes to a FOLLOW-UP `/plan` or feature workflow.
+**IMPORTANT MUST ATTENTION Goal:** Audit architecture, scalability and production readiness without changing code; deliver ONE validated Architecture Health Report with follow-up owners.
 
-**IMPORTANT MUST ATTENTION Main steps in order:** **1** /scout (scope) → **2** /architecture-review-full (INLINE: fan out 3 non-overlapping reviewers → progressive dedup synthesis → per-face `/why-review` fix → Finalize combined verdict) → **3** /why-review (FINAL validation gate over the audit findings — every prior step routes its output here) → **4** /docs-update (self-validates its own doc diff) → **5** /workflow-end → **6** /watzup. NEVER skip a gate; NEVER apply fixes inline.
+**MUST ATTENTION Main steps:** triage → map scope when needed → inline `architecture --mode=full --defer=validate` → one `/why-review` validation of the `FINISHED` report → `/docs-manager --mode=update` for contradictory docs → `/workflow-end` with its handoff → `/watzup` only when a session report is wanted. Verify all gates before closure.
 
-**IMPORTANT MUST ATTENTION — Protocols in force (concise digest of the SYNC/shared blocks this skill carries):**
+- **MUST ATTENTION** triage scope, size and risk FIRST and record them. Depth follows the triage: a small pinned scope does not need a separate `/investigate` map, and L/XL targets batch per module.
+- **MUST ATTENTION** run `architecture --mode=full` INLINE (it owns the fan-out and the all-return barrier), then the `/why-review` gate over the `FINISHED` report. Every finding carries `file:line` proof and a confidence.
+- **NEVER** apply source fixes in this workflow. Route each validated finding to `/plan` or a feature/refactor workflow; the advisory matrices never move a score or the verdict.
+- **MUST ATTENTION** write the workflow report first, append per step, and re-read it with `TaskList` after compaction. `/workflow-end` runs last.
 
-- **AI Mistake Prevention:** verify generated content against evidence, trace downstream references, verify all affected outputs, re-read after context loss, surface ambiguity.
-- **Nested Task Creation:** expand child phases, link parent when nested.
-- **Critical Thinking:** traced `file:line` proof, confidence >80% to act.
-- **Incremental Persistence:** append findings to report file after each section.
-- **Subagent Return Contract:** sub-agent returns summary-only with `Full report:` pointer.
+| Evasion | Required action |
+| --- | --- |
+| "Engine PASS is enough" | Validate the `FINISHED` report at workflow level, including zero-open-finding PASS. |
+| "Fix it during the audit" | Repair reports only; route source fixes to follow-up owners. |
 
-**IMPORTANT MUST ATTENTION** break work into small todo tasks using `TaskCreate` BEFORE starting
-**IMPORTANT MUST ATTENTION** search codebase for 3+ similar patterns before creating new code
-**IMPORTANT MUST ATTENTION** cite `file:line` evidence for every claim (confidence >80% to act)
-**IMPORTANT MUST ATTENTION** add a final review todo task to verify work quality
-
-**[TASK-PLANNING]** Before acting, analyze task scope and systematically break it into small todo tasks and sub-tasks using TaskCreate.
-
-> **[IMPORTANT]** Analyze how big the task is and break it into many small todo tasks systematically before starting — this is very important.
+**Protocols in force (digest; the guide entries above point to the full text):** Nested Task Creation · Incremental Persistence · Sub-Agent Return Contract · Session Goal Ledger · Workflow Registry Binding.

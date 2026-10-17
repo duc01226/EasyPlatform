@@ -6,6 +6,7 @@
 
 const path = require('path');
 const { send } = require('../lib/sender.cjs');
+const { EVENT_COPY } = require('../lib/event-copy.cjs');
 
 /**
  * Get title based on hook event type
@@ -13,16 +14,28 @@ const { send } = require('../lib/sender.cjs');
  * @returns {string} Human-readable title
  */
 function getTitle(hookType) {
-  switch (hookType) {
-    case 'Stop':
-      return 'Claude Code Session Complete';
-    case 'SubagentStop':
-      return 'Claude Code Subagent Complete';
-    case 'AskUserPrompt':
-      return 'Claude Code Needs Input';
-    default:
-      return 'Claude Code Event';
+  if (Object.prototype.hasOwnProperty.call(EVENT_COPY, hookType)) {
+    return EVENT_COPY[hookType].title;
   }
+  switch (hookType) {
+    case 'SubagentStop':
+      return 'Subagent Complete';
+    case 'AskUserPrompt':
+      return 'AI Agent Needs Input';
+    default:
+      return 'AI Agent Event';
+  }
+}
+
+/**
+ * Get concise event summary text for events with shared alert copy
+ * @param {string} hookType - Hook event name
+ * @returns {string}
+ */
+function getSummary(hookType) {
+  return Object.prototype.hasOwnProperty.call(EVENT_COPY, hookType)
+    ? `${EVENT_COPY[hookType].summary}.`
+    : '';
 }
 
 /**
@@ -60,6 +73,14 @@ function buildBlocks(input, hookType, projectName, sessionId) {
     }
   ];
 
+  const summary = getSummary(hookType);
+  if (summary) {
+    blocks.splice(1, 0, {
+      type: 'section',
+      text: { type: 'mrkdwn', text: summary }
+    });
+  }
+
   // Add agent_type for SubagentStop
   if (hookType === 'SubagentStop' && input.agent_type) {
     blocks.splice(2, 0, {
@@ -81,9 +102,11 @@ function formatMessage(input) {
   const projectDir = input.cwd || '';
   const projectName = path.basename(projectDir) || 'Unknown';
   const sessionId = (input.session_id || '').slice(0, 8);
+  const summary = getSummary(hookType);
 
   return {
-    text: `Claude Code: ${hookType} in ${projectName}`, // Fallback required
+    // Fallback required: Slack shows it in push/preview, so it names the project too.
+    text: summary ? `[${projectName}] ${summary}` : `AI Agent: ${hookType} in ${projectName}`,
     blocks: buildBlocks(input, hookType, projectName, sessionId)
   };
 }
@@ -106,6 +129,6 @@ module.exports = {
    */
   send: async (input, env) => {
     const payload = formatMessage(input);
-    return send('slack', env.SLACK_WEBHOOK_URL, payload);
+    return send('slack', env.SLACK_WEBHOOK_URL, payload, { event: input.hook_event_name });
   }
 };

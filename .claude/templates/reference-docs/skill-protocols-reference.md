@@ -4,9 +4,11 @@
 
 **Protocols directory:** `docs/project-protocols/`
 
+This is the default project-root-relative body directory. A project may change it by editing this header; the resolver validates it stays inside the project before reading any body.
+
 A skill protocol overlay is a **named, project-specific set of extra rules layered onto a framework skill** — it does not modify the skill. The portable harness under `.claude/` stays untouched; every overlay's content lives in this project's `docs/` plane. This file is the INDEX (the skill map): it carries only what resolution needs — which skills an overlay targets, and where its body lives. Each overlay's actual rules live in their own file under the protocols directory and are read only when a matching skill is invoked.
 
-Both hosts reach these overlays without a hook: neither Claude Code nor Codex CLI can intercept a skill invocation, so the resolution rule lives in `CLAUDE.md` (mirrored to `AGENTS.md`) and names the active overlays there.
+Every supported host reaches these overlays through hooks: when a skill starts, the `skill-overlay-remind` hook names the body files that match it, and the universal `project-protocol-overlay` protocol tells the assistant how to resolve and apply them. No root file lists them.
 
 ## Usage
 
@@ -41,6 +43,6 @@ Two gates are always on: **adding** never stores raw wording — the skill draft
 - **Index rows and body files are written together.** A row without a body is a broken resolution; a body without a row is unreachable.
 - **No secrets in overlay bodies** — reference env vars or the secret store by name.
 
-**Two copies of this file exist, and they are not the same thing.** `.claude/templates/reference-docs/skill-protocols-reference.md` is the framework-plane TEMPLATE; `docs/project-reference/skill-protocols-reference.md` is the project-plane INDEX that gets copied from it on first session start. They begin byte-identical and are EXPECTED to diverge as soon as the first overlay is added — the Registry table is project data and belongs only to the index. The surrounding contract prose (column meanings, Conventions) is what should stay in step: when the template's contract changes, reconcile the prose in the index, never the rows.
+**Two copies of this file exist, and they are not the same thing.** `.claude/templates/reference-docs/skill-protocols-reference.md` is the framework-plane TEMPLATE; `skill-protocols-reference.md` under the configured project-reference root (default `docs/project-reference`; a `docsRoots.projectReference.path` entry in `docs/project-config.json` relocates it) is the project-plane INDEX. SessionStart copies this template only when the required project config selects the matching `referenceDocs` entry with a `templatePath`; otherwise the registry is optional and `/project-skill-protocol add` can create it. The copies begin byte-identical and are EXPECTED to diverge as soon as the first overlay is added — the Registry table is project data and belongs only to the index. The surrounding contract prose (column meanings, Conventions) is what should stay in step: when the template's contract changes, reconcile the prose in the index, never the rows.
 
 The full overlay-file contract (frontmatter fields, required sections, resolution rules) lives in `.claude/skills/project-skill-protocol/references/registry.md`.

@@ -1,9 +1,11 @@
 #region
 
 using Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Domain.Events;
 
 #endregion
@@ -19,6 +21,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Domain
 internal sealed class TransferSnippetTextToMultiDbDemoEntityNameDomainEventConsumer
     : PlatformCqrsDomainEventBusMessageConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public TransferSnippetTextToMultiDbDemoEntityNameDomainEventConsumer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager uowManager,

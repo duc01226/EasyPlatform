@@ -1,6 +1,9 @@
 """Inject SYNC:task-tracking-external-report block into plan/review skills.
 
-Idempotent — skip files that already contain the SYNC tag.
+Idempotent — files that already carry the protocol (the SYNC tag, or a guide entry
+from a skill converted to guide lines: sync_blocks.has_guide_entry) are only
+refreshed; the TOP block is never put back into a guided skill. Files keep their own
+line-ending style.
 Inserts:
   TOP block:  immediately BEFORE the SYNC region start (per
               sync_blocks.find_sync_region_start) — co-locates TOP with reminders
@@ -13,7 +16,8 @@ import re
 import sys
 from pathlib import Path
 
-from sync_blocks import find_sync_region_start, load_wrapped_sync_block
+from line_endings import read_text, write_text
+from sync_blocks import find_sync_region_start, has_guide_entry, load_wrapped_sync_block
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = PROJECT_ROOT / ".claude" / "skills"
@@ -21,42 +25,35 @@ SKILLS_DIR = PROJECT_ROOT / ".claude" / "skills"
 SKILL_NAMES = [
     # Plan family
     "plan",
-    "plan-analysis",
-    "plan-review",
-    "plan-validate",
     # Review family
-    "security-review",
-    "code-review",
-    "integration-test-review",
+    "security-audit",
+    "ai-engineering-review",
+    "code-quality-review",
     "knowledge-review",
-    "architecture-review",
-    "artifact-review",
+    # `work-item` keeps its task-tracking body inline in work-item/references/mode-review.md, so it is not an injector target.
     "changes-review",
-    "domain-entities-review",
     "production-readiness-review",
-    "architecture-review-full",
+    # `architecture` (review and full modes) keeps its task-tracking body inline in
+    # architecture/references/mode-*.md, so it is not an injector target.
     "why-review",
     "workflow-review-changes",
     # Cook family
     "feature-implement",
     # Bugfix / fix family (ci/issue/logs/test/ui folded into /fix --target=*)
     "fix",
-    # Investigate / scout family
+    # Investigate family
     "investigate",
-    "debug-investigate",
-    "scout",
-    # Spec authoring quality family (idea → spec gates)
-    "spec-discovery",
-    "spec-clarify",
-    # workflow-write-integration-test step skills (those not already listed)
+    # Spec authoring quality gates (discovery / clarify) are `spec` modes: their bodies carry
+    # these blocks inline in spec/references/mode-*.md, so `spec` is intentionally not a target.
+    # workflow-integration-test step skills (those not already listed)
     # NOTE: `spec` (merged feature-spec router) is intentionally NOT a target —
     # it carries task-tracking via STEP-TASK-ANCHOR and writes its TC registry
     # to docs/specs/; the external-report block would duplicate that contract.
     "integration-test",
-    "integration-test-verify",
-    "docs-update",
+    # `docs-manager` modes carry this block inline in docs-manager/references/mode-*.md,
+    # so `docs-manager` is intentionally not a target.
     "watzup",
-    "workflow-write-integration-test",
+    "workflow-integration-test",
     # workflow-end is intentionally excluded — it just clears state, no long work
 ]
 
@@ -90,7 +87,7 @@ def find_skill_path(name: str) -> Path | None:
 def inject(text: str) -> tuple[str, dict]:
     status = {"top": "skipped", "bottom": "skipped", "already_present": False}
 
-    if TAG in text:
+    if TAG in text or has_guide_entry(text, TAG.removeprefix("SYNC:")):
         status["already_present"] = True
         m = TOP_BLOCK_RE.search(text)
         if m and m.group(0).strip() != TOP_BLOCK.strip():
@@ -150,7 +147,7 @@ def main() -> int:
         if path is None:
             results.append((name, "MISSING", {}))
             continue
-        original = path.read_text(encoding="utf-8")
+        original, newline = read_text(path)
         new_text, status = inject(original)
         if status["already_present"] and new_text == original:
             results.append((name, "ALREADY-PRESENT", status))
@@ -161,7 +158,7 @@ def main() -> int:
         if check or dry_run:
             results.append((name, "WOULD-UPDATE" if check else "DRY-RUN", status))
             continue
-        path.write_text(new_text, encoding="utf-8")
+        write_text(path, new_text, newline)
         results.append((name, "UPDATED", status))
 
     # summary

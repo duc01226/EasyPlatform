@@ -13,6 +13,7 @@ my-skill/
 
 More complex skills can add additional directories and files as needed.
 
+
 # The SKILL.md file
 
 The skill's "entrypoint" is the `SKILL.md` file. It is the only file required to exist. The file must start with a YAML frontmatter followed by regular Markdown.

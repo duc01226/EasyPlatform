@@ -184,9 +184,142 @@ function buildBoundaryAllowlist(extraDirs = []) {
     .filter(Boolean);
 }
 
+/**
+ * Normalize a CONFIGURED ROOT path to one canonical comparison/construction form.
+ *
+ * Backslashes -> `/`, repeated separators collapsed, a leading `./` stripped, every
+ * trailing `/` stripped. A non-string, empty, or whitespace-only value yields `''`.
+ *
+ * It deliberately does NOT lowercase: case folding is a COMPARISON concern and belongs
+ * at the comparison site (`isPathWithinRoot`), not baked into a value that may be used
+ * to build a real filesystem path on a case-sensitive host.
+ *
+ * Distinct from `sanitizePath` above by design: `sanitizePath` REVERTS a bad value to a
+ * default (fail-safe, correct for framework preferences in `.ck.json`), while this pair
+ * plus `escapesRepoRoot` REPORTS a bad value (fail-closed, correct for project content
+ * roots declared in `docs/project-config.json`).
+ *
+ * @param {*} value - Candidate root path
+ * @returns {string} Canonical slash-form root without a trailing slash, or `''`
+ */
+function normalizeRootPath(value) {
+  if (!value || typeof value !== 'string') return '';
+  let normalized = value.trim();
+  if (!normalized) return '';
+  normalized = normalized.replace(/\\/g, '/');
+  normalized = normalized.replace(/\/{2,}/g, '/');
+  while (normalized.startsWith('./')) normalized = normalized.slice(2);
+  normalized = normalized.replace(/\/+$/, '');
+  return normalized;
+}
+
+/**
+ * Is `candidate` inside `root` (or equal to it), matching on a SEGMENT boundary?
+ *
+ * Both sides are normalized and compared case-insensitively. The segment boundary is the
+ * defence against the fail-open class a bare `startsWith` produces: root `docs/specs`
+ * must NOT match `docs/specifications/x.md` or `docs/specs-technical/x.md`.
+ *
+ * @param {*} candidate - Repo-relative path to test
+ * @param {*} root - Configured root
+ * @returns {boolean} True when candidate is the root or lives under it
+ */
+function isPathWithinRoot(candidate, root) {
+  const c = normalizeRootPath(candidate).toLowerCase();
+  const r = normalizeRootPath(root).toLowerCase();
+  if (!c || !r) return false;
+  if (c === r) return true;
+  return c.startsWith(`${r}/`);
+}
+
+/**
+ * Does a configured value leave the repository root?
+ *
+ * True when the normalized value is absolute (POSIX `/…`, UNC, or a Windows drive such
+ * as `C:/…`), is Windows drive-relative (`C:foo` — resolved against that drive's current
+ * directory, never the repo), or contains a `..` segment anywhere. An empty/invalid value
+ * is NOT an escape — absence is handled by the caller's default, not by this guard.
+ *
+ * @param {*} value - Configured root path
+ * @returns {boolean} True when the value escapes the repo root
+ */
+function escapesRepoRoot(value) {
+  const normalized = normalizeRootPath(value);
+  if (!normalized) return false;
+  if (normalized.startsWith('/')) return true;
+  if (/^[a-zA-Z]:/.test(normalized)) return true;
+  return normalized.split('/').includes('..');
+}
+
+/**
+ * Is the absolute filesystem path `candidate` inside `root` (or equal to it)?
+ *
+ * The canonical containment predicate for RESOLVED filesystem paths — the security check
+ * behind traversal and symlink-escape guards. Distinct from `isPathWithinRoot`, which
+ * compares repo-relative CONFIG strings. Both sides are resolved first, so `.`/`..`
+ * segments and redundant separators cannot fake containment; comparison goes through
+ * `path.relative`, which folds case on win32 and yields an absolute result for a different
+ * drive or UNC share (both rejected). A sibling that merely shares the prefix (`/a/bc` vs
+ * root `/a/b`) and an entry literally named `..x` are handled on the segment boundary.
+ * Physical (symlink/junction) containment is the caller's job: pass `realpath`ed inputs.
+ *
+ * @param {string} root - Containing directory (absolute, or resolved against cwd)
+ * @param {string} candidate - Path to test
+ * @param {object} [pathApi=path] - `path`, `path.win32` or `path.posix`; injectable so the
+ *   win32 and POSIX semantics are testable on any host
+ * @returns {boolean} True when candidate is root or lives beneath it; false for invalid input
+ */
+function isAbsolutePathWithin(root, candidate, pathApi = path) {
+  if (typeof root !== 'string' || typeof candidate !== 'string' || !root || !candidate) return false;
+  if (root.includes('\0') || candidate.includes('\0')) return false;
+  const relative = pathApi.relative(pathApi.resolve(root), pathApi.resolve(candidate));
+  return relative === '' ||
+    (relative !== '..' && !relative.startsWith(`..${pathApi.sep}`) && !pathApi.isAbsolute(relative));
+}
+
+/**
+ * Join a configured root with path segments using exactly one `/` between parts.
+ *
+ * **Bare template concatenation of a configured root is FORBIDDEN.** A configured root
+ * may or may not carry a trailing slash, and this codebase ships BOTH conventions, so
+ * `` `${root}${segment}` `` silently produces either `docs/specs/Auth` or `docs/specsAuth`
+ * depending on whose value it received — a total mis-classification with no error. Route
+ * every construction through this helper instead. The two live call sites it replaces:
+ *   - `.claude/hooks/lib/doc-sync-classify.cjs:30,131` — `FEATURE_SPEC_ROOT = 'docs/specs/'`
+ *     WITH a trailing slash, used for string CONSTRUCTION.
+ *   - `.claude/scripts/doc-impact-map.cjs:368` — slash-FREE `config.specRoots.*.path`
+ *     compared with `startsWith` (which is also why `isPathWithinRoot` exists).
+ * Both are converted in Phase 08; this helper is the replacement they adopt.
+ *
+ * Empty/blank segments are dropped, EXCEPT that a final empty segment requests a trailing
+ * slash: `joinRoot('docs/specs', 'Auth', '')` and `joinRoot('docs/specs/', 'Auth', '')`
+ * both yield `'docs/specs/Auth/'`.
+ *
+ * @param {*} root - Configured root path
+ * @param {...*} segments - Path segments; a final `''` requests a trailing slash
+ * @returns {string} Joined path, or `''` when nothing usable remains
+ */
+function joinRoot(root, ...segments) {
+  const wantsTrailingSlash =
+    segments.length > 0 && normalizeRootPath(segments[segments.length - 1]) === '';
+  const parts = [normalizeRootPath(root)];
+  for (const segment of segments) {
+    const normalized = normalizeRootPath(segment);
+    if (normalized) parts.push(normalized);
+  }
+  const joined = parts.filter(Boolean).join('/');
+  if (!joined) return '';
+  return wantsTrailingSlash ? `${joined}/` : joined;
+}
+
 module.exports = {
   INVALID_FILENAME_CHARS,
   sanitizeSlug,
+  normalizeRootPath,
+  isPathWithinRoot,
+  escapesRepoRoot,
+  isAbsolutePathWithin,
+  joinRoot,
   normalizePath,
   normalizePathForComparison,
   convertMsysToWindows,

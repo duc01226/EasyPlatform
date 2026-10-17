@@ -15,10 +15,10 @@ namespace Easy.Platform.Common.Cqrs.Commands;
 /// - Support for result transformation and mapping
 /// 
 /// Used extensively across:
-/// - Growth service: Leave request processing, attendance management
-/// - Employee service: Payroll operations, employee lifecycle management
-/// - Talents service: Talent acquisition and management workflows
-/// - Permission Provider: Subscription and usage limit management
+/// - Request/approval processing
+/// - Batch operations and entity lifecycle management
+/// - Multi-step business workflows
+/// - Subscription and usage-limit management
 /// 
 /// All command results should implement this interface directly or inherit from PlatformCqrsCommandResult.
 /// </remarks>
@@ -53,9 +53,9 @@ public interface IPlatformCqrsCommandResult
 /// - Processing statistics and metrics
 /// 
 /// Examples from codebase:
-/// - Used as base for CreateEmployeeResult in Employee service
-/// - Extended for PayrollProcessingResult in Talents service
-/// - Foundation for LeaveRequestResult in Growth service
+/// - Used as base for CreateEntityResult in a consuming service
+/// - Extended for BatchProcessingResult in a consuming service
+/// - Foundation for ApproveRequestResult in a consuming service
 /// </remarks>
 public class PlatformCqrsCommandResult : IPlatformCqrsCommandResult
 {

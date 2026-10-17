@@ -27,7 +27,7 @@ namespace Easy.Platform.Tests.Unit.Infrastructures.MessageBus;
 public class PlatformMessageBusConsumerLogErrorTests
 {
     // Distinctive sentinels: a substring search for these is only meaningful if they cannot occur incidentally.
-    private const string PiiEmail = "pii-sentinel-candidate@example-donotuse.test";
+    private const string PiiEmail = "pii-sentinel-recipient@example-donotuse.test";
     private const string PiiName = "PiiSentinelGivenName";
     private const string PiiFreeText = "PiiSentinelBodyTextThatMustNeverBeLogged";
 
@@ -41,8 +41,8 @@ public class PlatformMessageBusConsumerLogErrorTests
         {
             TrackingId = "01JTRACKINGIDSENTINEL0001",
             CreatedUtcDate = new DateTime(2026, 08, 04, 10, 30, 00, DateTimeKind.Utc),
-            CandidateEmail = PiiEmail,
-            CandidateName = PiiName,
+            RecipientEmail = PiiEmail,
+            RecipientName = PiiName,
             Body = PiiFreeText
         };
 
@@ -101,7 +101,7 @@ public class PlatformMessageBusConsumerLogErrorTests
         // "no identity available" rather than throwing inside an error handler — a logger that throws while reporting a
         // consume failure would replace a handled fault with an unhandled one.
         var logger = new RecordingLogger();
-        var message = new PiiCarryingPlainTestMessage { CandidateEmail = PiiEmail };
+        var message = new PiiCarryingPlainTestMessage { RecipientEmail = PiiEmail };
 
         var act = () => IPlatformMessageBusConsumer.LogError(logger, typeof(FakeConsumer), message, new InvalidOperationException("boom"));
 
@@ -127,8 +127,8 @@ public class PlatformMessageBusConsumerLogErrorTests
 
     private sealed class PiiCarryingTrackableTestMessage : PlatformTrackableBusMessage
     {
-        public string CandidateEmail { get; set; } = "";
-        public string CandidateName { get; set; } = "";
+        public string RecipientEmail { get; set; } = "";
+        public string RecipientName { get; set; } = "";
         public string Body { get; set; } = "";
 
         public override string SubQueuePrefix() => "";
@@ -136,6 +136,6 @@ public class PlatformMessageBusConsumerLogErrorTests
 
     private sealed class PiiCarryingPlainTestMessage
     {
-        public string CandidateEmail { get; set; } = "";
+        public string RecipientEmail { get; set; } = "";
     }
 }

@@ -20,7 +20,7 @@ Copy the entire `.claude/` directory to your target project. This includes:
 - `skills/` — planning, implementation, review, testing, setup, and sync skills
 - `agents/` — specialized agents (code-reviewer, debugger, architect, etc.)
 - `hooks/` — context injection, workflow routing, enforcement, and setup gates
-- `workflows/` + `workflows.json` — 18 workflow definitions (feature, bugfix, refactor, etc.)
+- `workflows/` + `workflows.json` — <!-- COUNT:workflows -->17<!-- /COUNT --> workflow definitions (feature, bugfix, refactor, E2E verification, etc.)
 - `scripts/` — Catalog generators, audit scripts, Codex sync/verification tooling
 - `docs/` — Framework documentation
 
@@ -35,10 +35,10 @@ Run the `/project-init` skill as the canonical setup and re-evaluation entry poi
 This assesses the folder state and routes the required lower-level setup steps:
 
 - `/project-config` for `docs/project-config.json`
-- `/docs-init`, `/scan-all`, or targeted `/scan --target=<key>` for project-reference docs
-- `/claude-md-init` for `CLAUDE.md`
-- `/sync-codex` for `AGENTS.md`, `.agents`, and `.codex` mirrors
-- `/graph-build` after config/docs are populated
+- `/docs-manager --mode=init`, `/scan-all`, or targeted `/scan --target=<key>` for project-reference docs
+- `/ai-context-refresh` for the root AI context and its Codex mirror handoff
+- `/sync-codex` for `AGENTS.md`, `.agents`, and `.codex` mirrors — on Codex, trust the project and review the new handlers in `/hooks` afterwards, because the universal rules and the workflow route arrive only through hooks (see `hooks/README.md#hook-only-delivery-host-requirements`; OpenCode sub-agent delivery is unverified; a host that runs no hooks is unsupported)
+- `/graph-code --mode=build` after config/docs are populated
 
 `/project-init` is idempotent. Run it again after pulling changes, changing project structure, or noticing missing/stale setup files.
 
@@ -47,7 +47,7 @@ This assesses the folder state and routes the required lower-level setup steps:
 Review the generated project-specific files:
 
 - `docs/project-config.json`
-- `docs/project-reference/`
+- the project-reference docs root (default `docs/project-reference`; a `docsRoots.projectReference.path` entry in `docs/project-config.json` overrides the path)
 - `CLAUDE.md`
 - `AGENTS.md`
 
@@ -72,14 +72,16 @@ Optional scans (run if applicable):
 /scan --target=feature-spec         # Business feature documentation index
 ```
 
-`/claude-md-init`, when routed by `/project-init`, reads project config and generates a `CLAUDE.md` with:
+`/ai-context-refresh`, when routed by `/project-init`, reads project config and generates the root AI context in `CLAUDE.md` with:
 
 - Project description and architecture overview (from config)
 - Golden rules (from contextGroups[].rules)
 - Key file locations (from modules[].pathRegex)
 - Development commands, service ports, infrastructure
 - Documentation index and lookup guide
-- Static framework sections (search-first, task planning, evidence-based reasoning, etc.)
+- The skill-activation table (path-scoped conventions)
+
+The universal framework rules (search-first, task planning, evidence-based reasoning, etc.) are not written into `CLAUDE.md`: the universal hook delivers them to every session and sub-agent.
 
 **Modes:** `init` (first-time), `update` (sync marked sections), `refactor` (optimize token efficiency).
 
@@ -92,32 +94,32 @@ The framework is ready. Use workflows:
 - `/feature-implement` — Implement features step-by-step
 - `/fix` — Debug and fix issues
 - `/plan` — Create implementation plans
-- `/code-review` — Review code changes
+- `/code-quality-review` — Review code changes
 
-The workflow router injects the catalog; the model auto-selects and activates the best-matching workflow (no confirmation step).
+The workflow router injects the catalog; on the first task of a session, when the prompt matches a workflow, the model asks you one question before starting it — the full workflow, a slimmer custom route, or direct execution, recommended option first. Mid-session it never starts a workflow or asks to — it works directly or with a lean chain of skills unless you call a workflow skill or ask for one in words, which always runs.
 
 ## What's Project-Agnostic vs Project-Specific
 
-| Component                        | Agnostic? | Notes                                              |
-| -------------------------------- | --------- | -------------------------------------------------- |
-| Skills (`.claude/skills/`)       | Yes       | Behavioral patterns, not code patterns             |
-| Agents (`.claude/agents/`)       | Yes       | Role definitions, not project logic                |
-| Hooks (`.claude/hooks/`)         | Yes       | Context injection reads from `project-config.json` |
-| Workflows (`.claude/workflows/`) | Yes       | Process definitions, not implementation            |
-| `CLAUDE.md`                      | **No**    | Must customize per project                         |
-| `docs/project-config.json`       | **No**    | Generated per project via `/project-init`          |
-| `docs/project-reference/`        | **No**    | Generated per project via `/project-init`          |
-| `docs/specs/`                    | **No**    | Project-specific tech-free Feature Specs           |
+| Component                        | Agnostic? | Notes                                                                                                                                                      |
+| -------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Skills (`.claude/skills/`)       | Yes       | Behavioral patterns, not code patterns                                                                                                                     |
+| Agents (`.claude/agents/`)       | Yes       | Role definitions, not project logic                                                                                                                        |
+| Hooks (`.claude/hooks/`)         | Yes       | Context injection reads from `project-config.json`                                                                                                         |
+| Workflows (`.claude/workflows/`) | Yes       | Process definitions, not implementation                                                                                                                    |
+| `CLAUDE.md`                      | **No**    | Must customize per project                                                                                                                                 |
+| `docs/project-config.json`       | **No**    | Generated per project via `/project-init`                                                                                                                  |
+| Project-reference docs root      | **No**    | Generated per project via `/project-init`; default `docs/project-reference`, overridden by `docsRoots.projectReference.path` in `docs/project-config.json` |
+| Business spec root               | **No**    | Project-specific tech-free Feature Specs; default `docs/specs`, overridden by `specRoots.business.path` in `docs/project-config.json`                      |
 
 ## Greenfield Projects
 
 For new projects with no existing code:
 
 ```
-/greenfield
+/workflow-greenfield-init
 ```
 
-This activates the greenfield workflow: idea → research → architecture → plan → scaffold → implement.
+This activates the greenfield workflow: idea → research → architecture → plan → scaffold → reviewed foundation, then it hands the first slice to `/workflow-implement-spec --mode=greenfield-slice`.
 
 ## Troubleshooting
 

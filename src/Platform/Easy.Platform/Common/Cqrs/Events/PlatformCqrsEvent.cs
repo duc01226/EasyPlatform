@@ -117,7 +117,7 @@ public interface IPlatformCqrsEvent : INotification
     /// </summary>
     /// <value>
     /// String identifier representing the specific event occurrence.
-    /// Examples: "EmployeeCreated", "PayrollProcessed", "LeaveRequestApproved".
+    /// Examples: "EntityCreated", "BatchProcessed", "RequestApproved".
     /// </value>
     /// <remarks>
     /// Abstract property providing specific event identification.
@@ -535,7 +535,7 @@ public abstract class PlatformCqrsEvent : IPlatformCqrsEvent
     /// </summary>
     /// <value>
     /// String identifier representing the specific event occurrence.
-    /// Examples: "EmployeeCreated", "PayrollProcessed", "OrderCompleted".
+    /// Examples: "EntityCreated", "BatchProcessed", "OrderCompleted".
     /// </value>
     /// <remarks>
     /// Abstract property providing granular event identification.

@@ -1,25 +1,19 @@
 'use strict';
-// Phase 04 — Protocol Text Parity (source-freshness gate).
+// Protocol Text Parity (source-freshness gate).
 //
-// Single canonical source of the critical-thinking / ai-mistake-prevention protocol text is
-// `.claude/skills/shared/sync-inline-versions.md`. Every downstream copy — the baked CLAUDE.md
-// blocks and the per-skill embeds — must stay byte-faithful to it (after EOL/whitespace
-// normalization). This suite is the regression net that fails the moment any copy drifts from
-// canonical, so a hook-free Codex harness still sees identical AI context.
-//
-// After the de-hooking refactor no hook emits protocol text at runtime. `prompt-injections.cjs`
-// is a delegating compat wrapper that returns `buildCanonicalProtocolText(...,':full')` from the
-// canonical file. P1/P2 are therefore a WRAPPER-STILL-DELEGATES guard, not a runtime-emission
-// check: they confirm the legacy injector entrypoints still resolve to the canonical body so any
-// remaining legacy caller stays in lockstep with canonical. The REAL cross-copy parity is held by
-// P3/P4 (CLAUDE.md baked blocks) and P5 (skill embeds).
+// The single canonical source of the universal protocol text (critical thinking, AI mistake prevention,
+// reference-doc loading, task planning, …) is `.claude/skills/shared/sync-inline-versions.md`.
+// The universal hook delivers that text from the generated projection (`shared/protocols/<tag>.md`)
+// in the bins of `protocol-groups.json`; no root file, skill or agent carries any of it. This suite is
+// the regression net that fails the moment a projection drifts from canonical, a bin stops carrying a
+// canonical body, or a copy of the text reappears in a root file, a skill or an agent.
 //
 // Asserts (TC-CTXP-030..033):
-//   P1  wrapper-delegates  injectCriticalContext('',true)     == canonical SYNC:critical-thinking-mindset:full
-//   P2  wrapper-delegates  injectAiMistakePrevention('',true) == canonical SYNC:ai-mistake-prevention:full
-//   P3  CLAUDE.md TOP CK:CRITICAL-THINKING / CK:AI-MISTAKE-PREVENTION blocks == canonical :full
-//   P4  CLAUDE.md BOTTOM CK blocks == TOP CK blocks (exactly 2 occurrences each, primacy==recency)
-//   P5  canonical CONDENSED critical-thinking-mindset / ai-mistake-prevention == every skill embed
+//   P1  every universal tag's projection file == its canonical body
+//   P2  every delivered bin == the canonical bodies of its tags, rendered by the one bin format
+//   P3  CLAUDE.md carries no universal protocol text: no CK protocol/route block, no sentinel, no body lead line
+//   P4  AGENTS.md carries none either
+//   P5  no skill embeds or guides a universal tag
 //   GUARD comparator is not vacuously true (drift IS detected; empty extraction fails)
 //
 // Hard requirements: normalize CRLF (Windows checks out CRLF, canonical commits LF); NEVER fail-open
@@ -28,23 +22,32 @@
 const fs = require('fs');
 const path = require('path');
 const { assertEqual, assertTrue } = require('../lib/assertions.cjs');
+const { isFrameworkRepo } = require('../lib/framework-repo-guard.cjs');
 
 const REPO = path.resolve(__dirname, '..', '..', '..', '..');
 const { extractSyncBody } = require(path.join(REPO, '.claude', 'scripts', 'lib', 'extract-sync-block.cjs'));
-const injectors = require(path.join(REPO, '.claude', 'hooks', 'lib', 'prompt-injections.cjs'));
+const universalLib = require(path.join(REPO, '.claude', 'hooks', 'lib', 'universal-delivery.cjs'));
 
 const CANONICAL_PATH = path.join(REPO, '.claude', 'skills', 'shared', 'sync-inline-versions.md');
+const GROUPS_PATH = path.join(REPO, '.claude', 'skills', 'shared', 'protocol-groups.json');
 const CLAUDE_MD_PATH = path.join(REPO, 'CLAUDE.md');
+const AGENTS_MD_PATH = path.join(REPO, 'AGENTS.md');
+// P3/P4 assert this framework repo's own root files (an adopter's root file is project-owned), so they
+// skip elsewhere through the synchronous framework-repo guard (`skip` is read while the list is built).
+const SELF_CHECK = isFrameworkRepo(REPO);
+const HAS_CLAUDE_MD = SELF_CHECK && fs.existsSync(CLAUDE_MD_PATH);
+const HAS_AGENTS_MD = SELF_CHECK && fs.existsSync(AGENTS_MD_PATH);
 const SKILLS_DIR = path.join(REPO, '.claude', 'skills');
 
 const canonical = fs.readFileSync(CANONICAL_PATH, 'utf8');
+const universal = JSON.parse(fs.readFileSync(GROUPS_PATH, 'utf8')).groups.universal;
+const UNIVERSAL_TAGS = Object.keys(universal.tags);
 
-// Strict normalizer for tight byte-parity invariants (P1-P4): CRLF->LF + trim only.
+// Strict normalizer for tight byte-parity invariants: CRLF->LF + trim only.
 // Preserves internal blank-line structure so this catches spacing drift, not just wording drift.
 const normTrim = (s) => String(s).replace(/\r\n?/g, '\n').trim();
 
-// Lenient-but-proven normalizer for the broad embed sweep (P5): also strips trailing per-line ws
-// and collapses blank-line runs, absorbing the minor spacing variance across 155 skill embeds.
+// Lenient normalizer for the skill sweep: also strips trailing per-line ws and collapses blank-line runs.
 const norm = (s) =>
     String(s)
         .replace(/\r\n?/g, '\n')
@@ -66,7 +69,7 @@ function extractHtmlSyncBody(content, tag) {
     return md.slice(s + open.length, e).trim();
 }
 
-// All bodies between CK markers in CLAUDE.md: <!-- CK:TAG -->…<!-- /CK:TAG --> (top + bottom).
+// All bodies between CK markers: <!-- CK:TAG -->…<!-- /CK:TAG -->.
 function extractAllCkBodies(content, tag) {
     const md = String(content).replace(/\r\n?/g, '\n');
     const open = `<!-- CK:${tag} -->`;
@@ -84,110 +87,161 @@ function extractAllCkBodies(content, tag) {
     return bodies;
 }
 
-// Canonical bodies (fail loudly if a tag is missing — extractSyncBody returns null on miss).
-const canonCritFull = extractSyncBody(canonical, 'critical-thinking-mindset:full');
-const canonAimpFull = extractSyncBody(canonical, 'ai-mistake-prevention:full');
-const canonCritCondensed = extractSyncBody(canonical, 'critical-thinking-mindset');
-const canonAimpCondensed = extractSyncBody(canonical, 'ai-mistake-prevention');
+// Guide carriers: a converted skill carries a protocol as one guide line (shared recognizer — never a
+// copied line format) instead of the embed; its full text lives in `shared/protocols/<tag>.md`.
+const guideCarrier = require(path.join(REPO, '.claude', 'scripts', 'lib', 'protocol-guide-carrier.cjs'));
 
-// Sweep all skills for a condensed embed, returning matched/drifted partition vs canonical.
-function sweepSkillEmbeds(tag, canonCondensedNorm) {
+// Sweep all skills for an embed or guide entry of `tag`, returning matched/drifted partition vs
+// canonical, plus the skills that carry the tag as a guide entry backed by an existing projection file.
+function sweepSkillEmbeds(tag, canonCondensedNorm, skillsDir = SKILLS_DIR) {
     const matched = [];
     const drifted = [];
+    const guided = [];
+    const projectionExists = fs.existsSync(path.join(skillsDir, 'shared', 'protocols', `${tag}.md`));
     const skillDirs = fs
-        .readdirSync(SKILLS_DIR, { withFileTypes: true })
+        .readdirSync(skillsDir, { withFileTypes: true })
         .filter((d) => d.isDirectory())
         .map((d) => d.name);
     for (const dir of skillDirs) {
-        const p = path.join(SKILLS_DIR, dir, 'SKILL.md');
+        const p = path.join(skillsDir, dir, 'SKILL.md');
         if (!fs.existsSync(p)) continue;
-        const body = extractHtmlSyncBody(fs.readFileSync(p, 'utf8'), tag);
-        if (body == null) continue; // skill doesn't embed this tag
+        const text = fs.readFileSync(p, 'utf8');
+        const body = extractHtmlSyncBody(text, tag);
+        if (body == null) {
+            if (projectionExists && guideCarrier.hasGuideEntry(text, tag)) guided.push(dir);
+            continue; // skill doesn't embed this tag
+        }
         if (norm(body) === canonCondensedNorm) matched.push(dir);
         else drifted.push(dir);
     }
-    return { matched, drifted, embedCount: matched.length + drifted.length };
+    return { matched, drifted, guided, embedCount: matched.length + drifted.length, guideCount: guided.length };
+}
+
+/** The first non-empty line of a protocol body: its distinctive lead, used to find a copy. */
+const leadLine = (body) => normTrim(body).split('\n').find((line) => line.trim() !== '').trim();
+
+const ROOT_MARKERS = [/CK:UNIVERSAL-GUIDES/, /<!-- CK:CRITICAL-THINKING -->/, /<!-- CK:AI-MISTAKE-PREVENTION -->/, /<!-- CK:WORKFLOW-ROUTE-POINTER -->/, /<!-- CK:WORKFLOW-GATE -->/];
+
+function rootCopyProblems(text) {
+    const problems = [];
+    for (const marker of ROOT_MARKERS) if (marker.test(text)) problems.push(`marker ${marker}`);
+    const normalized = String(text).replace(/\r\n?/g, '\n');
+    for (const tag of UNIVERSAL_TAGS) {
+        const lead = leadLine(extractSyncBody(canonical, tag));
+        if (lead.length >= 30 && normalized.includes(lead)) problems.push(`lead line of ${tag}`);
+    }
+    return problems;
 }
 
 module.exports = {
     name: 'protocol-text-parity',
     tests: [
-        // ── P1 / P2 — wrapper-still-delegates guard: the legacy injector entrypoints in the
-        //    delegating compat wrapper must still resolve to canonical :full (no runtime emission).
+        // ── P1 — the published projection equals canonical for every universal tag.
         {
-            name: 'TC-CTXP-030 P1: injectCriticalContext == canonical critical-thinking-mindset:full',
+            name: 'TC-CTXP-030 P1: every universal projection file == its canonical body',
             fn() {
-                assertTrue(canonCritFull != null, 'canonical critical-thinking-mindset:full not found');
-                const wrapped = injectors.injectCriticalContext('', true);
-                assertEqual(normTrim(wrapped), normTrim(canonCritFull), 'wrapper injectCriticalContext stopped delegating to canonical :full');
+                assertTrue(UNIVERSAL_TAGS.length >= 4, 'the universal group holds the bundle');
+                for (const tag of UNIVERSAL_TAGS) {
+                    const body = extractSyncBody(canonical, tag);
+                    assertTrue(body != null && body.length > 0, `canonical ${tag} not found (fail-closed)`);
+                    const file = path.join(SKILLS_DIR, 'shared', 'protocols', `${tag}.md`);
+                    assertTrue(fs.existsSync(file), `projection file missing for ${tag}`);
+                    assertEqual(normTrim(fs.readFileSync(file, 'utf8')), normTrim(body), `projection of ${tag} drifted from canonical (run node .claude/scripts/build-protocol-projection.cjs)`);
+                }
             },
         },
+        // ── P2 — every bin is exactly the rendered canonical bodies of its tags.
         {
-            name: 'TC-CTXP-030 P2: injectAiMistakePrevention == canonical ai-mistake-prevention:full',
+            name: 'TC-CTXP-030 P2: every delivered bin == the canonical bodies of its tags, rendered by the bin format',
             fn() {
-                assertTrue(canonAimpFull != null, 'canonical ai-mistake-prevention:full not found');
-                const wrapped = injectors.injectAiMistakePrevention('', true);
-                assertEqual(normTrim(wrapped), normTrim(canonAimpFull), 'wrapper injectAiMistakePrevention stopped delegating to canonical :full');
-            },
-        },
-
-        // ── P3 — baked CLAUDE.md TOP blocks identical to canonical :full.
-        {
-            name: 'TC-CTXP-031 P3: CLAUDE.md TOP CK:CRITICAL-THINKING == canonical :full',
-            fn() {
-                const claudeMd = fs.readFileSync(CLAUDE_MD_PATH, 'utf8');
-                const bodies = extractAllCkBodies(claudeMd, 'CRITICAL-THINKING');
-                assertTrue(bodies.length >= 1, 'no CK:CRITICAL-THINKING block found in CLAUDE.md (fail-closed)');
-                assertEqual(normTrim(bodies[0]), normTrim(canonCritFull), 'CLAUDE.md TOP critical block drifted from canonical :full');
-            },
-        },
-        {
-            name: 'TC-CTXP-031 P3: CLAUDE.md TOP CK:AI-MISTAKE-PREVENTION == canonical :full',
-            fn() {
-                const claudeMd = fs.readFileSync(CLAUDE_MD_PATH, 'utf8');
-                const bodies = extractAllCkBodies(claudeMd, 'AI-MISTAKE-PREVENTION');
-                assertTrue(bodies.length >= 1, 'no CK:AI-MISTAKE-PREVENTION block found in CLAUDE.md (fail-closed)');
-                assertEqual(normTrim(bodies[0]), normTrim(canonAimpFull), 'CLAUDE.md TOP ai-mistake block drifted from canonical :full');
+                const reader = (file) => {
+                    try {
+                        return fs.readFileSync(file, 'utf8');
+                    } catch {
+                        return null;
+                    }
+                };
+                // The authored bins are the compatible bundle, whichever profile the developer selected.
+                const bins = universalLib.loadBins(REPO, reader, { config: { contextDelivery: { profile: 'compatible' } } });
+                assertEqual(bins.length, universal.bins.length, 'every authored bin is deliverable');
+                bins.forEach((bin, i) => {
+                    const expected = universalLib.renderBin(i + 1, universal.bins.length, universal.bins[i].map((tag) => normTrim(extractSyncBody(canonical, tag))));
+                    assertEqual(normTrim(bin.text), normTrim(expected), `bin ${i + 1} drifted from the canonical bodies`);
+                });
             },
         },
 
-        // ── P4 — primacy/recency anchors: bottom blocks == top blocks (exactly 2 occurrences each).
+        // ── P3 / P4 — no root file carries universal protocol text.
         {
-            name: 'TC-CTXP-032 P4: CLAUDE.md CRITICAL-THINKING bottom==top (2 occurrences)',
+            name: 'TC-CTXP-031 P3: CLAUDE.md carries no universal protocol text (the hook delivers it)',
+            skip: !HAS_CLAUDE_MD ? 'asserts the framework repository root file CLAUDE.md (framework-repo signal)' : false,
             fn() {
-                const claudeMd = fs.readFileSync(CLAUDE_MD_PATH, 'utf8');
-                const bodies = extractAllCkBodies(claudeMd, 'CRITICAL-THINKING');
-                assertEqual(bodies.length, 2, 'expected exactly 2 CK:CRITICAL-THINKING blocks (top primacy + bottom recency)');
-                assertEqual(normTrim(bodies[1]), normTrim(bodies[0]), 'CLAUDE.md bottom critical anchor drifted from top');
+                const problems = rootCopyProblems(fs.readFileSync(CLAUDE_MD_PATH, 'utf8'));
+                assertEqual(problems.length, 0, `CLAUDE.md holds universal protocol text: ${problems.join('; ')} (run /ai-context-refresh with --strip-legacy-universal)`);
             },
         },
         {
-            name: 'TC-CTXP-032 P4: CLAUDE.md AI-MISTAKE-PREVENTION bottom==top (2 occurrences)',
+            name: 'TC-CTXP-032 P4: AGENTS.md carries no universal protocol text (the hook delivers it)',
+            skip: !HAS_AGENTS_MD ? 'asserts the framework repository root file AGENTS.md (framework-repo signal)' : false,
             fn() {
-                const claudeMd = fs.readFileSync(CLAUDE_MD_PATH, 'utf8');
-                const bodies = extractAllCkBodies(claudeMd, 'AI-MISTAKE-PREVENTION');
-                assertEqual(bodies.length, 2, 'expected exactly 2 CK:AI-MISTAKE-PREVENTION blocks (top primacy + bottom recency)');
-                assertEqual(normTrim(bodies[1]), normTrim(bodies[0]), 'CLAUDE.md bottom ai-mistake anchor drifted from top');
+                const problems = rootCopyProblems(fs.readFileSync(AGENTS_MD_PATH, 'utf8'));
+                assertEqual(problems.length, 0, `AGENTS.md holds universal protocol text: ${problems.join('; ')} (regenerate with /sync-codex)`);
             },
         },
 
-        // ── P5 — every skill embed of the condensed blocks matches canonical condensed.
+        // ── P5 — no skill carries a universal tag in any form.
         {
-            name: 'TC-CTXP-033 P5: all skill embeds of critical-thinking-mindset == canonical condensed',
+            name: 'TC-CTXP-033 P5: no skill embeds or guides a universal tag',
             fn() {
-                assertTrue(canonCritCondensed != null, 'canonical critical-thinking-mindset (condensed) not found');
-                const r = sweepSkillEmbeds('critical-thinking-mindset', norm(canonCritCondensed));
-                assertTrue(r.embedCount > 0, 'no skill embeds of critical-thinking-mindset found — parser broken (fail-closed)');
-                assertEqual(r.drifted.length, 0, `critical-thinking-mindset embed drift in: ${r.drifted.join(', ')}`);
+                for (const tag of UNIVERSAL_TAGS) {
+                    const r = sweepSkillEmbeds(tag, norm(extractSyncBody(canonical, tag)));
+                    assertEqual(r.embedCount + r.guideCount, 0, `${tag} is hook-delivered, yet skill(s) still embed or guide it: ${[...r.matched, ...r.drifted, ...r.guided].join(', ')}`);
+                }
+                // And the sync-codex skill never instructs the model to put a universal rule or the full CLAUDE.md into the
+                // generated AGENTS.md projection: that file is project information only and hooks deliver the universal rules.
+                const syncCodex = fs.readFileSync(path.join(SKILLS_DIR, 'sync-codex', 'SKILL.md'), 'utf8');
+                assertTrue(!/Git discipline project first|Doc Lookup and Git discipline|mirror full `CLAUDE\.md`|generated hook\/context blocks/.test(syncCodex), 'sync-codex SKILL.md still instructs a universal-rule or full-CLAUDE.md projection into AGENTS.md');
+                assertTrue(/project projection of `CLAUDE\.md`/.test(syncCodex), 'sync-codex SKILL.md states that AGENTS.md is the project projection of CLAUDE.md');
             },
         },
+
+        // ── TC-PDL-065 — the sweep's fail-closed count accepts guide carriers but never an empty sweep.
         {
-            name: 'TC-CTXP-033 P5: all skill embeds of ai-mistake-prevention == canonical condensed',
+            name: 'TC-PDL-065 P5: a guide entry backed by a projection counts as a carrier; losing it fails closed',
             fn() {
-                assertTrue(canonAimpCondensed != null, 'canonical ai-mistake-prevention (condensed) not found');
-                const r = sweepSkillEmbeds('ai-mistake-prevention', norm(canonAimpCondensed));
-                assertTrue(r.embedCount > 0, 'no skill embeds of ai-mistake-prevention found — parser broken (fail-closed)');
-                assertEqual(r.drifted.length, 0, `ai-mistake-prevention embed drift in: ${r.drifted.join(', ')}`);
+                const os = require('os');
+                const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ptp-guide-'));
+                try {
+                    // Given: a fixture skills root whose only carrier holds a guide entry for the tag
+                    // (no embed) and the tag's projection file.
+                    const tag = 'severity-rubric';
+                    const skillsDir = path.join(tmp, '.claude', 'skills');
+                    fs.mkdirSync(path.join(skillsDir, 'shared', 'protocols'), { recursive: true });
+                    fs.mkdirSync(path.join(skillsDir, 'guided'), { recursive: true });
+                    const projection = path.join(skillsDir, 'shared', 'protocols', `${tag}.md`);
+                    fs.writeFileSync(projection, '> Fixture body.\n');
+                    const guideLine = guideCarrier.formatGuideLine({ tag, summary: 'Fixture', when: 'always', path: `.claude/skills/shared/protocols/${tag}.md` });
+                    const skillFile = path.join(skillsDir, 'guided', 'SKILL.md');
+                    fs.writeFileSync(skillFile, `# Guided\n\n${guideCarrier.GUIDE_BLOCK_START}\n\n${guideLine}\n\n${guideCarrier.GUIDE_BLOCK_END}\n`);
+                    const passes = (r) => r.embedCount + r.guideCount > 0;
+
+                    // When: the sweep runs. Then: the guide carrier satisfies the fail-closed count.
+                    const withGuide = sweepSkillEmbeds(tag, norm('> Fixture body.'), skillsDir);
+                    assertEqual(withGuide.guideCount, 1, 'guide carrier must be counted');
+                    assertTrue(passes(withGuide), 'a guide carrier must satisfy the fail-closed count');
+                    // When: the projection file is missing. Then: the guide no longer counts.
+                    fs.rmSync(projection);
+                    assertTrue(!passes(sweepSkillEmbeds(tag, norm('> Fixture body.'), skillsDir)), 'a guide with no projection must not count');
+                    // When: the guide entry is removed too (both forms missing). Then: the count fails closed.
+                    fs.writeFileSync(projection, '> Fixture body.\n');
+                    fs.writeFileSync(skillFile, '# Guided\n\nNo carrier.\n');
+                    assertTrue(!passes(sweepSkillEmbeds(tag, norm('> Fixture body.'), skillsDir)), 'no embed and no guide must fail closed');
+                    // And: an embed still present is still drift-checked.
+                    fs.writeFileSync(skillFile, `<!-- SYNC:${tag} -->\n\n> Drifted.\n\n<!-- /SYNC:${tag} -->\n`);
+                    assertEqual(sweepSkillEmbeds(tag, norm('> Fixture body.'), skillsDir).drifted.length, 1, 'embed drift must still be detected');
+                } finally {
+                    fs.rmSync(tmp, { recursive: true, force: true });
+                }
             },
         },
 
@@ -195,12 +249,16 @@ module.exports = {
         {
             name: 'GUARD: parity comparator detects drift and rejects empty extraction',
             fn() {
+                const body = extractSyncBody(canonical, UNIVERSAL_TAGS[0]);
                 assertTrue(
-                    normTrim(canonCritFull) !== normTrim(canonCritFull + '\n- injected drift line'),
+                    normTrim(body) !== normTrim(body + '\n- injected drift line'),
                     'comparator failed to detect appended drift — equality assertions would be vacuous'
                 );
                 assertTrue(extractHtmlSyncBody('no markers here', 'critical-thinking-mindset') === null, 'extractHtmlSyncBody must return null on miss (no fail-open)');
                 assertEqual(extractAllCkBodies('no markers here', 'CRITICAL-THINKING').length, 0, 'extractAllCkBodies must return empty on miss (no fail-open)');
+                // The root-copy detector fires on a real copy and stays quiet on project text
+                assertTrue(rootCopyProblems(`# Project\n\n${leadLine(body)}\n`).length > 0, 'a copy of a body lead line is detected');
+                assertEqual(rootCopyProblems('# Project\n\nOur module map.\n').length, 0, 'project text raises nothing');
             },
         },
     ],

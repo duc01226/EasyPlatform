@@ -32,10 +32,10 @@ namespace Easy.Platform.Common.Cqrs.Queries;
 /// - PageIndex: Calculated current page index (zero-based)
 /// 
 /// Used extensively across platform services:
-/// - Growth service: Paged employee lists, leave request history
-/// - Employee service: Payroll records, employee directory
-/// - Talents service: Candidate lists, hiring pipeline data
-/// - Permission Provider: Subscription usage, audit logs
+/// - Paged entity lists and request history
+/// - Paged records and directory listings
+/// - Paged search results and pipeline data
+/// - Subscription usage and audit logs
 /// 
 /// Design supports both offset-based and cursor-based paging patterns.
 /// Essential for performance when dealing with large datasets.

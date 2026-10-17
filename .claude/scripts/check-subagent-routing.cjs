@@ -3,15 +3,15 @@
 /**
  * Sub-Agent Routing Guard (anti-drift lint)
  *
- * Prevents the `integration-test-review` → `code-reviewer` misroute (and its
+ * Prevents the integration-test review → `code-reviewer` misroute (and its
  * class) from recurring after the Phase-1 audit fix. It scans the OWN-SELECTION
  * `subagent_type:` assignment lines in `.claude/skills/**​/SKILL.md` against a
  * CURATED `domain → required-specialist` allow-list and FAILS on a mismatch.
  *
  * Why a curated allow-list and not a blanket "no code-reviewer" heuristic:
  *   A blanket rule would false-flag the PRESCRIBED no-specialist fallbacks
- *   (`domain-entities-review`, `production-readiness-review` → `code-reviewer`;
- *   `plan-review`, `artifact-review` → `general-purpose`) that are correct
+ *   (`domain-analysis --mode=review`, `production-readiness-review` → `code-reviewer`;
+ *   `work-item --mode=review` → `general-purpose`) that are correct
  *   because no domain specialist agent exists for them. Only domains that HAVE a
  *   real specialist are guarded — extend ALLOW_LIST when a new specialist lands.
  *
@@ -40,7 +40,6 @@ const path = require('path');
 //  mandate `integration-tester`). Add a row only when a real specialist exists
 // for the domain AND that domain must never fall back to `code-reviewer`.
 const DEFAULT_ALLOW_LIST = {
-  'integration-test-review': 'integration-tester',
   'integration-test': 'integration-tester',
 };
 

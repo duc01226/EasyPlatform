@@ -4,13 +4,10 @@ This directory contains hooks for Claude Code sessions.
 
 ## Hooks Overview
 
-| Hook              | Location                  | Description                                                   |
-| ----------------- | ------------------------- | ------------------------------------------------------------- |
-| **Notifications** | `notifications/`          | Multi-provider notification system (Telegram, Discord, Slack) |
-| **Scout Block**   | `scout-block.cjs`         | Blocks heavy directories (node_modules, .git, etc.)           |
-| **Privacy Block** | `privacy-block.cjs`       | Prevents access to sensitive files                            |
-| **Path Boundary** | `path-boundary-block.cjs` | Blocks edits outside allowed project paths                    |
-| **Session Init**  | `session-init.cjs`        | Session startup initialization                                |
+| Hook              | Location           | Description                                                   |
+| ----------------- | ------------------ | ------------------------------------------------------------- |
+| **Notifications** | `notifications/`   | Multi-provider notification system (Telegram, Discord, Slack) |
+| **Session Init**  | `session-init.cjs` | Session startup initialization                                |
 
 ## Notifications
 
@@ -130,20 +127,6 @@ notifications/
     ├── telegram.cjs     # Telegram Bot API
     ├── discord.cjs      # Discord webhooks with embeds
     └── slack.cjs        # Slack Block Kit format
-```
-
-## Scout Block Hook
-
-Cross-platform hook blocking heavy directories to improve Claude performance.
-
-**Blocked Patterns** (configured in `.claude/.ckignore`):
-
-- `node_modules`, `__pycache__`, `.git`, `dist`, `build`
-
-**Testing:**
-
-```bash
-echo '{"tool_input":{"command":"ls node_modules"}}' | node .claude/hooks/scout-block.cjs
 ```
 
 ## Security

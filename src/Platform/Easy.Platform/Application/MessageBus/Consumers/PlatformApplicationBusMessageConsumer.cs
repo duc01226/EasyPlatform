@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Easy.Platform.Application.MessageBus.InboxPattern;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
@@ -173,6 +174,15 @@ public interface IPlatformApplicationMessageBusConsumer : IPlatformMessageBusCon
     /// <para>• Error reporting and monitoring systems for operational insights</para>
     /// </summary>
     public bool HasErrorAndShouldNeverRetry { get; set; }
+
+    /// <summary>
+    /// Selects the logical message-bus route for an infrastructure-created consumer instance.
+    /// Composite inbox workers use this hook when one consumer type, such as the built-in CQRS event
+    /// wrapper, processes messages from more than one application lane.
+    /// </summary>
+    /// <param name="storeKey">The explicitly selected logical store key.</param>
+    /// <param name="applicationName">The selected application-lane identity.</param>
+    public void ConfigureMessageBusStoreRoute(PlatformMessageBusStoreKey storeKey, string applicationName = null);
 }
 
 /// <summary>
@@ -212,19 +222,59 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
         UnitOfWorkManager = uowManager;
         ServiceProvider = serviceProvider;
         RootServiceProvider = rootServiceProvider;
-        InboxBusMessageRepo = serviceProvider.GetService<IPlatformInboxBusMessageRepository>();
-        InboxConfig = serviceProvider.GetRequiredService<PlatformInboxConfig>();
         RequestContextAccessor = ServiceProvider.GetRequiredService<IPlatformApplicationRequestContextAccessor>();
         ApplicationSettingContext = rootServiceProvider.GetRequiredService<IPlatformApplicationSettingContext>();
     }
 
     public override bool LogErrorOnException => HandleExistingInboxMessage == null && !IsHandlingLogicForInboxMessage;
 
-    protected IPlatformInboxBusMessageRepository InboxBusMessageRepo { get; }
-    protected PlatformInboxConfig InboxConfig { get; }
+    // All lane-derived state lives in one immutable snapshot so a route reset is a single assignment and a partially
+    // resolved route can never be observed.
+    private ResolvedMessageBusRoute resolvedMessageBusRoute;
+    private PlatformMessageBusStoreKey? configuredMessageBusStoreKey;
+    private string configuredMessageBusApplicationName;
+
+    protected IPlatformInboxBusMessageRepository InboxBusMessageRepo => EnsureMessageBusLaneResolved().InboxBusMessageRepo;
+
+    protected PlatformInboxConfig InboxConfig => EnsureMessageBusLaneResolved().InboxConfig;
+
     protected IPlatformRootServiceProvider RootServiceProvider { get; }
     protected IServiceProvider ServiceProvider { get; }
     protected IPlatformUnitOfWorkManager UnitOfWorkManager { get; }
+
+    /// <summary>
+    /// Gets the logical message-bus store selected by this consumer.
+    /// </summary>
+    protected virtual PlatformMessageBusStoreKey MessageBusStoreKey => PlatformMessageBusStoreKey.Default;
+
+    /// <summary>
+    /// Gets the optional application-lane identity selected by this consumer. A null value requires one lane in
+    /// the selected descriptor and therefore rejects ambiguous strict multi-module composition.
+    /// </summary>
+    protected virtual string MessageBusApplicationName => null;
+
+    /// <summary>
+    /// Configures a route selected by infrastructure outside the consumer's static type.
+    /// </summary>
+    /// <param name="storeKey">The logical message-bus store key.</param>
+    /// <param name="applicationName">The application-lane identity.</param>
+    public void ConfigureMessageBusStoreRoute(PlatformMessageBusStoreKey storeKey, string applicationName = null)
+    {
+        if (storeKey.IsEmpty)
+            throw new ArgumentException("A message-bus consumer route requires a non-empty store key.", nameof(storeKey));
+
+        configuredMessageBusStoreKey = storeKey;
+        configuredMessageBusApplicationName = applicationName;
+        resolvedMessageBusRoute = null;
+    }
+
+    /// <summary>
+    /// Gets the resolved application identity used for inbox filtering and pipeline diagnostics.
+    /// </summary>
+    protected string ResolvedMessageBusApplicationName
+    {
+        get => EnsureMessageBusLaneResolved().ApplicationLane?.ApplicationName ?? ApplicationSettingContext.ApplicationName;
+    }
 
     /// <summary>
     /// Gets a value indicating whether to automatically open a unit of work when handling a message.
@@ -281,6 +331,8 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     public override async Task ExecuteHandleLogicAsync(TMessage message, string routingKey)
     {
+        EnsureMessageBusLaneResolved();
+
         // Circular pipeline detected in BeforeExecuteHandleLogicAsync: skip-and-succeed (no handling, no exception).
         if (skipHandleLogicDueToCircularPipeLine)
             return;
@@ -295,6 +347,8 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
 
     public async Task HandleMessageDirectly(TMessage message, string routingKey, int? retryCount = null)
     {
+        EnsureMessageBusLaneResolved();
+
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(HandleMessageDirectly));
 
@@ -408,13 +462,15 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     protected virtual string GetPipelineRoutingKey(string routingKey, TMessage message)
     {
         return PlatformApplicationCommonRequestContextKeys.BuildConsumerOrEventHandlerPipeLineItem(
-            ApplicationSettingContext.ApplicationName,
+            ResolvedMessageBusApplicationName,
             message.GetType(),
             GetType());
     }
 
     private async Task HandleExecutingInboxConsumerAsync(TMessage message, string routingKey)
     {
+        var storeDescriptor = EnsureMessageBusLaneResolved().StoreDescriptor;
+
         await PlatformInboxMessageBusConsumerHelper.HandleExecutingInboxConsumerAsync(
             rootServiceProvider: RootServiceProvider,
             currentScopeServiceProvider: ServiceProvider,
@@ -423,7 +479,7 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
             inboxConfig: InboxConfig,
             applicationSettingContext: ApplicationSettingContext,
             message: message,
-            forApplicationName: ApplicationSettingContext.ApplicationName,
+            forApplicationName: ResolvedMessageBusApplicationName,
             routingKey: routingKey,
             loggerFactory: CreateLogger,
             retryProcessFailedMessageInSecondsUnit: InboxConfig.RetryProcessFailedMessageInSecondsUnit,
@@ -433,7 +489,51 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
             subQueueMessageIdPrefix: message.As<IPlatformSubMessageQueuePrefixSupport>()?.SubQueuePrefix(),
             autoDeleteProcessedMessageImmediately: AutoDeleteProcessedInboxEventMessageImmediately,
             needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage: NeedToCheckAnySameConsumerOtherPreviousNotProcessedInboxMessage,
-            allowHandleNewInboxMessageInBackground: AllowHandleNewInboxMessageInBackground
+            allowHandleNewInboxMessageInBackground: AllowHandleNewInboxMessageInBackground,
+            inboxBusMessageRepositoryFactory: storeDescriptor?.IsInboxEnabled == true ? storeDescriptor.InboxRepositoryFactory : null
         );
     }
+
+    private PlatformMessageBusStoreKey EffectiveMessageBusStoreKey => configuredMessageBusStoreKey ?? MessageBusStoreKey;
+
+    private string EffectiveMessageBusApplicationName => configuredMessageBusStoreKey.HasValue
+        ? configuredMessageBusApplicationName
+        : MessageBusApplicationName;
+
+    private ResolvedMessageBusRoute EnsureMessageBusLaneResolved()
+    {
+        if (resolvedMessageBusRoute != null)
+            return resolvedMessageBusRoute;
+
+        var registry = RootServiceProvider.GetService<IPlatformMessageBusStoreRegistry>();
+        // Without a composed runtime store the host has one unqualified inbox repository, so any declared key
+        // (Default or module-specific) resolves to the legacy path exactly as before store routing existed.
+        if (registry?.HasRuntimeStoreComposition != true)
+        {
+            resolvedMessageBusRoute = new ResolvedMessageBusRoute(
+                StoreDescriptor: null,
+                ApplicationLane: null,
+                InboxBusMessageRepo: ServiceProvider.GetService<IPlatformInboxBusMessageRepository>(),
+                InboxConfig: ServiceProvider.GetRequiredService<PlatformInboxConfig>());
+            return resolvedMessageBusRoute;
+        }
+
+        var effectiveMessageBusApplicationName = EffectiveMessageBusApplicationName;
+        var storeDescriptor = registry.Get(EffectiveMessageBusStoreKey);
+        var applicationLane = effectiveMessageBusApplicationName.IsNullOrEmpty()
+            ? storeDescriptor.GetSingleApplicationLane()
+            : storeDescriptor.GetApplicationLane(effectiveMessageBusApplicationName);
+
+        var inboxConfig = storeDescriptor.ResolveInboxConfig(ServiceProvider, applicationLane.ApplicationModuleType);
+        var inboxBusMessageRepo = storeDescriptor.IsInboxEnabled ? storeDescriptor.ResolveInboxRepository(ServiceProvider) : null;
+
+        resolvedMessageBusRoute = new ResolvedMessageBusRoute(storeDescriptor, applicationLane, inboxBusMessageRepo, inboxConfig);
+        return resolvedMessageBusRoute;
+    }
+
+    private sealed record ResolvedMessageBusRoute(
+        PlatformMessageBusStoreDescriptor StoreDescriptor,
+        PlatformMessageBusApplicationLaneRegistration ApplicationLane,
+        IPlatformInboxBusMessageRepository InboxBusMessageRepo,
+        PlatformInboxConfig InboxConfig);
 }

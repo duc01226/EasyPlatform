@@ -1,111 +1,115 @@
 {
-    "version": 3,
-    "lines": [
-        [
-            {
-                "id": "14",
-                "type": "custom-command",
-                "color": "brightWhite",
-                "commandPath": "node .claude/scripts/statusline-project.cjs",
-                "timeout": 3000,
-                "maxWidth": 32
-            },
-            {
-                "id": "15",
-                "type": "separator"
-            },
-            {
-                "id": "1",
-                "type": "model",
-                "color": "cyan",
-                "rawValue": true
-            },
-            {
-                "id": "16",
-                "type": "custom-text",
-                "color": "brightBlack",
-                "customText": " - "
-            },
-            {
-                "id": "17",
-                "type": "thinking-effort",
-                "color": "magenta",
-                "rawValue": true
-            },
-            {
-                "id": "2",
-                "type": "separator"
-            },
-            {
-                "id": "3",
-                "type": "context-length",
-                "color": "brightBlack"
-            },
-            {
-                "id": "4",
-                "type": "separator"
-            },
-            {
-                "id": "5",
-                "type": "block-timer",
-                "color": "yellow"
-            },
-            {
-                "id": "6",
-                "type": "separator"
-            },
-            {
-                "id": "7",
-                "type": "session-usage",
-                "color": "brightBlue"
-            },
-            {
-                "id": "8",
-                "type": "separator"
-            },
-            {
-                "id": "9",
-                "type": "weekly-usage",
-                "color": "brightMagenta"
-            },
-            {
-                "id": "10",
-                "type": "separator"
-            },
-            {
-                "id": "11",
-                "type": "weekly-reset-timer",
-                "color": "magenta"
-            },
-            {
-                "id": "12",
-                "type": "separator"
-            },
-            {
-                "id": "13",
-                "type": "custom-command",
-                "color": "green",
-                "commandPath": "node .claude/scripts/statusline-tps.cjs",
-                "timeout": 3000,
-                "maxWidth": 24
-            }
-        ],
-        [],
-        []
+  "version": 4,
+  "lines": [
+    [
+      {
+        "id": "14",
+        "type": "custom-command",
+        "color": "brightWhite",
+        "commandPath": "node .claude/scripts/statusline-project.cjs",
+        "timeout": 3000,
+        "maxWidth": 32
+      },
+      {
+        "id": "15",
+        "type": "separator"
+      },
+      {
+        "id": "1",
+        "type": "model",
+        "color": "cyan",
+        "rawValue": true
+      },
+      {
+        "id": "16",
+        "type": "custom-text",
+        "color": "brightBlack",
+        "customText": " - "
+      },
+      {
+        "id": "17",
+        "type": "thinking-effort",
+        "color": "magenta",
+        "rawValue": true
+      },
+      {
+        "id": "2",
+        "type": "separator"
+      },
+      {
+        "id": "3",
+        "type": "context-length",
+        "color": "brightBlack"
+      },
+      {
+        "id": "4",
+        "type": "separator"
+      },
+      {
+        "id": "5",
+        "type": "block-timer",
+        "color": "yellow"
+      },
+      {
+        "id": "6",
+        "type": "separator"
+      },
+      {
+        "id": "7",
+        "type": "session-usage",
+        "color": "brightBlue"
+      },
+      {
+        "id": "8",
+        "type": "separator"
+      },
+      {
+        "id": "9",
+        "type": "weekly-usage",
+        "color": "brightMagenta"
+      },
+      {
+        "id": "10",
+        "type": "separator"
+      },
+      {
+        "id": "11",
+        "type": "weekly-reset-timer",
+        "color": "magenta"
+      },
+      {
+        "id": "12",
+        "type": "separator"
+      },
+      {
+        "id": "13",
+        "type": "custom-command",
+        "color": "green",
+        "commandPath": "node .claude/scripts/statusline-tps.cjs",
+        "timeout": 3000,
+        "maxWidth": 24
+      }
     ],
-    "flexMode": "full-minus-40",
-    "compactThreshold": 60,
-    "colorLevel": 2,
-    "inheritSeparatorColors": false,
-    "globalBold": false,
-    "minimalistMode": false,
-    "powerline": {
-        "enabled": false,
-        "separators": [""],
-        "separatorInvertBackground": [false],
-        "startCaps": [],
-        "endCaps": [],
-        "autoAlign": false,
-        "continueThemeAcrossLines": false
-    }
+    [],
+    []
+  ],
+  "flexMode": "full-minus-40",
+  "compactThreshold": 60,
+  "colorLevel": 2,
+  "inheritSeparatorColors": false,
+  "globalBold": false,
+  "minimalistMode": false,
+  "powerline": {
+    "enabled": false,
+    "separators": [
+      ""
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
+    "startCaps": [],
+    "endCaps": [],
+    "autoAlign": false,
+    "continueThemeAcrossLines": false
+  }
 }

@@ -21,7 +21,7 @@ obj/
 .DS_Store
 Thumbs.db
 
-# Environment files (should trigger privacy-block if Read)
+# Environment files
 # These are commented out for test purposes
 # .env
 # .env.local

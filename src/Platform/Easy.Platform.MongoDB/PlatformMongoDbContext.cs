@@ -22,6 +22,7 @@ using Easy.Platform.Persistence.DataMigration;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
@@ -212,6 +213,17 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
     /// </list>
     /// </remarks>
     public const string PlatformDataMigrationHistoryCollectionName = "MigrationHistory";
+
+    /// <summary>
+    /// Gets an optional exact prefix for platform-owned MongoDB collections.
+    /// </summary>
+    /// <remarks>
+    /// The default is empty and preserves every existing collection name. Override this with a stable module namespace
+    /// when multiple contexts intentionally share one physical database; the prefix is applied only to platform system
+    /// collections, never to application entity mappings. Include a separator such as <c>{Module}_</c> when one is
+    /// desired.
+    /// </remarks>
+    protected virtual string PlatformSystemCollectionNamePrefix => string.Empty;
 
     protected readonly IPlatformApplicationSettingContext ApplicationSettingContext;
     protected readonly Lazy<Dictionary<Type, string>> EntityTypeToCollectionNameDictionary;
@@ -477,14 +489,14 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
     /// </example>
     /// </remarks>
     public IMongoCollection<PlatformDataMigrationHistory> DataMigrationHistoryCollection =>
-        Database.GetCollection<PlatformDataMigrationHistory>(DataMigrationHistoryCollectionName);
+        Database.GetCollection<PlatformDataMigrationHistory>(GetPlatformSystemCollectionName(DataMigrationHistoryCollectionName));
 
-    public virtual string DataMigrationHistoryCollectionName => "ApplicationDataMigrationHistory";
+    public virtual string DataMigrationHistoryCollectionName => GetPlatformSystemCollectionName("ApplicationDataMigrationHistory");
 
     public IMongoCollection<PlatformMongoMigrationHistory> MigrationHistoryCollection =>
-        Database.GetCollection<PlatformMongoMigrationHistory>(MigrationHistoryCollectionName);
+        Database.GetCollection<PlatformMongoMigrationHistory>(GetPlatformSystemCollectionName(MigrationHistoryCollectionName));
 
-    public virtual string MigrationHistoryCollectionName => "MigrationHistory";
+    public virtual string MigrationHistoryCollectionName => GetPlatformSystemCollectionName("MigrationHistory");
 
     public virtual int ExecutionManyPageSize => 100;
 
@@ -924,7 +936,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                         .FirstOrDefaultAsync(cancellationToken);
             }
 
-            var changedFields = entity.GetChangedFields(existingEntity, p => p.GetCustomAttribute<PlatformNavigationPropertyAttribute>() == null);
+            var changedFields = entity.GetChangedFields(existingEntity, property => IsMongoPersistedProperty(property));
             var entityUpdatedDateAuditField = LastUpdatedDateAuditFieldAttribute.GetUpdatedDateAuditField(typeof(TEntity));
 
             if (
@@ -1727,6 +1739,12 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
             : null;
     }
 
+    private static bool IsMongoPersistedProperty(PropertyInfo property)
+    {
+        return property.GetCustomAttribute<PlatformNavigationPropertyAttribute>() == null
+               && property.GetCustomAttribute<BsonIgnoreAttribute>() == null;
+    }
+
     /// <summary>
     /// Lets a concrete database context append storage-only operations to a normal field-level update without
     /// bypassing this method's optimistic-concurrency and entity-event pipeline. The supplied definition already
@@ -1930,7 +1948,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                     .FirstOrDefaultAsync(cancellationToken);
         }
 
-        var changedFields = entity.GetChangedFields(existingEntity, p => p.GetCustomAttribute<PlatformNavigationPropertyAttribute>() == null);
+        var changedFields = entity.GetChangedFields(existingEntity, property => IsMongoPersistedProperty(property));
         var entityUpdatedDateAuditField = LastUpdatedDateAuditFieldAttribute.GetUpdatedDateAuditField(typeof(TEntity));
 
         if (
@@ -2097,12 +2115,15 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         // Mirrors InsertDbInitializedApplicationDataMigrationHistory (:573-575), which sets Processed for the same reason.
         if (!await IsEnsureIndexesMigrationExecuted())
         {
-            await MigrationHistoryCollection.InsertOneAsync(
-                new PlatformMongoMigrationHistory(EnsureIndexesMigrationName)
-                {
-                    Status = PlatformMongoMigrationHistory.Statuses.Processed,
-                    RowKind = PlatformMongoMigrationHistory.MongoMigrationRowKind
-                }
+            // Concurrent initializers may both observe a missing sentinel. Publish once without replacing a peer's
+            // completion timestamp or a legacy row. The unique Name predicate supplies the inserted Name and is never modified.
+            await MigrationHistoryCollection.UpdateOneAsync(
+                p => p.Name == EnsureIndexesMigrationName,
+                Builders<PlatformMongoMigrationHistory>.Update
+                    .SetOnInsert(p => p.CreatedDate, Clock.UtcNow)
+                    .SetOnInsert(p => p.Status, PlatformMongoMigrationHistory.Statuses.Processed)
+                    .SetOnInsert(p => p.RowKind, PlatformMongoMigrationHistory.MongoMigrationRowKind),
+                new UpdateOptions { IsUpsert = true }
             );
         }
 
@@ -2359,7 +2380,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                 + "so nothing else catches this.",
             GetType().Name,
             migrationName,
-            MigrationHistoryCollectionName,
+            GetPlatformSystemCollectionName(MigrationHistoryCollectionName),
             existingRow?.RowKind ?? "null");
 
         return PlatformMongoMigrationClaimLostReason.NotOwned;
@@ -2681,10 +2702,11 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
     /// <para>
     /// <b>Why calling it on every startup is safe and cheap.</b> It CREATES and never drops: <c>createIndexes</c> against an
     /// already-existing index with the same keys and options is a server-side no-op that returns success, so this costs one cheap
-    /// command per service start. Only <c>DropAllAsync</c> is expensive and destructive, which is why the gate guards that method and
-    /// not this one. Sharing <see cref="MigrationHistoryStatusIndexModel" /> with the fresh-database path is what keeps the two specs
-    /// byte-identical, so no <c>IndexOptionsConflict</c> can arise between them — including on bravoINSIGHTS, where this collection and
-    /// the data-migration collection are physically the same and both declare an ascending <c>Status</c> index.
+    /// command per service start. Only explicit index recreation may call the destructive <c>DropAllAsync</c> operation.
+    /// Sharing <see cref="MigrationHistoryStatusIndexModel" /> with the fresh-database path is what keeps the two specs
+    /// byte-identical, so no <c>IndexOptionsConflict</c> can arise between them — including where a consuming DbContext maps this
+    /// collection and the data-migration collection onto the same physical collection and both declare an ascending
+    /// <c>Status</c> index.
     /// </para>
     /// </remarks>
     public virtual Task EnsureMigrationHistoryStatusIndexAsync()
@@ -2694,7 +2716,9 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
     public virtual async Task EnsureMigrationHistoryCollectionIndexesAsync(bool recreate = false)
     {
-        if (recreate || !await IsEnsureIndexesMigrationExecuted())
+        // A missing completion marker is not a lock: a peer may finish between the check and the index operation.
+        // Ordinary startup only creates indexes; dropping them is reserved for an explicit rebuild.
+        if (recreate)
             await MigrationHistoryCollection.Indexes.DropAllAsync();
 
         if (recreate || !await IsEnsureIndexesMigrationExecuted())
@@ -2708,7 +2732,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                     // Supports NotExecutedMigrationExecutors' ProcessedOrLiveProcessingExpr() filter. Mirrors the equivalent Status
                     // index built for PlatformDataMigrationHistory in EnsureMigrationHistoryIndexesAsync below — both are a bare
                     // Ascending(p => p.Status) with no options, so both generate the identical server-side index name Status_1, which
-                    // is what lets bravoINSIGHTS point BOTH ledgers at one physical collection without an IndexOptionsConflict.
+                    // is what lets a consuming DbContext point BOTH ledgers at one physical collection without an IndexOptionsConflict.
                     // (Named by symbol, not by line: this file's line numbers move under every edit.)
                     // This branch only reaches FRESH databases (it is behind the one-shot !IsEnsureIndexesMigrationExecuted() gate);
                     // EnsureMigrationHistoryStatusIndexAsync, called from Migrate(), is what gets the same index onto
@@ -2721,7 +2745,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
     public virtual async Task EnsureApplicationDataMigrationHistoryCollectionIndexesAsync(bool recreate = false)
     {
-        if (recreate || !await IsEnsureIndexesMigrationExecuted())
+        if (recreate)
             await DataMigrationHistoryCollection.Indexes.DropAllAsync();
 
         if (recreate || !await IsEnsureIndexesMigrationExecuted())
@@ -2740,7 +2764,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
     public virtual async Task EnsureInboxBusMessageCollectionIndexesAsync(bool recreate = false)
     {
-        if (recreate || !await IsEnsureIndexesMigrationExecuted())
+        if (recreate)
             await InboxBusMessageCollection.Indexes.DropAllAsync();
 
         if (recreate || !await IsEnsureIndexesMigrationExecuted())
@@ -2790,7 +2814,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
     public virtual async Task EnsureOutboxBusMessageCollectionIndexesAsync(bool recreate = false)
     {
-        if (recreate || !await IsEnsureIndexesMigrationExecuted())
+        if (recreate)
             await OutboxBusMessageCollection.Indexes.DropAllAsync();
 
         if (recreate || !await IsEnsureIndexesMigrationExecuted())
@@ -2833,14 +2857,14 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
     {
         if (EntityTypeToCollectionNameDictionary.Value == null || !EntityTypeToCollectionNameDictionary.Value.ContainsKey(typeof(TEntity)))
         {
-            collectionName = GetPlatformEntityCollectionName<TEntity>() ?? typeof(TEntity).Name;
+            collectionName = GetPlatformSystemCollectionName(GetPlatformEntityCollectionName<TEntity>()) ?? typeof(TEntity).Name;
             return true;
         }
 
         return EntityTypeToCollectionNameDictionary.Value.TryGetValue(typeof(TEntity), out collectionName);
     }
 
-    protected Task<bool> IsEnsureIndexesMigrationExecuted()
+    protected virtual Task<bool> IsEnsureIndexesMigrationExecuted()
     {
         return MigrationHistoryCollection.AsQueryable().AnyAsync(p => p.Name == EnsureIndexesMigrationName);
     }
@@ -2957,7 +2981,36 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
     protected Dictionary<Type, string> BuildEntityTypeToCollectionNameDictionary()
     {
-        return EntityTypeToCollectionNameMaps()?.ToDictionary(p => p.Key, p => p.Value);
+        return EntityTypeToCollectionNameMaps()?.ToDictionary(
+            p => p.Key,
+            p => IsPlatformSystemEntityType(p.Key) ? GetPlatformSystemCollectionName(p.Value) : p.Value);
+    }
+
+    /// <summary>
+    /// Resolves a platform system collection name using the optional context namespace.
+    /// </summary>
+    /// <param name="collectionName">The unprefixed or already-resolved collection name.</param>
+    /// <returns>The collection name in this context's platform system namespace.</returns>
+    protected virtual string GetPlatformSystemCollectionName(string collectionName)
+    {
+        if (string.IsNullOrWhiteSpace(collectionName))
+            return collectionName;
+
+        var normalizedCollectionName = collectionName.Trim();
+        var normalizedPrefix = PlatformSystemCollectionNamePrefix?.Trim();
+
+        if (string.IsNullOrEmpty(normalizedPrefix) || normalizedCollectionName.StartsWith(normalizedPrefix, StringComparison.Ordinal))
+            return normalizedCollectionName;
+
+        return normalizedPrefix + normalizedCollectionName;
+    }
+
+    private static bool IsPlatformSystemEntityType(Type entityType)
+    {
+        return entityType.IsAssignableTo(typeof(PlatformInboxBusMessage))
+               || entityType.IsAssignableTo(typeof(PlatformOutboxBusMessage))
+               || entityType.IsAssignableTo(typeof(PlatformDataMigrationHistory))
+               || entityType.IsAssignableTo(typeof(PlatformMongoMigrationHistory));
     }
 
     protected static string GetPlatformEntityCollectionName<TEntity>()

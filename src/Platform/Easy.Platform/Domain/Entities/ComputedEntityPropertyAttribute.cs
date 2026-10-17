@@ -43,13 +43,13 @@ namespace Easy.Platform.Domain.Entities;
 ///
 /// // Example 2: Status computation based on timestamps
 /// [ComputedEntityProperty]
-/// public TimeLogStatus Status
+/// public WorkSessionStatus Status
 /// {
 ///     get
 ///     {
-///         if (CheckInDateTime == null) return TimeLogStatus.NotCheckedIn;
-///         if (CheckOutDateTime == null) return TimeLogStatus.CheckedIn;
-///         return TimeLogStatus.CheckedOut;
+///         if (CheckInDateTime == null) return WorkSessionStatus.NotCheckedIn;
+///         if (CheckOutDateTime == null) return WorkSessionStatus.CheckedIn;
+///         return WorkSessionStatus.CheckedOut;
 ///     }
 /// }
 ///
@@ -107,7 +107,7 @@ namespace Easy.Platform.Domain.Entities;
 /// </remarks>
 /// <example>
 /// <code>
-/// public class TimeLog : DomainEntity
+/// public class WorkSession : DomainEntity
 /// {
 ///     public DateTime? CheckInDateTime { get; set; }
 ///     public DateTime? CheckOutDateTime { get; set; }
@@ -116,13 +116,13 @@ namespace Easy.Platform.Domain.Entities;
 ///     public bool IsEdited => /* complex logic to determine if time log was edited */;
 ///
 ///     [ComputedEntityProperty]
-///     public TimeLogStatus Status
+///     public WorkSessionStatus Status
 ///     {
 ///         get
 ///         {
-///             if (CheckInDateTime == null) return TimeLogStatus.NotCheckedIn;
-///             if (CheckOutDateTime == null) return TimeLogStatus.CheckedIn;
-///             return TimeLogStatus.CheckedOut;
+///             if (CheckInDateTime == null) return WorkSessionStatus.NotCheckedIn;
+///             if (CheckOutDateTime == null) return WorkSessionStatus.CheckedIn;
+///             return WorkSessionStatus.CheckedOut;
 ///         }
 ///     }
 /// }

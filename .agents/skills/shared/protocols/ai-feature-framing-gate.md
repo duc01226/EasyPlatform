@@ -1,0 +1,12 @@
+> **[BLOCKING] AI-feature framing gate (`AF-1`–`AF-6`) — plan-time: does this need a model, and how will we know it works? Binds on ANY plan, spec, or design that creates or changes a feature that calls a model (LLM calls, prompts, agents, RAG, tool use, ML).** Code-time floor: `AE-1.1`–`AE-9.4` (`SYNC:ai-engineering-gate`). Deep catalog: `.claude/docs/ai-engineering-knowledge.md`. Each clause is a CHECK: record `PASS` / `FAIL → fixed` / `N/A (reason)` with evidence; cite gaps as `AF-<n>` + plan location.
+>
+> **Precedence:** accepted product/AI decisions and ADRs → project config and reference docs (declared provider, policy, risk tier) → these clauses. A genuine conflict is SURFACED with both sides, NEVER resolved silently. Provider facts (models, limits, prices, deprecations) change: verify against current provider docs, never memory.
+>
+> - `AF-1` **Job & fit.** Name the user job and why a model is needed. A deterministic alternative (rules, search, template, plain code) was considered. The lowest-autonomy architecture that works (single call → fixed workflow → agent) is chosen, with a reason.
+> - `AF-2` **Success & eval first.** Measurable success criteria, a baseline, and an eval set or rubric (or a dated plan to build one) exist BEFORE the build. Every prompt, model or retrieval change is proven by an eval delta.
+> - `AF-3` **Failure & blast radius.** Enumerate failure modes: wrong, unsafe, manipulated, slow, expensive, unavailable. State the cost of a wrong output per action, reversible vs irreversible, and a fallback per mode.
+> - `AF-4` **Autonomy & oversight.** Choose the level explicitly: suggest / confirm / act-with-undo / autonomous. Irreversible or high-impact actions need human approval. Authority is the requesting user's, never broader.
+> - `AF-5` **Data & trust boundaries.** State what data reaches the model and provider, what untrusted content enters context, and where output flows (sinks). Run the lethal-trifecta check (private data + untrusted content + outbound channel). Name tenant and permission boundaries.
+> - `AF-6` **Operate.** Cost, latency and token budget per request and per user · observability · prompt/model versioning with rollback and a kill switch · provider-outage behaviour · a named owner.
+>
+> **Skip ONLY** when nothing in the plan calls a model or changes how one is called — state that reason explicitly so the skip is auditable.

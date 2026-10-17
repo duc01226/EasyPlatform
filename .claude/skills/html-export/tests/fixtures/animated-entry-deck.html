@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Animated entry deck fixture</title>
+<!--
+  Test input for html-export slide navigation (tests/browser.test.cjs, tests/to-png.test.cjs).
+  It is not a user-facing surface, so the UI/UX and design-distinctiveness gates are skipped on purpose.
+  Shape it exercises:
+  - three .deck__slide items; only the active one is displayed (a single-visible deck);
+  - the active slide enters with a delayed opacity 0 -> 1 animation that deliberately IGNORES
+    prefers-reduced-motion, so right after load NO slide is visible yet. Strategy detection must
+    wait for the entry to settle and choose keys, not mistake the deck for a stacked layout;
+  - Home / ArrowRight change the active slide, and each new slide replays the same entry.
+-->
+<style>
+  html, body { margin: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; }
+  .deck__slide { display: none; box-sizing: border-box; height: 100vh; padding: 48px; }
+  .deck__slide--active { display: block; animation: deck-enter 300ms ease-out 400ms both; }
+  @keyframes deck-enter { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+<section class="deck__slide deck__slide--active"><h1>Entry slide one</h1></section>
+<section class="deck__slide"><h1>Entry slide two</h1></section>
+<section class="deck__slide"><h1>Entry slide three</h1></section>
+<script>
+  (function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.deck__slide'));
+    var index = 0;
+    function show(next) {
+      if (next < 0 || next >= slides.length) return;
+      index = next;
+      slides.forEach(function (slide, i) { slide.classList.toggle('deck__slide--active', i === index); });
+    }
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowRight') show(index + 1);
+      else if (event.key === 'Home') show(0);
+    });
+  })();
+</script>
+</body>
+</html>

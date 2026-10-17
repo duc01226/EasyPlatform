@@ -64,6 +64,8 @@ Tool(**/path/**)     # Glob patterns for files
 
 ### Common Patterns
 
+Shipped Git permissions allow requested commits and pushes without an additional ask rule, including force-push syntax. The agent still needs explicit operation authority; this grants none. The commit review hook remains active unless the framework runtime is off. Personal or managed host settings can impose their own prompts.
+
 **Bash Commands:**
 
 ```json
@@ -88,7 +90,6 @@ Tool(**/path/**)     # Glob patterns for files
         "Bash(git reset --hard:*)" // Hard reset
     ],
     "ask": [
-        "Bash(git push:*)", // Regular push needs confirmation
         "Bash(npm publish:*)", // Package publishing
         "Bash(docker push:*)" // Image publishing
     ]
@@ -154,13 +155,15 @@ Register hooks for Claude Code lifecycle events.
 | `SessionStart`     | `startup`, `resume`, `clear`, `compact` | Session begins            |
 | `SessionEnd`       | `clear`, `exit`, `compact`              | Session ends              |
 | `UserPromptSubmit` | (none)                                  | User submits prompt       |
+| `UserPromptExpansion` | (none)                               | A typed `/command` expands |
 | `PreToolUse`       | Tool names                              | Before tool execution     |
 | `PostToolUse`      | Tool names                              | After tool execution      |
 | `PreCompact`       | `manual`, `auto`                        | Before context compaction |
-| `SubagentStart`    | `*`                                     | Subagent spawning         |
+| `SubagentStart`    | Agent type names                        | Subagent spawning         |
 | `Notification`     | (none)                                  | Waiting for user input    |
+| `Stop`             | (none)                                  | Main agent finishes responding |
 
-> Claude Code supports these events for hook registration. This framework registers no `SubagentStart` hook (sub-agent context is static in `agents/*.md`); it is listed here as an available event only.
+> Claude Code supports these events for hook registration. This framework registers `UserPromptExpansion` only for the protocol delivery steps (`protocol-inject-<group>.cjs`) and `SubagentStart` for those steps plus the prompt-time context hooks a delegated agent needs (skill activation, core principles, UI reuse, verdict and AI-feature directives); the `SubagentStart` registrations have no agent-type matcher, so every agent type reaches the handlers; standing sub-agent context stays static in `agents/*.md`. `Stop` registers only the notification router (`hooks/notifications/notify.cjs`) for the turn-complete alert. Read [../hooks/README.md § Protocol Delivery](../hooks/README.md#protocol-delivery) when changing those registrations.
 
 ### Tool Matchers
 
@@ -194,7 +197,7 @@ Register hooks for Claude Code lifecycle events.
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/privacy-block.cjs"
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/doc-sync-gate.cjs"
                     }
                 ]
             }
@@ -214,6 +217,19 @@ Register hooks for Claude Code lifecycle events.
 }
 ```
 
+### Hook Behavior Settings (not in settings.json)
+
+The `hooks` object above only REGISTERS hooks — it carries no behavior knobs. A hook's own settings live in project config:
+
+| Behavior                      | File                       | Section                |
+| ----------------------------- | -------------------------- | ---------------------- |
+| Startup dependency install    | `docs/project-config.json` | `hooks.startupInstall` |
+| Per-file convention reminders | `docs/project-config.json` | `conventionInjection`  |
+| Session prompt ledger         | `.claude/.ck.json`         | `promptLedger`         |
+| Advisory token checkpoint     | `docs/project-config.json` | `hooks.tokenBudget`    |
+
+`hooks.startupInstall` accepts `enabled` (boolean, default `true`), `packageManager` (`auto` | `npm` | `pnpm` | `yarn` | `bun`, default `"auto"`) and `allowLifecycleScripts` (boolean, default `false`). Those defaults apply identically when the property, the `hooks` section, or the whole project-config file is absent; a non-`auto` `packageManager` is one manager signal and never an override (a value contradicting the lockfile skips with `skip-manager-conflict`); `enabled: false` disables installation only and never the `.claude` install-integrity verification; and neither the manager executable nor its arguments are configurable — the hook runs a fixed, version-matched argv from its own support matrix. `allowLifecycleScripts: true` is only a repository REQUEST: it takes effect solely on a host that also sets `CK_STARTUP_INSTALL_TRUST=1` (an `env` entry in the git-ignored `.claude/settings.local.json` is the intended place), and that same grant stops the runner sanitizing registry credentials out of the manager's environment. Setting the config key alone fails silently — the install runs with suppression intact. Full contract, including the supported manager/lockfile/platform breadth: [README.md § Startup dependency installation](./README.md#startup-dependency-installation).
+
 **See:** [../hooks/README.md](../hooks/README.md) for hook catalog.
 
 ---
@@ -225,14 +241,14 @@ Enable/disable official Claude Code plugins.
 ```json
 {
     "enabledPlugins": {
-        "code-review@claude-plugins-official": true,
-        "commit-commands@claude-plugins-official": true,
-        "csharp-lsp@claude-plugins-official": true,
-        "frontend-design@claude-plugins-official": true,
-        "github@claude-plugins-official": true,
+        "code-review@claude-plugins-official": false,
+        "commit-commands@claude-plugins-official": false,
+        "csharp-lsp@claude-plugins-official": false,
+        "frontend-design@claude-plugins-official": false,
+        "github@claude-plugins-official": false,
         "playwright@claude-plugins-official": false,
-        "typescript-lsp@claude-plugins-official": true,
-        "code-simplifier@claude-plugins-official": true
+        "typescript-lsp@claude-plugins-official": false,
+        "code-simplifier@claude-plugins-official": false
     }
 }
 ```
@@ -263,9 +279,11 @@ Set environment variables for all tool executions.
 }
 ```
 
-| Variable                                   | Value | Purpose                        |
-| ------------------------------------------ | ----- | ------------------------------ |
-| `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` | `"1"` | Keep Bash in project directory |
+| Variable                                   | Value      | Purpose                                                                                                                                                                                                                                                                             |
+| ------------------------------------------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` | `"1"`      | Keep Bash in project directory                                                                                                                                                                                                                                                      |
+| `CK_NO_AUTO_OPEN`                          | `"1"`      | `.claude/scripts/open-report.cjs` (used by the `watzup` and `understand` HTML reports) prints the report path and opens nothing. It also opens nothing when `CI` is set (non-empty, not `0`/`false`) or on Linux with neither `DISPLAY` nor `WAYLAND_DISPLAY`. The same rules stop `task-track` `serve --open` from starting a browser |
+| `CK_AUTO_INSTALL_DEPENDENCIES`             | `"0"`      | Turns off automatic dependency installs (`0`, `off` or `false`): the PyYAML recovery in `.claude/scripts/lib/python_dependencies.py` and the `task-track` pinned-package setup, which then refuses with the command to run by hand |
 
 ---
 
@@ -299,11 +317,30 @@ Custom status line command for terminal display.
 {
     "statusLine": {
         "type": "command",
-        "command": "npx -y ccstatusline@latest",
+        "command": "cd \"$CLAUDE_PROJECT_DIR\" && npx -y ccstatusline@2.2.30 --config .claude/ccstatusline.json",
         "padding": 0
     }
 }
 ```
+
+**Run from the project root — never the session cwd.** Claude Code runs the status
+line in the session's current directory, which follows every `cd`, and exports
+`CLAUDE_PROJECT_DIR` (the session root) to it as it does for hooks. ccstatusline
+resolves `--config` against its own cwd and writes a default config when the file
+is missing, and its `custom-command` widgets (`node .claude/scripts/...`) inherit
+that cwd. The leading `cd "$CLAUDE_PROJECT_DIR" &&` anchors all of them; `&&` keeps
+a failed `cd` from falling back to the session cwd. Widget commands cannot anchor
+themselves: ccstatusline runs them through `cmd.exe` on Windows and `sh` elsewhere,
+so no single variable spelling works inside the widget string.
+
+**Pin the version — never `@latest`.** The status line command re-runs on every
+assistant message, after `/compact`, and on timers, so `@latest` means any newly
+published release starts executing on every teammate's machine within minutes,
+unreviewed and with no lockfile. That process runs as the developer's own user and
+receives session data on stdin, so a hijacked-maintainer release would be
+credential theft across the team. An exact version runs a cached copy that cannot
+change underneath you. Bumping it is a deliberate, reviewed edit — the same
+contract as the repo's other pinned tools.
 
 ---
 
@@ -334,7 +371,7 @@ Custom status line command for terminal display.
     "permissions": {
         "allow": ["Bash(git:*)", "Bash(npm:*)", "Edit", "Read", "Write"],
         "deny": ["Bash(rm -rf /*)", "Edit(**/.env*)"],
-        "ask": ["Bash(git push:*)"],
+        "ask": ["Bash(npm publish:*)"],
         "defaultMode": "default"
     },
     "hooks": {
@@ -363,7 +400,7 @@ Custom status line command for terminal display.
 ## Related Documentation
 
 - [README.md](./README.md) - Configuration overview
-- [output-styles.md](./output-styles.md) - Coding levels
+- [output-styles.md](./output-styles.md) - Custom output styles
 - [../hooks/README.md](../hooks/README.md) - Hook system
 - [../hooks/extending-hooks.md](../hooks/extending-hooks.md) - Custom hooks
 

@@ -1,8 +1,10 @@
 #region
 
 using Easy.Platform.Application.MessageBus.Consumers;
+using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Application.MessageBus.FreeFormatMessages;
 
 #endregion
@@ -12,6 +14,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.FreeFo
 internal sealed class DemoSendFreeFormatEventBusMessageCommandEventBusConsumer
     : PlatformApplicationMessageBusConsumer<DemoSendFreeFormatEventBusMessage>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public DemoSendFreeFormatEventBusMessageCommandEventBusConsumer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager uowManager,
@@ -41,6 +45,8 @@ internal sealed class DemoSendFreeFormatEventBusMessageCommandEventBusConsumer
 internal sealed class DemoSendFreeFormatInboxEventBusMessageCommandApplicationEventBusConsumer
     : PlatformApplicationMessageBusConsumer<DemoSendFreeFormatEventBusMessage>
 {
+    protected override PlatformMessageBusStoreKey MessageBusStoreKey => new(TextSnippetApplicationModule.MessageBusStoreKeyValue);
+
     public DemoSendFreeFormatInboxEventBusMessageCommandApplicationEventBusConsumer(
         ILoggerFactory loggerFactory,
         IPlatformUnitOfWorkManager uowManager,

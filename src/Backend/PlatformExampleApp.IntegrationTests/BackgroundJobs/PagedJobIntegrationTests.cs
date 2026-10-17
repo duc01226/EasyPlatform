@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
+using PlatformExampleApp.TextSnippet.Persistence.Mongo;
 
 #endregion
 
@@ -42,13 +43,14 @@ namespace PlatformExampleApp.IntegrationTests.BackgroundJobs;
 /// </code>
 /// </para>
 /// </summary>
-[Collection(TextSnippetIntegrationTestCollection.Name)]
+[Collection(PagedJobIntegrationTestCollection.Name)]
 [Trait("Category", "BackgroundJob")]
-public class PagedJobIntegrationTests : TextSnippetIntegrationTestBase
+public class PagedJobIntegrationTests : TextSnippetIntegrationTestBase<PagedJobIntegrationTestModule>
 {
     /// <summary>
     /// OptimizeData mode: populates empty FullText fields with optimized content.
-    /// Seeds an entity with empty FullText, runs the job, verifies FullText was populated.
+    /// Direct repository setup is required because the save command cannot produce empty FullText.
+    /// Proves the entity belongs to the requested page, then verifies its persisted optimized content.
     /// </summary>
     [Fact]
     [Trait("TestSpec", "TC-EXAMPLE-005")]
@@ -62,6 +64,15 @@ public class PagedJobIntegrationTests : TextSnippetIntegrationTestBase
         {
             var repo = sp.GetRequiredService<ITextSnippetRootRepository<TextSnippetEntity>>();
             await repo.CreateOrUpdateAsync(TextSnippetEntity.Create(entityId, snippetText, ""));
+
+            sp.GetRequiredService<TextSnippetDbContext>().Database.DatabaseNamespace.DatabaseName
+                .Should().StartWith("BravoSuite_Paged_", "paged jobs must not select shared-suite data");
+            var page = await repo.GetAllAsync(query => query
+                .Where(entity => !string.IsNullOrEmpty(entity.SnippetText) &&
+                    (string.IsNullOrEmpty(entity.FullText) || entity.FullText.Length < entity.SnippetText.Length))
+                .OrderBy(entity => entity.CreatedDate).ThenBy(entity => entity.Id).Take(200));
+            page.Select(entity => entity.Id).Should().Contain(entityId,
+                "the empty record must belong to the explicit page before execution");
         });
 
         // Act — run paged job with OptimizeData mode and explicit Skip/Take
@@ -82,23 +93,9 @@ public class PagedJobIntegrationTests : TextSnippetIntegrationTestBase
     }
 
     /// <summary>
-    /// ValidateData mode: paged job runs over entities that pass the SnippetText length filter
-    /// and verifies that valid entities are preserved (not corrupted, not marked as failed).
-    ///
-    /// <para>
-    /// <strong>Why two entities are seeded:</strong> the previous version of this test only seeded
-    /// one entity and asserted <c>FullText.Should().NotContain("ValidationFailed")</c> — that
-    /// passes vacuously because <c>FullText</c> starts empty, so the assertion would succeed
-    /// even if the job never executed at all (Gate 1 violation: "a test that cannot fail is not a test").
-    /// </para>
-    ///
-    /// <para>
-    /// The fix: seed TWO entities and verify a paired invariant — both pass the query filter,
-    /// both must remain valid after the run, both must keep their original SnippetText. This makes
-    /// the assertion observable (FullText must stay non-failed after processing) AND positive
-    /// (SnippetText must be preserved exactly), proving the job touched the entities without
-    /// corrupting them.
-    /// </para>
+    /// ValidateData mode must preserve valid records and mark a selected legacy whitespace record invalid.
+    /// Direct repository setup supplies the corrupt stored state that the save command rejects.
+    /// The positive invalid-record outcome prevents a no-op job from passing the preservation assertions.
     /// </summary>
     [Fact]
     [Trait("TestSpec", "TC-EXAMPLE-006")]
@@ -110,12 +107,22 @@ public class PagedJobIntegrationTests : TextSnippetIntegrationTestBase
         var entityId2 = Ulid.NewUlid().ToString();
         var snippetText1 = IntegrationTestHelper.UniqueName("ValidateData_FirstLongSnippet");
         var snippetText2 = IntegrationTestHelper.UniqueName("ValidateData_SecondLongSnippet");
+        var invalidEntityId = Ulid.NewUlid().ToString();
 
         await ExecuteWithServicesAsync(async sp =>
         {
             var repo = sp.GetRequiredService<ITextSnippetRootRepository<TextSnippetEntity>>();
             await repo.CreateOrUpdateAsync(TextSnippetEntity.Create(entityId1, snippetText1, ""));
             await repo.CreateOrUpdateAsync(TextSnippetEntity.Create(entityId2, snippetText2, ""));
+            // Deliberate legacy/corruption setup: commands reject whitespace-only text, but the repair job
+            // must mark such stored data invalid. Its length still passes the job's selection predicate.
+            await repo.CreateOrUpdateAsync(TextSnippetEntity.Create(invalidEntityId, new string(' ', 10), ""));
+
+            var page = await repo.GetAllAsync(query => query
+                .Where(entity => !string.IsNullOrEmpty(entity.SnippetText) && entity.SnippetText.Length > 5)
+                .OrderBy(entity => entity.CreatedDate).ThenBy(entity => entity.Id).Take(200));
+            page.Select(entity => entity.Id).Should().Contain([entityId1, entityId2, invalidEntityId],
+                "the explicit page must contain both valid records and the legacy invalid record");
         });
 
         // Act — run paged job with ValidateData mode + small MinTextLength (both entities pass filter)
@@ -132,9 +139,8 @@ public class PagedJobIntegrationTests : TextSnippetIntegrationTestBase
         await ExecuteBackgroundJobWithParamAsync<DemoPagedBackgroundJobExecutor>(pagedParam);
 
         // Assert — both entities must still exist with their original SnippetText preserved
-        // exactly (proves the job ran without corrupting valid entries) and NEITHER must
-        // be marked [ValidationFailed]. Asserting both entities together rather than one
-        // catches the case where the job silently no-ops on subsequent rows.
+        // exactly and NEITHER may be marked [ValidationFailed]. The invalid record's
+        // positive marker below proves that the selected page actually ran.
         await AssertEntityMatchesAsync<TextSnippetEntity>(entityId1, entity =>
         {
             entity.SnippetText.Should().Be(snippetText1,
@@ -148,6 +154,11 @@ public class PagedJobIntegrationTests : TextSnippetIntegrationTestBase
                 "ValidateData should not mutate SnippetText on valid entities");
             entity.FullText.Should().NotContain("ValidationFailed",
                 "Valid entity must not be marked failed");
+        });
+        await AssertEntityMatchesAsync<TextSnippetEntity>(invalidEntityId, entity =>
+        {
+            entity.FullText.Should().Contain("ValidationFailed",
+                "the selected legacy invalid record must be repaired, so a no-op job cannot pass");
         });
     }
 }

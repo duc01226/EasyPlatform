@@ -57,6 +57,8 @@ def normalize_path(path: str) -> str:
     Produces a canonical form for comparison across frontend/backend boundaries.
     """
     p = path.strip().lower()
+    # Drop query string / fragment so '/api/users?x=1' matches '/api/users'
+    p = p.split("?", 1)[0].split("#", 1)[0]
     # Replace all parameter patterns with a single placeholder
     for pat in _PARAM_PATTERNS:
         p = pat.sub("/{param}", p)
@@ -107,17 +109,22 @@ class BaseExtractor(ABC):
             dir_path = root / scan_dir
             if not dir_path.is_dir():
                 continue
-            for file_path in dir_path.rglob("*"):
-                if file_path.suffix.lower() not in self.extensions:
-                    continue
-                if file_path.is_symlink() or not file_path.is_file():
-                    continue
-                try:
-                    content = file_path.read_text(errors="replace")
-                except (OSError, PermissionError):
-                    continue
-                for ep in self._extract_from_content(str(file_path), content):
-                    endpoints.append(ep)
+            # os.walk (not rglob) so generated/vendored trees are pruned before
+            # traversal instead of enumerated and filtered afterwards.
+            for dirpath_str, dirnames, filenames in os.walk(str(dir_path)):
+                dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
+                for fname in filenames:
+                    file_path = Path(dirpath_str) / fname
+                    if file_path.suffix.lower() not in self.extensions:
+                        continue
+                    if file_path.is_symlink() or not file_path.is_file():
+                        continue
+                    try:
+                        content = file_path.read_text(errors="replace")
+                    except (OSError, PermissionError):
+                        continue
+                    for ep in self._extract_from_content(str(file_path), content):
+                        endpoints.append(ep)
         return endpoints
 
     @abstractmethod
@@ -262,6 +269,117 @@ class BackendExtractor(BaseExtractor):
         if method_path:
             parts.append(method_path.strip("/"))
         return "/" + "/".join(p for p in parts if p)
+
+
+# Matches a dynamic path segment: [id], [...slug], [[...slug]]
+_DYNAMIC_SEGMENT = re.compile(r"^\[+\.{0,3}([^\]]+?)\]+$")
+# Exported HTTP method handlers in filesystem routers (Next/SvelteKit style)
+_METHOD_EXPORT = re.compile(
+    r"export\s+(?:async\s+)?(?:function|const|let|var)\s+"
+    r"(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\b"
+)
+_DEFAULT_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+
+
+class FilesystemRouteExtractor:
+    """Extract backend routes from directory-based routers.
+
+    The URL is derived from the route file's location rather than from a string
+    literal, so this covers frameworks such as the Next.js App Router,
+    SvelteKit, Nuxt (``server/api``), etc. Project specifics come from config:
+
+    - ``routeFile``: the route module filename (e.g. ``route.ts``,
+      ``+server.ts``); may be a glob.
+    - ``paths``: scan dirs as strings, or ``{"dir": ..., "urlPrefix": ...}``
+      objects to give each router mount a URL base.
+    - ``methodExports``: handler export names to look for (defaults to the
+      standard HTTP verbs).
+    """
+
+    def __init__(
+        self,
+        paths: list,
+        route_file: str = "route.ts",
+        method_exports: list[str] | None = None,
+        extensions: list[str] | None = None,
+        framework: str = "filesystem",
+    ) -> None:
+        self.framework = framework
+        self.route_file = route_file
+        self.extensions = set(extensions or [".ts", ".tsx", ".js", ".jsx", ".mjs"])
+        self.method_exports = [
+            m.upper() for m in (method_exports or _DEFAULT_METHODS)
+        ]
+        self._scan_dirs: list[str] = []
+        self._url_prefixes: dict[str, str] = {}
+        for entry in paths:
+            if isinstance(entry, dict):
+                directory = entry.get("dir") or entry.get("path")
+                prefix = entry.get("urlPrefix", "")
+            else:
+                directory, prefix = entry, ""
+            if directory:
+                self._scan_dirs.append(directory)
+                self._url_prefixes[directory] = str(prefix).rstrip("/")
+
+    def extract(self, root: Path) -> list[ApiEndpoint]:
+        endpoints: list[ApiEndpoint] = []
+        for scan_dir in self._scan_dirs:
+            dir_path = root / scan_dir
+            if not dir_path.is_dir():
+                continue
+            prefix = self._url_prefixes.get(scan_dir, "")
+            for dirpath_str, dirnames, filenames in os.walk(str(dir_path)):
+                dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
+                for fname in filenames:
+                    if not _match_glob(fname, self.route_file):
+                        continue
+                    file_path = Path(dirpath_str) / fname
+                    if file_path.suffix.lower() not in self.extensions:
+                        continue
+                    try:
+                        content = file_path.read_text(errors="replace")
+                    except (OSError, PermissionError):
+                        continue
+                    rel_dir = Path(dirpath_str).relative_to(dir_path)
+                    url = self._url_for(prefix, rel_dir)
+                    for method in self._methods(content):
+                        endpoints.append(ApiEndpoint(
+                            file_path=str(file_path), line=1, method=method,
+                            path=url, kind="backend_route",
+                            framework=self.framework,
+                        ))
+        return endpoints
+
+    def _url_for(self, prefix: str, rel_dir: Path) -> str:
+        parts: list[str] = []
+        for segment in rel_dir.parts:
+            if segment in ("", ".", ".."):
+                continue
+            # Route groups (group), private (_foo), parallel (@slot), intercept
+            if segment.startswith(("(", "_", "@")) or segment == "...":
+                continue
+            match = _DYNAMIC_SEGMENT.match(segment)
+            parts.append("{" + match.group(1) + "}" if match else segment)
+        joined = "/".join(parts)
+        base = prefix.rstrip("/")
+        return normalize_path(f"{base}/{joined}" if joined else (base or "/"))
+
+    def _methods(self, content: str) -> list[str]:
+        found: list[str] = []
+        for match in _METHOD_EXPORT.finditer(content):
+            method = match.group(1)
+            if method in self.method_exports and method not in found:
+                found.append(method)
+        return found or ["GET"]
+
+
+def _match_glob(name: str, pattern: str) -> bool:
+    """Minimal glob match for a bare filename pattern (``*`` and ``?``)."""
+    if pattern == name:
+        return True
+    regex = "^" + re.escape(pattern).replace(r"\*", ".*").replace(r"\?", ".") + "$"
+    return re.match(regex, name) is not None
 
 
 # ---------------------------------------------------------------------------
@@ -538,12 +656,22 @@ def connect_api_endpoints(
         paths=fe_config.get("paths", ["."]),
         custom_patterns=fe_config.get("customPatterns"),
     )
-    be_extractor = BackendExtractor(
-        framework=be_config.get("framework", "generic"),
-        paths=be_config.get("paths", ["."]),
-        route_prefix=be_config.get("routePrefix", ""),
-        custom_patterns=be_config.get("customPatterns"),
-    )
+    if be_config.get("routeFile"):
+        # Directory-based router: URL comes from the route file's location.
+        be_extractor = FilesystemRouteExtractor(
+            paths=be_config.get("paths", ["."]),
+            route_file=be_config["routeFile"],
+            method_exports=be_config.get("methodExports"),
+            extensions=be_config.get("extensions"),
+            framework=be_config.get("framework", "filesystem"),
+        )
+    else:
+        be_extractor = BackendExtractor(
+            framework=be_config.get("framework", "generic"),
+            paths=be_config.get("paths", ["."]),
+            route_prefix=be_config.get("routePrefix", ""),
+            custom_patterns=be_config.get("customPatterns"),
+        )
 
     frontend_eps = fe_extractor.extract(root)
     backend_eps = be_extractor.extract(root)

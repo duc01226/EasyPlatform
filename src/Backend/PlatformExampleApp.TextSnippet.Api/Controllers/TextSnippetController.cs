@@ -44,6 +44,9 @@ public class TextSnippetController : PlatformBaseController
     [Route("search")]
     public async Task<SearchSnippetTextQueryResult> Search([FromQuery] SearchSnippetTextQuery request)
     {
+        // Validate even on a cache hit: CQRS validation runs only on cache misses.
+        request.Validate().EnsureValid();
+
         // Random delay slow request for spinner
         Util.RandomGenerator.DoByChance(50, () => Thread.Sleep(1000));
 
@@ -60,7 +63,7 @@ public class TextSnippetController : PlatformBaseController
         return await CacheRepositoryProvider.GetCollection<TextSnippetCollectionCacheKeyProvider>()
             .CacheRequestAsync(
                 () => Cqrs.SendQuery(request),
-                SearchSnippetTextQuery.BuildCacheRequestKeyParts(request, null, null),
+                SearchSnippetTextQuery.BuildCacheRequestKeyParts(request, RequestContext.UserId(), null),
                 tags: [SearchSnippetTextQuery.BuildCacheRequestTag(RequestContext.UserId())]);
 
         // Using distributed cache and also use CacheRequestUseConfigOptionsAsync for convenient

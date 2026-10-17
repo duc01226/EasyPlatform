@@ -1,0 +1,55 @@
+{
+  "_description": "Skill-profile presets and the curated called-skill list, read by .claude/scripts/sync-skill-profile.cjs (resolveProfile). A preset's nameOnly is a list of skill names or one selector string: \"calledByOthers\" = the calledByOthers list; \"allExceptEntry\" = every skill with a SKILL.md except entrySkills and skills whose frontmatter already sets disable-model-invocation: true. The project's skillProfile lists are applied on top of the preset.",
+  "version": 1,
+  "calledByOthers": {
+    "_description": "Skills that other skills (by /name prose) or hooks start. Skills call each other in prose, not through a Skill( call, so this list cannot be computed; workflow steps and agent skills: entries are computed at run time and need no entry here. A skill in this list, in entrySkills, a workflow step or an agent skills: entry is never made commandOnly or off without skillProfile.allowHidingCalledSkills. This list is also the standard preset's nameOnly selector, so entry skills are kept in entrySkills instead.",
+    "skills": [
+      "code-quality-review",
+      "commit",
+      "commit-review",
+      "course-builder",
+      "db-migrate",
+      "ui-design",
+      "feature-implement",
+      "graph-code",
+      "grill",
+      "learn",
+      "llm-council",
+      "package-upgrade",
+      "project-skill-protocol",
+      "prompt-enhance",
+      "strategy-builder",
+      "tech-spec",
+      "understand",
+      "wayfinder",
+      "web-design-guidelines"
+    ]
+  },
+  "entrySkills": {
+    "_description": "Skills the minimal preset keeps listed: the workflow runner, commit, lightweight framework-config help and the setup skills the setup gates start. Routing gates and hooks start them, so they are protected like calledByOthers (never commandOnly or off without skillProfile.allowHidingCalledSkills) but are not made name-only by the standard preset.",
+    "skills": [
+      "start-workflow",
+      "framework-config",
+      "commit",
+      "project-init",
+      "project-config",
+      "docs-manager",
+      "ai-context-refresh",
+      "scan-all"
+    ]
+  },
+  "presets": {
+    "full": {
+      "describe": "No overrides: every skill keeps its default visibility.",
+      "nameOnly": []
+    },
+    "standard": {
+      "describe": "The skills other skills or hooks start leave the model's skill list but stay callable by name.",
+      "nameOnly": "calledByOthers"
+    },
+    "minimal": {
+      "describe": "Command-first: only the entry skills stay listed; every other skill stays callable by name.",
+      "nameOnly": "allExceptEntry"
+    }
+  }
+}
