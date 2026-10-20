@@ -846,7 +846,7 @@ function renderView({ service, component, entries, today }) {
       `| \`${escapePipe(entry.id)}\` | \`${escapePipe(`${entry.className}.${entry.methodName}`)}\` | technical hint: \`${technicalHint(entry)}\` | Convert to \`TechnicalSpec\` only after review; otherwise keep as business \`TestSpec\`. |`,
   );
 
-  return `${DERIVED_BANNER} Source of truth: code and tests under [Source: test/${service}/${component}]. Regenerated: ${today}.
+  const markdown = `${DERIVED_BANNER} Source of truth: code and tests under [Source: test/${service}/${component}]. Regenerated: ${today}.
 
 # ${service} / ${component} — Technical View
 
@@ -893,6 +893,16 @@ ${topologyRows.length ? topologyRows.map((entry) => `| ${entry.operationKind} | 
 | --- | --- | --- | --- |
 ${candidateRows.length ? candidateRows.join('\n') : '| N/A | N/A | No technical-looking business joins detected | N/A |'}
 `;
+
+  if (markdown.trimEnd().split('\n').length <= 200) return markdown;
+
+  const headings = [...markdown.matchAll(/^## (.+)$/gm)].map(([, heading]) => heading);
+  const contents = headings.map((heading) => {
+    const anchor = heading.toLowerCase().replace(/[^\p{L}\p{N} _-]/gu, '').replaceAll(' ', '-');
+    return `- [${heading}](#${anchor})`;
+  }).join('\n');
+  const firstSection = markdown.indexOf('\n## ') + 1;
+  return `${markdown.slice(0, firstSection)}## Contents\n\n${contents}\n\n${markdown.slice(firstSection)}`;
 }
 
 function sanitizeSegment(value) {

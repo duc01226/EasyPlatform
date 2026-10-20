@@ -36,10 +36,10 @@ The framework is battle-tested in production enterprise applications and provide
 
 ```bash
 # Backend
-dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
+dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
 
 # Frontend
-cd src/Frontend && npm install && nx serve playground-text-snippet
+cd src/PlatformExampleAppWeb && npm install && nx serve playground-text-snippet
 
 # Infrastructure
 docker-compose -f src/platform-example-app.docker-compose.yml -f src/platform-example-app.docker-compose.override.yml up -d
@@ -162,7 +162,7 @@ src/Platform/                    # Easy.Platform framework
 ├── Easy.Platform.RabbitMQ/      # Message bus
 └── Easy.Platform.*/             # Other modules
 
-src/Backend/          # Example microservice
+src/PlatformExampleApp/          # Example microservice
 ├── *.Api/                       # Web API layer
 ├── *.Application/               # CQRS handlers, jobs, events
 ├── *.Domain/                    # Entities, domain events
@@ -173,7 +173,7 @@ src/Backend/          # Example microservice
 ### Frontend
 
 ```
-src/Frontend/       # Angular 19 Nx workspace
+src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
 ├── apps/
 │   └── playground-text-snippet/ # Example app
 └── libs/
@@ -213,11 +213,11 @@ src/Frontend/       # Angular 19 Nx workspace
 ```bash
 # Backend
 dotnet build src/Easy.Platform.sln
-dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
+dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
 dotnet test [Project].csproj
 
 # Frontend
-cd src/Frontend
+cd src/PlatformExampleAppWeb
 npm install
 nx serve playground-text-snippet
 nx build playground-text-snippet
@@ -228,7 +228,7 @@ nx test platform-core
 
 ## Getting Help
 
-1. **Study Examples**: `src/Backend/` for backend, `src/Frontend/apps/playground-text-snippet/` for frontend
+1. **Study Examples**: `src/PlatformExampleApp/` for backend, `src/PlatformExampleAppWeb/apps/playground-text-snippet/` for frontend
 2. **Search Codebase**: Use grep/glob to find existing patterns
 3. **Check Documentation**: `docs/` directory for guides, `CLAUDE.md` for patterns
 4. **Read Base Classes**: Check platform-core source for available APIs
@@ -244,4 +244,4 @@ nx test platform-core
 
 ---
 
-_For detailed code patterns and complete examples, see [CLAUDE.md](CLAUDE.md) and the working examples in `src/Backend/`._
+_For detailed code patterns and complete examples, see [CLAUDE.md](CLAUDE.md) and the working examples in `src/PlatformExampleApp/`._

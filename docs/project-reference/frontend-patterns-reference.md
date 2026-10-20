@@ -34,10 +34,10 @@ The empty app wrapper classes were removed. Reuse the platform owner directly; a
 
 | Base | Use | Existing example |
 | --- | --- | --- |
-| `PlatformComponent` | Component lifecycle and cleanup | `src/Frontend/libs/platform-core/src/lib/components/abstracts/platform.component.ts` |
-| `PlatformVmComponent<T>` | Local view model | `src/Frontend/libs/platform-core/src/lib/components/abstracts/platform.vm-component.ts` |
-| `PlatformFormComponent<T>` | Reactive forms | `src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-detail/task-detail.component.ts:108` |
-| `PlatformVmStoreComponent<T, S>` | Store-owned state | `src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-list/task-list.component.ts:58` |
+| `PlatformComponent` | Component lifecycle and cleanup | `src/PlatformExampleAppWeb/libs/platform-core/src/lib/components/abstracts/platform.component.ts` |
+| `PlatformVmComponent<T>` | Local view model | `src/PlatformExampleAppWeb/libs/platform-core/src/lib/components/abstracts/platform.vm-component.ts` |
+| `PlatformFormComponent<T>` | Reactive forms | `src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/shared/components/task-detail/task-detail.component.ts:108` |
+| `PlatformVmStoreComponent<T, S>` | Store-owned state | `src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/shared/components/task-list/task-list.component.ts:58` |
 
 ## State Management (PlatformVmStore)
 
@@ -260,9 +260,9 @@ Component-scoped SCSS with BEM naming. Import variables and mixins via `@use`. S
 
 ## Translation fallback regression
 
-`src/Frontend/apps/playground-text-snippet/src/app/platform-missing-translation-handler.spec.ts` guards readable missing-key fallback values, unresolved tokens, absent parameters and repeated/dotted literal keys through the public handler. Run it through the existing playground-text-snippet Jest target; it does not provide browser journey proof.
+`src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/platform-missing-translation-handler.spec.ts` guards readable missing-key fallback values, unresolved tokens, absent parameters and repeated/dotted literal keys through the public handler. Run it through the existing playground-text-snippet Jest target; it does not provide browser journey proof.
 
-`src/Frontend/apps/playground-text-snippet/src/app/platform-translate-service.spec.ts` resolves the real public service through TestBed and guards its exported configuration token, custom configuration identity and default values. Its Jest target uses the installed preset's `globals.ngJest.processWithEsbuild` option for the allowlisted lodash/dayjs ESM packages. Keep the configuration class initialized before decorated service metadata reads it; moving it must preserve the public export and DI token.
+`src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/platform-translate-service.spec.ts` resolves the real public service through TestBed and guards its exported configuration token, custom configuration identity and default values. Its Jest target uses the installed preset's `globals.ngJest.processWithEsbuild` option for the allowlisted lodash/dayjs ESM packages. Keep the configuration class initialized before decorated service metadata reads it; moving it must preserve the public export and DI token.
 
 ## Closing Reminders
 

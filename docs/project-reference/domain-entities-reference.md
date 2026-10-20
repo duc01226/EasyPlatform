@@ -34,11 +34,11 @@ Defined in: `src/Platform/Easy.Platform/Domain/Entities/Entity.cs:759` and `Audi
 
 | Entity              | Key Properties                                                                                                           | Base Class                                | File                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- | ----------------------------------------------------------- |
-| TextSnippetEntity   | Id, SnippetText, FullText, CreatedByUserId (FK→User), CategoryId (FK→Category), Status, Tags, ViewCount, IsDeleted       | `RootAuditedEntity` + `IRowVersionEntity` | `src/Backend/.../Domain/Entities/TextSnippetEntity.cs:22`   |
-| TextSnippetCategory | Id, Name, Description, ParentCategoryId (self-ref FK), SortOrder, IsActive, IconName, ColorCode                          | `RootAuditedEntity` + `IRowVersionEntity` | `src/Backend/.../Domain/Entities/TextSnippetCategory.cs:25` |
-| TaskItemEntity      | Id, Title, Description, Status, Priority, DueDate, AssigneeId, RelatedSnippetId (FK→Snippet), SubTasks (JSON), IsDeleted | `RootAuditedEntity` + `IRowVersionEntity` | `src/Backend/.../Domain/Entities/TaskItemEntity.cs:28`      |
-| UserEntity          | Id, FirstName, LastName, Email, DepartmentId, DepartmentName, IsActive                                                   | `RootEntity`                              | `src/Backend/.../Domain/Entities/User.cs:5`                 |
-| MultiDbDemoEntity   | Id, Name                                                                                                                 | `RootEntity`                              | `src/Backend/.../Domain/Entities/MultiDbDemoEntity.cs:8`    |
+| TextSnippetEntity   | Id, SnippetText, FullText, CreatedByUserId (FK→User), CategoryId (FK→Category), Status, Tags, ViewCount, IsDeleted       | `RootAuditedEntity` + `IRowVersionEntity` | `src/PlatformExampleApp/.../Domain/Entities/TextSnippetEntity.cs:22`   |
+| TextSnippetCategory | Id, Name, Description, ParentCategoryId (self-ref FK), SortOrder, IsActive, IconName, ColorCode                          | `RootAuditedEntity` + `IRowVersionEntity` | `src/PlatformExampleApp/.../Domain/Entities/TextSnippetCategory.cs:25` |
+| TaskItemEntity      | Id, Title, Description, Status, Priority, DueDate, AssigneeId, RelatedSnippetId (FK→Snippet), SubTasks (JSON), IsDeleted | `RootAuditedEntity` + `IRowVersionEntity` | `src/PlatformExampleApp/.../Domain/Entities/TaskItemEntity.cs:28`      |
+| UserEntity          | Id, FirstName, LastName, Email, DepartmentId, DepartmentName, IsActive                                                   | `RootEntity`                              | `src/PlatformExampleApp/.../Domain/Entities/User.cs:5`                 |
+| MultiDbDemoEntity   | Id, Name                                                                                                                 | `RootEntity`                              | `src/PlatformExampleApp/.../Domain/Entities/MultiDbDemoEntity.cs:8`    |
 
 ### Enums
 
@@ -52,23 +52,23 @@ Defined in: `src/Platform/Easy.Platform/Domain/Entities/Entity.cs:759` and `Audi
 
 | Value Object                | Properties                                          | Storage                         | File                                                                 |
 | --------------------------- | --------------------------------------------------- | ------------------------------- | -------------------------------------------------------------------- |
-| `ExampleAddressValueObject` | Number, Street                                      | Owned entity (EF OwnsOne)       | `src/Backend/.../Domain/ValueObjects/ExampleAddressValueObject.cs:6` |
-| `SubTaskItem`               | Id, Title, IsCompleted, Order, CompletedDate, Notes | JSON in TaskItemEntity.SubTasks | `src/Backend/.../Domain/Entities/TaskItemEntity.cs:529`              |
+| `ExampleAddressValueObject` | Number, Street                                      | Owned entity (EF OwnsOne)       | `src/PlatformExampleApp/.../Domain/ValueObjects/ExampleAddressValueObject.cs:6` |
+| `SubTaskItem`               | Id, Title, IsCompleted, Order, CompletedDate, Notes | JSON in TaskItemEntity.SubTasks | `src/PlatformExampleApp/.../Domain/Entities/TaskItemEntity.cs:529`              |
 
 > `SubTaskItem` extends `PlatformValueObject<SubTaskItem>` and overrides `Validate()` (value objects use `Validate()`, NOT `GetValidator()`). File: `TaskItemEntity.cs:529`, validator `TitleValidator()` at `:562`.
 
 ### Associated Entities (Composite Views)
 
-`TextSnippetAssociatedEntity` extends `TextSnippetEntity` — adds `CreatedByUser` (UserEntity) for joined queries without code duplication. File: `src/Backend/.../Domain/AssociatedEntities/TextSnippetAssociatedEntity.cs:9`
+`TextSnippetAssociatedEntity` extends `TextSnippetEntity` — adds `CreatedByUser` (UserEntity) for joined queries without code duplication. File: `src/PlatformExampleApp/.../Domain/AssociatedEntities/TextSnippetAssociatedEntity.cs:9`
 
 ## TaskManagement Module
 
 `TaskBoardItemEntity` owns title validation, the Open/InProgress/Completed/Cancelled transition graph and the aggregate
 concurrency token. Its create factory raises one creation event; reconstitution raises none. It has no TextSnippet
-entity reference. Source: `src/Backend/PlatformExampleApp.TaskManagement.Domain/Entities/TaskBoardItemEntities.cs`.
+entity reference. Source: `src/PlatformExampleApp/PlatformExampleApp.TaskManagement.Domain/Entities/TaskBoardItemEntities.cs`.
 
 `TaskBoardItemProjectionEntity` has one deterministic row per TaskId, enforced by the unique TaskId index in
-`src/Backend/PlatformExampleApp.TaskManagement.Persistence.Mongo/TaskManagementDbContext.cs`. Its `ConcurrencyUpdateToken`
+`src/PlatformExampleApp/PlatformExampleApp.TaskManagement.Persistence.Mongo/TaskManagementDbContext.cs`. Its `ConcurrencyUpdateToken`
 is the projection's own optimistic row version; `TaskConcurrencyUpdateToken` carries the aggregate token exposed by
 `TaskBoardItemDto`. These tokens serve different consistency boundaries and must stay separate.
 
@@ -77,7 +77,7 @@ reads the projection before reloading committed aggregate state; transport deliv
 Both insert missing rows without upserting and retain the captured row version for updates. Conflicts propagate to
 the caller's bounded retry, which repeats the applicable reads and recomputes. Transport creation can materialize
 a missing row but cannot replace an existing projection. Regression proof:
-`src/Backend/PlatformExampleApp.Tests.Unit/TaskManagement/TaskManagementProjectionConcurrencyTests.cs`.
+`src/PlatformExampleApp/PlatformExampleApp.Tests.Unit/TaskManagement/TaskManagementProjectionConcurrencyTests.cs`.
 
 ## Entity Relationships
 
@@ -127,7 +127,7 @@ The **TextSnippet** aggregates below live in `PlatformExampleApp.TextSnippet.Dom
 DTOs use `With*()` methods for optional related data loading and `WithIf()` for conditional loading:
 
 ```csharp
-// src/Backend/.../Application/Dtos/EntityDtos/TextSnippetEntityDto.cs:257
+// src/PlatformExampleApp/.../Application/Dtos/EntityDtos/TextSnippetEntityDto.cs:257
 public static TextSnippetEntityDto FromEntityWithRelated(
     TextSnippetEntity entity,
     TextSnippetCategory? category = null,
@@ -174,7 +174,7 @@ The TextSnippet messaging shown below uses RabbitMQ for entity-event propagation
 Generic repository interfaces per domain boundary. MUST use `ITextSnippetRootRepository<TEntity>` for write operations.
 
 ```csharp
-// src/Backend/.../Domain/Repositories/ITextSnippetRepository.cs:6,11
+// src/PlatformExampleApp/.../Domain/Repositories/ITextSnippetRepository.cs:6,11
 // Two interfaces: a non-root base + the root repository that composes it.
 public interface ITextSnippetRepository<TEntity> : IPlatformQueryableRepository<TEntity, string>
     where TEntity : class, IEntity<string>, new() { }
@@ -195,9 +195,9 @@ public interface ITextSnippetRootRepository<TEntity> : IPlatformQueryableRootRep
 
 | Provider                        | Module                             | Path                                                                 |
 | ------------------------------- | ---------------------------------- | -------------------------------------------------------------------- |
-| EF Core (SQL Server/PostgreSQL) | TextSnippet.Persistence            | `src/Backend/PlatformExampleApp.TextSnippet.Persistence/`            |
-| MongoDB                         | TextSnippet.Persistence.Mongo      | `src/Backend/PlatformExampleApp.TextSnippet.Persistence.Mongo/`      |
-| PostgreSQL-specific             | TextSnippet.Persistence.PostgreSql | `src/Backend/PlatformExampleApp.TextSnippet.Persistence.PostgreSql/` |
+| EF Core (SQL Server/PostgreSQL) | TextSnippet.Persistence            | `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence/`            |
+| MongoDB                         | TextSnippet.Persistence.Mongo      | `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.Mongo/`      |
+| PostgreSQL-specific             | TextSnippet.Persistence.PostgreSql | `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.PostgreSql/` |
 
 ### EF Core Entity Configurations
 
@@ -211,10 +211,10 @@ public interface ITextSnippetRootRepository<TEntity> : IPlatformQueryableRootRep
 
 | Model                     | Backend Entity    | File                                                                                                  |
 | ------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------- |
-| `TextSnippetDataModel`    | TextSnippetEntity | `src/Frontend/libs/apps-domains/text-snippet-domain/src/lib/data-models/text-snippet.data-model.ts:3` |
-| `TaskItemDataModel`       | TaskItemEntity    | `src/Frontend/libs/apps-domains/text-snippet-domain/src/lib/data-models/task-item.data-model.ts:123`  |
-| `SubTaskItemDataModel`    | SubTaskItem       | `src/Frontend/libs/apps-domains/text-snippet-domain/src/lib/data-models/task-item.data-model.ts:86`   |
-| `TaskStatisticsDataModel` | (computed)        | `src/Frontend/libs/apps-domains/text-snippet-domain/src/lib/data-models/task-item.data-model.ts:297`  |
+| `TextSnippetDataModel`    | TextSnippetEntity | `src/PlatformExampleAppWeb/libs/apps-domains/text-snippet-domain/src/lib/data-models/text-snippet.data-model.ts:3` |
+| `TaskItemDataModel`       | TaskItemEntity    | `src/PlatformExampleAppWeb/libs/apps-domains/text-snippet-domain/src/lib/data-models/task-item.data-model.ts:123`  |
+| `SubTaskItemDataModel`    | SubTaskItem       | `src/PlatformExampleAppWeb/libs/apps-domains/text-snippet-domain/src/lib/data-models/task-item.data-model.ts:86`   |
+| `TaskStatisticsDataModel` | (computed)        | `src/PlatformExampleAppWeb/libs/apps-domains/text-snippet-domain/src/lib/data-models/task-item.data-model.ts:297`  |
 
 ## Naming Conventions
 

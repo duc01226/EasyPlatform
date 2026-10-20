@@ -95,6 +95,32 @@ public class PlatformOutboxRetentionBatchTests
         harness.SelectedSizes.Should().Equal(7);
         harness.Rows.Count(row => row.SendStatus == PlatformOutboxBusMessage.SendStatuses.Processed).Should().Be(10);
         harness.DeleteTokens.Should().OnlyContain(token => token == cancellation.Token);
+        harness.DeleteTokens.Should().ContainSingle("cancellation must prevent another deletion attempt");
+        harness.CountTokens.Should().ContainSingle("cancellation must prevent the next cleanup phase from querying");
+        harness.Errors.Should().BeEmpty("cancellation between batches must stop without a cleanup error");
+    }
+
+    [Theory]
+    [Trait("TechnicalSpec", "TC-OUTBOX-RETENTION-004")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Cleanup_CancellationAfterExpiredScan_DoesNotStartFailedMessageScan(bool keyed)
+    {
+        using var cancellation = new CancellationTokenSource();
+        using var harness = new CleanerHarness(keyed, 17, retained: 30, batch: 7);
+        var expected = harness.Rows.Select(row => row.Id).ToList();
+        harness.AfterCount = count =>
+        {
+            if (count == 2) cancellation.Cancel();
+        };
+
+        await harness.CleanAsync(cancellation.Token);
+
+        harness.CountTokens.Should().HaveCount(2, "the completed expiration scan must be the final provider attempt");
+        harness.CountTokens.Should().OnlyContain(token => token == cancellation.Token);
+        harness.SelectedSizes.Should().BeEmpty();
+        harness.Rows.Select(row => row.Id).Should().BeEquivalentTo(expected);
+        harness.Errors.Should().BeEmpty("cancellation after a completed phase must not become a cleanup error");
     }
 
     [Fact]
@@ -184,8 +210,11 @@ public class PlatformOutboxRetentionBatchTests
             repository.Setup(repo => repo.CountAsync(It.IsAny<Expression<Func<PlatformOutboxBusMessage, bool>>>(), It.IsAny<CancellationToken>()))
                 .Returns((Expression<Func<PlatformOutboxBusMessage, bool>> predicate, CancellationToken token) =>
                 {
+                    CountTokens.Add(token);
                     token.ThrowIfCancellationRequested();
-                    return Task.FromResult(Rows.Count(predicate.Compile()));
+                    var count = Rows.Count(predicate.Compile());
+                    AfterCount?.Invoke(CountTokens.Count);
+                    return Task.FromResult(count);
                 });
             repository.Setup(repo => repo.DeleteManyAsync(
                     It.IsAny<Func<IQueryable<PlatformOutboxBusMessage>, IQueryable<PlatformOutboxBusMessage>>>(),
@@ -193,11 +222,11 @@ public class PlatformOutboxRetentionBatchTests
                 .Returns(async (Func<IQueryable<PlatformOutboxBusMessage>, IQueryable<PlatformOutboxBusMessage>> query,
                     bool dismissSendEvent, Action<PlatformCqrsEntityEvent> _, CancellationToken token) =>
                 {
+                    DeleteTokens.Add(token);
                     token.ThrowIfCancellationRequested();
                     dismissSendEvent.Should().BeTrue();
                     var selected = query(Rows.AsQueryable()).ToList();
                     SelectedSizes.Add(selected.Count);
-                    DeleteTokens.Add(token);
                     if (SelectedSizes.Count > processedCount + 2)
                         throw new InvalidOperationException("Regression guard: cleaner failed to stop without progress.");
                     var overridden = OverrideDeleteResult?.Invoke(selected);
@@ -223,6 +252,8 @@ public class PlatformOutboxRetentionBatchTests
         public List<PlatformOutboxBusMessage> Rows { get; }
         public List<int> SelectedSizes { get; } = [];
         public List<CancellationToken> DeleteTokens { get; } = [];
+        public List<CancellationToken> CountTokens { get; } = [];
+        public Action<int>? AfterCount { get; set; }
         public List<Exception> Errors { get; } = [];
         public Mock<IPlatformOutboxBusMessageRepository> ForeignRepository { get; }
         public Func<int, Task>? AfterDeleteAsync { get; set; }

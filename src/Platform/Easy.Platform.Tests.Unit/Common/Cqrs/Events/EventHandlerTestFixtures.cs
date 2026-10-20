@@ -55,7 +55,7 @@ public sealed class EventHandlerTestHost : IDisposable
     /// When true, <see cref="IPlatformInboxBusMessageRepository" /> is registered as a scoped service, which is
     /// exactly what makes <c>HasInboxMessageSupport()</c> observe inbox support.
     /// </param>
-    public static EventHandlerTestHost Create(bool registerInboxRepository = false)
+    public static EventHandlerTestHost Create(bool registerInboxRepository = false, bool registerPlainEventHandlers = false)
     {
         var services = new ServiceCollection();
 
@@ -88,6 +88,12 @@ public sealed class EventHandlerTestHost : IDisposable
 
         if (registerInboxRepository)
             services.AddScoped(_ => new Mock<IPlatformInboxBusMessageRepository>().Object);
+
+        if (registerPlainEventHandlers)
+        {
+            services.AddTransient<IPlatformCqrsEventHandler<PlainTestEvent>, PlainTestEventHandler>();
+            services.AddTransient<IPlatformCqrsEventHandler<PlainTestEvent>, SiblingPlainTestEventHandler>();
+        }
 
         var provider = services.BuildServiceProvider();
 
@@ -271,6 +277,11 @@ public class PlainTestEventHandler : PlatformCqrsEventHandler<PlainTestEvent>
     public bool NotNeedWaitHandlerExecutionFinishedImmediatelyForTest(PlainTestEvent @event)
     {
         return NotNeedWaitHandlerExecutionFinishedImmediately(@event);
+    }
+
+    public PlainTestEvent BuildHandlerInstanceEventForTest(PlainTestEvent @event)
+    {
+        return DoHandle_BuildHandlerInstanceEvent(@event);
     }
 
     public bool NeedRunHandlerInSameCurrentActiveUowForTest(PlainTestEvent @event)

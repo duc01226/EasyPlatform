@@ -88,6 +88,8 @@ describe('output-handler', () => {
   const { resolveOutputPath, createTempPath, cleanupTempFiles } = require('../scripts/lib/output-handler.cjs');
   const os = require('os');
   const fixturesDir = path.join(__dirname, 'fixtures');
+  // Explicit outputs create their parent directory, so they must live somewhere writable on every OS.
+  const outputDir = path.join(os.tmpdir(), 'pdf-convert-tests', 'output');
 
   it('should resolve output path from input (no output specified)', () => {
     const result = resolveOutputPath('/path/to/doc.md', null);
@@ -96,7 +98,7 @@ describe('output-handler', () => {
   });
 
   it('should use explicit output path', () => {
-    const result = resolveOutputPath('/path/to/doc.md', '/output/file.pdf');
+    const result = resolveOutputPath('/path/to/doc.md', path.join(outputDir, 'file.pdf'));
     assert.ok(result.endsWith('.pdf'), 'Output should end with .pdf');
   });
 
@@ -107,7 +109,7 @@ describe('output-handler', () => {
   });
 
   it('should add .pdf extension if missing', () => {
-    const result = resolveOutputPath('/path/to/doc.md', '/output/file');
+    const result = resolveOutputPath('/path/to/doc.md', path.join(outputDir, 'file'));
     assert.ok(result.endsWith('.pdf'), 'Should add .pdf extension');
   });
 

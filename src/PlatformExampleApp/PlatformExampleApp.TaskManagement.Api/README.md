@@ -62,9 +62,9 @@ Local business writes and their outbox records can be atomic inside one provider
 From the repository root, start the local infrastructure if required and run:
 
 ```powershell
-dotnet build src/Backend/PlatformExampleApp.TaskManagement.Api/PlatformExampleApp.TaskManagement.Api.csproj --nologo
-dotnet run --project src/Backend/PlatformExampleApp.TaskManagement.Api/PlatformExampleApp.TaskManagement.Api.csproj
-dotnet test src/Backend/PlatformExampleApp.IntegrationTests/PlatformExampleApp.IntegrationTests.csproj --no-restore --nologo --filter "FullyQualifiedName~PlatformExampleApp.IntegrationTests.ModularMonolith"
+dotnet build src/PlatformExampleApp/PlatformExampleApp.TaskManagement.Api/PlatformExampleApp.TaskManagement.Api.csproj --nologo
+dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TaskManagement.Api/PlatformExampleApp.TaskManagement.Api.csproj
+dotnet test src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/PlatformExampleApp.IntegrationTests.csproj --no-restore --nologo --filter "FullyQualifiedName~PlatformExampleApp.IntegrationTests.ModularMonolith"
 ```
 
 The standalone run uses the host configuration/environment for MongoDB and RabbitMQ. Keep connection strings and credentials outside source control. For the composite proof and deterministic test database naming, see `../PlatformExampleApp.ModularMonolith.Api/README.md` and `../PlatformExampleApp.IntegrationTests/ModularMonolithPersistenceIntegrationTests.cs`.

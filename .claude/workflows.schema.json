@@ -65,9 +65,21 @@
       "additionalProperties": false,
       "required": ["id", "steps"],
       "properties": {
-        "id": { "enum": ["discover", "specify", "plan", "build", "review", "verify", "close"], "description": "Phase name; phases appear in this order and at most once." },
-        "steps": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }, "description": "Occurrence IDs of this phase, in sequence order." },
-        "exit": { "type": "array", "items": { "type": "string" }, "description": "Outcome gate IDs this phase closes; a satisfier lies in this phase or an earlier one." }
+        "id": {
+          "enum": ["discover", "specify", "plan", "build", "review", "verify", "close"],
+          "description": "Phase name; phases appear in this order and at most once."
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "description": "Occurrence IDs of this phase, in sequence order."
+        },
+        "exit": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Outcome gate IDs this phase closes; a satisfier lies in this phase or an earlier one."
+        }
       },
       "title": "Phase",
       "description": "One todo per phase: the phase lists its steps as lines and completes when every line is closed and its exit gates hold."

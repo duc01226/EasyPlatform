@@ -6,8 +6,8 @@
 
 ## Current verification surfaces
 
-- Read `src/Backend/PlatformExampleApp.Test/_Readme.md` when working on the existing Selenium test lifecycle. Cases are under `src/Backend/PlatformExampleApp.Test/TestCases/`; configuration is in that project's appsettings files.
-- Read `src/Backend/PlatformExampleApp.Test.BDD/Startup.cs` and its step definitions when working on existing BDD automation. Browser nodes and Selenium Hub are declared in `src/platform-example-app.docker-compose.yml` and its override.
+- Read `src/PlatformExampleApp/PlatformExampleApp.Test/_Readme.md` when working on the existing Selenium test lifecycle. Cases are under `src/PlatformExampleApp/PlatformExampleApp.Test/TestCases/`; configuration is in that project's appsettings files.
+- Read `src/PlatformExampleApp/PlatformExampleApp.Test.BDD/Startup.cs` and its step definitions when working on existing BDD automation. Browser nodes and Selenium Hub are declared in `src/platform-example-app.docker-compose.yml` and its override.
 - Read `docs/project-reference/integration-test-reference.md` for API/CQRS integration tests. They provide service proof; browser interaction needs separate evidence.
 
 ## Removed frontend harness

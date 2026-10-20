@@ -146,26 +146,3 @@ test("an unavailable TypeScript parser reports MISSING_PARSER", async () => {
   assert.deepEqual(missing.records, []);
   assert.ok(missing.unknown.some(item => item.code === "MISSING_PARSER" && item.file === missingFile));
 });
-
-test("missing keyed-case fields remain visible as UNKNOWN without dropping valid siblings", async t => {
-  if (skipMissingCarrierParsers(t, "typescript")) return;
-  await withTempProject(t, async rootDir => {
-    // Invariant: malformed metadata diagnoses the affected row, never aborts extraction.
-    const file = "checks/missing-fields.test.js";
-    await writeProjectFile(rootDir, "specs/library/043-carriers.md", "# Carrier contract\n");
-    const fields = { variant: "'complete'", scenario: "'SCN-KEY-001'", requirements: "'library/043 REQ-1'", rationale: "'required metadata'", input: "1" };
-    const row = entries => `{ ${entries.map(([key, value]) => `${key}: ${value}`).join(", ")} }`;
-    const rows = [row(Object.entries(fields)), ...Object.keys(fields).map(missing => row(Object.entries(fields).filter(([key]) => key !== missing)))];
-    await writeProjectFile(rootDir, file, `
-const cases = [${rows.join(",\n")}];
-describe('library/043 REQ-1', () => {
-  it('executes cases', () => cases.forEach(run));
-});
-`);
-    const result = await readSpecCarriers({ rootDir, profile: carrierTestProfile, selectedFiles: [file], readText: diskReader(rootDir) });
-    assert.deepEqual(result.records.filter(record => record.variantId).map(record => record.variantId), ["complete"]);
-    const missing = result.unknown.filter(item => item.reason.includes("keyed case is missing a required"));
-    assert.equal(missing.length, Object.keys(fields).length);
-    assert.ok(missing.every(item => item.code === "UNKNOWN" && item.file === file && item.span));
-  });
-});

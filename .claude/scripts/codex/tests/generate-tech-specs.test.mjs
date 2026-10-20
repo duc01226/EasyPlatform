@@ -259,6 +259,41 @@ test('generate-tech-specs regenerates cleanly when every file is derived (TC-TSP
     assert.ok(written.startsWith(DERIVED_BANNER), 'generated output must be re-deletable by the next run');
 });
 
+test('long derived views link every real section while compact views remain compact', async () => {
+    const longSource = `public class OrderTests\n{\n${Array.from({ length: 100 }, (_, index) =>
+        `    [Trait("TechnicalSpec", "TS-NAV-${index}")]\n    public Task ShouldPersist${index}() => Task.CompletedTask;`
+    ).join('\n')}\n}\n`;
+
+    for (const source of [ANNOTATED_SOURCE, longSource]) {
+        const root = await makeProject({ source });
+        try {
+            const generated = runGenerator(root);
+            assert.equal(generated.status, 0, generated.stderr);
+            const markdown = await fs.readFile(await generatedMarkdownPath(root), 'utf8');
+            if (source === ANNOTATED_SOURCE) {
+                assert.doesNotMatch(markdown, /^## Contents$/m, 'compact views keep their existing layout');
+            } else {
+                const lines = markdown.trimEnd().split('\n');
+                assert.ok(lines.length > 200, 'fixture must exercise a long derived view');
+                const contentsLine = lines.indexOf('## Contents');
+                assert.ok(contentsLine > 0 && contentsLine < 100, 'navigation belongs near the title');
+                assert.ok(contentsLine < lines.indexOf('## 1. Component Boundary'));
+                const sections = lines.filter((line) => line.startsWith('## ') && line !== '## Contents')
+                    .map((line) => line.slice(3));
+                const links = [...markdown.matchAll(/^- \[([^\]]+)\]\(#[^)]+\)$/gm)];
+                assert.deepEqual(links.map((link) => link[1]), sections, 'every real section is linked in order');
+                assert.ok(markdown.includes('[3. TC ↔ Test Map](#3-tc--test-map)'),
+                    'the arrow is omitted from the anchor while both adjacent spaces remain hyphens');
+            }
+            const repeated = runGenerator(root);
+            assert.equal(repeated.status, 0, repeated.stderr);
+            assert.equal(parseResultJson(repeated).filesWritten, 0, 'navigation must remain byte-stable on regeneration');
+        } finally {
+            await fs.rm(root, { recursive: true, force: true });
+        }
+    }
+});
+
 test('generate-tech-specs preserves semantically unchanged views and their date/EOL bytes (TC-TSPEC-013)', async () => {
     const root = await makeProject();
     try {

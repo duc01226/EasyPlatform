@@ -63,6 +63,8 @@ public abstract class PlatformIntervalHostingBackgroundService : PlatformHosting
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     protected override async Task StartProcess(CancellationToken cancellationToken)
     {
+        // Startup cancellation and the long-running execution lifetime are different host contracts.
+        cancellationToken = StoppingCts.Token;
         while (!ProcessStopped && !StoppingCts.IsCancellationRequested)
         {
             try
@@ -71,6 +73,10 @@ public abstract class PlatformIntervalHostingBackgroundService : PlatformHosting
                     await Task.Delay(FirstTimeTriggeredDelayTime()!.Value, cancellationToken);
 
                 await TriggerIntervalProcessAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                break;
             }
             catch (Exception e)
             {
@@ -155,10 +161,10 @@ public abstract class PlatformIntervalHostingBackgroundService : PlatformHosting
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     private async Task DoTriggerIntervalProcessAsync(CancellationToken cancellationToken)
     {
+        // A canceled waiter never owns a permit to release.
+        await IntervalProcessLock.WaitAsync(cancellationToken);
         try
         {
-            await IntervalProcessLock.WaitAsync(cancellationToken);
-
             if (LogIntervalProcessInformation)
                 Logger.LogInformation("IntervalProcessHostedService {TargetName} STARTED", GetType().Name);
 
@@ -167,6 +173,10 @@ public abstract class PlatformIntervalHostingBackgroundService : PlatformHosting
 
             if (LogIntervalProcessInformation)
                 Logger.LogInformation("IntervalProcessHostedService {TargetName} FINISHED", GetType().Name);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception e)
         {

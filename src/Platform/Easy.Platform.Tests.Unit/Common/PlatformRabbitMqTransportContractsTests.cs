@@ -262,7 +262,8 @@ public class PlatformRabbitMqTransportContractsTests
         await cancellation.CancelAsync();
         try
         {
-            await send.WaitAsync(TimeSpan.FromSeconds(5));
+            var observeCanceledSend = () => send.WaitAsync(TimeSpan.FromSeconds(5));
+            await observeCanceledSend.Should().ThrowAsync<OperationCanceledException>();
             stored.Should().NotBeNull("caller cancellation cannot delete an already committed outbox row");
             stored!.ToJson().Should().Be(committedJson, "even the failed-state update can be canceled; persisted state must remain retryable");
             PlatformOutboxBusMessage.CanHandleMessagesExpr().Compile()(stored).Should().BeTrue();
@@ -283,7 +284,11 @@ public class PlatformRabbitMqTransportContractsTests
         finally
         {
             finish.TrySetResult();
-            await send;
+            try { await send; }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+            {
+                // Cancellation was asserted above; joining it must not mask a durable-state assertion failure.
+            }
         }
     }
 

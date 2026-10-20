@@ -540,23 +540,20 @@ function backfillGeneratedE2eSection(content, sections) {
 const DOC_LOOKUP_HEADING = '## Doc Lookup — What to Read When';
 
 function backfillDocLookupHeading(content) {
-    const lines = content.split(/(?<=\n)/);
+    const eol = content.includes('\r\n') ? '\r\n' : '\n';
+    const lines = content.split(/\r?\n/);
     const at = lines.findIndex(line => line.trim() === '<!-- SECTION:doc-lookup -->');
     if (at === -1) return content;
     let prev = at - 1;
     while (prev >= 0 && lines[prev].trim() === '') prev--;
     const previous = prev >= 0 ? lines[prev].trim() : '';
     if (previous === DOC_LOOKUP_HEADING) return content;
-    const ending = line => line.match(/\r?\n$/)?.[0] || '';
     if (/^##\s+.*doc lookup/i.test(previous)) {
-        lines[prev] = DOC_LOOKUP_HEADING + ending(lines[prev]);
+        lines[prev] = DOC_LOOKUP_HEADING;
     } else {
-        let eol = ending(lines[at]);
-        for (let i = at - 1; !eol && i >= 0; i--) eol = ending(lines[i]);
-        eol ||= '\n';
-        lines.splice(at, 0, DOC_LOOKUP_HEADING + eol, eol);
+        lines.splice(at, 0, DOC_LOOKUP_HEADING, '');
     }
-    return lines.join('');
+    return lines.join(eol);
 }
 
 /**

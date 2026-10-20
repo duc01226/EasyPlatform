@@ -33,7 +33,7 @@ public sealed class TaskManagementModuleBoundaryTests
             var directory = Path.Combine(
                 RepositoryRoot,
                 "src",
-                "Backend",
+                "PlatformExampleApp",
                 moduleDirectory);
 
             Directory.Exists(directory).Should().BeTrue($"the split boundary directory '{directory}' must exist");
@@ -80,13 +80,13 @@ public sealed class TaskManagementModuleBoundaryTests
         var projectPath = Path.Combine(
             RepositoryRoot,
             "src",
-            "Backend",
+            "PlatformExampleApp",
             "PlatformExampleApp.TaskManagement.Api",
             "PlatformExampleApp.TaskManagement.Api.csproj");
         var modulePath = Path.Combine(
             RepositoryRoot,
             "src",
-            "Backend",
+            "PlatformExampleApp",
             "PlatformExampleApp.TaskManagement.Api",
             "TaskManagementApiAspNetCoreModule.cs");
 
@@ -117,14 +117,14 @@ public sealed class TaskManagementModuleBoundaryTests
             Path.Combine(
                 RepositoryRoot,
                 "src",
-                "Backend",
+                "PlatformExampleApp",
                 "PlatformExampleApp.IntegrationTests",
                 "WebAppFactory",
                 "ModularMonolithWebApplicationFactory.cs"),
             Path.Combine(
                 RepositoryRoot,
                 "src",
-                "Backend",
+                "PlatformExampleApp",
                 "PlatformExampleApp.IntegrationTests",
                 "ModularMonolithCompositionIntegrationTests.cs")
         };

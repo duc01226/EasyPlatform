@@ -71,21 +71,21 @@ Read `.claude/scripts/lib/workflow-skill-contract.cjs` when changing workflow re
 
 > Curated highlights — the full catalog has <!-- COUNT:skills -->104<!-- /COUNT --> runnable skills; the tables below list selected skills per domain, not the complete set.
 
-| Domain                                            | Skills | Description                                    |
-| ------------------------------------------------- | ------ | ---------------------------------------------- |
-| [Development - Backend](#development---backend)   | 0      | Project-specific backend patterns              |
-| [Development - Frontend](#development---frontend) | 2      | Components, forms, state, styling, design      |
-| [Architecture](#architecture)                     | 4      | Architecture, performance, security            |
-| [Debugging/Testing](#debuggingtesting)            | 3      | Test generation, test specs                    |
-| [Documentation](#documentation)                   | 3      | Docs, feature docs, release notes              |
-| [Git/Workflow](#gitworkflow)                      | 5      | Commits, pull requests, code review, gates     |
-| [Code Quality](#code-quality)                     | 10     | Graph-based code analysis, blast radius, sync  |
-| [Planning/Research](#planningresearch)            | 5      | Plans, research, implementation, investigation |
-| [Context/Memory](#contextmemory)                  | 2      | Code cleanup, learning                         |
-| [Team Collaboration](#team-collaboration)         | 6      | Test specs, UX design specs, planned-work shaping   |
-| [Web/Frameworks](#webframeworks)                  | 2      | Package updates, markdown                      |
-| [Document Processing](#document-processing)       | 3      | PDF, DOCX, Markdown conversions, HTML export   |
-| [Utility](#utility)                               | 1      | Skill creation                                 |
+| Domain                                            | Skills | Description                                       |
+| ------------------------------------------------- | ------ | ------------------------------------------------- |
+| [Development - Backend](#development---backend)   | 0      | Project-specific backend patterns                 |
+| [Development - Frontend](#development---frontend) | 2      | Components, forms, state, styling, design         |
+| [Architecture](#architecture)                     | 4      | Architecture, performance, security               |
+| [Debugging/Testing](#debuggingtesting)            | 3      | Test generation, test specs                       |
+| [Documentation](#documentation)                   | 3      | Docs, feature docs, release notes                 |
+| [Git/Workflow](#gitworkflow)                      | 5      | Commits, pull requests, code review, gates        |
+| [Code Quality](#code-quality)                     | 10     | Graph-based code analysis, blast radius, sync     |
+| [Planning/Research](#planningresearch)            | 5      | Plans, research, implementation, investigation    |
+| [Context/Memory](#contextmemory)                  | 2      | Code cleanup, learning                            |
+| [Team Collaboration](#team-collaboration)         | 6      | Test specs, UX design specs, planned-work shaping |
+| [Web/Frameworks](#webframeworks)                  | 2      | Package updates, markdown                         |
+| [Document Processing](#document-processing)       | 3      | PDF, DOCX, Markdown conversions, HTML export      |
+| [Utility](#utility)                               | 1      | Skill creation                                    |
 
 **Additional:** Shared reference/protocol entries (<!-- COUNT:shared -->15<!-- /COUNT -->: files plus the generated `protocols/` projection) -- see [Shared Protocols](#shared-protocols-sync-bodies-and-guides)
 
@@ -99,10 +99,10 @@ See `backend-patterns-reference.md` in the project-reference docs root — defau
 
 ## Development - Frontend
 
-| Skill                   | Triggers                           | Description                         |
-| ----------------------- | ---------------------------------- | ----------------------------------- |
-| `ui-design`                | UI, design, screenshot, UI review  | UI implementation (multi-mode/lane) and `--mode=review` UI review |
-| `web-design-guidelines` | accessibility, WCAG, visual review | UI compliance review                |
+| Skill                   | Triggers                           | Description                                                       |
+| ----------------------- | ---------------------------------- | ----------------------------------------------------------------- |
+| `ui-design`             | UI, design, screenshot, UI review  | UI implementation (multi-mode/lane) and `--mode=review` UI review |
+| `web-design-guidelines` | accessibility, WCAG, visual review | UI compliance review                                              |
 
 See `frontend-patterns-reference.md` in the project-reference docs root for project-specific frontend patterns.
 
@@ -110,72 +110,72 @@ See `frontend-patterns-reference.md` in the project-reference docs root for proj
 
 ## Architecture
 
-| Skill                | Triggers                              | Description                                       |
-| -------------------- | ------------------------------------- | ------------------------------------------------- |
-| `architecture` | architecture design, architecture review, scalability grade, architecture audit | Modes `--mode=design` (solution architecture + ADRs), `--mode=review` (compliance review), `--mode=scalability` (`/20` scale grade), `--mode=full` (whole-project audit) |
-| `performance-review` | performance, optimization, bottleneck | Performance tuning + architecture-altitude review |
-| `security-audit`    | security, vulnerabilities             | Security analysis                                 |
-| `ai-engineering-review` | AI feature review, LLM review, prompt review, agent review, RAG review | Review a plan or change that calls a model against the AI-engineering protocol (`--mode=code\|plan`, `--report-only`) |
+| Skill                   | Triggers                                                                        | Description                                                                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `architecture`          | architecture design, architecture review, scalability grade, architecture audit | Modes `--mode=design` (solution architecture + ADRs), `--mode=review` (compliance review), `--mode=scalability` (`/20` scale grade), `--mode=full` (whole-project audit) |
+| `performance-review`    | performance, optimization, bottleneck                                           | Performance tuning + architecture-altitude review                                                                                                                        |
+| `security-audit`        | security, vulnerabilities                                                       | Security analysis                                                                                                                                                        |
+| `ai-engineering-review` | AI feature review, LLM review, prompt review, agent review, RAG review          | Review a plan or change that calls a model against the AI-engineering protocol (`--mode=code\|plan`, `--report-only`)                                                    |
 
 ---
 
 ## Debugging/Testing
 
-| Skill                     | Triggers                                                              | Description                                                                                                                                      |
-| ------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `e2e-test`                | E2E, Playwright, browser test                                         | End-to-end test authoring and maintenance                                                                                                        |
-| `e2e-demo`                | E2E demo video, screenshots, commit demo, PR demo                      | Screenshot storyboards exported to MP4/GIF with every relevant case mapped to results and timestamps                                              |
-| `experience-review`       | user experience, acceptance, baseline                                 | Exercise and inspect applicable observable output; preserve expectations until explicit acceptance                                               |
-| `performance-test` | performance/load/soak/capacity tests, performance harness, green performance tests | Write/init author only with automatic static review (default two rounds); review is static; run only on explicit verify/green request. `performance-tester` shares its gates; green combines bounded fixes with performance-review. |
-| `spec [mode=tests]`       | test specification, QA spec, test strategy, TC-IDs, test cases        | Unified test case writer — generates TC-{FEATURE}-{NNN} specs from tasks and feature docs                                                         |
-| `spec [mode=sync]`        | sync test specs, update dashboard, reverse sync, sync to feature docs | Dashboard sync mode — syncs TCs from feature docs Section 8 to the business spec root (sync mode retires when dashboards are removed in Phase 7) |
-| `integration-test --mode=review` | integration test review, assertion quality, test gate review, TC gate | Review-only or --fix-loop through eight quality gates covering intended, observable, repeatable and source/spec-aligned behavior                                  |
-| `integration-test --mode=verify` | run integration tests, verify tests pass, test runner, dotnet test    | Run integration tests after writing/reviewing them — reads project-config.json for project-specific run guidance                                 |
+| Skill                            | Triggers                                                                           | Description                                                                                                                                                                                                                         |
+| -------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `e2e-test`                       | E2E, Playwright, browser test                                                      | End-to-end test authoring and maintenance                                                                                                                                                                                           |
+| `e2e-demo`                       | E2E demo video, screenshots, commit demo, PR demo                                  | Screenshot storyboards exported to MP4/GIF with every relevant case mapped to results and timestamps                                                                                                                                |
+| `experience-review`              | user experience, acceptance, baseline                                              | Exercise and inspect applicable observable output; preserve expectations until explicit acceptance                                                                                                                                  |
+| `performance-test`               | performance/load/soak/capacity tests, performance harness, green performance tests | Write/init author only with automatic static review (default two rounds); review is static; run only on explicit verify/green request. `performance-tester` shares its gates; green combines bounded fixes with performance-review. |
+| `spec [mode=tests]`              | test specification, QA spec, test strategy, TC-IDs, test cases                     | Unified test case writer — generates TC-{FEATURE}-{NNN} specs from tasks and feature docs                                                                                                                                           |
+| `spec [mode=sync]`               | sync test specs, update dashboard, reverse sync, sync to feature docs              | Dashboard sync mode — syncs TCs from feature docs Section 8 to the business spec root (sync mode retires when dashboards are removed in Phase 7)                                                                                    |
+| `integration-test --mode=review` | integration test review, assertion quality, test gate review, TC gate              | Review-only or --fix-loop through eight quality gates covering intended, observable, repeatable and source/spec-aligned behavior                                                                                                    |
+| `integration-test --mode=verify` | run integration tests, verify tests pass, test runner, dotnet test                 | Run integration tests after writing/reviewing them — reads project-config.json for project-specific run guidance                                                                                                                    |
 
 ---
 
 ## Documentation
 
-| Skill           | Triggers                                                 | Description                                                                |
-| --------------- | -------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `web-research`  | find docs, library docs                                  | Source discovery and triage (Context7 MCP optional accelerator)            |
-| `spec`          | business docs, module docs, feature docs, feature readme | Business/feature documentation (single canonical Feature Spec per feature) |
-| `release-doc` | release notes, git history                               | Release notes from git commits (tag-to-tag)                                |
+| Skill          | Triggers                                                 | Description                                                                |
+| -------------- | -------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `web-research` | find docs, library docs                                  | Source discovery and triage (Context7 MCP optional accelerator)            |
+| `spec`         | business docs, module docs, feature docs, feature readme | Business/feature documentation (single canonical Feature Spec per feature) |
+| `release-doc`  | release notes, git history                               | Release notes from git commits (tag-to-tag)                                |
 
 ---
 
 ## Git/Workflow
 
-| Skill                         | Triggers                                                | Description                                          |
-| ----------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
-| `commit` | commit, stage, save changes | Five-line coordinator: requested scope, applicable checks, configured review, exact-candidate receipt and commit; push only when requested. |
-| `commit-review` | lightweight review of an exact pending commit | Five-line review with inline finding validation; optional two-round fix loop and drift-safe receipt. `commit.reviewMode: lightweight` selects it; risk-based and PR reviews retain their existing choices. |
+| Skill                         | Triggers                                                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `commit`                      | commit, stage, save changes                               | Five-line coordinator: requested scope, applicable checks, configured review, exact-candidate receipt and commit; push only when requested.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `commit-review`               | lightweight review of an exact pending commit             | Five-line review with inline finding validation; optional two-round fix loop and drift-safe receipt. `commit.reviewMode: lightweight` selects it; risk-based and PR reviews retain their existing choices.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `pull-request`                | create PR, open PR, finish PR, ready to merge, mark ready | Take the branch to a ready-to-merge PR: branch at the latest `pullRequest.targetBranch` (default `main`) — new branch when already merged, rebase when unpushed and behind; a pushed branch is updated only when GitHub reports it conflicting or behind (by merge, or by a rebase with an explicit lease when `pullRequest.pushedBranchUpdate` is `rebase`), keep the project's work tracking in step with the PR as its root instructions say (never a gate), decide local tests and the whole-branch review by risk without asking (the `commit` skill's decision policy; an explicit user instruction overrides it), run the gates, commit, push, create or ready the PR, automatically check routine CI repairs until green — in the main session; [work tracking step](../../skills/pull-request/SKILL.md#step-33--work-tracking) |
-| `code-quality-review`                 | review, feedback, PR review                             | Code review                                          |
-| `why-review`                  | why, design rationale, plan validation, alternatives    | Validate design rationale in plan files              |
-| `production-readiness-review` | sre, production, observability, reliability, ops review | Production readiness scoring for service/API changes |
+| `code-quality-review`         | review, feedback, PR review                               | Code review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `why-review`                  | why, design rationale, plan validation, alternatives      | Validate design rationale in plan files                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `production-readiness-review` | sre, production, observability, reliability, ops review   | Production readiness scoring for service/API changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ---
 
 ## Code Quality
 
-| Skill                | Triggers                                                                                                                        | Description                                                                                                      |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `graph-code`         | build graph, sync graph, update graph, refresh graph after pull, who calls, what imports, tests for, graph query, trace flow, blast radius, impact analysis, connect api, export graph, JSON dump, export Mermaid, graph diagram, visualize graph | Code knowledge graph via `--mode={build\|query\|trace\|blast-radius\|connect-api\|export}`: build/update/sync (`--scope={full\|update\|sync}`, Tree-sitter + SQLite; installs the Python graph tooling on first use; refused while `hooks.codeGraph.enabled` is `off`), relationship queries, system-flow traces, blast radius of current changes, frontend-to-backend API matching, JSON exports (`--format=json`, default) and single-file Mermaid diagrams (`--format=mermaid`) |
-| `linter-setup`       | linter setup, formatter setup, pre-commit, quality gate                                                                         | Configure stack-appropriate lint/format/type-check quality tooling                                               |
-| `harness-setup`      | harness setup, quality harness, feedback sensors                                                                                | Set up feedforward guides and feedback sensors for coding workflows                                              |
+| Skill           | Triggers                                                                                                                                                                                                                                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `graph-code`    | build graph, sync graph, update graph, refresh graph after pull, who calls, what imports, tests for, graph query, trace flow, blast radius, impact analysis, connect api, export graph, JSON dump, export Mermaid, graph diagram, visualize graph | Code knowledge graph via `--mode={build\|query\|trace\|blast-radius\|connect-api\|export}`: build/update/sync (`--scope={full\|update\|sync}`, Tree-sitter + SQLite; installs the Python graph tooling on first use; refused while `hooks.codeGraph.enabled` is `off`), relationship queries, system-flow traces, blast radius of current changes, frontend-to-backend API matching, JSON exports (`--format=json`, default) and single-file Mermaid diagrams (`--format=mermaid`) |
+| `linter-setup`  | linter setup, formatter setup, pre-commit, quality gate                                                                                                                                                                                           | Configure stack-appropriate lint/format/type-check quality tooling                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `harness-setup` | harness setup, quality harness, feedback sensors                                                                                                                                                                                                  | Set up feedforward guides and feedback sensors for coding workflows                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ---
 
 ## Planning/Research
 
-| Skill         | Triggers                           | Description                                                           |
-| ------------- | ---------------------------------- | --------------------------------------------------------------------- |
+| Skill         | Triggers                                                                                   | Description                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `plan`        | plan, strategy, approach, research, review plan, analyze plan, validate plan, execute plan | Concise implementation planning with a task-derived Quality Gates & Concerns Checklist; `--mode=review` reviews intent, necessity, trade-offs and proof, with optional --fix-loop; `--mode=validate` briefs the user on the plan, then asks every material decision as a decision card in rounds (a standalone plan runs it automatically after saving); `--mode=execute` code and test an existing plan |
-| `grill`       | grill me, stress-test, challenge my plan, interview me | Interview the user about a plan, design, decision or idea until no material decision is silently assumed; writes a Decision Record and hands off |
-| `wayfinder`   | dependent unresolved decisions spanning sessions, unclear route   | Chart a map of decision tickets under the plans root, resolve one ticket per session, hand off to the spec workflows; eligible for conditional automatic selection |
-| `feature`     | implement, add, create, build      | Feature development                                                   |
-| `investigate` | how does, explain, trace           | Code exploration                                                      |
+| `grill`       | grill me, stress-test, challenge my plan, interview me                                     | Interview the user about a plan, design, decision or idea until no material decision is silently assumed; writes a Decision Record and hands off                                                                                                                                                                                                                                                         |
+| `wayfinder`   | dependent unresolved decisions spanning sessions, unclear route                            | Chart a map of decision tickets under the plans root, resolve one ticket per session, hand off to the spec workflows; eligible for conditional automatic selection                                                                                                                                                                                                                                       |
+| `feature`     | implement, add, create, build                                                              | Feature development                                                                                                                                                                                                                                                                                                                                                                                      |
+| `investigate` | how does, explain, trace                                                                   | Code exploration                                                                                                                                                                                                                                                                                                                                                                                         |
 
 Read `.claude/skills/shared/workflow-first-gate.md` when selecting discovery depth: unresolved choices fitting one conversation route to `grill`; dependent choices spanning sessions route to `wayfinder`. Saved plans and specs retain their validators, and an existing workflow interview does not gain another interview. Confirmed linked decisions may be reused while scope and premises still hold; required gates and discovery stop boundaries remain binding.
 
@@ -183,24 +183,24 @@ Read `.claude/skills/shared/workflow-first-gate.md` when selecting discovery dep
 
 ## Context/Memory
 
-| Skill             | Triggers                                         | Description                  |
-| ----------------- | ------------------------------------------------ | ---------------------------- |
-| `code-simplifier` | simplify, refine, clarity                        | Code cleanup                 |
-| `learn`           | remember this, always do, patterns, list learned, rule for a skill, when doing X always | Pattern learning and viewing; skill-specific rules route to `project-skill-protocol` overlays; broad short project rules route to the root `CLAUDE.md` project-rules section (then `sync-codex`) |
-| `framework-config` | framework questions, runtime modes, scoped settings, commit reviews, skill visibility | Show/apply/reset runtime and review preferences; manage the team's explicit-only profile; validate requested scoped changes |
+| Skill              | Triggers                                                                                | Description                                                                                                                                                                                      |
+| ------------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `code-simplifier`  | simplify, refine, clarity                                                               | Code cleanup                                                                                                                                                                                     |
+| `learn`            | remember this, always do, patterns, list learned, rule for a skill, when doing X always | Pattern learning and viewing; skill-specific rules route to `project-skill-protocol` overlays; broad short project rules route to the root `CLAUDE.md` project-rules section (then `sync-codex`) |
+| `framework-config` | framework questions, runtime modes, scoped settings, commit reviews, skill visibility   | Show/apply/reset runtime and review preferences; manage the team's explicit-only profile; validate requested scoped changes                                                                      |
 
 ---
 
 ## Team Collaboration
 
-| Skill               | Triggers                                                                                         | Description                               |
-| ------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------- |
-| `spec [mode=tests]` | test plan, test cases, coverage, automation                                                      | Test specification and case generation    |
-| `design-spec`       | UI specification, component spec, layout spec, wireframe, mockup, user flow, accessibility audit | Design specification documents, UX design |
-| `initiative`              | capture idea, new idea, new initiative, add to planned work                                                       | Initiative capture and structuring              |
-| `work-item`               | refine initiative, convert to task, acceptance criteria, user story, vertical slice, split story, interactive mockup, task challenge, artifact review, readiness check | Task lifecycle by `--mode`: refine, story, mockup, challenge, review, dor |
-| `task-track` | project-owned tracker guidance; portable-engine team work, placement, lifecycle, evidence, acceptance, status and saved checkpoints | Explicit `--mode=guide` follows the selected project's root-linked [tracker guide](../../skills/task-track/references/project-guide.md). Bare invocation remains engine inspect; `--mode=inspect\|maintain\|link\|lifecycle\|verify\|accept\|report\|serve` uses the preserved [engine protocol](../../skills/task-track/references/engine-protocol.md); unknown modes refuse. Manual-only; no route switching from configuration alone. [Engine recipes](../../skills/task-track/references/manual-operations.md), [setup](../configuration/README.md#team-work-tracking), [engine integration](../../skills/task-track/references/integration-guide.md) |
-| `prioritize`        | RICE score, MoSCoW, value-effort matrix                                                          | Planned-work prioritization frameworks         |
+| Skill               | Triggers                                                                                                                                                               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `spec [mode=tests]` | test plan, test cases, coverage, automation                                                                                                                            | Test specification and case generation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `design-spec`       | UI specification, component spec, layout spec, wireframe, mockup, user flow, accessibility audit                                                                       | Design specification documents, UX design                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `initiative`        | capture idea, new idea, new initiative, add to planned work                                                                                                            | Initiative capture and structuring                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `work-item`         | refine initiative, convert to task, acceptance criteria, user story, vertical slice, split story, interactive mockup, task challenge, artifact review, readiness check | Task lifecycle by `--mode`: refine, story, mockup, challenge, review, dor                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `task-track`        | project-owned tracker guidance; portable-engine team work, placement, lifecycle, evidence, acceptance, status and saved checkpoints                                    | Explicit `--mode=guide` follows the selected project's root-linked [tracker guide](../../skills/task-track/references/project-guide.md). Bare invocation remains engine inspect; `--mode=inspect\|maintain\|link\|lifecycle\|verify\|accept\|report\|serve` uses the preserved [engine protocol](../../skills/task-track/references/engine-protocol.md); unknown modes refuse. Manual-only; no route switching from configuration alone. [Engine recipes](../../skills/task-track/references/manual-operations.md), [setup](../configuration/README.md#team-work-tracking), [engine integration](../../skills/task-track/references/integration-guide.md) |
+| `prioritize`        | RICE score, MoSCoW, value-effort matrix                                                                                                                                | Planned-work prioritization frameworks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ---
 
@@ -214,11 +214,11 @@ Read `.claude/skills/shared/workflow-first-gate.md` when selecting discovery dep
 
 ## Document Processing
 
-| Skill          | Triggers                                                         | Description                                                |
-| -------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- |
-| `docx-convert` | DOCX to markdown, Word conversion, markdown to DOCX, Word export | Word ⇄ Markdown via `--to {markdown\|docx}`                |
-| `html-export`  | HTML screenshot, render check, deck to PDF, animation to MP4/GIF | HTML → PNG/PDF/MP4/GIF via `--to {png\|pdf\|mp4\|gif}`     |
-| `pdf-convert`  | PDF to markdown, PDF extraction, markdown to PDF, PDF export     | PDF ⇄ Markdown via `--to {markdown\|pdf}`                  |
+| Skill          | Triggers                                                         | Description                                            |
+| -------------- | ---------------------------------------------------------------- | ------------------------------------------------------ |
+| `docx-convert` | DOCX to markdown, Word conversion, markdown to DOCX, Word export | Word ⇄ Markdown via `--to {markdown\|docx}`            |
+| `html-export`  | HTML screenshot, render check, deck to PDF, animation to MP4/GIF | HTML → PNG/PDF/MP4/GIF via `--to {png\|pdf\|mp4\|gif}` |
+| `pdf-convert`  | PDF to markdown, PDF extraction, markdown to PDF, PDF export     | PDF ⇄ Markdown via `--to {markdown\|pdf}`              |
 
 ---
 
@@ -299,20 +299,20 @@ Set `disable-model-invocation: true` on a skill the model must never start on it
 
 Skills are often activated alongside commands:
 
-| Command              | Primary Skills Activated               |
-| -------------------- | -------------------------------------- |
-| `/feature-implement` | `feature`, `plan`, `spec [mode=tests]` |
-| `/fix`               | `investigate --mode=debug`             |
-| `/plan`              | `plan` (`--mode=review` is explicit opt-in) |
-| `/review`            | `code-quality-review`                          |
-| `/test`              | `spec [mode=tests]`, `e2e-test`        |
-| `/initiative`              | `initiative`                                 |
-| `/work-item --mode=refine` | `work-item --mode=refine`                    |
-| `/work-item --mode=story`  | `work-item --mode=story`                     |
-| `/design-spec`       | `design-spec`                          |
-| `/spec [mode=tests]` | `spec [mode=tests]`                    |
-| `/work-item --mode=dor`          | `work-item --mode=dor`                             |
-| `/prioritize`        | `prioritize`                           |
+| Command                    | Primary Skills Activated                    |
+| -------------------------- | ------------------------------------------- |
+| `/feature-implement`       | `feature`, `plan`, `spec [mode=tests]`      |
+| `/fix`                     | `investigate --mode=debug`                  |
+| `/plan`                    | `plan` (`--mode=review` is explicit opt-in) |
+| `/review`                  | `code-quality-review`                       |
+| `/test`                    | `spec [mode=tests]`, `e2e-test`             |
+| `/initiative`              | `initiative`                                |
+| `/work-item --mode=refine` | `work-item --mode=refine`                   |
+| `/work-item --mode=story`  | `work-item --mode=story`                    |
+| `/design-spec`             | `design-spec`                               |
+| `/spec [mode=tests]`       | `spec [mode=tests]`                         |
+| `/work-item --mode=dor`    | `work-item --mode=dor`                      |
+| `/prioritize`              | `prioritize`                                |
 
 ---
 

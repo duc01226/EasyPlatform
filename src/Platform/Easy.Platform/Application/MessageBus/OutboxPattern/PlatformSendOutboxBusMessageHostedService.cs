@@ -151,14 +151,14 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
     protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
     {
         // Wait for all required modules to be initialized before processing messages.
-        await IPlatformModule.WaitForAllModulesInitializedAsync(ServiceProvider, typeof(IPlatformPersistenceModule), Logger, $"process {GetType().Name}");
+        await IPlatformModule.WaitForAllModulesInitializedAsync(ServiceProvider, typeof(IPlatformPersistenceModule), cancellationToken, Logger, $"process {GetType().Name}");
 
         if (HasRegistryComposition)
         {
             foreach (var processingState in GetProcessingStates())
             {
-                Util.TaskRunner.QueueActionInBackground(
-                    () => ProcessOutboxMessagesForStateAsync(processingState, cancellationToken),
+                QueueBackgroundWork(
+                    processingToken => ProcessOutboxMessagesForStateAsync(processingState, processingToken),
                     cancellationToken: cancellationToken);
             }
 
@@ -169,8 +169,8 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
         if (!HasOutboxEventBusMessageRepositoryRegistered())
             return;
 
-        Util.TaskRunner.QueueActionInBackground(
-            () => ProcessOutboxMessagesForStateAsync(null, cancellationToken),
+        QueueBackgroundWork(
+            processingToken => ProcessOutboxMessagesForStateAsync(null, processingToken),
             cancellationToken: cancellationToken);
     }
 
@@ -184,10 +184,9 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
             if (CurrentProcessMessageParallelLimitLock.CurrentCount == 0 || CurrentMaxIntervalProcessTriggeredLock.CurrentCount == 0)
                 return;
 
+            await CurrentMaxIntervalProcessTriggeredLock.WaitAsync(cancellationToken);
             try
             {
-                await CurrentMaxIntervalProcessTriggeredLock.WaitAsync(cancellationToken);
-
                 // Retry sending outbox messages in case of transient errors, such as database connection issues.
                 await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                     () => SendOutboxEventBusMessages(cancellationToken),
@@ -210,6 +209,10 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                         }
                     },
                     cancellationToken: cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -296,7 +299,7 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
 
                                 using (var startIntervalPingProcessingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                                 {
-                                    PlatformOutboxMessageBusProducerHelper.StartIntervalPingProcessing(
+                                    var pingTask = PlatformOutboxMessageBusProducerHelper.StartIntervalPingProcessingAsync(
                                         toHandleMessages,
                                         RootServiceProvider,
                                         () => Logger,
@@ -326,6 +329,12 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
                                                 ProcessingPersistenceOwnerType,
                                                 ProcessingPersistenceContextType);
                                         }
+
+                                        try { await pingTask; }
+                                        catch (OperationCanceledException) when (startIntervalPingProcessingCts.IsCancellationRequested)
+                                        {
+                                            // The batch owns its ping loop, including cancellation before its first tick.
+                                        }
                                     }
                                 }
                             }
@@ -347,10 +356,9 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
         // Local function to handle a single outbox message.
         async Task HandleOutboxMessageAsync(PlatformOutboxBusMessage toHandleOutboxMessage)
         {
+            await CurrentProcessMessageParallelLimitLock.WaitAsync(cancellationToken);
             try
             {
-                await CurrentProcessMessageParallelLimitLock.WaitAsync(cancellationToken);
-
                 using (var scope = ServiceProvider.CreateTrackedScope()) await SendMessageToBusAsync(scope, toHandleOutboxMessage, cancellationToken);
             }
             finally

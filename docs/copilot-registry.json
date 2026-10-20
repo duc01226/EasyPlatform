@@ -33,23 +33,23 @@
             { "path": "src/Platform/Easy.Platform.MongoDB/", "description": "MongoDB persistence provider" },
             { "path": "src/Platform/Easy.Platform.EfCore/", "description": "EF Core persistence provider (PostgreSQL, SQL Server)" },
             { "path": "src/Platform/Easy.Platform.RabbitMQ/", "description": "RabbitMQ message bus implementation" },
-            { "path": "src/Backend/PlatformExampleApp.TextSnippet.Api/", "description": "Example app API host — controllers, DI modules, startup" },
+            { "path": "src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/", "description": "Example app API host — controllers, DI modules, startup" },
             {
-                "path": "src/Backend/PlatformExampleApp.TextSnippet.Application/",
+                "path": "src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/",
                 "description": "Example app application layer — CQRS commands, queries, DTOs, event handlers"
             },
-            { "path": "src/Backend/PlatformExampleApp.TextSnippet.Domain/", "description": "Example app domain layer — entities, repositories, domain events" },
-            { "path": "src/Backend/PlatformExampleApp.IntegrationTests/", "description": "Integration test suite for example app" },
-            { "path": "src/Frontend/apps/playground-text-snippet/", "description": "Angular frontend app for TextSnippet example" },
-            { "path": "src/Frontend/libs/platform-core/", "description": "Frontend framework core — base components, stores, API services, utilities" }
+            { "path": "src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/", "description": "Example app domain layer — entities, repositories, domain events" },
+            { "path": "src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/", "description": "Integration test suite for example app" },
+            { "path": "src/PlatformExampleAppWeb/apps/playground-text-snippet/", "description": "Angular frontend app for TextSnippet example" },
+            { "path": "src/PlatformExampleAppWeb/libs/platform-core/", "description": "Frontend framework core — base components, stores, API services, utilities" }
         ],
         "devCommands": {
             "Backend tests": [
-                "dotnet test src/Backend/PlatformExampleApp.Test/              # backend-unit",
-                "dotnet test src/Backend/PlatformExampleApp.IntegrationTests/  # backend-integration",
-                "dotnet test src/Backend/PlatformExampleApp.Test.BDD/          # backend-bdd"
+                "dotnet test src/PlatformExampleApp/PlatformExampleApp.Test/              # backend-unit",
+                "dotnet test src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/  # backend-integration",
+                "dotnet test src/PlatformExampleApp/PlatformExampleApp.Test.BDD/          # backend-bdd"
             ],
-            "Frontend & E2E tests": ["cd src/Frontend && npm test                   # frontend-unit", "cd src/Frontend/e2e && npx playwright test    # e2e"],
+            "Frontend & E2E tests": ["cd src/PlatformExampleAppWeb && npm test                   # frontend-unit", "cd src/PlatformExampleAppWeb/e2e && npx playwright test    # e2e"],
             "Local startup (Docker)": [
                 "src/start-dev-platform-example-app.cmd                # full system (default MongoDB+SQL)",
                 "src/start-dev-platform-example-app.infrastructure.cmd # infra only"

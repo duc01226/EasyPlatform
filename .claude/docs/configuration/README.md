@@ -16,21 +16,6 @@ CLAUDE.md                # Project instructions at repo root (read by Claude)
 
 ---
 
-## Contents
-
-- [Overview](#overview)
-- [Configuration Files](#configuration-files)
-- [Quick Configuration Guide](#quick-configuration-guide)
-- [Configuration Inheritance](#configuration-inheritance)
-- [Environment Variables](#environment-variables)
-- [Permission Configuration](#permission-configuration)
-- [Hook Configuration](#hook-configuration)
-- [Common Customizations](#common-customizations)
-- [Troubleshooting](#troubleshooting)
-- [Related Documentation](#related-documentation)
-- [Closing reminders](#closing-reminders)
-- [Frontend reuse reminder](#frontend-reuse-reminder)
-
 ## Configuration Files
 
 ### settings.json
@@ -91,13 +76,13 @@ CLAUDE.md                # Project instructions at repo root (read by Claude)
 }
 ```
 
-| Field               | Type     | Description                                                                                                                                                                    |
-| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `plan.namingFormat` | string   | Plan directory naming pattern                                                                                                                                                  |
+| Field               | Type     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `plan.namingFormat` | string   | Plan directory naming pattern                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `plan.validation`   | object   | Plan validation interview. `mode`: `auto` (default) runs the interview after `/plan` saves its plan (standalone, or in a workflow that lists no validate step), `prompt` asks first, `off` skips it — inside a workflow it never skips the Plan Gate approval question; a direct `/plan --mode=validate` and a `/plan --mode=validate` workflow step always run. `minQuestions` is the breadth floor and `maxQuestions` the size of one question round, never a cap on the interview |
-| `assertions`        | string[] | Legacy compatibility field. The standard SessionStart path does not add it to prompt context; active project rules belong in `docs/project-config.json` and its reference docs |
-| `locale`            | object   | Language settings for thinking/responses                                                                                                                                       |
-| `trust`             | object   | Trust passphrase configuration                                                                                                                                                 |
+| `assertions`        | string[] | Legacy compatibility field. The standard SessionStart path does not add it to prompt context; active project rules belong in `docs/project-config.json` and its reference docs                                                                                                                                                                                                                                                                                                       |
+| `locale`            | object   | Language settings for thinking/responses                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `trust`             | object   | Trust passphrase configuration                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 In this repository, the SessionStart hook loads `.ck.json` settings but does not inject the `assertions` array into prompt text. Keep this field only for compatibility with external consumers; use `contextGroups` and project reference docs for active project conventions.
 
@@ -196,13 +181,13 @@ Resolve the selected checkout and config through the existing project-config loa
 
 When already authorized work needs missing or invalid project context repaired, perform the narrow [project-config](../../skills/project-config/SKILL.md) setup; use [project-init](../../skills/project-init/SKILL.md) when broader required project context also needs setup. The minimum valid config is a non-empty `project.name` derived from that adopter's metadata or root directory, with no inferred stack or tracking capability. Do not create a second tracker initializer. Merge only the needed evidence-backed fields, validate the selected file, reread it, and make repeated setup a no-op when the requested state already exists. Needed safe setup follows the active task's authority; a configured disablement or unresolved member/profile decision is preserved rather than filled from the example.
 
-| Selected configuration | Required handling |
-| --- | --- |
-| No config, or valid minimal project identity with no tracking section | Retain neutral tracking defaults; create required project context only through the existing setup owner when the authorized task needs it |
-| Valid custom config path, artifact roots, members or profile | Resolve those actual values; preserve unrelated/custom content and unmanaged host settings, with no authoring-project paths copied into the adopter |
-| Explicit automatic tracking `off`, opted-out item, or restricted skill selection | Keep that choice; setup does not enable automatic upkeep, relink work or authorize a heavy skill |
-| Malformed declared config or tracking capability | Refuse affected operations with the original sources retained; route narrow repair to the project-config owner, then validate before retry |
-| Declared native profile without demonstrated owner capabilities | Report unavailable and retain its sources; registration does not authorize portable serialization or infer a native writer |
+| Selected configuration                                                           | Required handling                                                                                                                                   |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No config, or valid minimal project identity with no tracking section            | Retain neutral tracking defaults; create required project context only through the existing setup owner when the authorized task needs it           |
+| Valid custom config path, artifact roots, members or profile                     | Resolve those actual values; preserve unrelated/custom content and unmanaged host settings, with no authoring-project paths copied into the adopter |
+| Explicit automatic tracking `off`, opted-out item, or restricted skill selection | Keep that choice; setup does not enable automatic upkeep, relink work or authorize a heavy skill                                                    |
+| Malformed declared config or tracking capability                                 | Refuse affected operations with the original sources retained; route narrow repair to the project-config owner, then validate before retry          |
+| Declared native profile without demonstrated owner capabilities                  | Report unavailable and retain its sources; registration does not authorize portable serialization or infer a native writer                          |
 
 ```json
 {
@@ -211,9 +196,7 @@ When already authorized work needs missing or invalid project context repaired, 
         "schemaVersion": 4,
         "mode": "linked",
         "profile": { "kind": "portable-markdown", "version": 1 },
-        "members": [
-            { "id": "member-1", "displayName": "Example member", "active": true }
-        ],
+        "members": [{ "id": "member-1", "displayName": "Example member", "active": true }],
         "report": { "enabled": true, "autoRefresh": true }
     }
 }
@@ -228,17 +211,17 @@ Replace the optional example member with actual custom identities, or omit `memb
 An area says where work belongs and an initiative says why it is done. Both are optional, and so is every tag: any record may be tagged to any number of areas, and any record but an area to any number of initiatives, the tag is saved on the tagged record through the `tag` operation, and no record lists its members. An area may carry a level and sits under any number of parent areas; a parent is never at a deeper level than its child, and an `application`-level area has no parent. An initiative carries a type, its own statuses (`draft`, `approved`, `committed`, `done`, `canceled`) and optionally a priority level (`high`, `medium`, `low`); an initiative, a task, a story or a subtask may carry a due date. This introduces no required wrapper and no fixed nesting depth. Read [areas and tags](../../skills/task-track/references/manual-operations.md#areas-and-tags) for the actual retained request, preview, actor and conflict guards.
 
 | Area level, shallowest first | Default display label |
-| --- | --- |
-| `application` | Application |
-| `product` | Product |
-| `module` | Module |
-| `feature` | Feature |
+| ---------------------------- | --------------------- |
+| `application`                | Application           |
+| `product`                    | Product               |
+| `module`                     | Module                |
+| `feature`                    | Feature               |
 
 | Initiative type | Default display label |
-| --- | --- |
-| `feedback` | Feedback |
-| `idea` | Idea |
-| `initiative` | Initiative |
+| --------------- | --------------------- |
+| `feedback`      | Feedback              |
+| `idea`          | Idea                  |
+| `initiative`    | Initiative            |
 
 Optional `taskTracking.levelLabels` accepts only the four level keys, and optional `taskTracking.typeLabels` only the three type keys. Each declared value is nonblank text, at most 160 characters before trimming, with no control characters; display trims surrounding whitespace. Omitted keys use defaults, including when the object or tracking configuration is absent. Duplicate label text is legal. Labels supply no owner selection, tag, permission or executable instruction, and never change a stored level, the order of levels or a count; commands select stable item IDs. Malformed declared labels refuse affected operations rather than silently defaulting. Pinned reads use the labels and tags of the selected commit, preserving local/shared source distinctions. `taskTracking.groupLabels` belongs to the earlier vocabulary: it is accepted only in a project that declares `schemaVersion: 2`, where the migration turns it into level and type labels (and refuses while a different label is already declared for the level or type a group label becomes), and it is an unknown field in a current project.
 
@@ -370,13 +353,13 @@ Records live in `tmp/prompt-ledger/<session>/` (override `CK_PROMPT_LEDGER_DIR`)
 
 Five accelerators are ON by default and inject a short directive (four on prompts, one after tool results); the universal rules (delivered by the universal hook) still bind without them, so turning one off loses only the reminder. `.claude/.ck.local.json` overrides `.ck.json` per key (local wins), and the switch accepts `false` or the strings `"0"`, `"off"`, `"false"`, `"no"`, `"disabled"`.
 
-| Hook                            | Injects when                                                                                                                                 | Opt-out (`.claude/.ck.json`)                          | Env opt-out                      |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| `commit-skill-route.cjs`        | the prompt asks for a commit — run the `commit` skill, never a raw `git commit` (`review-commit-gate.cjs` still blocks an unreviewed commit) | `{ "commitSkillRoute": { "enabled": false } }`        | `CK_COMMIT_SKILL_ROUTE=0`        |
-| `judgement-integrity-route.cjs` | the prompt asks for a verdict, root cause, evaluation, or gap hunt — the `SYNC:judgement-integrity:reminder` directive; also at a sub-agent start and after a compaction while the latest recorded prompt is one | `{ "judgementIntegrityRoute": { "enabled": false } }` | `CK_JUDGEMENT_INTEGRITY_ROUTE=0` |
-| `core-principles-inject.cjs`    | first prompt, task step or sub-agent start of a session scope, at once after a compaction, then again after ~`reinjectAfterTokens` (default 150000) of transcript growth — the `SYNC:core-engineering-principles` gate | `{ "corePrinciplesInject": { "enabled": false } }`  | `CK_CORE_PRINCIPLES_INJECT=0`    |
-| `ai-feature-route.cjs`          | the prompt asks to build, plan, change or review an AI feature (an AI technique such as LLM calls, RAG, embeddings, tool/function calling or the Claude API/SDK — not "Claude Code" — AND an action on it) and is not about the framework's own machinery — one short directive (one protocol pointer, the `ai-engineering-review` skill / reviewer sub-agent route) once per session window; questions and framework-meta prompts stay silent; also at a sub-agent start and after a compaction while the latest recorded prompt is one | `{ "aiFeatureRoute": { "enabled": false } }`        | `CK_AI_FEATURE_ROUTE=0`          |
-| `quality-skill-remind.cjs`      | the first tool result of a scope, then again after ~150K tokens of growth or a compaction — the `SYNC:quality-skill-routing:reminder` digest (reviews → `why-review`, `changes-review` or `workflow-review-changes`; tests → the project's test skills; failures or errors → `investigate --mode=debug`) | `{ "qualitySkillReminder": { "enabled": false } }` | `CK_QUALITY_SKILL_REMINDER=0`    |
+| Hook                            | Injects when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Opt-out (`.claude/.ck.json`)                          | Env opt-out                      |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------- |
+| `commit-skill-route.cjs`        | the prompt asks for a commit — run the `commit` skill, never a raw `git commit` (`review-commit-gate.cjs` still blocks an unreviewed commit)                                                                                                                                                                                                                                                                                                                                                                                             | `{ "commitSkillRoute": { "enabled": false } }`        | `CK_COMMIT_SKILL_ROUTE=0`        |
+| `judgement-integrity-route.cjs` | the prompt asks for a verdict, root cause, evaluation, or gap hunt — the `SYNC:judgement-integrity:reminder` directive; also at a sub-agent start and after a compaction while the latest recorded prompt is one                                                                                                                                                                                                                                                                                                                         | `{ "judgementIntegrityRoute": { "enabled": false } }` | `CK_JUDGEMENT_INTEGRITY_ROUTE=0` |
+| `core-principles-inject.cjs`    | first prompt, task step or sub-agent start of a session scope, at once after a compaction, then again after ~`reinjectAfterTokens` (default 150000) of transcript growth — the `SYNC:core-engineering-principles` gate                                                                                                                                                                                                                                                                                                                   | `{ "corePrinciplesInject": { "enabled": false } }`    | `CK_CORE_PRINCIPLES_INJECT=0`    |
+| `ai-feature-route.cjs`          | the prompt asks to build, plan, change or review an AI feature (an AI technique such as LLM calls, RAG, embeddings, tool/function calling or the Claude API/SDK — not "Claude Code" — AND an action on it) and is not about the framework's own machinery — one short directive (one protocol pointer, the `ai-engineering-review` skill / reviewer sub-agent route) once per session window; questions and framework-meta prompts stay silent; also at a sub-agent start and after a compaction while the latest recorded prompt is one | `{ "aiFeatureRoute": { "enabled": false } }`          | `CK_AI_FEATURE_ROUTE=0`          |
+| `quality-skill-remind.cjs`      | the first tool result of a scope, then again after ~150K tokens of growth or a compaction — the `SYNC:quality-skill-routing:reminder` digest (reviews → `why-review`, `changes-review` or `workflow-review-changes`; tests → the project's test skills; failures or errors → `investigate --mode=debug`)                                                                                                                                                                                                                                 | `{ "qualitySkillReminder": { "enabled": false } }`    | `CK_QUALITY_SKILL_REMINDER=0`    |
 
 In concise delivery, the principles hook checks the shared universal-core record
 and retries that core when needed. Its standalone reminder switch does not
@@ -400,11 +383,11 @@ OpenCode's legacy bridge appends pending pre-tool context once to the output of 
 
 Read this section when switching framework machinery off, reducing injected context, or restoring normal operation. Every shipped hook checks the switch before context delivery or operational side effects. Protocol hooks first reject irrelevant events using only Node built-ins, then check the mode before reading or writing delivery ledgers.
 
-| Mode | Behavior |
-| --- | --- |
-| `on` | Normal hooks and their existing individual preferences. Default. |
+| Mode    | Behavior                                                                                                                                                     |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `on`    | Normal hooks and their existing individual preferences. Default.                                                                                             |
 | `quiet` | No context injection, routing reminders, prompt ledgers or automatic context preparation. Commit review and doc checks, formatting and notifications remain. |
-| `off` | All shipped framework hooks stop. The CLI also disables framework skills in Claude and Codex native discovery until restored. |
+| `off`   | All shipped framework hooks stop. The CLI also disables framework skills in Claude and Codex native discovery until restored.                                |
 
 Use these platform-neutral commands from the project (Windows, macOS and Linux):
 
@@ -479,24 +462,24 @@ The injection column below describes compatible delivery. Concise delivery keeps
 the same routing effects, with compact route cues and explicit catalog retrieval
 before selection; mode `off` still emits only its notice.
 
-| Mode | What the hooks inject | Effect |
-| --- | --- | --- |
-| `ask` (default) | The gate, and the compact workflow catalog as a second output | The **workflow question** (full workflow · slimmer custom route · execute directly) is asked only when the model's own route is to start a catalog workflow, on the first task of a session; a direct, single-skill or custom-simple route proceeds without asking; an explicit request runs with no question |
-| `auto` | The gate and the catalog, with the full workflow recommended first | The **workflow question** is still asked before a self-selected workflow starts; its recommended option is the full workflow for an `auto` or `confirm` tier, never for `manual`; an explicit request runs with no question |
-| `off` | A short state notice only — no gate, and no catalog output | No workflow or workflow skill starts without an explicit request; the model executes directly or with the one skill you name. Every quality gate still binds |
+| Mode            | What the hooks inject                                              | Effect                                                                                                                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ask` (default) | The gate, and the compact workflow catalog as a second output      | The **workflow question** (full workflow · slimmer custom route · execute directly) is asked only when the model's own route is to start a catalog workflow, on the first task of a session; a direct, single-skill or custom-simple route proceeds without asking; an explicit request runs with no question |
+| `auto`          | The gate and the catalog, with the full workflow recommended first | The **workflow question** is still asked before a self-selected workflow starts; its recommended option is the full workflow for an `auto` or `confirm` tier, never for `manual`; an explicit request runs with no question                                                                                   |
+| `off`           | A short state notice only — no gate, and no catalog output         | No workflow or workflow skill starts without an explicit request; the model executes directly or with the one skill you name. Every quality gate still binds                                                                                                                                                  |
 
 An explicit request (`/workflow-*`, `/start-workflow <id>`, `$workflow-*` on Codex, or asking in words) runs in every mode. So does a workflow that an explicit skill step, the skill you named or an already-running parent workflow requires (for example `/commit` running `/workflow-integration-test --mode=green` to fix a failing test): it is part of that run, not a self-matched workflow — it asks no workflow question and `off` does not skip it; `ask`, `auto` and `off` govern only a workflow the model chooses to start. Mid-session the model never auto-activates a workflow in `ask` or `auto`; `off` is stated once per session.
 
 **Who sets it.** The team may set a default in the tracked project config; each person overrides it in a file that is never committed, or in an environment variable. Precedence, later wins:
 
-| # | Source | Scope | Where |
-| --- | --- | --- | --- |
-| 1 | Framework default | everyone | `ask` |
-| 2 | Tracked project config | team | `docs/project-config.json` → `portability.workflowRouteMode` |
-| 3 | Personal file, every project | you | `~/.claude/.ck.json` → `portability.workflowRouteMode` |
-| 4 | Personal file, this checkout | you | `.claude/.ck.local.json` → `portability.workflowRouteMode` (git-ignored by `.claude/.gitignore`) |
-| 5 | Environment | you, this shell or host | `CK_WORKFLOW_ROUTE_MODE` set to `ask`, `auto` or `off` (`0`, `false`, `no`, `disabled` also mean `off`) |
-| 6 | This session | you, this conversation | first line of a prompt: `workflow-mode: ask`, `auto` or `off` (see below) |
+| #   | Source                       | Scope                   | Where                                                                                                   |
+| --- | ---------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| 1   | Framework default            | everyone                | `ask`                                                                                                   |
+| 2   | Tracked project config       | team                    | `docs/project-config.json` → `portability.workflowRouteMode`                                            |
+| 3   | Personal file, every project | you                     | `~/.claude/.ck.json` → `portability.workflowRouteMode`                                                  |
+| 4   | Personal file, this checkout | you                     | `.claude/.ck.local.json` → `portability.workflowRouteMode` (git-ignored by `.claude/.gitignore`)        |
+| 5   | Environment                  | you, this shell or host | `CK_WORKFLOW_ROUTE_MODE` set to `ask`, `auto` or `off` (`0`, `false`, `no`, `disabled` also mean `off`) |
+| 6   | This session                 | you, this conversation  | first line of a prompt: `workflow-mode: ask`, `auto` or `off` (see below)                               |
 
 The user file is the same `.ck.json` the framework already reads from your home directory. The home directory is `os.homedir()`: `%USERPROFILE%\.claude\.ck.json` on Windows, `$HOME/.claude/.ck.json` on macOS and Linux. A blank, malformed, unreadable or unknown value in any layer is ignored and the next lower layer decides. The tracked `.claude/.ck.json` is never read for this key. With no project config at all, or a project config without the key, nothing above layer 1 applies and the mode is `ask`. Personal layers (3-6) never reach tracked output: the generators read layers 1-2 only.
 
@@ -520,11 +503,11 @@ Each `.claude/workflows.json` entry may declare `activation` (default `auto`):
 
 In route modes `ask` (the default; [Workflow route mode](#workflow-route-mode-per-person)) and `auto`, every tier asks the **workflow question** before a catalog workflow the model routes to on its own starts (a direct, single-skill or custom-simple route asks nothing); `ask` lets the tier order the recommendation, `auto` recommends the full workflow first (never for a `manual` tier); in mode `off` nothing starts unasked. The tier and the mode are unrelated settings that share the word `auto`. The question is one question offering (a) the full workflow with its step count, (b) a slimmer custom route listing its steps with every required gate kept, (c) direct execution — recommended option first, with a one-line reason. The tier only decides which option is recommended:
 
-| Tier | Recommended option | Enforced by |
-| --- | --- | --- |
-| `auto` | By catalog fit: the full workflow when >80% of its unconditional steps do real work, else the slimmer route | Route gate, `start-workflow` |
-| `confirm` | The full workflow only when no leaner route would satisfy the request | Route gate, `start-workflow`; OpenCode `permission.skill` `ask` on the wrapper skill |
-| `manual` | Never the full workflow; it runs only when the user picks it or asks for it explicitly | Route gate, `start-workflow`, the wrapper skill's `disable-model-invocation: true` (Claude) and the generated `agents/openai.yaml` `policy.allow_implicit_invocation: false` (Codex) |
+| Tier      | Recommended option                                                                                          | Enforced by                                                                                                                                                                          |
+| --------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `auto`    | By catalog fit: the full workflow when >80% of its unconditional steps do real work, else the slimmer route | Route gate, `start-workflow`                                                                                                                                                         |
+| `confirm` | The full workflow only when no leaner route would satisfy the request                                       | Route gate, `start-workflow`; OpenCode `permission.skill` `ask` on the wrapper skill                                                                                                 |
+| `manual`  | Never the full workflow; it runs only when the user picks it or asks for it explicitly                      | Route gate, `start-workflow`, the wrapper skill's `disable-model-invocation: true` (Claude) and the generated `agents/openai.yaml` `policy.allow_implicit_invocation: false` (Codex) |
 
 Framework defaults: every workflow is tier `auto` except the two heaviest, `workflow-big-feature` and `workflow-greenfield-init`, which are `confirm`. The workflow question is asked on the first task of a session only; mid-session the model neither starts a workflow nor asks to. No framework workflow ships `manual`; a project that wants one opts in with `portability.workflowActivation`. An explicit request (`/workflow-<id>`, `/start-workflow <id>`, `$workflow-<id>` on Codex, or asking in words) runs any tier with no question. Changing a workflow to or from `manual` also means changing its wrapper skill's `disable-model-invocation` — a test fails when the two disagree.
 
@@ -534,10 +517,10 @@ A project can tighten these tiers without forking `workflows.json` through `port
 { "portability": { "workflowActivation": { "default": "confirm", "overrides": { "workflow-bugfix": "auto" } } } }
 ```
 
-| `portability.workflowActivation` field | Default | Allowed | Meaning |
-| --- | --- | --- | --- |
-| `default` | none (framework tiers) | `auto`, `confirm`, `manual` | Floor applied to every workflow: the effective tier is the stricter of this and the framework tier, so it only tightens |
-| `overrides` | none | map of workflow id → `auto`, `confirm`, `manual` | Pins one workflow's tier; wins over `default` and the framework tier, so it may loosen |
+| `portability.workflowActivation` field | Default                | Allowed                                          | Meaning                                                                                                                 |
+| -------------------------------------- | ---------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `default`                              | none (framework tiers) | `auto`, `confirm`, `manual`                      | Floor applied to every workflow: the effective tier is the stricter of this and the framework tier, so it only tightens |
+| `overrides`                            | none                   | map of workflow id → `auto`, `confirm`, `manual` | Pins one workflow's tier; wins over `default` and the framework tier, so it may loosen                                  |
 
 Tier order is `auto` < `confirm` < `manual`. Omitting the object keeps every framework tier. An unknown tier in either field is a validation error naming the key and `auto|confirm|manual`. A developer may override it in the git-ignored `.claude/.ck.local.json` (same nesting): each setting in `.claude/.ck.local.json` wins over the team value; overrides merge per workflow id, so a local `overrides`-only object keeps the team `default`.
 
@@ -560,8 +543,6 @@ When inlined `contextGroups[].rules` push the generated root context past its by
 ```
 
 `SECTION:golden-rules` then names the rule-bearing groups and requires pre-action lookup. Enable `conventionInjection.completeLookup: true` with `conventionInjection.enabled: true` to retrieve **every** matching read/edit class through `node .claude/hooks/lib/file-conventions.cjs --lookup <path>`. Read all returned pages, repeating with `--page N`. Pages stay within 9,500 characters; automatic PostToolUse reminders keep their caps and are only accelerators. This mode also replaces the generated path pre-read table with one pointer.
-
-If a configured path matcher exceeds its bounded execution budget, complete lookup reports the unresolved classes and exits nonzero. Simplify those regexes and repeat the lookup before acting; a timed-out match is not evidence that no rules apply. Automatic hook delivery retains its best-effort behavior.
 
 The generator requires named, unique rule-bearing groups and a library advertising complete lookup support. Older libraries or configurations without this opt-in retain the legacy proof: all rule groups must fit the class cap and worst-case digest size. If either delivery proof fails, rules remain inline and `[WARN] INLINE_PATH_RULES` names the missing precondition. Read `.claude/skills/ai-context-refresh/SKILL.md` when enabling this mode.
 
@@ -671,11 +652,11 @@ Validate with `node .claude/hooks/lib/project-config-schema.cjs --validate docs/
 
 `docs/project-config.json` `hooks.codeGraph.enabled` decides whether the code-graph hooks and CLI run:
 
-| Value | Meaning |
-| --- | --- |
-| `"auto"` (default) | Active only when `.code-graph/graph.db` exists |
-| `"on"` | Always active |
-| `"off"` | Graph hooks stay silent and the graph CLI refuses to run |
+| Value              | Meaning                                                  |
+| ------------------ | -------------------------------------------------------- |
+| `"auto"` (default) | Active only when `.code-graph/graph.db` exists           |
+| `"on"`             | Always active                                            |
+| `"off"`            | Graph hooks stay silent and the graph CLI refuses to run |
 
 Omitting the key or the `codeGraph` object means `"auto"`. Any other value is a validation error naming `auto|on|off`.
 
@@ -689,10 +670,10 @@ Omitting the key or the `codeGraph` object means `"auto"`. Any other value is a 
 { "hooks": { "tokenBudget": { "enabled": true, "checkpointTokens": 500000 } } }
 ```
 
-| `hooks.tokenBudget` field | Type    | Default  | Allowed             | Meaning                              |
-| ------------------------- | ------- | -------- | ------------------- | ------------------------------------ |
-| `enabled`                 | boolean | `true`   | boolean             | `false` turns the note off           |
-| `checkpointTokens`        | integer | `500000` | 50000–20000000      | Non-cached tokens between two notes  |
+| `hooks.tokenBudget` field | Type    | Default  | Allowed        | Meaning                             |
+| ------------------------- | ------- | -------- | -------------- | ----------------------------------- |
+| `enabled`                 | boolean | `true`   | boolean        | `false` turns the note off          |
+| `checkpointTokens`        | integer | `500000` | 50000–20000000 | Non-cached tokens between two notes |
 
 A `checkpointTokens` value outside the range, or not a whole number, is a validation error naming the key and the range.
 
@@ -812,13 +793,13 @@ Apply it with `node .claude/scripts/sync-skill-profile.cjs` (`--check` is read-o
 
 **Live catalog (17 workflows):** `workflow-big-feature`, `workflow-bugfix`, `workflow-e2e`, `workflow-feature`, `workflow-implement-spec`, `workflow-feature-spec`, `workflow-greenfield-init`, `workflow-planned-work`, `workflow-refactor`, `workflow-research`, `workflow-review-changes`, `workflow-architecture-audit`, `workflow-code-to-spec`, `workflow-spec-to-mockup`, `workflow-spec-sync`, `workflow-seed-test-data`, `workflow-integration-test`.
 
-| Workflow                  | Sequence (abridged, from `workflows.json`)                                                                                                                                          | whenToUse (abridged)                              |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `workflow-feature`        | investigate → … → spec + test specs → plan → plan --mode=execute → integration-test → spec sync → review → verify → workflow-end                                                            | Well-defined feature; no canonical spec has the behavior yet |
-| `workflow-implement-spec` | investigate → spec [mode=clarify] → plan → plan --mode=execute → seed-test-data (conditional) → integration-test (conditional) → spec [mode=sync] (when behavior differs) → workflow-review-changes `--tests=defer` → integration-test --mode=verify → workflow-e2e (on request; a gate in `--mode=greenfield-slice`) → test `--proven=@verify` → workflow-end → watzup (conditional) | Behavior already written in a canonical spec or TC set; a greenfield first slice |
-| `workflow-bugfix`         | investigate --mode=debug → … → fix → … → workflow-end                                                                                                                             | Bug, error, crash, regression; end-to-start trace |
-| `workflow-refactor`       | investigate → plan → … → plan --mode=execute → … → workflow-end                                                                                                                            | Restructure code without behavior change          |
-| `workflow-review-changes` | triage → changes-review + whole-target why-review + triage-selected specialists (`--fix-loop --loop-owner=caller` read-only passes; independent lenses may run together) (`integration-test --mode=review --prove-tests` always runs unless a parent passes `--tests=defer`, the verify-last order) (the simplifier is a report-only lens) → validate findings once → `fix --target=review` → domain refresh + docs-manager --mode=update → fresh re-run of every applicable lens on the settled target → workflow-end (top level only) | Whole pull request or complex, risky changes      |
+| Workflow                  | Sequence (abridged, from `workflows.json`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | whenToUse (abridged)                                                             |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `workflow-feature`        | investigate → … → spec + test specs → plan → plan --mode=execute → integration-test → spec sync → review → verify → workflow-end                                                                                                                                                                                                                                                                                                                                                                                                        | Well-defined feature; no canonical spec has the behavior yet                     |
+| `workflow-implement-spec` | investigate → spec [mode=clarify] → plan → plan --mode=execute → seed-test-data (conditional) → integration-test (conditional) → spec [mode=sync] (when behavior differs) → workflow-review-changes `--tests=defer` → integration-test --mode=verify → workflow-e2e (on request; a gate in `--mode=greenfield-slice`) → test `--proven=@verify` → workflow-end → watzup (conditional)                                                                                                                                                   | Behavior already written in a canonical spec or TC set; a greenfield first slice |
+| `workflow-bugfix`         | investigate --mode=debug → … → fix → … → workflow-end                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Bug, error, crash, regression; end-to-start trace                                |
+| `workflow-refactor`       | investigate → plan → … → plan --mode=execute → … → workflow-end                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Restructure code without behavior change                                         |
+| `workflow-review-changes` | triage → changes-review + whole-target why-review + triage-selected specialists (`--fix-loop --loop-owner=caller` read-only passes; independent lenses may run together) (`integration-test --mode=review --prove-tests` always runs unless a parent passes `--tests=defer`, the verify-last order) (the simplifier is a report-only lens) → validate findings once → `fix --target=review` → domain refresh + docs-manager --mode=update → fresh re-run of every applicable lens on the settled target → workflow-end (top level only) | Whole pull request or complex, risky changes                                     |
 
 ---
 
@@ -870,11 +851,11 @@ Apply it with `node .claude/scripts/sync-skill-profile.cjs` (`--check` is read-o
 
 The portable bundle sets no auto-compaction budget on any host, so each host compacts at its own default and each person picks their own value. Keep a personal budget in personal or local config, never in a file the bundle ships to the whole team.
 
-| Surface     | Host default (no pin)                                                                                          | Set your own                                                                                                                                                                                                                                                                                              |
-| ----------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Claude Code | Compacts near the model's context limit: about 967K on a 1M-window model; 200K models are unchanged              | `/autocompact 500k` (saved as `autoCompactWindow` in your user settings) · `claude --autocompact 500k` (one launch) · `env.CLAUDE_CODE_AUTO_COMPACT_WINDOW` in `~/.claude/settings.json` (all projects) or `.claude/settings.local.json` (this project only). Never put it in `.claude/settings.json`: that shared scope outranks user settings, and the env var overrides `/autocompact` |
-| Codex       | Codex's own default                                                                                            | `model_auto_compact_token_limit` in `~/.codex/config.toml`, or top-level in the project `.codex/config.toml`                                                                                                                                                                                              |
-| opencode    | The model's registry window; the bundled model declares a 1M `context` and 384K `output`, so it compacts at 968,000 | `provider.<id>.models.<model>.limit` in the project-root `opencode.json` or your global opencode config                                                                                                                                                                                                    |
+| Surface     | Host default (no pin)                                                                                               | Set your own                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code | Compacts near the model's context limit: about 967K on a 1M-window model; 200K models are unchanged                 | `/autocompact 500k` (saved as `autoCompactWindow` in your user settings) · `claude --autocompact 500k` (one launch) · `env.CLAUDE_CODE_AUTO_COMPACT_WINDOW` in `~/.claude/settings.json` (all projects) or `.claude/settings.local.json` (this project only). Never put it in `.claude/settings.json`: that shared scope outranks user settings, and the env var overrides `/autocompact` |
+| Codex       | Codex's own default                                                                                                 | `model_auto_compact_token_limit` in `~/.codex/config.toml`, or top-level in the project `.codex/config.toml`                                                                                                                                                                                                                                                                              |
+| opencode    | The model's registry window; the bundled model declares a 1M `context` and 384K `output`, so it compacts at 968,000 | `provider.<id>.models.<model>.limit` in the project-root `opencode.json` or your global opencode config                                                                                                                                                                                                                                                                                   |
 
 **Retiring the old pin.** Earlier bundles pinned 500K on every host. `/sync-codex` removes a top-level `model_auto_compact_token_limit` from `.codex/config.toml` only when its value is exactly `500000`, along with the bundled comment block above it when that block is unchanged. `/sync-opencode` removes the pinned model's `limit` from the root `opencode.json` only when it is exactly `{ "context": 500000, "output": 384000 }`. Any other value belongs to the user: the sync keeps it and prints one `kept user-set …` line. A personal 500K budget should therefore live in user-level config (`~/.codex/config.toml`, the global opencode config), where no sync looks.
 
@@ -921,12 +902,12 @@ but its values are not injected into the standard prompt context.
 
 The AI-engineering gate ships project-neutral. A project adds its own rules only through these routes, never by editing `.claude/skills/shared/protocols/ai-*.md`, the `ai-engineering-review` skill or the reviewer agent:
 
-| Need | Route |
-| --- | --- |
+| Need                                                                                                                              | Route                                                                                                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Which files are AI surface (an internal LLM wrapper, prompt folders, another SDK) and the short rules or docs delivered with them | Declare a `contextGroups` class named `ai-feature-gate` in `docs/project-config.json` (at least one include matcher, then `pathRegexes`, `contentRegexes`, `rules`, `referenceDocs`). It replaces the built-in class for the per-file hook and `ai-signal-scan.cjs` (`classSource: config`). |
-| Provider, approved models, data boundary, risk tier, eval thresholds | Record them in an ADR or a project reference doc listed in the docs index or `referenceDocs`. Project policy outranks the `AE-*` clauses, and the review records `Project policy read: <paths>`. |
-| An extra review rule for one skill (for example a house eval threshold for `ai-engineering-review`) | `/project-skill-protocol add` — an additive overlay that can never waive the gate. |
-| Turn the prompt reminder off | `.claude/.ck.json` `aiFeatureRoute.enabled: false` or `CK_AI_FEATURE_ROUTE=0`. |
+| Provider, approved models, data boundary, risk tier, eval thresholds                                                              | Record them in an ADR or a project reference doc listed in the docs index or `referenceDocs`. Project policy outranks the `AE-*` clauses, and the review records `Project policy read: <paths>`.                                                                                             |
+| An extra review rule for one skill (for example a house eval threshold for `ai-engineering-review`)                               | `/project-skill-protocol add` — an additive overlay that can never waive the gate.                                                                                                                                                                                                           |
+| Turn the prompt reminder off                                                                                                      | `.claude/.ck.json` `aiFeatureRoute.enabled: false` or `CK_AI_FEATURE_ROUTE=0`.                                                                                                                                                                                                               |
 
 Validate with `node .claude/hooks/lib/project-config-schema.cjs --validate docs/project-config.json`. A matcher change alters the class's content tag, so regenerate `CLAUDE.md` and `AGENTS.md` afterwards.
 
@@ -973,27 +954,27 @@ Configuration is loaded in order with later files overriding earlier:
 
 Set a personal switch as an `env` entry in the git-ignored `.claude/settings.local.json`, or in your shell.
 
-| Variable                                | Purpose                                                                                                                              |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `CLAUDE_PROJECT_DIR`                    | Project root directory, set by the host and used in hook commands                                                                    |
-| `CK_DEBUG`                              | `1` or `true`: framework hooks print diagnostics to stderr (`.claude/hooks/lib/debug-log.cjs`)                                       |
-| `CLAUDE_HOOK_DEBUG`                     | `1` or `true`: hooks append a lifecycle trace (no transcript text) to a log file, rotated at 1 MB, keeping one backup                                     |
-| `CLAUDE_HOOK_DEBUG_LOG`                 | Path of that trace file; default `<os temp>/ck/debug/bash-hooks.log`                                                                 |
-| `CK_NO_AUTO_OPEN`                       | `1`: HTML reports (`watzup`, `understand`) print their path instead of opening, and `task-track` `serve --open` starts no browser; nothing opens under `CI` or headless Linux either |
-| `CK_AUTO_INSTALL_DEPENDENCIES`          | `0`, `off` or `false`: no automatic dependency install (catalog tooling's PyYAML recovery, the `task-track` pinned package); the tool refuses with the by-hand command instead |
-| `CK_STARTUP_INSTALL_TRUST`              | `1`: host grant that lets `hooks.startupInstall.allowLifecycleScripts: true` take effect (see [Startup dependency installation](#startup-dependency-installation)) |
-| `CK_PROMPT_LEDGER`                      | `0` / `false` / `off` / `no`: turns the session prompt ledger off, like `promptLedger.enabled: false` in `.ck.json`                  |
-| `CK_PROMPT_LEDGER_DIR`                  | Directory for prompt-ledger records instead of `<project>/tmp/prompt-ledger`                                                         |
-| `CK_COMMIT_SKILL_ROUTE`                 | `0`: stops the reminder to commit through the `commit` skill, like `commitSkillRoute.enabled: false`                                 |
-| `CK_JUDGEMENT_INTEGRITY_ROUTE`          | `0`: stops the judgement-integrity reminder, like `judgementIntegrityRoute.enabled: false`                                           |
-| `CK_AI_FEATURE_ROUTE`                   | `0`: stops the AI-feature (AI-engineering gate) reminder, like `aiFeatureRoute.enabled: false`                                       |
-| `CK_QUALITY_SKILL_REMINDER`             | `0`: stops the quality-skill reminder after tool results, like `qualitySkillReminder.enabled: false`                                 |
-| `DOC_SYNC_OVERRIDE`                     | `1`: silences the doc-sync commit warning (the gate only warns, never blocks); each use is appended to the gate's audit log            |
-| `ENABLE_DESKTOP_NOTIFICATIONS`          | `false`: turns off desktop turn-complete alerts (on by default)                                                                     |
-| `DISCORD_WEBHOOK_URL` / `SLACK_WEBHOOK_URL` / `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` | Setting one turns on turn-complete alerts in that chat channel; setup: `.claude/hooks/notifications/docs/` |
-| `PYTHON_PATH`                           | Python executable tried first when session start detects the Python version                                                          |
-| `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS`   | `1` when starting OpenCode: it stops loading `.claude/skills` for that session                                                       |
-| `GITHUB_PERSONAL_ACCESS_TOKEN`          | GitHub MCP server auth                                                                                                               |
+| Variable                                                                                | Purpose                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CLAUDE_PROJECT_DIR`                                                                    | Project root directory, set by the host and used in hook commands                                                                                                                    |
+| `CK_DEBUG`                                                                              | `1` or `true`: framework hooks print diagnostics to stderr (`.claude/hooks/lib/debug-log.cjs`)                                                                                       |
+| `CLAUDE_HOOK_DEBUG`                                                                     | `1` or `true`: hooks append a lifecycle trace (no transcript text) to a log file, rotated at 1 MB, keeping one backup                                                                |
+| `CLAUDE_HOOK_DEBUG_LOG`                                                                 | Path of that trace file; default `<os temp>/ck/debug/bash-hooks.log`                                                                                                                 |
+| `CK_NO_AUTO_OPEN`                                                                       | `1`: HTML reports (`watzup`, `understand`) print their path instead of opening, and `task-track` `serve --open` starts no browser; nothing opens under `CI` or headless Linux either |
+| `CK_AUTO_INSTALL_DEPENDENCIES`                                                          | `0`, `off` or `false`: no automatic dependency install (catalog tooling's PyYAML recovery, the `task-track` pinned package); the tool refuses with the by-hand command instead       |
+| `CK_STARTUP_INSTALL_TRUST`                                                              | `1`: host grant that lets `hooks.startupInstall.allowLifecycleScripts: true` take effect (see [Startup dependency installation](#startup-dependency-installation))                   |
+| `CK_PROMPT_LEDGER`                                                                      | `0` / `false` / `off` / `no`: turns the session prompt ledger off, like `promptLedger.enabled: false` in `.ck.json`                                                                  |
+| `CK_PROMPT_LEDGER_DIR`                                                                  | Directory for prompt-ledger records instead of `<project>/tmp/prompt-ledger`                                                                                                         |
+| `CK_COMMIT_SKILL_ROUTE`                                                                 | `0`: stops the reminder to commit through the `commit` skill, like `commitSkillRoute.enabled: false`                                                                                 |
+| `CK_JUDGEMENT_INTEGRITY_ROUTE`                                                          | `0`: stops the judgement-integrity reminder, like `judgementIntegrityRoute.enabled: false`                                                                                           |
+| `CK_AI_FEATURE_ROUTE`                                                                   | `0`: stops the AI-feature (AI-engineering gate) reminder, like `aiFeatureRoute.enabled: false`                                                                                       |
+| `CK_QUALITY_SKILL_REMINDER`                                                             | `0`: stops the quality-skill reminder after tool results, like `qualitySkillReminder.enabled: false`                                                                                 |
+| `DOC_SYNC_OVERRIDE`                                                                     | `1`: silences the doc-sync commit warning (the gate only warns, never blocks); each use is appended to the gate's audit log                                                          |
+| `ENABLE_DESKTOP_NOTIFICATIONS`                                                          | `false`: turns off desktop turn-complete alerts (on by default)                                                                                                                      |
+| `DISCORD_WEBHOOK_URL` / `SLACK_WEBHOOK_URL` / `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` | Setting one turns on turn-complete alerts in that chat channel; setup: `.claude/hooks/notifications/docs/`                                                                           |
+| `PYTHON_PATH`                                                                           | Python executable tried first when session start detects the Python version                                                                                                          |
+| `OPENCODE_DISABLE_CLAUDE_CODE_SKILLS`                                                   | `1` when starting OpenCode: it stops loading `.claude/skills` for that session                                                                                                       |
+| `GITHUB_PERSONAL_ACCESS_TOKEN`                                                          | GitHub MCP server auth                                                                                                                                                               |
 
 ---
 
@@ -1038,19 +1019,19 @@ Set a personal switch as an `env` entry in the git-ignored `.claude/settings.loc
 
 ### Event Types
 
-| Event              | When Triggered            |
-| ------------------ | ------------------------- |
-| `SessionStart`     | Session begins            |
-| `UserPromptSubmit` | User sends message        |
-| `PreToolUse`       | Before tool execution     |
-| `PostToolUse`      | After tool execution      |
-| `PostToolUseFailure` | Started tool fails (Claude native) |
-| `Stop`             | Response complete         |
-| `PreCompact`       | Before context compaction |
-| `SessionEnd`       | Session ends              |
-| `SubagentStart`    | Subagent spawning         |
-| `UserPromptExpansion` | Typed `/command` expands |
-| `Notification`     | Idle/waiting events       |
+| Event                 | When Triggered                     |
+| --------------------- | ---------------------------------- |
+| `SessionStart`        | Session begins                     |
+| `UserPromptSubmit`    | User sends message                 |
+| `PreToolUse`          | Before tool execution              |
+| `PostToolUse`         | After tool execution               |
+| `PostToolUseFailure`  | Started tool fails (Claude native) |
+| `Stop`                | Response complete                  |
+| `PreCompact`          | Before context compaction          |
+| `SessionEnd`          | Session ends                       |
+| `SubagentStart`       | Subagent spawning                  |
+| `UserPromptExpansion` | Typed `/command` expands           |
+| `Notification`        | Idle/waiting events                |
 
 > These are the Claude Code events available for hooks. This framework registers no `PreCompact` hook. `SubagentStart` and `UserPromptExpansion` carry only protocol-delivery handlers: `SubagentStart` the five `protocol-inject-<group>.cjs` group handlers (full protocol texts for skill-preloading agents) and the four `protocol-inject-universal-<n>.cjs` bins (the universal bundle, to every agent type; the bins are also registered on `UserPromptSubmit` and on `SessionStart` with matcher `compact|clear`); `UserPromptExpansion` the five group handlers and `skill-overlay-remind.cjs` for typed `/command` skills. Standing sub-agent context stays static in `agents/*.md`. Read `../hooks/README.md` when you need the per-event registration counts.
 
@@ -1170,15 +1151,15 @@ Read this section when changing frontend reuse discovery reminders. The default-
 
 ```json
 {
-  "hooks": {
-    "uiReuseReminder": {
-      "enabled": true,
-      "reinjectAfterTokens": 100000,
-      "useDefaultMatchers": true,
-      "pathGlobs": ["custom-ui/**/*.view"],
-      "excludePathGlobs": ["custom-ui/generated/**"]
+    "hooks": {
+        "uiReuseReminder": {
+            "enabled": true,
+            "reinjectAfterTokens": 100000,
+            "useDefaultMatchers": true,
+            "pathGlobs": ["custom-ui/**/*.view"],
+            "excludePathGlobs": ["custom-ui/generated/**"]
+        }
     }
-  }
 }
 ```
 

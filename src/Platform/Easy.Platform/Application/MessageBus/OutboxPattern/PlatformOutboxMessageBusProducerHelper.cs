@@ -303,6 +303,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     {
         using (var startIntervalPingProcessingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
         {
+            var pingTask = Task.CompletedTask;
             try
             {
                 // If sub-queueing is enabled and there are other unprocessed messages with the same prefix, revert the existing message to "New".
@@ -314,7 +315,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     await RevertExistingOutboxToNewMessageAsync(existingOutboxMessage, outboxBusMessageRepository, cancellationToken);
                 else
                 {
-                    StartIntervalPingProcessing(
+                    pingTask = StartIntervalPingProcessingAsync(
                         [existingOutboxMessage],
                         rootServiceProvider,
                         () => logger,
@@ -363,6 +364,10 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     }
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception exception)
             {
                 logger.LogError(
@@ -389,14 +394,35 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                         PlatformMessageBusDiagnosticFormatter.FormatException(e));
                 }
             }
+            finally
+            {
+                await startIntervalPingProcessingCts.CancelAsync();
+                try { await pingTask; }
+                catch (OperationCanceledException) when (startIntervalPingProcessingCts.IsCancellationRequested)
+                {
+                    // A loop cancelled before its scheduled start still belongs to this operation.
+                }
+            }
         }
     }
 
-    public async Task DeleteExistingOutboxProcessedMessageAsync(
+    public Task DeleteExistingOutboxProcessedMessageAsync(
         IServiceProvider serviceProvider,
         PlatformOutboxBusMessage existingOutboxMessage,
         CancellationToken cancellationToken = default,
         Func<IServiceProvider, IPlatformOutboxBusMessageRepository> outboxBusMessageRepositoryFactory = null)
+    {
+        return DeleteExistingOutboxProcessedMessageAsync(
+            serviceProvider, existingOutboxMessage, cancellationToken, outboxBusMessageRepositoryFactory, DefaultResilientRetiredCount);
+    }
+
+    // Keep the operation's retry budget separate from terminal cancellation/error handling.
+    internal async Task DeleteExistingOutboxProcessedMessageAsync(
+        IServiceProvider serviceProvider,
+        PlatformOutboxBusMessage existingOutboxMessage,
+        CancellationToken cancellationToken,
+        Func<IServiceProvider, IPlatformOutboxBusMessageRepository> outboxBusMessageRepositoryFactory,
+        int maxRetryCount)
     {
         try
         {
@@ -409,7 +435,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                         dismissSendEvent: true,
                         eventCustomConfig: null,
                         cancellationToken)),
-                retryCount: DefaultResilientRetiredCount,
+                retryCount: maxRetryCount,
                 cancellationToken: cancellationToken,
                 sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
                 onRetry: (ex, delayTime, retryCount, context) =>
@@ -425,6 +451,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                                 PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(existingOutboxMessage.MessageTypeFullName));
                     }
                 });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The sending operation owns shutdown cancellation; it is not a deletion failure.
+            throw;
         }
         catch (Exception e)
         {
@@ -449,96 +480,114 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         CancellationToken cancellationToken,
         Func<IServiceProvider, IPlatformOutboxBusMessageRepository> outboxBusMessageRepositoryFactory = null)
     {
+        _ = StartIntervalPingProcessingAsync(existingOutboxMessages, rootServiceProvider, loggerFactory, cancellationToken, outboxBusMessageRepositoryFactory);
+    }
+
+    /// <summary>Starts a ping loop whose owner can await completion after cancellation.</summary>
+    public static Task StartIntervalPingProcessingAsync(
+        List<PlatformOutboxBusMessage> existingOutboxMessages,
+        IPlatformRootServiceProvider rootServiceProvider,
+        Func<ILogger> loggerFactory,
+        CancellationToken cancellationToken,
+        Func<IServiceProvider, IPlatformOutboxBusMessageRepository> outboxBusMessageRepositoryFactory = null)
+    {
         // Interval loops intentionally do not take a permit pool: a permit would be held for the
         // lifetime of the loop instead of around one bounded unit of work.
-        Util.TaskRunner.QueueActionInBackground(
+        return Util.TaskRunner.QueueActionInBackgroundTask(
             async () =>
             {
-                while (!cancellationToken.IsCancellationRequested)
+                try
                 {
-                    await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                        async () =>
-                        {
-                            try
+                    while (!cancellationToken.IsCancellationRequested)
+                    {
+                        await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+                            async () =>
                             {
-                                if (!cancellationToken.IsCancellationRequested)
+                                try
                                 {
-                                    async Task UpdatePingAsync(IPlatformOutboxBusMessageRepository outboxBusMessageRepository)
+                                    if (!cancellationToken.IsCancellationRequested)
                                     {
-                                        using (var uow = outboxBusMessageRepository.UowManager().Begin())
+                                        async Task UpdatePingAsync(IPlatformOutboxBusMessageRepository outboxBusMessageRepository)
                                         {
-                                            var existingOutboxMessagesDict = existingOutboxMessages.ToDictionary(p => p.Id);
-
-                                            var toUpdateExistingOutboxMessages = await outboxBusMessageRepository.GetAllAsync(
-                                                p => existingOutboxMessagesDict.Keys.Contains(p.Id),
-                                                cancellationToken);
-
-                                            if (toUpdateExistingOutboxMessages.Any())
+                                            using (var uow = outboxBusMessageRepository.UowManager().Begin())
                                             {
-                                                var pingDate = Clock.UtcNow;
+                                                var existingOutboxMessagesDict = existingOutboxMessages.ToDictionary(p => p.Id);
 
-                                                toUpdateExistingOutboxMessages.ForEach(toUpdateExistingOutboxMessage =>
-                                                {
-                                                    toUpdateExistingOutboxMessage.LastProcessingPingDate = pingDate;
-                                                    existingOutboxMessagesDict[toUpdateExistingOutboxMessage.Id].LastProcessingPingDate = pingDate;
-                                                });
-
-                                                await outboxBusMessageRepository.UpdateManyAsync(
-                                                    toUpdateExistingOutboxMessages,
-                                                    dismissSendEvent: true,
-                                                    checkDiff: false,
-                                                    eventCustomConfig: null,
+                                                var toUpdateExistingOutboxMessages = await outboxBusMessageRepository.GetAllAsync(
+                                                    p => existingOutboxMessagesDict.Keys.Contains(p.Id),
                                                     cancellationToken);
-                                            }
 
-                                            if (!cancellationToken.IsCancellationRequested) await uow.CompleteAsync(cancellationToken);
+                                                if (toUpdateExistingOutboxMessages.Any())
+                                                {
+                                                    var pingDate = Clock.UtcNow;
+
+                                                    toUpdateExistingOutboxMessages.ForEach(toUpdateExistingOutboxMessage =>
+                                                    {
+                                                        toUpdateExistingOutboxMessage.LastProcessingPingDate = pingDate;
+                                                        existingOutboxMessagesDict[toUpdateExistingOutboxMessage.Id].LastProcessingPingDate = pingDate;
+                                                    });
+
+                                                    await outboxBusMessageRepository.UpdateManyAsync(
+                                                        toUpdateExistingOutboxMessages,
+                                                        dismissSendEvent: true,
+                                                        checkDiff: false,
+                                                        eventCustomConfig: null,
+                                                        cancellationToken);
+                                                }
+
+                                                if (!cancellationToken.IsCancellationRequested) await uow.CompleteAsync(cancellationToken);
+                                            }
+                                        }
+
+                                        if (outboxBusMessageRepositoryFactory == null)
+                                        {
+                                            await rootServiceProvider.ExecuteInjectScopedAsync(async (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
+                                                await UpdatePingAsync(outboxBusMessageRepository));
+                                        }
+                                        else
+                                        {
+                                            await rootServiceProvider.ExecuteInjectScopedAsync(async (IServiceProvider scopedServiceProvider) =>
+                                                await UpdatePingAsync(outboxBusMessageRepositoryFactory(scopedServiceProvider)));
                                         }
                                     }
 
-                                    if (outboxBusMessageRepositoryFactory == null)
-                                    {
-                                        await rootServiceProvider.ExecuteInjectScopedAsync(async (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
-                                            await UpdatePingAsync(outboxBusMessageRepository));
-                                    }
-                                    else
-                                    {
-                                        await rootServiceProvider.ExecuteInjectScopedAsync(async (IServiceProvider scopedServiceProvider) =>
-                                            await UpdatePingAsync(outboxBusMessageRepositoryFactory(scopedServiceProvider)));
-                                    }
+                                    await Task.Delay(PlatformOutboxBusMessage.CheckProcessingPingIntervalSeconds.Seconds(), cancellationToken);
                                 }
-
-                                await Task.Delay(PlatformOutboxBusMessage.CheckProcessingPingIntervalSeconds.Seconds(), cancellationToken);
-                            }
-                            catch (TaskCanceledException)
-                            {
-                                // Empty and skip taskCanceledException
-                            }
-                        },
-                        cancellationToken: cancellationToken,
-                        retryCount: DefaultResilientRetiredCount,
-                        sleepDurationProvider: retryAttempt =>
-                            Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
-                        onRetry: (ex, delayTime, retryCount, context) =>
-                        {
-                            if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
-                            {
-                                foreach (var outboxMessage in existingOutboxMessages)
+                                catch (TaskCanceledException)
                                 {
-                                    loggerFactory()
-                                        .LogError(
-                                            "[{Type}] Retry: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
-                                            nameof(PlatformOutboxMessageBusProducerHelper),
-                                            PlatformMessageBusDiagnosticFormatter.FormatException(ex),
-                                            outboxMessage.MessageTypeFullName,
-                                            PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(outboxMessage.MessageTypeFullName));
+                                    // Empty and skip taskCanceledException
                                 }
-                            }
-                        });
+                            },
+                            cancellationToken: cancellationToken,
+                            retryCount: DefaultResilientRetiredCount,
+                            sleepDurationProvider: retryAttempt =>
+                                Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+                            onRetry: (ex, delayTime, retryCount, context) =>
+                            {
+                                if (retryCount > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
+                                {
+                                    foreach (var outboxMessage in existingOutboxMessages)
+                                    {
+                                        loggerFactory()
+                                            .LogError(
+                                                "[{Type}] Retry: [[ExceptionDiagnostics:{ExceptionDiagnostics}]]. [[Type:{MessageTypeFullName}]]; [[MessageDiagnostics:{MessageDiagnostics}]].",
+                                                nameof(PlatformOutboxMessageBusProducerHelper),
+                                                PlatformMessageBusDiagnosticFormatter.FormatException(ex),
+                                                outboxMessage.MessageTypeFullName,
+                                                PlatformMessageBusDiagnosticFormatter.FormatPersistedMessage(outboxMessage.MessageTypeFullName));
+                                    }
+                                }
+                            });
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // Cancellation ends this owned loop; other failures remain visible to the background executor.
                 }
             },
             loggerFactory: loggerFactory,
             delayTimeSeconds: PlatformOutboxBusMessage.CheckProcessingPingIntervalSeconds,
-            cancellationToken: CancellationToken.None);
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -623,6 +672,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     scopedServiceProvider.GetRequiredService<IPlatformMessageBusProducer>(),
                     repository,
                     outboxBusMessageRepositoryFactory));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // This independent attempt has stopped; the persisted outbox retains its normal recovery path.
+            // Expected cancellation must not enter failed-send recovery after a successful transport send.
         }
         catch (Exception exception)
         {

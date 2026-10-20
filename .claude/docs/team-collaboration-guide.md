@@ -8,18 +8,18 @@
 
 ## Contents
 
-| Section                                       | Audience  | Purpose                        |
-| --------------------------------------------- | --------- | ------------------------------ |
-| [How It Works](#how-it-works)                 | All Roles | Understand the workflow system |
-| [Before You Start](#before-you-start) | All Roles | Prerequisites and output locations |
-| [Quick Start](#quick-start-by-role)           | All Roles | First success in 2 minutes     |
-| [Skills Reference](#skills-reference-by-role) | All Roles | Key skills with examples       |
-| [Workflows](#workflow-tutorials)              | All Roles | End-to-end process flows       |
-| [Role Handoffs](#cross-role-workflows)      | All Roles | Cross-role collaboration       |
-| [Real-World Example](#real-world-example)     | All Roles | Employee Photo Upload feature  |
-| [Cheat Sheet](#cheat-sheet)                   | All Roles | Printable quick reference      |
-| [Troubleshooting](#troubleshooting)           | All Roles | Common issues and fixes        |
-| [Source Files](#source-files) | All Roles | Canonical configuration owners |
+| Section                                       | Audience  | Purpose                            |
+| --------------------------------------------- | --------- | ---------------------------------- |
+| [How It Works](#how-it-works)                 | All Roles | Understand the workflow system     |
+| [Before You Start](#before-you-start)         | All Roles | Prerequisites and output locations |
+| [Quick Start](#quick-start-by-role)           | All Roles | First success in 2 minutes         |
+| [Skills Reference](#skills-reference-by-role) | All Roles | Key skills with examples           |
+| [Workflows](#workflow-tutorials)              | All Roles | End-to-end process flows           |
+| [Role Handoffs](#cross-role-workflows)        | All Roles | Cross-role collaboration           |
+| [Real-World Example](#real-world-example)     | All Roles | Employee Photo Upload feature      |
+| [Cheat Sheet](#cheat-sheet)                   | All Roles | Printable quick reference          |
+| [Troubleshooting](#troubleshooting)           | All Roles | Common issues and fixes            |
+| [Source Files](#source-files)                 | All Roles | Canonical configuration owners     |
 
 ---
 
@@ -188,46 +188,46 @@ Project knowledge — backend/frontend patterns, design tokens, code-review rule
 
 ### Capture & Requirements
 
-| Skill         | Purpose                                  | Example                    |
-| ------------- | ---------------------------------------- | -------------------------- |
-| `/initiative`       | Capture raw idea                         | `/initiative "Dark mode toggle"` |
-| `/work-item --mode=refine`     | Transform the initiative into a task with AC          | `/work-item --mode=refine {initiative-file}`      |
-| `/work-item --mode=story`      | Break task into user stories (INVEST)     | `/work-item --mode=story {task-file}`        |
-| `/prioritize` | Order planned work (RICE/MoSCoW/Value-Effort) | `/prioritize rice`         |
-| `/work-item --mode=dor`   | Run the readiness check on a task         | `/work-item --mode=dor {task-file}`     |
+| Skill                      | Purpose                                       | Example                                      |
+| -------------------------- | --------------------------------------------- | -------------------------------------------- |
+| `/initiative`              | Capture raw idea                              | `/initiative "Dark mode toggle"`             |
+| `/work-item --mode=refine` | Transform the initiative into a task with AC  | `/work-item --mode=refine {initiative-file}` |
+| `/work-item --mode=story`  | Break task into user stories (INVEST)         | `/work-item --mode=story {task-file}`        |
+| `/prioritize`              | Order planned work (RICE/MoSCoW/Value-Effort) | `/prioritize rice`                           |
+| `/work-item --mode=dor`    | Run the readiness check on a task             | `/work-item --mode=dor {task-file}`          |
 
 ### Testing & Quality
 
-| Skill                | Purpose                                  | Example                              |
-| -------------------- | ---------------------------------------- | ------------------------------------ |
-| `/spec [mode=tests]` | Generate test specs (TC-{FEATURE}-{NNN}) | `/spec [mode=tests] {feature-doc}`   |
-| `/integration-test`  | Generate integration tests from specs    | `/integration-test`                  |
-| `/e2e-test`          | Generate E2E tests                       | `/e2e-test`                          |
-| `/work-item --mode=review`   | Gate artifact quality before handoff     | `/work-item --mode=review --type=spec-tests` |
-| `/test`              | Run and analyze tests                    | `/test`                              |
+| Skill                      | Purpose                                  | Example                                      |
+| -------------------------- | ---------------------------------------- | -------------------------------------------- |
+| `/spec [mode=tests]`       | Generate test specs (TC-{FEATURE}-{NNN}) | `/spec [mode=tests] {feature-doc}`           |
+| `/integration-test`        | Generate integration tests from specs    | `/integration-test`                          |
+| `/e2e-test`                | Generate E2E tests                       | `/e2e-test`                                  |
+| `/work-item --mode=review` | Gate artifact quality before handoff     | `/work-item --mode=review --type=spec-tests` |
+| `/test`                    | Run and analyze tests                    | `/test`                                      |
 
 ### Design & Frontend
 
-| Skill                    | Purpose                              | Example                    |
-| ------------------------ | ------------------------------------ | -------------------------- |
-| `/design-spec`           | Create UI/UX design specification    | `/design-spec {task-file}`  |
-| `/ui-design`                | Production-grade frontend interfaces | `/ui-design --lane=marketing` |
-| `/web-design-guidelines` | WCAG 2.2, responsive, best practices | `/web-design-guidelines`   |
+| Skill                    | Purpose                              | Example                       |
+| ------------------------ | ------------------------------------ | ----------------------------- |
+| `/design-spec`           | Create UI/UX design specification    | `/design-spec {task-file}`    |
+| `/ui-design`             | Production-grade frontend interfaces | `/ui-design --lane=marketing` |
+| `/web-design-guidelines` | WCAG 2.2, responsive, best practices | `/web-design-guidelines`      |
 
 ### Process & Collaboration
 
-| Skill         | Purpose                                            | Example       |
-| ------------- | -------------------------------------------------- | ------------- |
-| `/watzup`     | Review recent changes and wrap up the current work | `/watzup`     |
-| `/prioritize` | Re-order remaining planned work when priorities shift   | `/prioritize` |
+| Skill         | Purpose                                               | Example       |
+| ------------- | ----------------------------------------------------- | ------------- |
+| `/watzup`     | Review recent changes and wrap up the current work    | `/watzup`     |
+| `/prioritize` | Re-order remaining planned work when priorities shift | `/prioritize` |
 
 ### Planning & Investigation
 
-| Skill          | Purpose                    | Example                  |
-| -------------- | -------------------------- | ------------------------ |
-| `/plan`        | Create implementation plan | `/plan {description}`    |
-| `/investigate` | Deep code investigation    | `/investigate {feature}` |
-| `/code-quality-review` | Review code quality        | `/code-quality-review`           |
+| Skill                  | Purpose                    | Example                  |
+| ---------------------- | -------------------------- | ------------------------ |
+| `/plan`                | Create implementation plan | `/plan {description}`    |
+| `/investigate`         | Deep code investigation    | `/investigate {feature}` |
+| `/code-quality-review` | Review code quality        | `/code-quality-review`   |
 
 ---
 
@@ -306,8 +306,8 @@ Test specs are written **before** implementation, then code is written to satisf
 
 Claude provides end-to-end workflows that span multiple roles:
 
-| Workflow              | Roles | Trigger          | Steps                                                                        |
-| --------------------- | ----- | ---------------- | ---------------------------------------------------------------------------- |
+| Workflow                | Roles | Trigger          | Steps                                                                                                                        |
+| ----------------------- | ----- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `idea-to-tasks` (PO→BA) | PO→BA | "hand off to BA" | `/initiative` → `/work-item --mode=review` → `/work-item --mode=refine` → `/work-item --mode=story` (conditional first step) |
 
 Each workflow tracks progress across roles so the next role has full visibility into upstream artifacts.
@@ -467,24 +467,24 @@ PLANNING
 
 ### Role Quick Reference
 
-| Role | Primary Skills                                                  | Workflow               |
-| ---- | --------------------------------------------------------------- | ---------------------- |
-| PO   | `/initiative`, `/prioritize`                                          | planned-work (idea-to-tasks)            |
-| BA   | `/work-item --mode=refine`, `/work-item --mode=story`                                             | planned-work (idea-to-tasks)            |
-| QA   | `/spec [mode=tests]`, `/integration-test`, `/test`              | workflow-integration-test |
-| QC   | `/work-item --mode=dor`, `/work-item --mode=review`, `/production-readiness-review` | —                      |
-| UX   | `/design-spec`, `/ui-design`                                       | —                      |
+| Role | Primary Skills                                                                      | Workflow                     |
+| ---- | ----------------------------------------------------------------------------------- | ---------------------------- |
+| PO   | `/initiative`, `/prioritize`                                                        | planned-work (idea-to-tasks) |
+| BA   | `/work-item --mode=refine`, `/work-item --mode=story`                               | planned-work (idea-to-tasks) |
+| QA   | `/spec [mode=tests]`, `/integration-test`, `/test`                                  | workflow-integration-test    |
+| QC   | `/work-item --mode=dor`, `/work-item --mode=review`, `/production-readiness-review` | —                            |
+| UX   | `/design-spec`, `/ui-design`                                                        | —                            |
 
 Plan status tracking is not a separate role here: `/plan --mode=execute` updates `plan.md` and phase status inline as it runs.
 
 ### Workflow Quick Triggers
 
-| Say This                       | Activates                    | Sequence                                                |
-| ------------------------------ | ---------------------------- | ------------------------------------------------------- |
-| "new idea" / "feature request" | planned-work (idea-to-tasks)                  | /initiative → /work-item --mode=refine → /work-item --mode=story → /prioritize                  |
-| "test this task" / "test cases" | `/spec [mode=tests]` (skill) | /spec [mode=tests] → /work-item --mode=review --type=spec-tests |
-| "design spec for"              | `/design-spec`               | /design-spec → /ui-design --lane=product                   |
-| "TDD" / "test-first"           | feature                      | /plan → /spec [mode=tests] → /feature-implement → /test |
+| Say This                        | Activates                    | Sequence                                                                       |
+| ------------------------------- | ---------------------------- | ------------------------------------------------------------------------------ |
+| "new idea" / "feature request"  | planned-work (idea-to-tasks) | /initiative → /work-item --mode=refine → /work-item --mode=story → /prioritize |
+| "test this task" / "test cases" | `/spec [mode=tests]` (skill) | /spec [mode=tests] → /work-item --mode=review --type=spec-tests                |
+| "design spec for"               | `/design-spec`               | /design-spec → /ui-design --lane=product                                       |
+| "TDD" / "test-first"            | feature                      | /plan → /spec [mode=tests] → /feature-implement → /test                        |
 
 ### Common Patterns
 

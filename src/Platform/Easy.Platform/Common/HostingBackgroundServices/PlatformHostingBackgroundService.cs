@@ -62,6 +62,8 @@ public abstract class PlatformHostingBackgroundService : IHostedService, IDispos
     /// </summary>
     private bool disposed;
 
+    private readonly PlatformBackgroundTaskLifetime backgroundTasks = new();
+
     /// <summary>
     /// Initializes a new instance of the <see cref="PlatformHostingBackgroundService" /> class.
     /// </summary>
@@ -133,13 +135,36 @@ public abstract class PlatformHostingBackgroundService : IHostedService, IDispos
         try
         {
             await AsyncStopProcessLock.WaitAsync(cancellationToken);
+        }
+        catch (ObjectDisposedException) when (ProcessStopped)
+        {
+            // Another host shutdown caller already completed the stop and disposed the service.
+            // Only completed work is a no-op; disposal before a successful stop must still fail.
+            return;
+        }
 
+        // A cancelled or failed waiter owns no permit and must never release another caller's lock.
+        try
+        {
             if (!ProcessStarted || ProcessStopped) return;
 
             // Signal cancellation to the executing method
             if (StoppingCts != null) await StoppingCts.CancelAsync();
+            backgroundTasks.Cancel();
 
             await StopProcess(cancellationToken);
+
+            try
+            {
+                await ExecuteTask.WaitAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) when (
+                ExecuteTask.IsCanceled && StoppingCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                // The executing loop observed its owned stop signal. Unexpected faults remain visible.
+            }
+
+            await backgroundTasks.StopAsync(cancellationToken);
 
             ProcessStopped = true;
 
@@ -162,6 +187,11 @@ public abstract class PlatformHostingBackgroundService : IHostedService, IDispos
     /// <summary>
     /// Starts the execution process of the hosted service.
     /// </summary>
+    /// <remarks>
+    /// The argument controls finite startup. Long-running implementations observe <see cref="StoppingCts" />
+    /// and queue child operations through <see cref="QueueBackgroundWork" />. Stop signals that lifetime and
+    /// joins execution and child work within the host's stop deadline before dependencies can be disposed.
+    /// </remarks>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     protected abstract Task StartProcess(CancellationToken cancellationToken);
@@ -173,11 +203,20 @@ public abstract class PlatformHostingBackgroundService : IHostedService, IDispos
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     protected virtual Task StopProcess(CancellationToken cancellationToken) { return Task.CompletedTask; }
 
+    /// <summary>Queues asynchronous child work that must finish before this hosted service stops.</summary>
+    protected void QueueBackgroundWork(Func<CancellationToken, Task> action, CancellationToken cancellationToken)
+    {
+        backgroundTasks.QueueBackgroundWork(action, () => Logger, cancellationToken);
+    }
+
     /// <summary>
     /// Disposes of managed resources.
     /// </summary>
     protected virtual void DisposeManagedResource()
     {
+        backgroundTasks.Dispose();
+        StoppingCts?.Cancel();
+        StoppingCts?.Dispose();
         AsyncStartProcessLock?.Dispose();
         AsyncStopProcessLock?.Dispose();
     }

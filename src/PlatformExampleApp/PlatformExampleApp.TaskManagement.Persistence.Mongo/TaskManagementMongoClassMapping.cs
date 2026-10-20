@@ -1,4 +1,5 @@
 using Easy.Platform.MongoDB.Mapping;
+using MongoDB.Bson.Serialization;
 using PlatformExampleApp.TaskManagement.Domain.Entities;
 
 namespace PlatformExampleApp.TaskManagement.Persistence.Mongo;
@@ -14,4 +15,15 @@ public sealed class TaskBoardItemEntityMongoClassMapping : PlatformMongoBaseEnti
 public sealed class TaskBoardItemProjectionEntityMongoClassMapping :
     PlatformMongoBaseEntityClassMapping<TaskBoardItemProjectionEntity, string>
 {
+    public override void ClassMapInitializer(BsonClassMap<TaskBoardItemProjectionEntity> cm)
+    {
+        base.ClassMapInitializer(cm);
+
+        // Existing documents store the aggregate token under ConcurrencyUpdateToken. Keep that meaning
+        // and give the projection's independent compare-and-swap token a separate physical field.
+        cm.GetMemberMap(nameof(TaskBoardItemProjectionEntity.ConcurrencyUpdateToken))
+            .SetElementName("ProjectionConcurrencyUpdateToken");
+        cm.GetMemberMap(nameof(TaskBoardItemProjectionEntity.TaskConcurrencyUpdateToken))
+            .SetElementName("ConcurrencyUpdateToken");
+    }
 }

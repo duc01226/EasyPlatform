@@ -1,9 +1,11 @@
+using System.Reflection;
 using Easy.Platform.Application;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.MessageBus.Store;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
+using Easy.Platform.Domain.Entities;
 using Easy.Platform.MongoDB;
 using Easy.Platform.Persistence;
 using FluentAssertions;
@@ -15,6 +17,8 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using PlatformExampleApp.TaskManagement.Application;
+using PlatformExampleApp.TaskManagement.Application.Dtos;
+using PlatformExampleApp.TaskManagement.Application.UseCaseCommands;
 using PlatformExampleApp.TaskManagement.Domain.Entities;
 using PlatformExampleApp.TaskManagement.Domain.Repositories;
 using PlatformExampleApp.TaskManagement.Persistence.Mongo;
@@ -27,6 +31,13 @@ namespace PlatformExampleApp.Tests.Unit.TaskManagement;
 /// </summary>
 public sealed class TaskManagementPersistenceTests
 {
+    static TaskManagementPersistenceTests()
+    {
+        // Match module startup: register mappings before any collection access can freeze the driver serializer.
+        new TaskBoardItemEntityMongoClassMapping().RegisterClassMap();
+        new TaskBoardItemProjectionEntityMongoClassMapping().RegisterClassMap();
+    }
+
     // TC-PERSIST-101: shared placement can use the existing Mongo database while context-owned platform collections remain isolated.
     [Fact]
     [Trait("TechnicalSpec", "TC-PERSIST-101")]
@@ -174,6 +185,89 @@ public sealed class TaskManagementPersistenceTests
         projectionMap.GetMemberMap(nameof(TaskBoardItemProjectionEntity.SourceEventId)).Should().NotBeNull();
         projectionMap.GetMemberMap(nameof(TaskBoardItemProjectionEntity.ConcurrencyUpdateToken)).Should().NotBeNull();
         projectionMap.GetMemberMap(nameof(TaskBoardItemProjectionEntity.TaskConcurrencyUpdateToken)).Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData("legacy-aggregate-token")]
+    [InlineData(null)]
+    [Trait("TechnicalSpec", "TC-PERSIST-108")]
+    public void LegacyProjection_PreservesTheStoredAggregateEditToken_WithoutInventingOneForTransportOnlyState(string? aggregateToken)
+    {
+        new TaskBoardItemProjectionEntityMongoClassMapping().RegisterClassMap();
+        var legacyDocument = new BsonDocument
+        {
+            { "_id", "legacy-task" },
+            { "TaskId", "legacy-task" },
+            { "SourceEventId", "creation-event" },
+            { "Title", "Legacy task" },
+            { "Status", "Open" },
+            { "ConcurrencyUpdateToken", aggregateToken == null ? BsonNull.Value : new BsonString(aggregateToken) }
+        };
+
+        var projection = BsonSerializer.Deserialize<TaskBoardItemProjectionEntity>(legacyDocument);
+        var dto = new TaskBoardItemDto(projection);
+
+        projection.Id.Should().Be("legacy-task");
+        projection.Status.Should().Be(TaskBoardItemStatus.Open);
+        projection.TaskConcurrencyUpdateToken.Should().Be(aggregateToken);
+        projection.ConcurrencyUpdateToken.Should().NotBeNullOrWhiteSpace().And.NotBe(aggregateToken);
+        dto.ConcurrencyUpdateToken.Should().Be(aggregateToken);
+        new SaveTaskBoardItemCommand { Item = dto }.Validate().IsValid.Should().Be(aggregateToken != null,
+            "only a genuine stored aggregate token can authorize a listed item update");
+
+        var serialized = projection.ToBsonDocument();
+        serialized["ConcurrencyUpdateToken"].Should().Be(legacyDocument["ConcurrencyUpdateToken"]);
+        serialized["ProjectionConcurrencyUpdateToken"].AsString.Should().Be(projection.ConcurrencyUpdateToken);
+        serialized["Status"].AsString.Should().Be("Open", "the existing enum convention must survive the custom aliases");
+        serialized.Contains(nameof(TaskBoardItemProjectionEntity.TaskConcurrencyUpdateToken)).Should().BeFalse();
+    }
+
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PERSIST-108")]
+    public void ProjectionWrites_CompareAndRotateTheRowToken_WithoutOverwritingTheAggregateEditToken()
+    {
+        new TaskBoardItemProjectionEntityMongoClassMapping().RegisterClassMap();
+        var registry = BsonSerializer.SerializerRegistry;
+        var renderArgs = new RenderArgs<TaskBoardItemProjectionEntity>(registry.GetSerializer<TaskBoardItemProjectionEntity>(), registry);
+        var projection = new TaskBoardItemProjectionEntity
+        {
+            Id = "task",
+            TaskId = "task",
+            ConcurrencyUpdateToken = "new-row-token",
+            TaskConcurrencyUpdateToken = "new-aggregate-token"
+        };
+        // Render the provider's interface-based CAS shape, including the first-write path for legacy documents.
+        static FilterDefinition<TEntity> RowVersionFilter<TEntity>(TEntity entity) where TEntity : IEntity<string>
+        {
+            return Builders<TEntity>.Filter.Where(item => item.Id == entity.Id &&
+                (((IRowVersionEntity)item).ConcurrencyUpdateToken == null ||
+                 ((IRowVersionEntity)item).ConcurrencyUpdateToken == "" ||
+                 ((IRowVersionEntity)item).ConcurrencyUpdateToken == "captured-row-token"));
+        }
+
+        var filter = RowVersionFilter(projection);
+        var renderedFilter = filter.Render(renderArgs).ToJson();
+        renderedFilter.Should().Contain("ProjectionConcurrencyUpdateToken").And.Contain("captured-row-token");
+        renderedFilter.Should().NotContain("\"ConcurrencyUpdateToken\"");
+
+        // Invoke the actual provider's CLR-name dictionary update seam; a typed Update.Set alone would not prove it.
+        var buildUpdate = typeof(PlatformMongoDbContext<TaskManagementDbContext>)
+            .GetMethod("BuildChangedFieldsUpdateDefinition", BindingFlags.NonPublic | BindingFlags.Static)!
+            .MakeGenericMethod(typeof(TaskBoardItemProjectionEntity));
+        var update = (UpdateDefinition<TaskBoardItemProjectionEntity>)buildUpdate.Invoke(null,
+        [
+            projection,
+            new Dictionary<string, object>
+            {
+                [nameof(TaskBoardItemProjectionEntity.ConcurrencyUpdateToken)] = projection.ConcurrencyUpdateToken,
+                [nameof(TaskBoardItemProjectionEntity.TaskConcurrencyUpdateToken)] = projection.TaskConcurrencyUpdateToken
+            }
+        ])!;
+        var set = update.Render(renderArgs)["$set"].AsBsonDocument;
+
+        set.ElementCount.Should().Be(2);
+        set["ProjectionConcurrencyUpdateToken"].AsString.Should().Be("new-row-token");
+        set["ConcurrencyUpdateToken"].AsString.Should().Be("new-aggregate-token");
     }
 
     private static TestableTaskManagementMongoPersistenceModule CreateModule(params (string Key, string Value)[] values)

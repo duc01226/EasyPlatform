@@ -20,6 +20,40 @@ namespace PlatformExampleApp.IntegrationTests.TextSnippets;
 public class SearchSnippetTextQueryIntegrationTests : TextSnippetIntegrationTestBase
 {
     /// <summary>
+    /// Literal punctuation is valid autocomplete input. Direct setup is required because the public DTO cannot
+    /// assign creators; a unique reader owns the literal and decoy rows, and a second reader owns a matching row.
+    /// </summary>
+    [Fact]
+    [Trait("TechnicalSpec", "TC-SEARCH-072")]
+    public async Task Search_ParenthesisPrefix_ReturnsOnlyTheReadersLiteralPrefixMatches()
+    {
+        var owner = TextSnippetTestUserContextFactory.CreateUser(IntegrationTestHelper.UniqueName("LiteralOwner"));
+        var other = TextSnippetTestUserContextFactory.CreateUser(IntegrationTestHelper.UniqueName("LiteralOther"));
+        var marker = IntegrationTestHelper.UniqueName("LiteralPrefix");
+        var ids = Enumerable.Range(0, 3).Select(_ => Ulid.NewUlid().ToString()).ToArray();
+        await ExecuteWithServicesAsync(async services =>
+        {
+            var repository = services.GetRequiredService<ITextSnippetRootRepository<TextSnippetEntity>>();
+            for (var index = 0; index < ids.Length; index++)
+            {
+                var entity = TextSnippetEntity.Create(ids[index], index == 1 ? "ordinary " + marker : "(" + marker, "different body");
+                entity.CreatedByUserId = index == 2 ? other.UserId : owner.UserId;
+                await repository.CreateOrUpdateAsync(entity, dismissSendEvent: true);
+            }
+        });
+
+        await IntegrationTestHelper.WaitUntilAsync(async () =>
+        {
+            var result = await ExecuteQueryAsync(new SearchSnippetTextQuery { SearchText = "(" }, owner);
+            result.Items.Select(item => item.Id).Should().Equal(ids[0]);
+            result.TotalCount.Should().Be(1);
+            var others = await ExecuteQueryAsync(new SearchSnippetTextQuery { SearchText = "(" }, other);
+            others.Items.Select(item => item.Id).Should().Equal(ids[2]);
+            others.TotalCount.Should().Be(1);
+        });
+    }
+
+    /// <summary>
     /// Search ownership must constrain both rows and totals in every text branch. Direct repository seed is
     /// required because TextSnippetEntityDto cannot set CreatedByUserId (same constraint as TC-EXAMPLE-025).
     /// </summary>

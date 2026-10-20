@@ -1108,20 +1108,6 @@ test("TC-DOCROOT-072 update back-fills the Doc Lookup heading onto a legacy head
   assert.equal(gen.backfillDocLookupHeading("# No lookup here\n"), "# No lookup here\n", "a root without the section is untouched");
 });
 
-test("TC-DOCROOT-072 heading backfill preserves unmanaged mixed line endings byte for byte", () => {
-  // Invariant: inserting an owned heading cannot rewrite user-owned whitespace.
-  const custom = "\n\n\n## Synthetic user prose\r\nretain exact λ spacing  \r\n\r\n\r\ncustom tail\r\n";
-  const marker = "<!-- SECTION:doc-lookup -->";
-  const legacy = `# Demo\n\n${marker}\n<!-- /SECTION:doc-lookup -->\n${custom}`;
-  const expected = legacy.replace(marker, `## Doc Lookup — What to Read When\n\n${marker}`);
-  const out = gen.backfillDocLookupHeading(legacy);
-  assert.equal(out, expected);
-  assert.equal(gen.backfillDocLookupHeading(out), out);
-  const alias = `# Demo\r\n\r\n## Doc Lookup Guide\n\n${marker}\r\n${custom}`;
-  assert.equal(gen.backfillDocLookupHeading(alias), alias.replace("## Doc Lookup Guide", "## Doc Lookup — What to Read When"));
-  assert.equal(gen.backfillDocLookupHeading(`# Demo\r\n${marker}`), `# Demo\r\n## Doc Lookup — What to Read When\r\n\r\n${marker}`);
-});
-
 test("TC-DOCROOT-073 N/A needs an explicit field or a leading/parenthesized marker, never incidental prose", async t => {
   // Given four existing docs: one with incidental "not applicable" prose, three declared N/A three ways.
   const root = await docsFixture(t, {

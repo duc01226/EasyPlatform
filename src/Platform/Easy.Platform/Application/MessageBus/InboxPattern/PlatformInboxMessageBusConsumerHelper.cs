@@ -615,6 +615,7 @@ public static class PlatformInboxMessageBusConsumerHelper
     {
         using (var startIntervalPingProcessingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
         {
+            var pingTask = Task.CompletedTask;
             try
             {
                 // If sub-queueing is enabled and there are other unprocessed messages with the same prefix, revert the existing message to "New".
@@ -628,7 +629,7 @@ public static class PlatformInboxMessageBusConsumerHelper
                 {
                     if (consumer.NeedStartIntervalPingInboxMessageProcessing)
                     {
-                        StartIntervalPingProcessing(
+                        pingTask = StartIntervalPingProcessingAsync(
                             [existingInboxMessage],
                             loggerFactory,
                             serviceProvider,
@@ -679,6 +680,10 @@ public static class PlatformInboxMessageBusConsumerHelper
                     }
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 // If an error occurs during consumer execution, update the inbox message as failed.
@@ -705,10 +710,30 @@ public static class PlatformInboxMessageBusConsumerHelper
                         PlatformMessageBusDiagnosticFormatter.FormatException(e));
                 }
             }
+            finally
+            {
+                await startIntervalPingProcessingCts.CancelAsync();
+                try { await pingTask; }
+                catch (OperationCanceledException) when (startIntervalPingProcessingCts.IsCancellationRequested)
+                {
+                    // A loop cancelled before its scheduled start still belongs to this operation.
+                }
+            }
         }
     }
 
     public static void StartIntervalPingProcessing(
+        List<PlatformInboxBusMessage> existingInboxMessages,
+        Func<ILogger> loggerFactory,
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken,
+        Func<IServiceProvider, IPlatformInboxBusMessageRepository> inboxBusMessageRepositoryFactory = null)
+    {
+        _ = StartIntervalPingProcessingAsync(existingInboxMessages, loggerFactory, serviceProvider, cancellationToken, inboxBusMessageRepositoryFactory);
+    }
+
+    /// <summary>Starts a ping loop whose owner can await completion after cancellation.</summary>
+    public static Task StartIntervalPingProcessingAsync(
         List<PlatformInboxBusMessage> existingInboxMessages,
         Func<ILogger> loggerFactory,
         IServiceProvider serviceProvider,
@@ -720,81 +745,88 @@ public static class PlatformInboxMessageBusConsumerHelper
 
         // Interval loops intentionally do not take a permit pool: a permit would be held for the
         // lifetime of the loop instead of around one bounded unit of work.
-        Util.TaskRunner.QueueActionInBackground(
+        return Util.TaskRunner.QueueActionInBackgroundTask(
             async () =>
             {
-                while (!cancellationToken.IsCancellationRequested)
+                try
                 {
-                    await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                        async () =>
-                        {
-                            try
+                    while (!cancellationToken.IsCancellationRequested)
+                    {
+                        await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+                            async () =>
                             {
-                                if (!cancellationToken.IsCancellationRequested)
+                                try
                                 {
-                                    async Task UpdatePingAsync(IPlatformInboxBusMessageRepository inboxBusMessageRepository)
+                                    if (!cancellationToken.IsCancellationRequested)
                                     {
-                                        using (var uow = inboxBusMessageRepository.UowManager().Begin())
+                                        async Task UpdatePingAsync(IPlatformInboxBusMessageRepository inboxBusMessageRepository)
                                         {
-                                            var existingInboxMessagesDict = existingInboxMessages.ToDictionary(p => p.Id);
-
-                                            var toUpdateExistingInboxMessages = await inboxBusMessageRepository.GetAllAsync(
-                                                p => existingInboxMessagesDict.Keys.Contains(p.Id),
-                                                cancellationToken);
-
-                                            if (toUpdateExistingInboxMessages.Any())
+                                            using (var uow = inboxBusMessageRepository.UowManager().Begin())
                                             {
-                                                var pingDate = Clock.UtcNow;
+                                                var existingInboxMessagesDict = existingInboxMessages.ToDictionary(p => p.Id);
 
-                                                toUpdateExistingInboxMessages.ForEach(toUpdateExistingInboxMessage =>
-                                                {
-                                                    toUpdateExistingInboxMessage.LastProcessingPingDate = pingDate;
-                                                    existingInboxMessagesDict[toUpdateExistingInboxMessage.Id].LastProcessingPingDate = pingDate;
-                                                });
-
-                                                await inboxBusMessageRepository.UpdateManyAsync(
-                                                    toUpdateExistingInboxMessages,
-                                                    dismissSendEvent: true,
-                                                    checkDiff: false,
-                                                    eventCustomConfig: null,
+                                                var toUpdateExistingInboxMessages = await inboxBusMessageRepository.GetAllAsync(
+                                                    p => existingInboxMessagesDict.Keys.Contains(p.Id),
                                                     cancellationToken);
-                                            }
 
-                                            if (!cancellationToken.IsCancellationRequested) await uow.CompleteAsync(cancellationToken);
+                                                if (toUpdateExistingInboxMessages.Any())
+                                                {
+                                                    var pingDate = Clock.UtcNow;
+
+                                                    toUpdateExistingInboxMessages.ForEach(toUpdateExistingInboxMessage =>
+                                                    {
+                                                        toUpdateExistingInboxMessage.LastProcessingPingDate = pingDate;
+                                                        existingInboxMessagesDict[toUpdateExistingInboxMessage.Id].LastProcessingPingDate = pingDate;
+                                                    });
+
+                                                    await inboxBusMessageRepository.UpdateManyAsync(
+                                                        toUpdateExistingInboxMessages,
+                                                        dismissSendEvent: true,
+                                                        checkDiff: false,
+                                                        eventCustomConfig: null,
+                                                        cancellationToken);
+                                                }
+
+                                                if (!cancellationToken.IsCancellationRequested) await uow.CompleteAsync(cancellationToken);
+                                            }
+                                        }
+
+                                        if (inboxBusMessageRepositoryFactory == null)
+                                        {
+                                            await rootServiceProvider.ExecuteInjectScopedAsync(async (IPlatformInboxBusMessageRepository inboxBusMessageRepository) =>
+                                                await UpdatePingAsync(inboxBusMessageRepository));
+                                        }
+                                        else
+                                        {
+                                            await rootServiceProvider.ExecuteInjectScopedAsync(async (IServiceProvider scopedServiceProvider) =>
+                                                await UpdatePingAsync(inboxBusMessageRepositoryFactory(scopedServiceProvider)));
                                         }
                                     }
 
-                                    if (inboxBusMessageRepositoryFactory == null)
-                                    {
-                                        await rootServiceProvider.ExecuteInjectScopedAsync(async (IPlatformInboxBusMessageRepository inboxBusMessageRepository) =>
-                                            await UpdatePingAsync(inboxBusMessageRepository));
-                                    }
-                                    else
-                                    {
-                                        await rootServiceProvider.ExecuteInjectScopedAsync(async (IServiceProvider scopedServiceProvider) =>
-                                            await UpdatePingAsync(inboxBusMessageRepositoryFactory(scopedServiceProvider)));
-                                    }
+                                    await Task.Delay(PlatformInboxBusMessage.CheckProcessingPingIntervalSeconds.Seconds(), cancellationToken);
                                 }
-
-                                await Task.Delay(PlatformInboxBusMessage.CheckProcessingPingIntervalSeconds.Seconds(), cancellationToken);
-                            }
-                            catch (TaskCanceledException)
+                                catch (TaskCanceledException)
+                                {
+                                    // Empty and skip taskCanceledException
+                                }
+                            },
+                            cancellationToken: cancellationToken,
+                            retryCount: DefaultResilientRetiredCount,
+                            sleepDurationProvider: retryAttempt =>
+                                Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+                            onRetry: (ex, delayRetryTime, retryAttempt, context) =>
                             {
-                                // Empty and skip taskCanceledException
-                            }
-                        },
-                        cancellationToken: cancellationToken,
-                        retryCount: DefaultResilientRetiredCount,
-                        sleepDurationProvider: retryAttempt =>
-                            Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
-                        onRetry: (ex, delayRetryTime, retryAttempt, context) =>
-                        {
-                            // Log only after 75% of retry budget consumed; with Inbox/Outbox budget=43200 first error fires at retry 32400. See Util.TaskRunner.LogErrorRetryThreshold.
-                            if (retryAttempt > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
-                                loggerFactory().LogError(
-                                    "Update PlatformInboxBusMessage LastProcessingPingTime failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]",
-                                    PlatformMessageBusDiagnosticFormatter.FormatException(ex));
-                        });
+                                // Log only after 75% of retry budget consumed; with Inbox/Outbox budget=43200 first error fires at retry 32400. See Util.TaskRunner.LogErrorRetryThreshold.
+                                if (retryAttempt > Util.TaskRunner.LogErrorRetryThreshold(DefaultResilientRetiredCount))
+                                    loggerFactory().LogError(
+                                        "Update PlatformInboxBusMessage LastProcessingPingTime failed. [[ExceptionDiagnostics:{ExceptionDiagnostics}]]",
+                                        PlatformMessageBusDiagnosticFormatter.FormatException(ex));
+                            });
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    // Cancellation ends this owned loop; other failures remain visible to the background executor.
                 }
             },
             loggerFactory: loggerFactory,

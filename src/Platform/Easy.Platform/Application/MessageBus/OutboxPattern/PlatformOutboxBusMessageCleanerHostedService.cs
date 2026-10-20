@@ -57,12 +57,15 @@ public class PlatformOutboxBusMessageCleanerHostedService : PlatformIntervalHost
 
     protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
     {
-        await IPlatformModule.WaitForAllModulesInitializedAsync(ServiceProvider, typeof(IPlatformPersistenceModule), Logger, $"process {GetType().Name}");
+        await IPlatformModule.WaitForAllModulesInitializedAsync(ServiceProvider, typeof(IPlatformPersistenceModule), cancellationToken, Logger, $"process {GetType().Name}");
 
         if (HasRegistryComposition)
         {
             foreach (var cleanupState in GetCleanupStates())
+            {
+                if (cancellationToken.IsCancellationRequested) return;
                 await CleanOutboxMessagesForStateAsync(cleanupState, cancellationToken);
+            }
 
             return;
         }
@@ -74,6 +77,10 @@ public class PlatformOutboxBusMessageCleanerHostedService : PlatformIntervalHost
         try
         {
             await RetryCleanOutboxMessagesAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cleanup cancellation ends this pass without reporting a processing failure.
         }
         catch (Exception ex)
         {
@@ -124,7 +131,11 @@ public class PlatformOutboxBusMessageCleanerHostedService : PlatformIntervalHost
     protected async Task CleanOutboxEventBusMessage(CancellationToken cancellationToken)
     {
         await ProcessCleanMessageByMaxStoreProcessedMessageCount(cancellationToken);
+        if (cancellationToken.IsCancellationRequested) return;
+
         await ProcessCleanMessageByExpiredTime(cancellationToken);
+        if (cancellationToken.IsCancellationRequested) return;
+
         await ProcessIgnoreFailedMessageByExpiredTime(cancellationToken);
     }
 
@@ -158,6 +169,10 @@ public class PlatformOutboxBusMessageCleanerHostedService : PlatformIntervalHost
         try
         {
             await RetryCleanOutboxMessagesAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cleanup cancellation ends this pass without reporting a processing failure.
         }
         catch (Exception ex)
         {
@@ -282,6 +297,10 @@ public class PlatformOutboxBusMessageCleanerHostedService : PlatformIntervalHost
                 ProcessingPersistenceOwnerType,
                 ProcessingPersistenceContextType);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cleanup cancellation ends this pass without reporting a processing failure.
+        }
         catch (Exception e)
         {
             LogCleanupError(e, "ProcessCleanMessageByMaxStoreProcessedMessageCount failed");
@@ -319,6 +338,10 @@ public class PlatformOutboxBusMessageCleanerHostedService : PlatformIntervalHost
                     ProcessingPersistenceOwnerType,
                     ProcessingPersistenceContextType);
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cleanup cancellation ends this pass without reporting a processing failure.
         }
         catch (Exception e)
         {
@@ -377,6 +400,10 @@ public class PlatformOutboxBusMessageCleanerHostedService : PlatformIntervalHost
                     ProcessingPersistenceOwnerType,
                     ProcessingPersistenceContextType);
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cleanup cancellation ends this pass without reporting a processing failure.
         }
         catch (Exception e)
         {

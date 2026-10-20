@@ -2623,18 +2623,25 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                 if (navigationValue is IEnumerable<object> collection)
                 {
                     foreach (var item in collection)
-                        await TrackSingleNavigationEntity(item, cancellationToken);
+                        await TrackSingleNavigationEntity(entity, item, cancellationToken);
                 }
             }
             else
             {
                 // Handle single navigation properties
-                await TrackSingleNavigationEntity(navigationValue, cancellationToken);
+                await TrackSingleNavigationEntity(entity, navigationValue, cancellationToken);
             }
         }
     }
 
-    private async Task TrackSingleNavigationEntity(object navigationEntity, CancellationToken cancellationToken)
+    /// <summary>
+    /// Controls whether an untracked, assigned-key related entity may be created with its owner.
+    /// Contexts can preserve independently owned references without changing graph creation elsewhere.
+    /// Owned navigations and entities already tracked by the caller retain their normal lifecycle.
+    /// </summary>
+    protected virtual bool CanCreateMissingNavigationEntity(object owningEntity, object navigationEntity) => true;
+
+    private async Task TrackSingleNavigationEntity(object owningEntity, object navigationEntity, CancellationToken cancellationToken)
     {
         if (navigationEntity == null) return;
 
@@ -2662,15 +2669,15 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         {
             // Check if entity exists in database (this will track it if found)
             var existingEntity = await FindAsync(navigationEntity.GetType(), keyValues, cancellationToken);
-            if (existingEntity != null)
+            if (existingEntity != null || !CanCreateMissingNavigationEntity(owningEntity, navigationEntity))
             {
-                // Entity exists in database but navigationEntity is not tracked
-                // We need to detach the loaded entity and track our navigationEntity instead
-                Entry(existingEntity).State = EntityState.Detached;
+                // Preserve the reference even if its independently owned row was removed after it was read.
+                // The foreign key must reject that race rather than recreating the referenced entity.
+                if (existingEntity != null) Entry(existingEntity).State = EntityState.Detached;
                 Entry(navigationEntity).State = EntityState.Unchanged;
             }
         }
-        // If entity doesn't exist or has null keys, let EF Core handle it normally
+        // New-key navigations and contexts allowing related creation retain normal graph behavior.
     }
 
     private static object GetDefaultValue(Type type)

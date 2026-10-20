@@ -150,18 +150,18 @@ Register hooks for Claude Code lifecycle events.
 
 ### Events
 
-| Event              | Matcher Values                          | When Triggered            |
-| ------------------ | --------------------------------------- | ------------------------- |
-| `SessionStart`     | `startup`, `resume`, `clear`, `compact` | Session begins            |
-| `SessionEnd`       | `clear`, `exit`, `compact`              | Session ends              |
-| `UserPromptSubmit` | (none)                                  | User submits prompt       |
-| `UserPromptExpansion` | (none)                               | A typed `/command` expands |
-| `PreToolUse`       | Tool names                              | Before tool execution     |
-| `PostToolUse`      | Tool names                              | After tool execution      |
-| `PreCompact`       | `manual`, `auto`                        | Before context compaction |
-| `SubagentStart`    | Agent type names                        | Subagent spawning         |
-| `Notification`     | (none)                                  | Waiting for user input    |
-| `Stop`             | (none)                                  | Main agent finishes responding |
+| Event                 | Matcher Values                          | When Triggered                 |
+| --------------------- | --------------------------------------- | ------------------------------ |
+| `SessionStart`        | `startup`, `resume`, `clear`, `compact` | Session begins                 |
+| `SessionEnd`          | `clear`, `exit`, `compact`              | Session ends                   |
+| `UserPromptSubmit`    | (none)                                  | User submits prompt            |
+| `UserPromptExpansion` | (none)                                  | A typed `/command` expands     |
+| `PreToolUse`          | Tool names                              | Before tool execution          |
+| `PostToolUse`         | Tool names                              | After tool execution           |
+| `PreCompact`          | `manual`, `auto`                        | Before context compaction      |
+| `SubagentStart`       | Agent type names                        | Subagent spawning              |
+| `Notification`        | (none)                                  | Waiting for user input         |
+| `Stop`                | (none)                                  | Main agent finishes responding |
 
 > Claude Code supports these events for hook registration. This framework registers `UserPromptExpansion` only for the protocol delivery steps (`protocol-inject-<group>.cjs`) and `SubagentStart` for those steps plus the prompt-time context hooks a delegated agent needs (skill activation, core principles, UI reuse, verdict and AI-feature directives); the `SubagentStart` registrations have no agent-type matcher, so every agent type reaches the handlers; standing sub-agent context stays static in `agents/*.md`. `Stop` registers only the notification router (`hooks/notifications/notify.cjs`) for the turn-complete alert. Read [../hooks/README.md § Protocol Delivery](../hooks/README.md#protocol-delivery) when changing those registrations.
 
@@ -279,11 +279,11 @@ Set environment variables for all tool executions.
 }
 ```
 
-| Variable                                   | Value      | Purpose                                                                                                                                                                                                                                                                             |
-| ------------------------------------------ | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` | `"1"`      | Keep Bash in project directory                                                                                                                                                                                                                                                      |
-| `CK_NO_AUTO_OPEN`                          | `"1"`      | `.claude/scripts/open-report.cjs` (used by the `watzup` and `understand` HTML reports) prints the report path and opens nothing. It also opens nothing when `CI` is set (non-empty, not `0`/`false`) or on Linux with neither `DISPLAY` nor `WAYLAND_DISPLAY`. The same rules stop `task-track` `serve --open` from starting a browser |
-| `CK_AUTO_INSTALL_DEPENDENCIES`             | `"0"`      | Turns off automatic dependency installs (`0`, `off` or `false`): the PyYAML recovery in `.claude/scripts/lib/python_dependencies.py` and the `task-track` pinned-package setup, which then refuses with the command to run by hand |
+| Variable                                   | Value | Purpose                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` | `"1"` | Keep Bash in project directory                                                                                                                                                                                                                                                                                                         |
+| `CK_NO_AUTO_OPEN`                          | `"1"` | `.claude/scripts/open-report.cjs` (used by the `watzup` and `understand` HTML reports) prints the report path and opens nothing. It also opens nothing when `CI` is set (non-empty, not `0`/`false`) or on Linux with neither `DISPLAY` nor `WAYLAND_DISPLAY`. The same rules stop `task-track` `serve --open` from starting a browser |
+| `CK_AUTO_INSTALL_DEPENDENCIES`             | `"0"` | Turns off automatic dependency installs (`0`, `off` or `false`): the PyYAML recovery in `.claude/scripts/lib/python_dependencies.py` and the `task-track` pinned-package setup, which then refuses with the command to run by hand                                                                                                     |
 
 ---
 

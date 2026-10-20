@@ -81,8 +81,8 @@ Entry point: CLAUDE.md (AI code instructions)
   ├──▶ docs/project-reference/code-review-rules.md      (auto-injected by hook)
   ├──▶ docs/project-reference/lessons.md                (auto-injected by hook)
   ├──▶ docs/project-reference/integration-test-reference.md  (linked: integration testing)
-  ├──▶ docs/project-reference/backend-patterns-reference.md  (auto-context: src/Backend/**)
-  └──▶ docs/project-reference/frontend-patterns-reference.md (auto-context: src/Frontend/**)
+  ├──▶ docs/project-reference/backend-patterns-reference.md  (auto-context: src/PlatformExampleApp/**)
+  └──▶ docs/project-reference/frontend-patterns-reference.md (auto-context: src/PlatformExampleAppWeb/**)
 
 AGENTS.md  ── Codex/agent mirror of CLAUDE.md (same reference-doc pointers)
 

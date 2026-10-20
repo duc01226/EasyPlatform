@@ -58,12 +58,15 @@ public class PlatformInboxBusMessageCleanerHostedService : PlatformIntervalHosti
 
     protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
     {
-        await IPlatformModule.WaitForAllModulesInitializedAsync(ServiceProvider, typeof(IPlatformPersistenceModule), Logger, $"process {GetType().Name}");
+        await IPlatformModule.WaitForAllModulesInitializedAsync(ServiceProvider, typeof(IPlatformPersistenceModule), cancellationToken, Logger, $"process {GetType().Name}");
 
         if (HasRegistryComposition)
         {
             foreach (var cleanupState in GetCleanupStates())
+            {
+                if (cancellationToken.IsCancellationRequested) return;
                 await CleanInboxMessagesForStateAsync(cleanupState, cancellationToken);
+            }
 
             return;
         }
@@ -75,6 +78,10 @@ public class PlatformInboxBusMessageCleanerHostedService : PlatformIntervalHosti
         try
         {
             await RetryCleanInboxMessagesAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cleanup cancellation ends this pass without reporting a processing failure.
         }
         catch (Exception ex)
         {
@@ -125,6 +132,7 @@ public class PlatformInboxBusMessageCleanerHostedService : PlatformIntervalHosti
     protected async Task CleanInboxEventBusMessage(CancellationToken cancellationToken)
     {
         await ProcessCleanMessageByExpiredTime(cancellationToken);
+        if (cancellationToken.IsCancellationRequested) return;
         await ProcessIgnoreFailedMessageByExpiredTime(cancellationToken);
     }
 
@@ -159,6 +167,10 @@ public class PlatformInboxBusMessageCleanerHostedService : PlatformIntervalHosti
         try
         {
             await RetryCleanInboxMessagesAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cleanup cancellation ends this pass without reporting a processing failure.
         }
         catch (Exception ex)
         {
@@ -211,6 +223,10 @@ public class PlatformInboxBusMessageCleanerHostedService : PlatformIntervalHosti
                     ProcessingPersistenceOwnerType,
                     ProcessingPersistenceContextType);
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cleanup cancellation ends this pass without reporting a processing failure.
         }
         catch (Exception e)
         {
@@ -268,6 +284,10 @@ public class PlatformInboxBusMessageCleanerHostedService : PlatformIntervalHosti
                     ProcessingPersistenceOwnerType,
                     ProcessingPersistenceContextType);
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Cleanup cancellation ends this pass without reporting a processing failure.
         }
         catch (Exception e)
         {

@@ -152,6 +152,100 @@ public sealed class PlatformBackgroundJobStartProcessHostedServiceTests : IDispo
             + "signalled to abort by the time the processing service itself begins shutting down");
     }
 
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PLATJOB-073")]
+    public async Task StopAsync_AfterSuccessfulStopAndDisposal_DoesNotStopProcessingAgain()
+    {
+        var hostedService = CreateHostedService();
+
+        await hostedService.StartAsync(CancellationToken.None);
+        await hostedService.StopAsync(CancellationToken.None);
+        hostedService.Dispose();
+
+        // Separate host shutdown callers can overlap: one finishes and disposes the host before
+        // the other reaches this already-stopped service. Completed work remains idempotent.
+        await hostedService.StopAsync(CancellationToken.None);
+
+        processingService.Verify(service => service.Stop(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PLATJOB-074")]
+    public async Task StopAsync_WhenDisposedBeforeSuccessfulStop_DoesNotHideTheLifecycleFailure()
+    {
+        var hostedService = CreateHostedService();
+
+        await hostedService.StartAsync(CancellationToken.None);
+        hostedService.Dispose();
+
+        var stop = () => hostedService.StopAsync(CancellationToken.None);
+
+        await stop.Should().ThrowAsync<ObjectDisposedException>();
+        processingService.Verify(service => service.Stop(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PLATJOB-073")]
+    public async Task StopAsync_WhenAConcurrentWaiterIsCancelled_DoesNotLetAnotherCallerReenterProcessingStop()
+    {
+        var stopEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseStop = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        processingService
+            .Setup(service => service.Stop(It.IsAny<CancellationToken>()))
+            .Returns(async () =>
+            {
+                stopEntered.TrySetResult();
+                await releaseStop.Task;
+            });
+
+        using var hostedService = CreateHostedService();
+        await hostedService.StartAsync(CancellationToken.None);
+
+        var firstStop = hostedService.StopAsync(CancellationToken.None);
+        var thirdStop = Task.CompletedTask;
+
+        try
+        {
+            await stopEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            using var cancelled = new CancellationTokenSource();
+            await cancelled.CancelAsync();
+
+            var cancelledStop = () => hostedService.StopAsync(cancelled.Token);
+            await cancelledStop.Should().ThrowAsync<OperationCanceledException>();
+
+            thirdStop = hostedService.StopAsync(CancellationToken.None);
+            processingService.Verify(
+                service => service.Stop(It.IsAny<CancellationToken>()),
+                Times.Once,
+                "a cancelled waiter never acquired the lock and must not release the first caller's permit");
+        }
+        finally
+        {
+            releaseStop.TrySetResult();
+            await Task.WhenAll(firstStop, thirdStop).WaitAsync(TimeSpan.FromSeconds(5));
+        }
+
+        processingService.Verify(service => service.Stop(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PLATJOB-073")]
+    public async Task StopAsync_WhenProcessingStopThrows_DoesNotSuppressTheFailureOrMarkItCompleted()
+    {
+        processingService
+            .Setup(service => service.Stop(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ObjectDisposedException("processing-service"));
+
+        using var hostedService = CreateHostedService();
+        await hostedService.StartAsync(CancellationToken.None);
+
+        var stop = () => hostedService.StopAsync(CancellationToken.None);
+
+        await stop.Should().ThrowAsync<ObjectDisposedException>();
+        await stop.Should().ThrowAsync<ObjectDisposedException>();
+        processingService.Verify(service => service.Stop(It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
     private PlatformBackgroundJobStartProcessHostedService CreateHostedService()
     {
         return new PlatformBackgroundJobStartProcessHostedService(serviceProvider, NullLoggerFactory.Instance, processingService.Object);

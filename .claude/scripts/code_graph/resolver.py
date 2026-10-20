@@ -202,7 +202,7 @@ def _discover_packages(root: Path, extra_globs: Optional[list[str]] = None) -> d
 
 
 def _discover_aliases(root: Path, packages: dict[str, dict]) -> list[list]:
-    """Collect (config_scope, pattern, [targets], target_base) aliases.
+    """Collect (base_dir_rel, pattern, [targets]) tuples from tsconfig/jsconfig.
 
     Scans the repo root and every workspace member directory; only files under
     a member (or root) inherit that member's ``paths`` map.
@@ -234,7 +234,7 @@ def _discover_aliases(root: Path, packages: dict[str, dict]) -> list[list]:
                     continue
                 clean_targets = [t for t in targets if isinstance(t, str)]
                 if clean_targets and pattern:
-                    aliases.append([rel_dir, pattern, clean_targets, base_dir_rel])
+                    aliases.append([base_dir_rel, pattern, clean_targets])
             break  # tsconfig wins over jsconfig for the same directory
     return aliases
 
@@ -329,8 +329,7 @@ class ModuleResolver:
 
         # Path aliases (longest matching baseDir first)
         caller_rel = _safe_rel(caller_file, self.root) or caller_file
-        for alias in self._aliases:
-            base_dir, pattern, targets = alias[:3]
+        for base_dir, pattern, targets in self._aliases:
             base = str(base_dir).replace("\\", "/")
             if base and not caller_rel.startswith(base.rstrip("/") + "/"):
                 continue
@@ -339,8 +338,7 @@ class ModuleResolver:
                 continue
             for target in targets:
                 expanded = target.replace(_ALIAS_STAR, star)
-                target_dir = alias[3] if len(alias) > 3 else base_dir
-                target_base = self.root / target_dir if target_dir else self.root
+                target_base = self.root / base_dir if base_dir else self.root
                 resolved = self._resolve_path_like(target_base / expanded, exts)
                 if resolved:
                     return resolved

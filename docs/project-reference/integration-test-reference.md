@@ -47,7 +47,7 @@ Before any test run, verify the intended Compose project identity—not only por
 docker ps --filter "label=com.docker.compose.project=easyplatform-example" --format "{{.Names}} => {{.Status}}"
 ```
 
-Empty output means the required stack is not started. The suite hosts the API in-process through `WebApplicationFactory<Program>` with host-port binding disabled (`src/Backend/PlatformExampleApp.IntegrationTests/WebAppFactory/TextSnippetWebApplicationFactory.cs:40-55`); `text-snippet-api` is not an integration-test prerequisite and a separately running API can conflict.
+Empty output means the required stack is not started. The suite hosts the API in-process through `WebApplicationFactory<Program>` with host-port binding disabled (`src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/WebAppFactory/TextSnippetWebApplicationFactory.cs:40-55`); `text-snippet-api` is not an integration-test prerequisite and a separately running API can conflict.
 
 Verification gate: run the integration suite twice consecutively with no database reset; both runs must pass. Test data accumulates, so use unique data rather than resetting shared databases.
 
@@ -59,7 +59,7 @@ Verification gate: run the integration suite twice consecutively with no databas
 | `PlatformServiceIntegrationTestWithAssertions<T>` | Same file `:429`                                                                                       | Adds AssertEntityExistsAsync, AssertEntityMatchesAsync, AssertEntityDeletedAsync  |
 | `PlatformServiceIntegrationTestFixture<T>`        | `src/Platform/Easy.Platform.AutomationTest/IntegrationTests/PlatformServiceIntegrationTestFixture.cs`  | xUnit collection fixture — DI lifecycle, module init, data seeding                |
 | `PlatformCrossServiceFixture`                     | `src/Platform/Easy.Platform.AutomationTest/IntegrationTests/PlatformCrossServiceFixture.cs`            | Composes multiple service fixtures for cross-service tests                        |
-| `TextSnippetIntegrationTestBase`                  | `src/Backend/PlatformExampleApp.IntegrationTests/TextSnippetIntegrationTestBase.cs`                    | Service-specific base — repo resolution + request context setup                   |
+| `TextSnippetIntegrationTestBase`                  | `src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/TextSnippetIntegrationTestBase.cs`                    | Service-specific base — repo resolution + request context setup                   |
 
 ### Inheritance Chain (extend this in your tests)
 
@@ -111,7 +111,7 @@ MUST override in service-specific base class, NEVER in individual test classes:
 ### Fixture Setup Pattern
 
 ```csharp
-// 1. Fixture class (src/Backend/.../TextSnippetIntegrationTestFixture.cs:13)
+// 1. Fixture class (src/PlatformExampleApp/.../TextSnippetIntegrationTestFixture.cs:13)
 public class TextSnippetIntegrationTestFixture
     : PlatformServiceIntegrationTestFixture<TextSnippetIntegrationTestAspNetCoreModule>
 {
@@ -134,7 +134,7 @@ A no-op `Startup` class (`Startup.cs:15`) satisfies the `Xunit.DependencyInjecti
 ### User Context Factory
 
 ```csharp
-// src/Backend/.../TextSnippetTestUserContextFactory.cs:46
+// src/PlatformExampleApp/.../TextSnippetTestUserContextFactory.cs:46
 var admin = TextSnippetTestUserContextFactory.CreateAdminUser();   // Admin + User roles
 var user  = TextSnippetTestUserContextFactory.CreateUser();        // User role only
 var viewer = TextSnippetTestUserContextFactory.CreateViewerUser(); // Viewer role (read-only)
@@ -148,10 +148,10 @@ var result = await ExecuteCommandAsync(command, userContext: admin);
 
 `PlatformCrossServiceFixture` (`src/Platform/.../PlatformCrossServiceFixture.cs:42`) composes multiple service fixtures. A subclass overrides `GetFixtureTypes()` (`:69`); the ctor instantiates each via `Activator.CreateInstance` after an `IsPlatformServiceFixture` check (`:47,:122`). `InitializeAsync()` (`:96`) inits fixtures sequentially in declared order; `Dispose` (`:110`) disposes in reverse. **Isolation:** `PlatformServiceIntegrationTestBase<TModule>.ServiceProvider` is `static` keyed on the closed generic type, so distinct module subtypes = distinct DI containers.
 
-Concrete POC (`src/Backend/.../CrossService/`): two marker modules `TextSnippetCrossServiceProducerModule` / `TextSnippetCrossServiceConsumerModule` (`TextSnippetCrossServiceModules.cs:17,:27`) — both extend `TextSnippetIntegrationTestAspNetCoreModule` (two containers, same physical DB in the POC).
+Concrete POC (`src/PlatformExampleApp/.../CrossService/`): two marker modules `TextSnippetCrossServiceProducerModule` / `TextSnippetCrossServiceConsumerModule` (`TextSnippetCrossServiceModules.cs:17,:27`) — both extend `TextSnippetIntegrationTestAspNetCoreModule` (two containers, same physical DB in the POC).
 
 ```csharp
-// src/Backend/.../CrossService/TextSnippetCrossServiceFixtures.cs:50
+// src/PlatformExampleApp/.../CrossService/TextSnippetCrossServiceFixtures.cs:50
 public class TextSnippetCrossServiceFixture : PlatformCrossServiceFixture
 {
     protected override IReadOnlyList<Type> GetFixtureTypes()
@@ -169,7 +169,7 @@ await IntegrationTestHelper.WaitUntilAsync(/* assert consumer-side state */,
 
 ## WebApplicationFactory Testing (HTTP-level)
 
-Use this path when a service registers Autofac-DI services (incompatible with the Microsoft-DI-only subcutaneous fixture) OR when you must assert the full HTTP pipeline (routing, serialization, middleware, exception→status mapping). Files: `src/Backend/.../WebAppFactory/`.
+Use this path when a service registers Autofac-DI services (incompatible with the Microsoft-DI-only subcutaneous fixture) OR when you must assert the full HTTP pipeline (routing, serialization, middleware, exception→status mapping). Files: `src/PlatformExampleApp/.../WebAppFactory/`.
 
 ```csharp
 // TextSnippetWebApplicationFactory.cs:40 — boots the REAL Program.cs over in-memory TestServer
@@ -240,7 +240,7 @@ await PlatformIntegrationTestHelper.WaitUntilAsync(
 
 ### TextSnippet Service
 
-**Base class:** `TextSnippetIntegrationTestBase` at `src/Backend/PlatformExampleApp.IntegrationTests/TextSnippetIntegrationTestBase.cs`
+**Base class:** `TextSnippetIntegrationTestBase` at `src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/TextSnippetIntegrationTestBase.cs`
 
 **Repository resolution:**
 
@@ -286,7 +286,7 @@ Assert side-effects on the RELATED entity, not just the source command (`Snippet
 
 ```bash
 # Run all integration tests
-dotnet test src/Backend/PlatformExampleApp.IntegrationTests/
+dotnet test src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/
 
 # Filter by trait — Category values: Authorization, BackgroundJob, Command,
 # CrossService, EventHandler, MessageBus, Query, WebAppFactory
@@ -310,7 +310,7 @@ dotnet test --filter "TestSpec=TC-EXAMPLE-026"
 ## New Test Quickstart
 
 ```csharp
-// src/Backend/PlatformExampleApp.IntegrationTests/YourFeature/YourCommandIntegrationTests.cs
+// src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/YourFeature/YourCommandIntegrationTests.cs
 [Collection(TextSnippetIntegrationTestCollection.Name)]
 [Trait("Category", "Command")]
 public class YourCommandIntegrationTests : TextSnippetIntegrationTestBase

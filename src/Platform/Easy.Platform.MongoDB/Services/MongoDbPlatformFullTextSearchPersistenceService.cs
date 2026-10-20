@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Persistence.Services;
 using MongoDB.Bson;
@@ -79,7 +80,7 @@ public class MongoDbPlatformFullTextSearchPersistenceService : PlatformFullTextS
     {
         var filterBuilder = Builders<T>.Filter;
         var startsWithFilters = includeStartWithProps
-            .Select(p => filterBuilder.Regex(p, new BsonRegularExpression($"^({searchText})", "i")))
+            .Select(p => filterBuilder.Regex(p, new BsonRegularExpression($"^({Regex.Escape(searchText)})", "i")))
             .ToList();
         return filterBuilder.Or(startsWithFilters);
     }

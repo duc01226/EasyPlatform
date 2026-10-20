@@ -31,8 +31,8 @@ Read the relevant project convention before changing these files.
 
 | Files | Project reference |
 |---|---|
-| src[\\/]Backend[\\/], src[\\/]Platform[\\/]; extensions: .cs, .csproj | `docs/project-reference/backend-patterns-reference.md` |
-| src[\\/]Frontend[\\/]; extensions: .ts, .html, .scss | `docs/project-reference/frontend-patterns-reference.md` |
+| src[\\/]PlatformExampleApp[\\/], src[\\/]Platform[\\/]; extensions: .cs, .csproj | `docs/project-reference/backend-patterns-reference.md` |
+| src[\\/]PlatformExampleAppWeb[\\/]; extensions: .ts, .html, .scss | `docs/project-reference/frontend-patterns-reference.md` |
 
 <!-- /SECTION:golden-rules -->
 
@@ -83,30 +83,30 @@ src/Platform/Easy\.Platform\.AutomationTest/ # Test framework — integration te
 src/Platform/Easy\.Platform\.AzureFileStorage/ # Azure Blob Storage file storage provider
 src/Platform/Easy\.Platform\.FireBasePushNotification/ # Firebase push notification provider
 src/Platform/Easy\.Platform\.HangfireBackgroundJob/ # Hangfire background job integration
-src/Backend/PlatformExampleApp\.TextSnippet\.Api/ # Example app API host — controllers, DI modules, startup
-src/Backend/PlatformExampleApp\.TextSnippet\.Application/ # Example app application layer — CQRS commands, queries, DTOs, event handlers
-src/Backend/PlatformExampleApp\.TextSnippet\.Domain/ # Example app domain layer — entities, repositories, domain events
-src/Backend/PlatformExampleApp\.TextSnippet\.Infrastructure/ # Example app infrastructure — external service integrations
-src/Backend/PlatformExampleApp\.TextSnippet\.Persistence/ # Example app EF Core persistence (SQL Server/PostgreSQL)
-src/Backend/PlatformExampleApp\.TextSnippet\.Persistence\.Mongo/ # Example app MongoDB persistence
-src/Backend/PlatformExampleApp\.TextSnippet\.Persistence\.PostgreSql/ # Example app PostgreSQL-specific persistence
-src/Backend/PlatformExampleApp\.Shared/  # Shared DTOs and message contracts across example app services
-src/Backend/PlatformExampleApp\.TextSnippet\.Persistence\.MultiDbDemo\.Mongo/ # Example app multi-database demo MongoDB persistence
-src/Backend/PlatformExampleApp\.Ids/     # Identity server — authentication and authorization
-src/Backend/PlatformExampleApp\.IntegrationTests/ # Integration test suite for example app
-src/Backend/PlatformExampleApp\.Test\.Shared/ # Shared test utilities and helpers across test projects
-src/Backend/PlatformExampleApp\.Test/    # Unit test project for example app
-src/Backend/PlatformExampleApp\.Test\.BDD/ # BDD test project for example app
-src/Backend/PlatformExampleApp\.Benchmark/ # Benchmarking project
+src/PlatformExampleApp/PlatformExampleApp\.TextSnippet\.Api/ # Example app API host — controllers, DI modules, startup
+src/PlatformExampleApp/PlatformExampleApp\.TextSnippet\.Application/ # Example app application layer — CQRS commands, queries, DTOs, event handlers
+src/PlatformExampleApp/PlatformExampleApp\.TextSnippet\.Domain/ # Example app domain layer — entities, repositories, domain events
+src/PlatformExampleApp/PlatformExampleApp\.TextSnippet\.Infrastructure/ # Example app infrastructure — external service integrations
+src/PlatformExampleApp/PlatformExampleApp\.TextSnippet\.Persistence/ # Example app EF Core persistence (SQL Server/PostgreSQL)
+src/PlatformExampleApp/PlatformExampleApp\.TextSnippet\.Persistence\.Mongo/ # Example app MongoDB persistence
+src/PlatformExampleApp/PlatformExampleApp\.TextSnippet\.Persistence\.PostgreSql/ # Example app PostgreSQL-specific persistence
+src/PlatformExampleApp/PlatformExampleApp\.Shared/  # Shared DTOs and message contracts across example app services
+src/PlatformExampleApp/PlatformExampleApp\.TextSnippet\.Persistence\.MultiDbDemo\.Mongo/ # Example app multi-database demo MongoDB persistence
+src/PlatformExampleApp/PlatformExampleApp\.Ids/     # Identity server — authentication and authorization
+src/PlatformExampleApp/PlatformExampleApp\.IntegrationTests/ # Integration test suite for example app
+src/PlatformExampleApp/PlatformExampleApp\.Test\.Shared/ # Shared test utilities and helpers across test projects
+src/PlatformExampleApp/PlatformExampleApp\.Test/    # Unit test project for example app
+src/PlatformExampleApp/PlatformExampleApp\.Test\.BDD/ # BDD test project for example app
+src/PlatformExampleApp/PlatformExampleApp\.Benchmark/ # Benchmarking project
 src/Platform/Easy\.Platform\.Benchmark/  # Benchmarking project for Platform framework
 src/Platform/Easy\.Platform\.CustomAnalyzers/ # Custom Roslyn analyzers for code quality enforcement
 src/Platform/Easy\.Platform\.Tests\.Unit/ # Unit tests for Platform framework
-src/Frontend/apps/playground-text-snippet/ # Angular frontend app for TextSnippet example
-src/Frontend/libs/platform-core/         # Frontend framework core — base components, stores, API services, utilities
-src/Frontend/libs/apps-domains/text-snippet-domain/ # Frontend domain library for TextSnippet
-src/Frontend/libs/apps-domains-components/ # Domain-specific UI components
-src/Frontend/libs/apps-shared-components/ # Shared UI components across apps
-src/Frontend/libs/platform-components/   # Platform-level reusable UI components
+src/PlatformExampleAppWeb/apps/playground-text-snippet/ # Angular frontend app for TextSnippet example
+src/PlatformExampleAppWeb/libs/platform-core/         # Frontend framework core — base components, stores, API services, utilities
+src/PlatformExampleAppWeb/libs/apps-domains/text-snippet-domain/ # Frontend domain library for TextSnippet
+src/PlatformExampleAppWeb/libs/apps-domains-components/ # Domain-specific UI components
+src/PlatformExampleAppWeb/libs/apps-shared-components/ # Shared UI components across apps
+src/PlatformExampleAppWeb/libs/platform-components/   # Platform-level reusable UI components
 ```
 
 <!-- /SECTION:key-locations -->
@@ -116,11 +116,11 @@ src/Frontend/libs/platform-components/   # Platform-level reusable UI components
 <!-- SECTION:dev-commands -->
 
 ```bash
-dotnet test src/Backend/PlatformExampleApp.Test/ # backend-unit
-dotnet test src/Backend/PlatformExampleApp.IntegrationTests/ # backend-integration
-dotnet test src/Backend/PlatformExampleApp.Test.BDD/ # backend-bdd
-cd src/Frontend && npm test                   # frontend-unit
-cd src/Frontend/e2e && npx playwright test    # e2e
+dotnet test src/PlatformExampleApp/PlatformExampleApp.Test/ # backend-unit
+dotnet test src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/ # backend-integration
+dotnet test src/PlatformExampleApp/PlatformExampleApp.Test.BDD/ # backend-bdd
+cd src/PlatformExampleAppWeb && npm test                   # frontend-unit
+cd src/PlatformExampleAppWeb/e2e && npx playwright test    # e2e
 ```
 
 <!-- /SECTION:dev-commands -->

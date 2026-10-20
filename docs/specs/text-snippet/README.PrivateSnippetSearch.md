@@ -18,8 +18,8 @@ Readers discover their own snippets without revealing another reader's content o
 | Owner | Link | Read when |
 |---|---|---|
 | Test conventions | [Integration testing](../../project-reference/integration-test-reference.md) | Extending executable search guards |
-| Search assertions | [Search tests](../../../src/Backend/PlatformExampleApp.IntegrationTests/TextSnippets/SearchSnippetTextQueryIntegrationTests.cs) | Tracing visible rows and totals |
-| Repeated-search assertions | [Search isolation tests](../../../src/Backend/PlatformExampleApp.IntegrationTests/WebAppFactory/TextSnippetSearchCacheIsolationTests.cs) | Tracing different readers and saved edits |
+| Search assertions | [Search tests](../../../src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/TextSnippets/SearchSnippetTextQueryIntegrationTests.cs) | Tracing visible rows and totals |
+| Repeated-search assertions | [Search isolation tests](../../../src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/WebAppFactory/TextSnippetSearchCacheIsolationTests.cs) | Tracing different readers and saved edits |
 
 ## Contents
 

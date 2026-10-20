@@ -11,6 +11,7 @@ using Easy.Platform.Application;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Common;
+using Easy.Platform.Common.HostingBackgroundServices;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Infrastructures.MessageBus;
@@ -170,7 +171,9 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
     private readonly SemaphoreSlim stopProcessLock = new(initialCount: 1, maxCount: 1);
     private readonly HashSet<IChannel> usedChannels = [];
     private readonly ConcurrentDictionary<string, object> waitingAckMessages = new();
+    private readonly PlatformBackgroundTaskLifetime processLifetime = new();
     private CancellationToken currentStartProcessCancellationToken;
+    private bool hasStartedWorkers;
     private bool disposed;
 
     /// <summary>
@@ -214,6 +217,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
         this.consumeInboxBusMessageHostedService = consumeInboxBusMessageHostedService;
         this.inboxBusMessageCleanerHostedService = inboxBusMessageCleanerHostedService;
         this.rootServiceProvider = rootServiceProvider;
+        currentStartProcessCancellationToken = processLifetime.Token;
         Logger = loggerFactory.CreateLogger(GetType());
         malformedMessageRecovery = new PlatformRabbitMqMalformedMessageRecovery(options, Logger);
         IsDistributedTracingEnabled = rootServiceProvider.GetService<PlatformModule.DistributedTracingConfig>()?.Enabled == true;
@@ -235,6 +239,9 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
 
     public bool IsStarted { get; private set; }
 
+    /// <summary>The owned execution signal shared by initialization and delivery processing.</summary>
+    protected CancellationToken ProcessingCancellationToken => currentStartProcessCancellationToken;
+
     /// <summary>
     /// Disposes of the resources used by this service.
     /// </summary>
@@ -250,32 +257,32 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
     /// </summary>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-    public async Task StartProcess(CancellationToken cancellationToken, int? maxRetryCount = null)
+    public Task StartProcess(CancellationToken cancellationToken, int? maxRetryCount = null)
     {
+        // Module initialization and the hosted adapter share this lifetime, including startup with None.
+        return processLifetime.RunAsync(token => StartProcessAsync(cancellationToken, token, maxRetryCount));
+    }
+
+    private async Task StartProcessAsync(CancellationToken cancellationToken, CancellationToken stoppingToken, int? maxRetryCount)
+    {
+        using var startingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, stoppingToken);
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
             async () =>
             {
+                await startProcessLock.WaitAsync(startingCts.Token);
                 try
                 {
-                    await startProcessLock.WaitAsync(cancellationToken);
-
-                    currentStartProcessCancellationToken = cancellationToken;
-
                     if (IsStarted)
                         return;
 
+                    // Only the caller performing initialization can abort it. A later no-op start must
+                    // neither replace the active token nor bind its own cancellation to existing consumers.
+                    using var startupCancellation = cancellationToken.Register(processLifetime.Cancel);
+                    startingCts.Token.ThrowIfCancellationRequested();
                     Logger.LogInformation("[{TargetName}] RabbitMq init process STARTED", GetType().Name);
 
-                    await DeclareRabbitMqConfiguration(maxRetryCount);
-
-                    await ConnectConsumersToQueues();
-
-                    await Task.WhenAll(
-                        sendOutboxBusMessageHostedService.StartAsync(currentStartProcessCancellationToken),
-                        outboxBusMessageCleanerHostedService.StartAsync(currentStartProcessCancellationToken),
-                        consumeInboxBusMessageHostedService.StartAsync(currentStartProcessCancellationToken),
-                        inboxBusMessageCleanerHostedService.StartAsync(currentStartProcessCancellationToken)
-                    );
+                    await InitializeProcessingAsync(maxRetryCount);
+                    stoppingToken.ThrowIfCancellationRequested();
 
                     IsStarted = true;
 
@@ -292,8 +299,21 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
             {
                 if (retryAttempt >= options.MinimumRetryTimesToLogError) Logger.LogError(ex.BeautifyStackTrace(), "[MessageBus] Retry to StartProcess failed");
             },
-            cancellationToken: cancellationToken
+            cancellationToken: startingCts.Token
         );
+    }
+
+    /// <summary>Initializes the transport and its workers inside the shared processing lifetime.</summary>
+    protected virtual async Task InitializeProcessingAsync(int? maxRetryCount)
+    {
+        await DeclareRabbitMqConfiguration(maxRetryCount);
+        await ConnectConsumersToQueues();
+        hasStartedWorkers = true;
+        await Task.WhenAll(
+            sendOutboxBusMessageHostedService.StartAsync(currentStartProcessCancellationToken),
+            outboxBusMessageCleanerHostedService.StartAsync(currentStartProcessCancellationToken),
+            consumeInboxBusMessageHostedService.StartAsync(currentStartProcessCancellationToken),
+            inboxBusMessageCleanerHostedService.StartAsync(currentStartProcessCancellationToken));
     }
 
     /// <summary>
@@ -301,14 +321,23 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
     /// This involves stopping the hosted services and clearing any pending acknowledgments.
     /// </summary>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-    public async Task StopProcess()
+    public Task StopProcess() => StopProcess(CancellationToken.None);
+
+    /// <summary>Drains startup, callbacks and queued operations before their dependencies can be disposed.</summary>
+    public async Task StopProcess(CancellationToken cancellationToken)
     {
+        await stopProcessLock.WaitAsync(cancellationToken);
         try
         {
-            await stopProcessLock.WaitAsync(CancellationToken.None);
-
-            if (!IsStarted)
-                return;
+            await processLifetime.StopAsync(cancellationToken);
+            if (hasStartedWorkers)
+            {
+                await Task.WhenAll(
+                    sendOutboxBusMessageHostedService.StopAsync(cancellationToken),
+                    outboxBusMessageCleanerHostedService.StopAsync(cancellationToken),
+                    consumeInboxBusMessageHostedService.StopAsync(cancellationToken),
+                    inboxBusMessageCleanerHostedService.StopAsync(cancellationToken));
+            }
 
             waitingAckMessages.Clear();
 
@@ -346,10 +375,9 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
         if (connectConsumersToQueuesLock.CurrentCount == 0)
             return;
 
+        await connectConsumersToQueuesLock.WaitAsync(currentStartProcessCancellationToken);
         try
         {
-            await connectConsumersToQueuesLock.WaitAsync(currentStartProcessCancellationToken);
-
             IChannel[] usedChannelsSnapshot;
             lock (usedChannels) usedChannelsSnapshot = usedChannels.ToArray();
 
@@ -401,6 +429,10 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
 
             Logger.LogInformation("Start connect all consumers to rabbitmq queue FINISHED");
         }
+        catch (OperationCanceledException) when (currentStartProcessCancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             Logger.LogError(ex.BeautifyStackTrace(), "[{GetTypeFullName}] RabbitMq Consumer can't start", GetType().FullName);
@@ -438,7 +470,12 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
     /// This method identifies the appropriate consumers for the message, deserializes the message,
     /// and enqueues it for processing.
     /// </summary>
-    protected async Task TransferMessageToAllMessageBusConsumers(IChannel channel, BasicDeliverEventArgs rabbitMqMessage, string sourceQueue)
+    protected Task TransferMessageToAllMessageBusConsumers(IChannel channel, BasicDeliverEventArgs rabbitMqMessage, string sourceQueue)
+    {
+        return processLifetime.RunAsync(_ => TransferMessageToAllMessageBusConsumersAsync(channel, rabbitMqMessage, sourceQueue));
+    }
+
+    private async Task TransferMessageToAllMessageBusConsumersAsync(IChannel channel, BasicDeliverEventArgs rabbitMqMessage, string sourceQueue)
     {
         try
         {
@@ -449,6 +486,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                 await IPlatformModule.WaitForAllModulesInitializedAsync(
                     rootServiceProvider,
                     typeof(IPlatformPersistenceModule),
+                    currentStartProcessCancellationToken,
                     Logger,
                     "to start connect all consumers to rabbitmq queue"
                 );
@@ -503,7 +541,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                 rabbitMqMessage.Exchange, rabbitMqMessage.RoutingKey, rabbitMqMessage.BasicProperties,
                 rabbitMqMessage.Body.ToArray(), rabbitMqMessage.CancellationToken);
 
-            Util.TaskRunner.QueueActionInBackground(
+            QueueBackgroundWork(
                 () =>
                     ExecuteCanProcessMessageBusConsumers(
                         canProcessConsumerTypeToBusMessagePairs: canProcessConsumerTypeToBusMessagePairs,
@@ -511,7 +549,6 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                         rabbitMqMessageArgs: ownedDelivery,
                         currentStartProcessCancellationToken
                     ),
-                loggerFactory: () => Logger,
                 cancellationToken: currentStartProcessCancellationToken
             );
         }
@@ -533,7 +570,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
         }
         finally
         {
-            rootServiceProvider.GetService<IPlatformApplicationSettingContext>().ProcessAutoGarbageCollect();
+            applicationSettingContext.ProcessAutoGarbageCollect();
         }
     }
 
@@ -574,9 +611,11 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                 _ => new SemaphoreSlim(Util.TaskRunner.DefaultParallelComputeTaskMaxConcurrent, Util.TaskRunner.DefaultParallelComputeTaskMaxConcurrent))
             : sharedProcessMessageParallelLimitLock;
 
+        var permitAcquired = false;
         try
         {
             await priorityLockToUse.WaitAsync(currentStartProcessCancellationToken);
+            permitAcquired = true;
 
             // Extract tracing context from the message properties.
             var parentContext = IsDistributedTracingEnabled
@@ -622,9 +661,9 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
         }
         finally
         {
-            priorityLockToUse.TryRelease();
+            if (permitAcquired) priorityLockToUse.TryRelease();
 
-            rootServiceProvider.GetService<IPlatformApplicationSettingContext>().ProcessAutoGarbageCollect();
+            applicationSettingContext.ProcessAutoGarbageCollect();
         }
 
         async Task RunExecuteConsumer(KeyValuePair<Type, object> consumerTypeBusMessagePair, Activity? traceActivity)
@@ -647,7 +686,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
     public void AckMessage(IChannel channel, BasicDeliverEventArgs rabbitMqMessageArgs, bool isReject)
     {
         // Acknowledge the message in the background to avoid blocking the message processing loop.
-        Util.TaskRunner.QueueActionInBackground(
+        QueueBackgroundWork(
             async () =>
             {
                 if (channel.IsClosedPermanently(out _))
@@ -710,8 +749,7 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                     cancellationToken: currentStartProcessCancellationToken
                 );
             },
-            loggerFactory: () => Logger,
-            cancellationToken: CancellationToken.None
+            cancellationToken: currentStartProcessCancellationToken
         );
     }
 
@@ -792,16 +830,15 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
         // Requeue only this failed delivery. A range nack (multiple: true) would also requeue unrelated in-flight
         // deliveries on the same channel whose tags are less than or equal to this delivery tag.
         // Because if all consumers requeue because they cannot process a delivery due to a transient condition, they will create a requeue/redelivery loop. Such loops can be costly in terms of network bandwidth and CPU resources
-        Util.TaskRunner.QueueActionInBackground(
+        QueueBackgroundWork(
             async () =>
             {
                 await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                     async () =>
                     {
+                        await processRequeueMessageLock.WaitAsync(currentStartProcessCancellationToken);
                         try
                         {
-                            await processRequeueMessageLock.WaitAsync(currentStartProcessCancellationToken);
-
                             if (!channel.IsClosedPermanently(out _))
                             {
                                 if (channel.IsClosed)
@@ -847,7 +884,6 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
                     cancellationToken: currentStartProcessCancellationToken
                 );
             },
-            loggerFactory: () => Logger,
             cancellationToken: currentStartProcessCancellationToken
         );
 
@@ -1036,12 +1072,18 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
         return exchangeProvider.GetExchangeName(consumerRoutingKey);
     }
 
+    private void QueueBackgroundWork(Func<Task> action, CancellationToken cancellationToken)
+    {
+        processLifetime.QueueBackgroundWork(_ => action(), () => Logger, cancellationToken);
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (!disposed)
         {
             if (disposing)
             {
+                processLifetime.Dispose();
                 malformedMessageRecovery.Dispose();
                 // Release managed resources
                 startProcessLock?.Dispose();

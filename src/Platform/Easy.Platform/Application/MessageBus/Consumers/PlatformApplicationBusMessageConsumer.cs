@@ -296,6 +296,12 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     /// </summary>
     public virtual bool AllowUseInboxMessage => true;
 
+    /// <summary>
+    /// Allows unordered messages to try handling before they are persisted. Override with false when handling
+    /// can outlive the transport delivery budget; combine with background inbox handling to release the delivery.
+    /// </summary>
+    public virtual bool AllowTryConsumeMessageImmediatelyBeforeCreateInboxMessage => true;
+
     public bool AllowHandleNewInboxMessageInBackground { get; set; } = false;
 
     /// <inheritdoc />
@@ -490,6 +496,7 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
             autoDeleteProcessedMessageImmediately: AutoDeleteProcessedInboxEventMessageImmediately,
             needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage: NeedToCheckAnySameConsumerOtherPreviousNotProcessedInboxMessage,
             allowHandleNewInboxMessageInBackground: AllowHandleNewInboxMessageInBackground,
+            allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage: AllowTryConsumeMessageImmediatelyBeforeCreateInboxMessage,
             inboxBusMessageRepositoryFactory: storeDescriptor?.IsInboxEnabled == true ? storeDescriptor.InboxRepositoryFactory : null
         );
     }

@@ -188,7 +188,7 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
     protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
     {
         // Wait for all required modules to be initialized before processing messages.
-        await IPlatformModule.WaitForAllModulesInitializedAsync(ServiceProvider, typeof(IPlatformPersistenceModule), Logger, $"process {GetType().Name}");
+        await IPlatformModule.WaitForAllModulesInitializedAsync(ServiceProvider, typeof(IPlatformPersistenceModule), cancellationToken, Logger, $"process {GetType().Name}");
 
         if (HasRegistryComposition)
         {
@@ -196,8 +196,8 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
             {
                 // Queue one action per lane so a slow or failed lane does not consume another lane's
                 // semaphore budget or first-pass recovery window.
-                Util.TaskRunner.QueueActionInBackground(
-                    () => ProcessInboxMessagesForStateAsync(processingState, cancellationToken),
+                QueueBackgroundWork(
+                    processingToken => ProcessInboxMessagesForStateAsync(processingState, processingToken),
                     cancellationToken: cancellationToken);
             }
 
@@ -208,8 +208,8 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
         if (!HasInboxEventBusMessageRepositoryRegistered()) return;
 
         // Queue action in background so another interval can inspect available messages while a slow message is processing.
-        Util.TaskRunner.QueueActionInBackground(
-            () => ProcessInboxMessagesForStateAsync(null, cancellationToken),
+        QueueBackgroundWork(
+            processingToken => ProcessInboxMessagesForStateAsync(null, processingToken),
             cancellationToken: cancellationToken);
     }
 
@@ -226,10 +226,9 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
             if (maxIntervalProcessTriggeredLock.CurrentCount == 0)
                 return;
 
+            await maxIntervalProcessTriggeredLock.WaitAsync(cancellationToken);
             try
             {
-                await maxIntervalProcessTriggeredLock.WaitAsync(cancellationToken);
-
                 await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                     () => ConsumeInboxEventBusMessages(cancellationToken),
                     retryAttempt => InboxConfig.ProcessConsumeMessageRetryDelaySeconds.Seconds(),
@@ -251,6 +250,10 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
                         }
                     },
                     cancellationToken: cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -335,9 +338,10 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
 
                                 using (var startIntervalPingProcessingCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                                 {
+                                    var pingTask = Task.CompletedTask;
                                     try
                                     {
-                                        StartIntervalPingProcessing(
+                                        pingTask = StartIntervalPingProcessing(
                                             toHandleMessages,
                                             startIntervalPingProcessingCts.Token,
                                             CurrentInboxRepositoryFactory);
@@ -365,6 +369,12 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
                                                 ProcessingPersistenceOwnerType,
                                                 ProcessingPersistenceContextType);
                                         }
+
+                                        try { await pingTask; }
+                                        catch (OperationCanceledException) when (startIntervalPingProcessingCts.IsCancellationRequested)
+                                        {
+                                            // The batch owns its ping loop, including cancellation before its first tick.
+                                        }
                                     }
                                 }
                             }
@@ -382,12 +392,12 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
         });
     }
 
-    private void StartIntervalPingProcessing(
+    private Task StartIntervalPingProcessing(
         List<PlatformInboxBusMessage> toHandleMessages,
         CancellationToken token,
         Func<IServiceProvider, IPlatformInboxBusMessageRepository> repositoryFactory = null)
     {
-        PlatformInboxMessageBusConsumerHelper.StartIntervalPingProcessing(
+        return PlatformInboxMessageBusConsumerHelper.StartIntervalPingProcessingAsync(
             toHandleMessages,
             () => Logger,
             ServiceProvider,
@@ -569,15 +579,22 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
                         using (var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                         {
                             timeoutCts.CancelAfter(InboxConfig.MaxProcessingDurationSeconds.Seconds());
+                            var consumerTask = PlatformMessageBusConsumer.InvokeConsumerAsync(
+                                consumer,
+                                busMessage,
+                                toHandleInboxMessage.RoutingKey,
+                                MessageBusConfig,
+                                Logger);
                             try
                             {
-                                await PlatformMessageBusConsumer.InvokeConsumerAsync(
-                                        consumer,
-                                        busMessage,
-                                        toHandleInboxMessage.RoutingKey,
-                                        MessageBusConfig,
-                                        Logger)
-                                    .WaitAsync(timeoutCts.Token);
+                                await consumerTask.WaitAsync(timeoutCts.Token);
+                            }
+                            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                            {
+                                // Shutdown must retain the invocation's scope until the consumer really exits.
+                                // The hosted stop still bounds this drain by the host's own deadline.
+                                await consumerTask;
+                                throw;
                             }
                             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
                             {
@@ -592,6 +609,10 @@ public class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalHosti
                         await ResolveInboxRepository(scope.ServiceProvider)
                             .DeleteImmediatelyAsync(toHandleInboxMessage.Id, cancellationToken: cancellationToken);
                     }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception ex)
                 {

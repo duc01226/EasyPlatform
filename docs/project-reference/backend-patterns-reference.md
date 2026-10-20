@@ -39,7 +39,7 @@ MUST extend `RootAuditedEntity<TEntity, TPrimaryKey, TUserId>`. MUST override `G
 | Factory methods | `static Create(...)`                                          | `TextSnippetEntity.Create(id, snippetText, fullText)` |
 
 ```csharp
-// src/Backend/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs:22
+// src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs:22
 [TrackFieldUpdatedDomainEvent]
 public class TextSnippetEntity : RootAuditedEntity<TextSnippetEntity, string, string>, IRowVersionEntity
 {
@@ -62,11 +62,11 @@ public class TextSnippetEntity : RootAuditedEntity<TextSnippetEntity, string, st
 MUST define filter logic as static `Expression<Func<T, bool>>` on the entity. Use `AndAlso()` to compose, `AndAlsoIf()` for conditional composition.
 
 ```csharp
-// src/Backend/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs:150
+// src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs:150
 public static Expression<Func<TextSnippetEntity, bool>> UniqueExpr(string? categoryId, string snippetText)
     => e => e.CategoryId == categoryId && e.SnippetText == snippetText;
 
-// Conditional composition: src/Backend/.../TextSnippetEntity.cs:188
+// Conditional composition: src/PlatformExampleApp/.../TextSnippetEntity.cs:188
 public static Expression<Func<TextSnippetEntity, bool>> FilterExpr(
     string? categoryId, List<SnippetStatus>? statuses = null, bool includeDeleted = false)
 {
@@ -82,14 +82,14 @@ public static Expression<Func<TextSnippetEntity, bool>> FilterExpr(
 MUST override `GetValidator()` composing `PlatformSingleValidator` instances. MUST use instance methods (`ValidateCanBePublished()`) for state-transition validation returning `PlatformValidationResult<T>`.
 
 ```csharp
-// src/Backend/.../TextSnippetEntity.cs:297
+// src/PlatformExampleApp/.../TextSnippetEntity.cs:297
 public static PlatformSingleValidator<TextSnippetEntity, string> SnippetTextValidator()
     => new(p => p.SnippetText, p => p.NotNull().NotEmpty().MaximumLength(SnippetTextMaxLength));
 
 public override PlatformValidator<TextSnippetEntity> GetValidator()
     => PlatformValidator<TextSnippetEntity>.Create(SnippetTextValidator(), FullTextValidator(), AddressValidator());
 
-// Instance validation: src/Backend/.../TextSnippetEntity.cs:352
+// Instance validation: src/PlatformExampleApp/.../TextSnippetEntity.cs:352
 public PlatformValidationResult<TextSnippetEntity> ValidateCanBePublished()
 {
     return this.Validate(_ => Status != SnippetStatus.Published, "Snippet is already published")
@@ -110,7 +110,7 @@ MUST define service-specific repository interfaces in Domain layer. MUST impleme
 | MongoDB | `TextSnippetRootRepository<TEntity>`  | `PlatformMongoDbRootRepository<TEntity, string, TDbContext>` |
 
 ```csharp
-// src/Backend/PlatformExampleApp.TextSnippet.Domain/Repositories/ITextSnippetRepository.cs:6
+// src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/Repositories/ITextSnippetRepository.cs:6
 public interface ITextSnippetRepository<TEntity> : IPlatformQueryableRepository<TEntity, string>
     where TEntity : class, IEntity<string>, new() { }
 
@@ -119,7 +119,7 @@ public interface ITextSnippetRootRepository<TEntity> : IPlatformQueryableRootRep
 ```
 
 ```csharp
-// EF Core impl: src/Backend/PlatformExampleApp.TextSnippet.Persistence/TextSnippetRepository.cs:20
+// EF Core impl: src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence/TextSnippetRepository.cs:20
 internal sealed class TextSnippetRootRepository<TEntity>
     : PlatformEfCoreRootRepository<TEntity, string, TextSnippetDbContext>, ITextSnippetRootRepository<TEntity>
     where TEntity : class, IRootEntity<string>, new()
@@ -152,7 +152,7 @@ internal sealed class TextSnippetRootRepository<TEntity>
 MUST use `PlatformCqrsCommand<TResult>` for commands. Handler MUST be `internal sealed`. Command class MUST be `public sealed`. MUST override `Validate()` on command for self-validation.
 
 ```csharp
-// src/Backend/.../UseCaseCommands/SaveSnippetTextCommand.cs:26
+// src/PlatformExampleApp/.../UseCaseCommands/SaveSnippetTextCommand.cs:26
 public sealed class SaveSnippetTextCommand : PlatformCqrsCommand<SaveSnippetTextCommandResult>
 {
     public TextSnippetEntityDto Data { get; set; }
@@ -171,7 +171,7 @@ public sealed class SaveSnippetTextCommandResult : PlatformCqrsCommandResult
     public TextSnippetEntityDto SavedData { get; set; }
 }
 
-// Handler: src/Backend/.../UseCaseCommands/SaveSnippetTextCommand.cs:59
+// Handler: src/PlatformExampleApp/.../UseCaseCommands/SaveSnippetTextCommand.cs:59
 internal sealed class SaveSnippetTextCommandHandler
     : PlatformCqrsCommandApplicationHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
 {
@@ -203,13 +203,13 @@ internal sealed class SaveSnippetTextCommandHandler
 MUST use `PlatformCqrsQuery<TResult>` or `PlatformCqrsPagedQuery<TResult, TItemDto>` for paged queries. Paged queries get `SkipCount`/`MaxResultCount` automatically. The example app's exposed snippet/task lists reuse `TextSnippetPagedQuery` for a default20 and accepted sizes1..200, rejecting negative offsets. Shared platform queries retain their documented nullable unlimited contract; do not impose app policy on generic callers.
 
 ```csharp
-// src/Backend/.../UseCaseQueries/SearchSnippetTextQuery.cs:20
+// src/PlatformExampleApp/.../UseCaseQueries/SearchSnippetTextQuery.cs:20
 public sealed class SearchSnippetTextQuery : PlatformCqrsPagedQuery<SearchSnippetTextQueryResult, TextSnippetEntityDto>
 {
     public string SearchText { get; set; }
 }
 
-// Handler: src/Backend/.../UseCaseQueries/SearchSnippetTextQuery.cs:73
+// Handler: src/PlatformExampleApp/.../UseCaseQueries/SearchSnippetTextQuery.cs:73
 internal sealed class SearchSnippetTextQueryHandler
     : PlatformCqrsQueryApplicationHandler<SearchSnippetTextQuery, SearchSnippetTextQueryResult>
 {
@@ -237,7 +237,7 @@ internal sealed class SearchSnippetTextQueryHandler
 MUST extend `PlatformBaseController`. Dispatch via `Cqrs.SendQuery(request)` / `Cqrs.SendCommand(request)`.
 
 ```csharp
-// src/Backend/PlatformExampleApp.TextSnippet.Api/Controllers/TextSnippetController.cs:22
+// src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/Controllers/TextSnippetController.cs:22
 [Route("api/[controller]")]
 [ApiController]
 public class TextSnippetController : PlatformBaseController
@@ -274,7 +274,7 @@ NEVER throw exceptions for validation. MUST use `PlatformValidationResult<T>` fl
 // BAD: throwing exceptions
 if (entity.CreatedByUserId != userId) throw new Exception("No permission");
 
-// GOOD: fluent validation chain (src/Backend/.../SaveSnippetTextCommand.cs:312)
+// GOOD: fluent validation chain (src/PlatformExampleApp/.../SaveSnippetTextCommand.cs:312)
 var validEntity = await toSaveEntity
     .ValidateSavePermission(userId: RequestContext.UserId<string>())  // entity/app helper -> WithPermissionException
     .And(entity => toSaveEntity.ValidateSomeSpecificIsXxxLogic())     // WithDomainException
@@ -287,12 +287,12 @@ var validEntity = await toSaveEntity
 `PlatformExpressionValidator<T>` validators expose `.ValidExpr` for reuse in repository queries:
 
 ```csharp
-// src/Backend/.../TextSnippetEntity.cs:321
+// src/PlatformExampleApp/.../TextSnippetEntity.cs:321
 public static PlatformExpressionValidator<TextSnippetEntity> SavePermissionValidator(string userId)
     => new(must: p => p.CreatedByUserId == null || userId == null || p.CreatedByUserId == userId,
            errorMessage: "User must be the creator");
 
-// Reuse in queries: src/Backend/.../SaveSnippetTextCommand.cs:349
+// Reuse in queries: src/PlatformExampleApp/.../SaveSnippetTextCommand.cs:349
 var permittedEntities = await repository.GetAllAsync(
     predicate: TextSnippetEntity.SavePermissionValidator(userId).ValidExpr, cancellationToken);
 ```
@@ -311,7 +311,7 @@ DTOs MUST own mapping logic. MUST extend `PlatformEntityDto<TEntity, TKey>`. Han
 | `dto.Validate()`               | -             | Validate mapped entity    |
 
 ```csharp
-// src/Backend/.../Dtos/EntityDtos/TextSnippetEntityDto.cs:17
+// src/PlatformExampleApp/.../Dtos/EntityDtos/TextSnippetEntityDto.cs:17
 public sealed class TextSnippetEntityDto : PlatformEntityDto<TextSnippetEntity, string>
 {
     public TextSnippetEntityDto(TextSnippetEntity entity) { Id = entity.Id; SnippetText = entity.SnippetText; /* ... */ }
@@ -336,7 +336,7 @@ public sealed class TextSnippetEntityDto : PlatformEntityDto<TextSnippetEntity, 
 MUST use `With*` pattern to populate optional/related data on DTOs:
 
 ```csharp
-// src/Backend/.../TextSnippetEntityDto.cs:157
+// src/PlatformExampleApp/.../TextSnippetEntityDto.cs:157
 public TextSnippetEntityDto WithCategory(TextSnippetCategory? category) { ... return this; }
 public TextSnippetEntityDto WithCreatedByUser(string? userName) { ... return this; }
 
@@ -365,7 +365,7 @@ Side effects MUST go in entity event handlers in `UseCaseEvents/`, NEVER in comm
 | `@event.CrudAction`                             | `Created` / `Updated` / `Deleted`            |
 
 ```csharp
-// src/Backend/.../UseCaseEvents/ClearCaches/ClearCacheOnSaveSnippetTextEntityEventHandler.cs:12
+// src/PlatformExampleApp/.../UseCaseEvents/ClearCaches/ClearCacheOnSaveSnippetTextEntityEventHandler.cs:12
 internal sealed class ClearCacheOnSaveSnippetTextEntityEventHandler
     : PlatformCqrsEntityEventApplicationHandler<TextSnippetEntity>
 {
@@ -383,7 +383,7 @@ internal sealed class ClearCacheOnSaveSnippetTextEntityEventHandler
 To run a side effect synchronously (ordered with the command, not async) override `EnableInboxEventBusMessage => false`. When the handler itself updates an entity, pass `dismissSendEvent: true` to avoid re-triggering the same event chain.
 
 ```csharp
-// src/Backend/.../UseCaseEvents/Snippet/UpdateCategoryStatsOnSnippetChangeEventHandler.cs:47
+// src/PlatformExampleApp/.../UseCaseEvents/Snippet/UpdateCategoryStatsOnSnippetChangeEventHandler.cs:47
 public override bool EnableInboxEventBusMessage => false; // run sync, in-order with command
 
 // loop prevention when handler writes back (same file:139)
@@ -395,7 +395,7 @@ await categoryRepository.UpdateAsync(category, dismissSendEvent: true, cancellat
 For batch CRUD, extend `PlatformCqrsBulkEntitiesEventApplicationHandler<TEntity, TKey>` — exposes `@event.Entities` and per-id `@event.DomainEvents`.
 
 ```csharp
-// src/Backend/.../UseCaseEvents/DemoBulkEntitiesEventHandler.cs:13
+// src/PlatformExampleApp/.../UseCaseEvents/DemoBulkEntitiesEventHandler.cs:13
 internal sealed class DemoBulkEntitiesEventHandler
     : PlatformCqrsBulkEntitiesEventApplicationHandler<TextSnippetEntity, string>
 {
@@ -421,13 +421,13 @@ Cross-service communication MUST use RabbitMQ message bus. NEVER direct database
 | Free-format Request | `IPlatformApplicationBusMessageProducer.SendAsync(msg)`          | `PlatformApplicationMessageBusConsumer<TMessage>`          | `[LeaderService]+XXX+RequestBusMessage` |
 
 ```csharp
-// Producer: src/Backend/.../MessageBus/Producers/.../TextSnippetEntityEventBusMessageProducer.cs:9
+// Producer: src/PlatformExampleApp/.../MessageBus/Producers/.../TextSnippetEntityEventBusMessageProducer.cs:9
 public class TextSnippetEntityEventBusMessageProducer
     : PlatformCqrsEntityEventBusMessageProducer<TextSnippetEntityEventBusMessage, TextSnippetEntity, string> { }
 
 public class TextSnippetEntityEventBusMessage : PlatformCqrsEntityEventBusMessage<TextSnippetEntity, string> { }
 
-// Consumer: src/Backend/.../MessageBus/Consumers/.../SnippetTextEntityEventBusConsumer.cs:20
+// Consumer: src/PlatformExampleApp/.../MessageBus/Consumers/.../SnippetTextEntityEventBusConsumer.cs:20
 internal sealed class SnippetTextEntityEventBusConsumer
     : PlatformCqrsEntityEventBusMessageConsumer<TextSnippetEntityEventBusMessage, TextSnippetEntity>
 {
@@ -439,10 +439,10 @@ internal sealed class SnippetTextEntityEventBusConsumer
 ### Free-format Messages
 
 ```csharp
-// Event message: src/Backend/.../FreeFormatMessages/EventMessages/DemoSomethingHappenedEventBusMessage.cs:13
+// Event message: src/PlatformExampleApp/.../FreeFormatMessages/EventMessages/DemoSomethingHappenedEventBusMessage.cs:13
 public sealed class DemoSomethingHappenedEventBusMessage : PlatformTrackableBusMessage { }
 
-// Request message: src/Backend/.../FreeFormatMessages/RequestMessages/DemoAskDoSomethingRequestBusMessage.cs:13
+// Request message: src/PlatformExampleApp/.../FreeFormatMessages/RequestMessages/DemoAskDoSomethingRequestBusMessage.cs:13
 public sealed class DemoAskDoSomethingRequestBusMessage : PlatformTrackableBusMessage { }
 ```
 
@@ -496,7 +496,7 @@ Job patterns. Recurring jobs use `[PlatformRecurringJob("cron")]`; the parameter
 | Batch scrolling      | `PlatformApplicationBatchScrollingBackgroundJobExecutor<TEntity, TBatchKey, TParam>` | Parallel batch processing with logical grouping                                                                             |
 
 ```csharp
-// Simple: src/Backend/.../BackgroundJob/TestRecurringBackgroundJobExecutor.cs:19
+// Simple: src/PlatformExampleApp/.../BackgroundJob/TestRecurringBackgroundJobExecutor.cs:19
 [PlatformRecurringJob("0 0 * * *", timeZoneOffset: -7)]
 public sealed class TestRecurringBackgroundJobExecutor : PlatformApplicationBackgroundJobExecutor
 {
@@ -509,7 +509,7 @@ public sealed class TestRecurringBackgroundJobExecutor : PlatformApplicationBack
 ```
 
 ```csharp
-// Paged: src/Backend/.../BackgroundJob/DemoPagedBackgroundJobExecutor.cs:69
+// Paged: src/PlatformExampleApp/.../BackgroundJob/DemoPagedBackgroundJobExecutor.cs:69
 [PlatformRecurringJob("0 3 * * *")]
 public sealed class DemoPagedBackgroundJobExecutor : PlatformApplicationPagedBackgroundJobExecutor<DemoPagedParam>
 {
@@ -524,7 +524,7 @@ public sealed class DemoPagedBackgroundJobExecutor : PlatformApplicationPagedBac
 Platform data migrations MUST extend `PlatformDataMigrationExecutor<TDbContext>`. Name format: `YYYYMMDD_Description`.
 
 ```csharp
-// src/Backend/.../Persistence/DataMigrations/DemoMigrateUpdateSeedDataWhenSeedDataLogicIsUpdated.cs:7
+// src/PlatformExampleApp/.../Persistence/DataMigrations/DemoMigrateUpdateSeedDataWhenSeedDataLogicIsUpdated.cs:7
 internal sealed class DemoMigrateUpdateSeedDataWhenSeedDataLogicIsUpdated : PlatformDataMigrationExecutor<TextSnippetDbContext>
 {
     public override string Name => "20220130_DemoMigrateUpdateSeedDataWhenSeedDataLogicIsUpdated";
@@ -541,7 +541,7 @@ EF Core schema migrations live in `Persistence/Migrations/` (standard EF Core mi
 MUST extend `PlatformApplicationDataSeeder`. MUST use `CreateOrUpdateAsync` with `customCheckExistingPredicate` for idempotent seeding.
 
 ```csharp
-// src/Backend/.../DataSeeders/TextSnippetApplicationDataSeeder.cs:14
+// src/PlatformExampleApp/.../DataSeeders/TextSnippetApplicationDataSeeder.cs:14
 public sealed class TextSnippetApplicationDataSeeder : PlatformApplicationDataSeeder
 {
     protected override async Task InternalSeedData(bool isReplaceNewSeed = false)

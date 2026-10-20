@@ -1275,17 +1275,8 @@ function lookupComplete(config, filePath, opts = {}) {
     const rel = toRepoRelative(filePath, projectDir, opts.cwd || projectDir);
     if (!rel) return { rel: null, entries: [], text: '', forms: {}, pages: [] };
     const ctx = { readContent: typeof opts.readContent === 'function' ? opts.readContent : createContentReader(projectDir) };
-    const unresolvedClasses = [];
-    const entries = sortEntries(injectableEntries(config).filter(entry => {
-        const match = explainGroupMatch(entry.group, rel, ctx);
-        if (match.incomplete) unresolvedClasses.push(entry.name);
-        return match.member;
-    }));
+    const entries = sortEntries(injectableEntries(config).filter(entry => groupMatches(entry.group, rel, ctx)));
     const forms = Object.fromEntries(entries.map(entry => [entry.name, 'full']));
-    if (unresolvedClasses.length) {
-        const text = `[conventions] Complete lookup is incomplete: matching timed out or failed for ${unresolvedClasses.join(', ')}. Simplify the configured path regexes and repeat before acting.`;
-        return { rel, entries, forms, pages: [], text, incomplete: true, unresolvedClasses };
-    }
     const body = composeText(entries, forms, [rel], { ...opts, projectDir, trigger: TRIGGER_EDIT });
     const chunks = [];
     // Leave room for the page header and continuation instruction. Splits preserve every character,
@@ -1303,7 +1294,7 @@ function lookupComplete(config, filePath, opts = {}) {
         chunk,
         i + 1 < chunks.length ? `[conventions] REQUIRED: repeat this lookup with --page ${i + 2} before acting.` : '[conventions] Complete lookup finished.'
     ].join('\n'));
-    return { rel, entries, forms, pages, text: pages[0] || '', incomplete: false, unresolvedClasses };
+    return { rel, entries, forms, pages, text: pages[0] || '' };
 }
 
 module.exports = {
@@ -1387,7 +1378,6 @@ function runCli(argv) {
     if (!Number.isSafeInteger(page) || page < 1) { process.stderr.write('Invalid --page; use a positive integer.\n'); return 2; }
     const result = lookup(config, argv[index + 1], { projectDir, cwd: process.cwd(), complete });
     if (complete && !result.rel) { process.stderr.write('Complete lookup rejected this path; use a supported path within the project before acting.\n'); return 1; }
-    if (complete && result.incomplete) { process.stderr.write(result.text + '\n'); return 1; }
     const totalPages = result.pages?.length || 1;
     if (page > totalPages) { process.stderr.write(`Page ${page} does not exist; lookup has ${totalPages} page(s).\n`); return 2; }
     const text = result.pages ? (result.pages[page - 1] || '') : result.text;

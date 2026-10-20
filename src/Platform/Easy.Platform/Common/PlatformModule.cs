@@ -424,13 +424,26 @@ public interface IPlatformModule
     /// The method uses a polling mechanism with configurable timeout and interval settings,
     /// ensuring robust operation in distributed and high-latency environments.
     /// </remarks>
-    public static async Task WaitForAllModulesInitializedAsync(
+    public static Task WaitForAllModulesInitializedAsync(
         IServiceProvider serviceProvider,
         Type moduleType,
         ILogger logger = null,
         string logSuffix = null,
         bool notLogging = true)
     {
+        return WaitForAllModulesInitializedAsync(serviceProvider, moduleType, CancellationToken.None, logger, logSuffix, notLogging);
+    }
+
+    /// <summary>Waits for module readiness without outliving the operation that needs those modules.</summary>
+    public static async Task WaitForAllModulesInitializedAsync(
+        IServiceProvider serviceProvider,
+        Type moduleType,
+        CancellationToken cancellationToken,
+        ILogger logger = null,
+        string logSuffix = null,
+        bool notLogging = true)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         if (serviceProvider.GetServices(moduleType).Select(p => p.As<IPlatformModule>()).All(p => p.IsFullyInitialized))
             return;
 
@@ -444,8 +457,9 @@ public interface IPlatformModule
             {
                 var modules = serviceProvider.GetServices(moduleType).Select(p => p.As<IPlatformModule>());
 
-                return Task.FromResult(modules.All(p => p.IsFullyInitialized));
+                return modules.All(p => p.IsFullyInitialized);
             },
+            cancellationToken,
             serviceProvider.GetServices(moduleType).Count() * DefaultInitializationTimeoutSeconds,
             waitForMsg: $"Wait for all modules of type {moduleType.Name} get initiated",
             waitIntervalSeconds: 5

@@ -54,8 +54,8 @@ Read the relevant project convention before changing these files.
 
 | Files | Project reference |
 |---|---|
-| src[\\/]Backend[\\/], src[\\/]Platform[\\/]; extensions: .cs, .csproj | `docs/project-reference/backend-patterns-reference.md` |
-| src[\\/]Frontend[\\/]; extensions: .ts, .html, .scss | `docs/project-reference/frontend-patterns-reference.md` |
+| src[\\/]PlatformExampleApp[\\/], src[\\/]Platform[\\/]; extensions: .cs, .csproj | `docs/project-reference/backend-patterns-reference.md` |
+| src[\\/]PlatformExampleAppWeb[\\/]; extensions: .ts, .html, .scss | `docs/project-reference/frontend-patterns-reference.md` |
 
 <!-- /SECTION:golden-rules -->
 
@@ -96,11 +96,11 @@ Read the relevant project convention before changing these files.
 <!-- SECTION:dev-commands -->
 
 ```bash
-dotnet test src/Backend/PlatformExampleApp.Test/ # backend-unit
-dotnet test src/Backend/PlatformExampleApp.IntegrationTests/ # backend-integration
-dotnet test src/Backend/PlatformExampleApp.Test.BDD/ # backend-bdd
-cd src/Frontend && npm test                   # frontend-unit
-cd src/Frontend/e2e && npx playwright test    # e2e
+dotnet test src/PlatformExampleApp/PlatformExampleApp.Test/ # backend-unit
+dotnet test src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/ # backend-integration
+dotnet test src/PlatformExampleApp/PlatformExampleApp.Test.BDD/ # backend-bdd
+cd src/PlatformExampleAppWeb && npm test                   # frontend-unit
+cd src/PlatformExampleAppWeb/e2e && npx playwright test    # e2e
 ```
 
 <!-- /SECTION:dev-commands -->

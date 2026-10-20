@@ -61,8 +61,8 @@ A new service host can reuse this graph, register its own API module and provide
 From the repository root:
 
 ```powershell
-dotnet build src/Backend/PlatformExampleApp.ModularMonolith.Api/PlatformExampleApp.ModularMonolith.Api.csproj --nologo
-dotnet test src/Backend/PlatformExampleApp.IntegrationTests/PlatformExampleApp.IntegrationTests.csproj --no-restore --nologo --filter "FullyQualifiedName~PlatformExampleApp.IntegrationTests.ModularMonolith"
+dotnet build src/PlatformExampleApp/PlatformExampleApp.ModularMonolith.Api/PlatformExampleApp.ModularMonolith.Api.csproj --nologo
+dotnet test src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/PlatformExampleApp.IntegrationTests.csproj --no-restore --nologo --filter "FullyQualifiedName~PlatformExampleApp.IntegrationTests.ModularMonolith"
 ```
 
 The integration test requires the repository's configured local infrastructure. Use the preflight in `docs/project-config.json` before broker-backed runs; store disposable reports under `tmp/`.

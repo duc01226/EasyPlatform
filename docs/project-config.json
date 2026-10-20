@@ -103,7 +103,7 @@
         {
             "name": "TextSnippet.Api",
             "kind": "backend-service",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Api[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.TextSnippet\\.Api[\\\\/]",
             "description": "Example app API host — controllers, DI modules, startup",
             "tags": ["example-app", "api"],
             "meta": {
@@ -113,98 +113,98 @@
         {
             "name": "TextSnippet.Application",
             "kind": "backend-service",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Application[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.TextSnippet\\.Application[\\\\/]",
             "description": "Example app application layer — CQRS commands, queries, DTOs, event handlers",
             "tags": ["example-app", "application"]
         },
         {
             "name": "TextSnippet.Domain",
             "kind": "backend-service",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Domain[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.TextSnippet\\.Domain[\\\\/]",
             "description": "Example app domain layer — entities, repositories, domain events",
             "tags": ["example-app", "domain"]
         },
         {
             "name": "TextSnippet.Infrastructure",
             "kind": "backend-service",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Infrastructure[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.TextSnippet\\.Infrastructure[\\\\/]",
             "description": "Example app infrastructure — external service integrations",
             "tags": ["example-app", "infrastructure"]
         },
         {
             "name": "TextSnippet.Persistence",
             "kind": "backend-service",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence[\\\\/]",
             "description": "Example app EF Core persistence (SQL Server/PostgreSQL)",
             "tags": ["example-app", "persistence", "efcore"]
         },
         {
             "name": "TextSnippet.Persistence.Mongo",
             "kind": "backend-service",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence\\.Mongo[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence\\.Mongo[\\\\/]",
             "description": "Example app MongoDB persistence",
             "tags": ["example-app", "persistence", "mongodb"]
         },
         {
             "name": "TextSnippet.Persistence.PostgreSql",
             "kind": "backend-service",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence\\.PostgreSql[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence\\.PostgreSql[\\\\/]",
             "description": "Example app PostgreSQL-specific persistence",
             "tags": ["example-app", "persistence", "postgresql"]
         },
         {
             "name": "PlatformExampleApp.Shared",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Shared[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.Shared[\\\\/]",
             "description": "Shared DTOs and message contracts across example app services",
             "tags": ["example-app", "shared"]
         },
         {
             "name": "TextSnippet.Persistence.MultiDbDemo.Mongo",
             "kind": "backend-service",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence\\.MultiDbDemo\\.Mongo[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence\\.MultiDbDemo\\.Mongo[\\\\/]",
             "description": "Example app multi-database demo MongoDB persistence",
             "tags": ["example-app", "persistence", "mongodb", "multi-db-demo"]
         },
         {
             "name": "PlatformExampleApp.Ids",
             "kind": "backend-service",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Ids[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.Ids[\\\\/]",
             "description": "Identity server — authentication and authorization",
             "tags": ["example-app", "identity"]
         },
         {
             "name": "PlatformExampleApp.IntegrationTests",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.IntegrationTests[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.IntegrationTests[\\\\/]",
             "description": "Integration test suite for example app",
             "tags": ["example-app", "testing", "integration"]
         },
         {
             "name": "PlatformExampleApp.Test.Shared",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Test\\.Shared[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.Test\\.Shared[\\\\/]",
             "description": "Shared test utilities and helpers across test projects",
             "tags": ["example-app", "testing", "shared"]
         },
         {
             "name": "PlatformExampleApp.Test",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Test[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.Test[\\\\/]",
             "description": "Unit test project for example app",
             "tags": ["example-app", "testing", "unit"]
         },
         {
             "name": "PlatformExampleApp.Test.BDD",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Test\\.BDD[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.Test\\.BDD[\\\\/]",
             "description": "BDD test project for example app",
             "tags": ["example-app", "testing", "bdd"]
         },
         {
             "name": "PlatformExampleApp.Benchmark",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Benchmark[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleApp[\\\\/]PlatformExampleApp\\.Benchmark[\\\\/]",
             "description": "Benchmarking project",
             "tags": ["example-app", "benchmark"]
         },
@@ -232,42 +232,42 @@
         {
             "name": "playground-text-snippet",
             "kind": "frontend-app",
-            "pathRegex": "src[\\\\/]Frontend[\\\\/]apps[\\\\/]playground-text-snippet[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleAppWeb[\\\\/]apps[\\\\/]playground-text-snippet[\\\\/]",
             "description": "Angular frontend app for TextSnippet example",
             "tags": ["example-app", "angular", "frontend"]
         },
         {
             "name": "platform-core",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]platform-core[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleAppWeb[\\\\/]libs[\\\\/]platform-core[\\\\/]",
             "description": "Frontend framework core — base components, stores, API services, utilities",
             "tags": ["framework", "angular", "frontend"]
         },
         {
             "name": "text-snippet-domain",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]apps-domains[\\\\/]text-snippet-domain[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleAppWeb[\\\\/]libs[\\\\/]apps-domains[\\\\/]text-snippet-domain[\\\\/]",
             "description": "Frontend domain library for TextSnippet",
             "tags": ["example-app", "angular", "domain"]
         },
         {
             "name": "apps-domains-components",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]apps-domains-components[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleAppWeb[\\\\/]libs[\\\\/]apps-domains-components[\\\\/]",
             "description": "Domain-specific UI components",
             "tags": ["angular", "components"]
         },
         {
             "name": "apps-shared-components",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]apps-shared-components[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleAppWeb[\\\\/]libs[\\\\/]apps-shared-components[\\\\/]",
             "description": "Shared UI components across apps",
             "tags": ["angular", "components", "shared"]
         },
         {
             "name": "platform-components",
             "kind": "library",
-            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]platform-components[\\\\/]",
+            "pathRegex": "src[\\\\/]PlatformExampleAppWeb[\\\\/]libs[\\\\/]platform-components[\\\\/]",
             "description": "Platform-level reusable UI components",
             "tags": ["framework", "angular", "components"]
         }
@@ -275,7 +275,7 @@
     "contextGroups": [
         {
             "name": "backend",
-            "pathRegexes": ["src[\\\\/]Backend[\\\\/]", "src[\\\\/]Platform[\\\\/]"],
+            "pathRegexes": ["src[\\\\/]PlatformExampleApp[\\\\/]", "src[\\\\/]Platform[\\\\/]"],
             "fileExtensions": [".cs", ".csproj"],
             "patternsDoc": "docs/project-reference/backend-patterns-reference.md",
             "rules": [
@@ -289,7 +289,7 @@
         },
         {
             "name": "frontend",
-            "pathRegexes": ["src[\\\\/]Frontend[\\\\/]"],
+            "pathRegexes": ["src[\\\\/]PlatformExampleAppWeb[\\\\/]"],
             "fileExtensions": [".ts", ".html", ".scss"],
             "patternsDoc": "docs/project-reference/frontend-patterns-reference.md",
             "stylingDoc": "docs/project-reference/scss-styling-guide.md",
@@ -310,7 +310,7 @@
         "appMappings": [
             {
                 "name": "playground-text-snippet",
-                "pathRegexes": ["src[\\\\/]Frontend[\\\\/]apps[\\\\/]playground-text-snippet[\\\\/]"],
+                "pathRegexes": ["src[\\\\/]PlatformExampleAppWeb[\\\\/]apps[\\\\/]playground-text-snippet[\\\\/]"],
                 "docFile": "docs/project-reference/design-system/README.md",
                 "description": "TextSnippet example app frontend"
             }
@@ -321,18 +321,18 @@
         "fileExtensions": [".scss"],
         "guideDoc": "docs/project-reference/scss-styling-guide.md",
         "appMap": {
-            "playground-text-snippet": "src[\\\\/]Frontend[\\\\/]apps[\\\\/]playground-text-snippet[\\\\/].*\\.scss$"
+            "playground-text-snippet": "src[\\\\/]PlatformExampleAppWeb[\\\\/]apps[\\\\/]playground-text-snippet[\\\\/].*\\.scss$"
         },
         "patterns": [
             {
                 "name": "component-styles",
-                "pathRegexes": ["src[\\\\/]Frontend[\\\\/].*\\.component\\.scss$"],
+                "pathRegexes": ["src[\\\\/]PlatformExampleAppWeb[\\\\/].*\\.component\\.scss$"],
                 "description": "Component-scoped SCSS files using BEM naming",
                 "scssExamples": [".block__element--modifier { }"]
             },
             {
                 "name": "global-styles",
-                "pathRegexes": ["src[\\\\/]Frontend[\\\\/]apps[\\\\/].*[\\\\/]src[\\\\/]styles[\\\\/].*\\.scss$"],
+                "pathRegexes": ["src[\\\\/]PlatformExampleAppWeb[\\\\/]apps[\\\\/].*[\\\\/]src[\\\\/]styles[\\\\/].*\\.scss$"],
                 "description": "Global styles and Material component overrides"
             }
         ]
@@ -342,11 +342,11 @@
         "selectorPrefixes": ["app-", "platform-example-web-"],
         "filePattern": "*.component.ts",
         "layerClassification": {
-            "platform-core": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]platform-core[\\\\/]",
-            "platform-components": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]platform-components[\\\\/]",
-            "shared-components": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]apps-shared-components[\\\\/]",
-            "domain-components": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]apps-domains-components[\\\\/]",
-            "app-components": "src[\\\\/]Frontend[\\\\/]apps[\\\\/]"
+            "platform-core": "src[\\\\/]PlatformExampleAppWeb[\\\\/]libs[\\\\/]platform-core[\\\\/]",
+            "platform-components": "src[\\\\/]PlatformExampleAppWeb[\\\\/]libs[\\\\/]platform-components[\\\\/]",
+            "shared-components": "src[\\\\/]PlatformExampleAppWeb[\\\\/]libs[\\\\/]apps-shared-components[\\\\/]",
+            "domain-components": "src[\\\\/]PlatformExampleAppWeb[\\\\/]libs[\\\\/]apps-domains-components[\\\\/]",
+            "app-components": "src[\\\\/]PlatformExampleAppWeb[\\\\/]apps[\\\\/]"
         }
     },
     "testing": {
@@ -359,49 +359,49 @@
             "e2e-frontend": "e2e/**/*.spec.ts"
         },
         "commands": {
-            "backend-unit": "dotnet test src/Backend/PlatformExampleApp.Test/",
-            "backend-integration": "dotnet test src/Backend/PlatformExampleApp.IntegrationTests/",
-            "backend-bdd": "dotnet test src/Backend/PlatformExampleApp.Test.BDD/",
-            "frontend-unit": "cd src/Frontend && npm test",
-            "e2e": "cd src/Frontend/e2e && npx playwright test"
+            "backend-unit": "dotnet test src/PlatformExampleApp/PlatformExampleApp.Test/",
+            "backend-integration": "dotnet test src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/",
+            "backend-bdd": "dotnet test src/PlatformExampleApp/PlatformExampleApp.Test.BDD/",
+            "frontend-unit": "cd src/PlatformExampleAppWeb && npm test",
+            "e2e": "cd src/PlatformExampleAppWeb/e2e && npx playwright test"
         },
         "guideDoc": "docs/project-reference/integration-test-reference.md"
     },
     "integrationTestVerify": {
-        "guidance": "BLOCKING PREREQUISITE: the easyplatform-example infrastructure stack (sql-data, mongo-data, postgres-sql, rabbitmq, redis-cache) must be running before any integration test run. The suite connects to fixed localhost ports (Mongo 27017, RabbitMQ 5672, Redis 6379, Postgres 54320, SQL Server 14330) declared in src/Backend/PlatformExampleApp.IntegrationTests/appsettings.json. Those ports are NOT proof the right stack is up: any other Docker Compose project publishing the same ports will accept the connections and the suite will run green-or-red against foreign infrastructure with no error. Always verify container IDENTITY via systemCheckCommand (compose-project label), never mere connectivity. Empty systemCheckCommand output means NOT started, even if the ports respond. The text-snippet-api container is NOT required: the suite hosts the API in-process via WebApplicationFactory with port binding disabled (see WebAppFactory/TextSnippetWebApplicationFactory.cs); a separately running API is a conflict risk, not a dependency.",
+        "guidance": "BLOCKING PREREQUISITE: the easyplatform-example infrastructure stack (sql-data, mongo-data, postgres-sql, rabbitmq, redis-cache) must be running before any integration test run. The suite connects to fixed localhost ports (Mongo 27017, RabbitMQ 5672, Redis 6379, Postgres 54320, SQL Server 14330) declared in src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/appsettings.json. Those ports are NOT proof the right stack is up: any other Docker Compose project publishing the same ports will accept the connections and the suite will run green-or-red against foreign infrastructure with no error. Always verify container IDENTITY via systemCheckCommand (compose-project label), never mere connectivity. Empty systemCheckCommand output means NOT started, even if the ports respond. The text-snippet-api container is NOT required: the suite hosts the API in-process via WebApplicationFactory with port binding disabled (see WebAppFactory/TextSnippetWebApplicationFactory.cs); a separately running API is a conflict risk, not a dependency.",
         "referenceDocs": ["docs/project-reference/integration-test-reference.md"],
         "startupScript": "src/start-dev-platform-example-app.infrastructure.cmd",
         "runScript": "src/start-dev-platform-example-app.cmd",
         "systemCheckCommand": "docker ps --filter \"label=com.docker.compose.project=easyplatform-example\" --format \"{{.Names}} => {{.Status}}\"",
         "quickRunCommand": "dotnet test",
         "testProjectPattern": "**/*.IntegrationTests.csproj",
-        "testProjects": ["src/Backend/PlatformExampleApp.IntegrationTests/PlatformExampleApp.IntegrationTests.csproj"]
+        "testProjects": ["src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/PlatformExampleApp.IntegrationTests.csproj"]
     },
     "e2eTesting": {
         "framework": "playwright",
         "language": "typescript",
-        "configFile": "src/Frontend/e2e/playwright.config.ts",
-        "testsPath": "src/Frontend/e2e/tests/",
-        "pageObjectsPath": "src/Frontend/e2e/page-objects/",
-        "fixturesPath": "src/Frontend/e2e/fixtures/",
+        "configFile": "src/PlatformExampleAppWeb/e2e/playwright.config.ts",
+        "testsPath": "src/PlatformExampleAppWeb/e2e/tests/",
+        "pageObjectsPath": "src/PlatformExampleAppWeb/e2e/page-objects/",
+        "fixturesPath": "src/PlatformExampleAppWeb/e2e/fixtures/",
         "guideDoc": "docs/project-reference/e2e-test-reference.md",
         "testSpecsDocs": [],
         "searchPatterns": ["test\\(['\"]", "\\.spec\\.ts$"],
         "runCommands": {
-            "all": "cd src/Frontend/e2e && npx playwright test",
-            "headed": "cd src/Frontend/e2e && npx playwright test --headed",
-            "ui": "cd src/Frontend/e2e && npx playwright test --ui",
-            "smoke": "cd src/Frontend/e2e && npx playwright test --grep @P0",
-            "debug": "cd src/Frontend/e2e && npx playwright test --debug"
+            "all": "cd src/PlatformExampleAppWeb/e2e && npx playwright test",
+            "headed": "cd src/PlatformExampleAppWeb/e2e && npx playwright test --headed",
+            "ui": "cd src/PlatformExampleAppWeb/e2e && npx playwright test --ui",
+            "smoke": "cd src/PlatformExampleAppWeb/e2e && npx playwright test --grep @P0",
+            "debug": "cd src/PlatformExampleAppWeb/e2e && npx playwright test --debug"
         },
         "tcCodeFormat": "UNSTANDARDIZED: TS-{MODULE}-{Pn}-{NNN} (dominant) and TC-{MODULE}-{AREA}-{NNN} coexist",
         "stats": {
-            "specFilesGrepExpr": "find src/Frontend/e2e/tests -name '*.spec.ts'",
-            "testBlocksGrepExpr": "grep -rE \"\\btest\\(['\\\"]\" src/Frontend/e2e/tests",
-            "describeBlocksGrepExpr": "grep -rE \"test\\.describe\\(\" src/Frontend/e2e/tests",
-            "pageObjectsGrepExpr": "grep -rE 'extends BasePage' src/Frontend/e2e/page-objects",
-            "priorityTagsGrepExpr": "grep -roE '@P[0-3]' src/Frontend/e2e/tests",
-            "tcIdsGrepExpr": "grep -rnoE 'T[CS]-[A-Z]+-[A-Z0-9]+-[0-9]+' src/Frontend/e2e/tests"
+            "specFilesGrepExpr": "find src/PlatformExampleAppWeb/e2e/tests -name '*.spec.ts'",
+            "testBlocksGrepExpr": "grep -rE \"\\btest\\(['\\\"]\" src/PlatformExampleAppWeb/e2e/tests",
+            "describeBlocksGrepExpr": "grep -rE \"test\\.describe\\(\" src/PlatformExampleAppWeb/e2e/tests",
+            "pageObjectsGrepExpr": "grep -rE 'extends BasePage' src/PlatformExampleAppWeb/e2e/page-objects",
+            "priorityTagsGrepExpr": "grep -roE '@P[0-3]' src/PlatformExampleAppWeb/e2e/tests",
+            "tcIdsGrepExpr": "grep -rnoE 'T[CS]-[A-Z]+-[A-Z0-9]+-[0-9]+' src/PlatformExampleAppWeb/e2e/tests"
         },
         "architecture": {
             "summary": "Self-contained Playwright project; single chromium project; POM root BasePage; custom test/expect fixture (utils/test-helpers.ts) with passive ConsoleErrorTracker; ApiHelpers for API arrange/cleanup.",
@@ -409,7 +409,7 @@
             "bddFramework": null
         },
         "bestPractices": [],
-        "entryPoints": ["src/Frontend/e2e/playwright.config.ts", "src/Frontend/e2e/fixtures/test-data.ts", "src/Frontend/e2e/page-objects/base.page.ts"]
+        "entryPoints": ["src/PlatformExampleAppWeb/e2e/playwright.config.ts", "src/PlatformExampleAppWeb/e2e/fixtures/test-data.ts", "src/PlatformExampleAppWeb/e2e/page-objects/base.page.ts"]
     },
     "databases": {
         "primary": "MongoDB",
@@ -539,14 +539,14 @@
             "frontend": {
                 "framework": "angular",
                 "paths": [
-                    "src/Frontend/apps/playground-text-snippet/",
-                    "src/Frontend/libs/apps-domains/text-snippet-domain/",
-                    "src/Frontend/libs/platform-core/"
+                    "src/PlatformExampleAppWeb/apps/playground-text-snippet/",
+                    "src/PlatformExampleAppWeb/libs/apps-domains/text-snippet-domain/",
+                    "src/PlatformExampleAppWeb/libs/platform-core/"
                 ]
             },
             "backend": {
                 "framework": "dotnet",
-                "paths": ["src/Backend/PlatformExampleApp.TextSnippet.Api/Controllers/"],
+                "paths": ["src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/Controllers/"],
                 "routePrefix": "api"
             }
         },
@@ -555,7 +555,7 @@
                 "name": "entity-definition-to-event-handlers",
                 "description": "Entity classes → EntityEventApplicationHandlers that react to entity changes",
                 "edgeKind": "MESSAGE_BUS",
-                "paths": ["src/Backend/PlatformExampleApp.TextSnippet.Domain/", "src/Backend/PlatformExampleApp.TextSnippet.Application/UseCaseEvents/"],
+                "paths": ["src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/", "src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/UseCaseEvents/"],
                 "source": {
                     "filePattern": "*.cs",
                     "contentPattern": "class\\s+(\\w+)\\s*:.*(?:RootEntity|RootAuditedEntity)<",
@@ -572,7 +572,7 @@
                 "name": "entity-event-producers",
                 "description": "Entity event bus producers that publish entity events to message bus",
                 "edgeKind": "MESSAGE_BUS",
-                "paths": ["src/Backend/PlatformExampleApp.TextSnippet.Application/MessageBus/Producers/"],
+                "paths": ["src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/MessageBus/Producers/"],
                 "source": {
                     "filePattern": "*.cs",
                     "contentPattern": "EntityEventBusMessageProducer<(\\w+)",
@@ -589,7 +589,7 @@
                 "name": "bus-message-producers-to-consumers",
                 "description": "Message bus producers → consumers for entity events across services",
                 "edgeKind": "MESSAGE_BUS",
-                "paths": ["src/Backend/PlatformExampleApp.TextSnippet.Application/MessageBus/"],
+                "paths": ["src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/MessageBus/"],
                 "source": {
                     "filePattern": "*.cs",
                     "contentPattern": "class\\s+(\\w+).*EntityEventBusMessageProducer<",
@@ -607,9 +607,9 @@
                 "description": "Free-format bus message classes → their consumers",
                 "edgeKind": "MESSAGE_BUS",
                 "paths": [
-                    "src/Backend/PlatformExampleApp.TextSnippet.Application/MessageBus/FreeFormatMessages/",
-                    "src/Backend/PlatformExampleApp.TextSnippet.Application/MessageBus/Consumers/FreeFormatConsumers/",
-                    "src/Backend/PlatformExampleApp.Shared/Application/MessageBus/FreeFormatMessages/"
+                    "src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/MessageBus/FreeFormatMessages/",
+                    "src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/MessageBus/Consumers/FreeFormatConsumers/",
+                    "src/PlatformExampleApp/PlatformExampleApp.Shared/Application/MessageBus/FreeFormatMessages/"
                 ],
                 "source": {
                     "filePattern": "*.cs",

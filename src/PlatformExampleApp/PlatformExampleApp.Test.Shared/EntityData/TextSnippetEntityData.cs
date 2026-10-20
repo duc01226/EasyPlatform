@@ -19,6 +19,7 @@ public class TextSnippetEntityData : AutomationTestEntityData
 
     public static class Errors
     {
-        public const string DuplicatedSnippetTextErrorMsg = "SnippetText must be unique";
+        // Save runs TextSnippetEntity.ValidateSomeSpecificIsXxxLogicAsync before the repository unique check, so this is the message users see.
+        public const string DuplicatedSnippetTextErrorMsg = "SnippetText is duplicated";
     }
 }

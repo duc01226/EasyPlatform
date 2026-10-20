@@ -80,6 +80,8 @@ describe('config-loader', () => {
 describe('output-handler', () => {
   const { resolveOutputPath } = require('../scripts/lib/output-handler.cjs');
   const fixturesDir = path.join(__dirname, 'fixtures');
+  // Explicit outputs create their parent directory, so they must live somewhere writable on every OS.
+  const outputDir = path.join(require('os').tmpdir(), 'docx-convert-tests', 'output');
 
   it('should resolve output path from input (no output specified)', () => {
     const result = resolveOutputPath('/path/to/doc.md', null, '.docx');
@@ -88,7 +90,7 @@ describe('output-handler', () => {
   });
 
   it('should use explicit output path', () => {
-    const result = resolveOutputPath('/path/to/doc.md', '/output/file.docx', '.docx');
+    const result = resolveOutputPath('/path/to/doc.md', path.join(outputDir, 'file.docx'), '.docx');
     assert.ok(result.endsWith('.docx'), 'Output should end with .docx');
   });
 
@@ -98,7 +100,7 @@ describe('output-handler', () => {
   });
 
   it('should add .docx extension if missing', () => {
-    const result = resolveOutputPath('/path/to/doc.md', '/output/file', '.docx');
+    const result = resolveOutputPath('/path/to/doc.md', path.join(outputDir, 'file'), '.docx');
     assert.ok(result.endsWith('.docx'), 'Should add .docx extension');
   });
 });

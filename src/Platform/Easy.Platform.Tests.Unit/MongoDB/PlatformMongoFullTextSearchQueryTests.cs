@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Easy.Platform.MongoDB.Services;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +64,32 @@ public class PlatformMongoFullTextSearchQueryTests
             .GetCollection<SearchRow>("Rows").AsQueryable().Where(row => row.Owner == "reader");
 
         search.Search(source, " ", [row => row.Text]).Should().BeSameAs(source);
+    }
+
+    [Theory]
+    [InlineData("a.b", "axb")]
+    [InlineData("(", "anything")]
+    [InlineData("[x]", "x")]
+    [InlineData("a+b", "aaab")]
+    [InlineData("a*b", "b")]
+    [InlineData("a?b", "b")]
+    [InlineData("a|b", "b")]
+    [InlineData("a{2}", "aa")]
+    [InlineData("^word$", "word")]
+    [InlineData(@"a\b", "a tail")]
+    [Trait("TechnicalSpec", "TC-MONGO-SEARCH-003")]
+    public void PrefixSearch_TreatsMetacharactersAsLiteralText(string prefix, string decoy)
+    {
+        var filter = MongoDbPlatformFullTextSearchPersistenceService.BuildStartsWithMongoFilterDefinition<SearchRow>(prefix, [row => row.Text]);
+        var registry = BsonSerializer.SerializerRegistry;
+        var document = filter.Render(new RenderArgs<SearchRow>(registry.GetSerializer<SearchRow>(), registry));
+        var expression = document["$or"][0]["Text"].AsBsonRegularExpression;
+
+        expression.Options.Should().Be("i");
+        var regex = new Regex(expression.Pattern, RegexOptions.IgnoreCase);
+        regex.IsMatch(prefix.ToUpperInvariant() + " tail").Should().BeTrue("literal prefixes remain case-insensitive");
+        regex.IsMatch(decoy).Should().BeFalse("regular-expression syntax must not widen a literal prefix");
+        regex.IsMatch("before " + prefix).Should().BeFalse("a prefix must remain anchored");
     }
 
     // Mongo combines fields implicitly with AND. Descend only through explicit AND, so a

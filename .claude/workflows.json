@@ -11,44 +11,30 @@
       "outcomeGates": [
         {
           "id": "plan-approved",
-          "satisfiedBy": [
-            "plan --mode=validate"
-          ]
+          "satisfiedBy": ["plan --mode=validate"]
         },
         {
           "id": "spec-synced",
-          "satisfiedBy": [
-            "spec [mode=sync]"
-          ],
+          "satisfiedBy": ["spec [mode=sync]"],
           "when": "Behavior or a public contract changed"
         },
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "test",
-            "integration-test --mode=verify"
-          ]
+          "satisfiedBy": ["test", "integration-test --mode=verify"]
         },
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "workflow-review-changes"
-          ]
+          "satisfiedBy": ["workflow-review-changes"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "parallelGroups": [
         {
           "id": "architecture-gates",
-          "members": [
-            "architecture-scalability-gate",
-            "architecture-rationale-review"
-          ],
+          "members": ["architecture-scalability-gate", "architecture-rationale-review"],
           "conditionalMembers": [],
           "barrier": true
         }
@@ -67,9 +53,7 @@
       },
       "preActions": {
         "injectContext": "BIG FEATURE (research-driven, existing codebase). Read .claude/skills/workflow-big-feature/SKILL.md first: it owns triage, the architecture gates, the planned-work chain and the tail; /start-workflow \u2192 Step Execution Protocol owns step flex and the deviation log.\nFIRST: triage size, kind, risk and isLargeIdea (multipleIndependentOutcomes || ambiguousOrResearchHeavy || releaseScopeDecomposition || oversizedTaskThatMustSplit); record it. It selects the research depth, the strategic PLAN1 (large idea or several slices only), the foundation steps and the UI mockup. True isLargeIdea \u2192 the complete large_idea_decomposition block (outcome_slices, dependencies_order, non_goals, risks_evidence, deferred_work_owner) in the owning artifacts; false \u2192 Decomposition Applicability: EXEMPT with reason and owner. Never create {PRODUCT_ROADMAP_DOC}; a supplied roadmap is read-only context.\nRESEARCH & DECISIONS: the research phase (web-research --chain=deep-dive, then market-analysis and business-evaluation only when their conditions hold) is validated with the user once via ask user question tool, and the business case gets one go/no-go confirmation. Major decisions show 2-4 options with confidence %; evaluate the top 3 alternatives before adding any new dependency.\nRELEASABLE TASK: every task is one independently releasable actor-facing outcome (.claude/skills/shared/releasable-task-contract.md); UI tasks carry the connected multi-view mock-app flow, or a recorded Mockup: SKIPPED by user from the scope gate.\nPLANS: /plan --mode=validate is the plan-approved gate and approves the implementation plan before scaffold writes any code.\nTAIL: /workflow-review-changes runs INLINE in the main session; /integration-test --mode=verify proves the change once with its mutation check; /workflow-e2e --source=context runs after the review; /test --proven=@verify and /workflow-end close the run.",
-        "readFiles": [
-          ".claude/skills/workflow-big-feature/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-big-feature/SKILL.md"]
       },
       "sequence": [
         {
@@ -388,9 +372,7 @@
             "big-feature-plan-implementation-review",
             "big-feature-plan-validation"
           ],
-          "exit": [
-            "plan-approved"
-          ]
+          "exit": ["plan-approved"]
         },
         {
           "id": "build",
@@ -403,39 +385,22 @@
             "big-feature-integration-test",
             "big-feature-spec-sync"
           ],
-          "exit": [
-            "spec-synced"
-          ]
+          "exit": ["spec-synced"]
         },
         {
           "id": "review",
-          "steps": [
-            "big-feature-review"
-          ],
-          "exit": [
-            "review-converged"
-          ]
+          "steps": ["big-feature-review"],
+          "exit": ["review-converged"]
         },
         {
           "id": "verify",
-          "steps": [
-            "big-feature-integration-verify",
-            "big-feature-e2e",
-            "big-feature-test"
-          ],
-          "exit": [
-            "tests-pass"
-          ]
+          "steps": ["big-feature-integration-verify", "big-feature-e2e", "big-feature-test"],
+          "exit": ["tests-pass"]
         },
         {
           "id": "close",
-          "steps": [
-            "big-feature-end",
-            "big-feature-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["big-feature-end", "big-feature-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -446,41 +411,29 @@
       "outcomeGates": [
         {
           "id": "root-cause-traced",
-          "satisfiedBy": [
-            "investigate --mode=debug"
-          ]
+          "satisfiedBy": ["investigate --mode=debug"]
         },
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "integration-test --mode=verify"
-          ]
+          "satisfiedBy": ["integration-test --mode=verify"]
         },
         {
           "id": "spec-synced",
-          "satisfiedBy": [
-            "spec"
-          ],
+          "satisfiedBy": ["spec"],
           "when": "A canonical spec or test-case artifact governs the affected area, and behavior or a public contract changed or that spec lacked the case the bug exposed"
         },
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "workflow-review-changes"
-          ]
+          "satisfiedBy": ["workflow-review-changes"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "BUG FIX (lean, TDD-first). Read .claude/skills/workflow-bugfix/SKILL.md (triage, gates, Code Bug vs Spec Bug gate); /start-workflow \u2192 Step Execution Protocol owns step flex.\nFIRST: triage size (XS/S/M/L/XL), kind and risk; it selects which optional steps run.\nNON-NEGOTIABLE:\n- /investigate --mode=debug owns discovery AND root cause: an end-to-start trace from the observed final state backward through every feeder path, a hypothesis matrix that weighs environment causes, the owning fix layer and a forward convergence proof, before any fix.\n- CODE BUG vs SPEC BUG before any regression case or test: Spec Bug \u2192 /spec [mode=amend] first; Ambiguous \u2192 ask the user. Never encode buggy behavior into specs or tests.\n- RED/GREEN (verify last): the regression test is written before /fix and not run; /fix adjusts it when the fix changes its seams. Tests run once, after the static /workflow-review-changes --tests=defer, in /integration-test --mode=verify, whose mutation check reverts the fix by hand-edit (never git checkout/restore/stash) to prove RED, then GREEN. Tests name the Business Intent / Invariant Guarded.\n- /workflow-review-changes runs INLINE in the main session over the whole package (spec + tests + fix).\nPERFORMANCE-SDD ROUTE: a performance bug runs /performance-review with SLA/benchmark evidence (target metric, baseline, measurement command, regression budget); keep functional no-regression checks when behavior can change; update specs/docs for a changed SLA or behavior boundary.\nNEW UI (size M+ only): /work-item --mode=mockup --explore before plan, main session only.",
-        "readFiles": [
-          ".claude/skills/workflow-bugfix/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-bugfix/SKILL.md"]
       },
       "sequence": [
         {
@@ -607,68 +560,36 @@
       "phases": [
         {
           "id": "discover",
-          "steps": [
-            "bugfix-investigate"
-          ],
-          "exit": [
-            "root-cause-traced"
-          ]
+          "steps": ["bugfix-investigate"],
+          "exit": ["root-cause-traced"]
         },
         {
           "id": "specify",
-          "steps": [
-            "bugfix-spec-amend",
-            "bugfix-ui-mockup-explore"
-          ]
+          "steps": ["bugfix-spec-amend", "bugfix-ui-mockup-explore"]
         },
         {
           "id": "plan",
-          "steps": [
-            "bugfix-plan",
-            "bugfix-spec-tests",
-            "bugfix-spec-tests-review"
-          ]
+          "steps": ["bugfix-plan", "bugfix-spec-tests", "bugfix-spec-tests-review"]
         },
         {
           "id": "build",
-          "steps": [
-            "bugfix-regression-red",
-            "bugfix-fix",
-            "bugfix-spec-sync"
-          ],
-          "exit": [
-            "spec-synced"
-          ]
+          "steps": ["bugfix-regression-red", "bugfix-fix", "bugfix-spec-sync"],
+          "exit": ["spec-synced"]
         },
         {
           "id": "review",
-          "steps": [
-            "bugfix-review"
-          ],
-          "exit": [
-            "review-converged"
-          ]
+          "steps": ["bugfix-review"],
+          "exit": ["review-converged"]
         },
         {
           "id": "verify",
-          "steps": [
-            "bugfix-test-verify",
-            "bugfix-e2e",
-            "bugfix-demo-guide"
-          ],
-          "exit": [
-            "tests-pass"
-          ]
+          "steps": ["bugfix-test-verify", "bugfix-e2e", "bugfix-demo-guide"],
+          "exit": ["tests-pass"]
         },
         {
           "id": "close",
-          "steps": [
-            "bugfix-end",
-            "bugfix-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["bugfix-end", "bugfix-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -679,24 +600,17 @@
       "outcomeGates": [
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "e2e-test --mode=verify"
-          ]
+          "satisfiedBy": ["e2e-test --mode=verify"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ],
+          "satisfiedBy": ["workflow-end"],
           "when": "This workflow is the top-level invocation; a nested run is closed by its parent workflow."
         }
       ],
       "preActions": {
         "injectContext": "E2E WORKFLOW \u2014 read .claude/skills/workflow-e2e/SKILL.md (triage, gates).\nFIRST: resolve --source={changes|recording|update-ui|prompt|context|whole} and --visual-review={true|false} from the invocation, request and project contract (a false value cannot waive a project-required gate), then triage size/kind/risk and record it.\nLifecycle: investigate when the scope is not already evidenced -> conditional authoring (e2e-test for changes, recording, update-ui; skipped for prompt, context, whole because the loop selects or generates cases) -> e2e-test --mode=verify --fix-loop -> docs-manager --mode=update when tests, baselines, source or documented behavior changed -> workflow-end when top-level.\nThe e2e-test --mode=verify --fix-loop step is the single convergence owner: configured run, report-only /experience-review for visual evidence when required, a five-way classification (SOURCE-WRONG, TEST-WRONG, TEST-NOT-OPTIMAL, ENVIRONMENT-BLOCKED, AMBIGUOUS) before edits, owning-layer fixes, fresh bring-up and same-scope reruns until one fresh green run passes (or the project's configured consecutive count; two consecutive greens are the integration-test rule) within the round cap, or escalation. Nested in a parent workflow, its fix rounds defer their review to the parent's re-review and the parent closes the run.\nInvariants: each selected case maps to an actual test, assertion and result; runner-native waits only, never a delay as readiness; no baseline or expectation change without explicit acceptance; never weaken, skip, narrow, delete, silence or auto-accept to obtain green.",
-        "readFiles": [
-          ".claude/skills/workflow-e2e/SKILL.md",
-          ".claude/skills/e2e-test/references/mode-verify.md"
-        ]
+        "readFiles": [".claude/skills/workflow-e2e/SKILL.md", ".claude/skills/e2e-test/references/mode-verify.md"]
       },
       "sequence": [
         {
@@ -756,35 +670,21 @@
       "phases": [
         {
           "id": "discover",
-          "steps": [
-            "e2e-investigate"
-          ]
+          "steps": ["e2e-investigate"]
         },
         {
           "id": "build",
-          "steps": [
-            "e2e-author"
-          ]
+          "steps": ["e2e-author"]
         },
         {
           "id": "verify",
-          "steps": [
-            "e2e-converge",
-            "e2e-docs"
-          ],
-          "exit": [
-            "tests-pass"
-          ]
+          "steps": ["e2e-converge", "e2e-docs"],
+          "exit": ["tests-pass"]
         },
         {
           "id": "close",
-          "steps": [
-            "e2e-end",
-            "e2e-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["e2e-end", "e2e-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -796,36 +696,25 @@
       "outcomeGates": [
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "test",
-            "integration-test --mode=verify"
-          ]
+          "satisfiedBy": ["test", "integration-test --mode=verify"]
         },
         {
           "id": "spec-synced",
-          "satisfiedBy": [
-            "spec [mode=sync]"
-          ],
+          "satisfiedBy": ["spec [mode=sync]"],
           "when": "Behavior or a public contract changed"
         },
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "workflow-review-changes"
-          ]
+          "satisfiedBy": ["workflow-review-changes"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "FEATURE WORKFLOW \u2014 spec-first, test-first. Read .claude/skills/workflow-feature/SKILL.md (triage, gates, contracts); /start-workflow \u2192 Step Execution Protocol governs which steps flex.\nFIRST ACTION: triage size (XS/S/M/L/XL), kind and risk; depth follows risk and ambiguity, not file count. Record the triage and every deviation in the run report.\nGATES: the nested /workflow-review-changes converges, run inline in the main session; /integration-test --mode=verify is green on the final tree with its mutation check; /test --proven=@verify runs only the tiers verify did not cover; when behavior or a public contract changed, spec \u00a71-7 is re-verified against the built behavior and the test cases are synced via /spec [mode=sync]; /workflow-end emits the Goal Satisfaction matrix.\nINVARIANTS: the canonical Feature Spec precedes the first /plan; test cases are reviewed by /work-item --mode=review --type=spec-tests before /plan --mode=execute; /spec [mode=clarify] is the spec decision interview and /plan validates only decisions it leaves open; /plan applies its own validation answers; a BLOCKED Plan Gate stops execute; every test names the business intent or invariant it guards and fails when it breaks.\nPERFORMANCE-SDD ROUTE: a performance enhancement runs /performance-review with SLA/benchmark evidence (target metric, baseline, measurement command, regression budget), still runs /plan --mode=execute, and runs functional no-regression checks whenever behavior can change.\nLARGE IDEA and NEW UI: per the SKILL.md (isLargeIdea \u2192 decomposition block or EXEMPT; /work-item --mode=mockup --explore before plan, main session only). This route never writes {PRODUCT_ROADMAP_DOC}.",
-        "readFiles": [
-          ".claude/skills/workflow-feature/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-feature/SKILL.md"]
       },
       "sequence": [
         {
@@ -991,12 +880,7 @@
       "phases": [
         {
           "id": "discover",
-          "steps": [
-            "feature-investigate",
-            "feature-spec-landscape",
-            "feature-domain-analysis",
-            "feature-design-review"
-          ]
+          "steps": ["feature-investigate", "feature-spec-landscape", "feature-domain-analysis", "feature-design-review"]
         },
         {
           "id": "specify",
@@ -1011,52 +895,27 @@
         },
         {
           "id": "plan",
-          "steps": [
-            "feature-plan"
-          ]
+          "steps": ["feature-plan"]
         },
         {
           "id": "build",
-          "steps": [
-            "feature-execute",
-            "feature-seed-test-data",
-            "feature-integration-test",
-            "feature-spec-sync"
-          ],
-          "exit": [
-            "spec-synced"
-          ]
+          "steps": ["feature-execute", "feature-seed-test-data", "feature-integration-test", "feature-spec-sync"],
+          "exit": ["spec-synced"]
         },
         {
           "id": "review",
-          "steps": [
-            "feature-review"
-          ],
-          "exit": [
-            "review-converged"
-          ]
+          "steps": ["feature-review"],
+          "exit": ["review-converged"]
         },
         {
           "id": "verify",
-          "steps": [
-            "feature-integration-verify",
-            "feature-e2e",
-            "feature-test",
-            "feature-demo-guide"
-          ],
-          "exit": [
-            "tests-pass"
-          ]
+          "steps": ["feature-integration-verify", "feature-e2e", "feature-test", "feature-demo-guide"],
+          "exit": ["tests-pass"]
         },
         {
           "id": "close",
-          "steps": [
-            "feature-end",
-            "feature-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["feature-end", "feature-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -1068,36 +927,25 @@
       "outcomeGates": [
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "integration-test --mode=verify",
-            "test"
-          ]
+          "satisfiedBy": ["integration-test --mode=verify", "test"]
         },
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "workflow-review-changes"
-          ]
+          "satisfiedBy": ["workflow-review-changes"]
         },
         {
           "id": "spec-synced",
-          "satisfiedBy": [
-            "spec [mode=sync]"
-          ],
+          "satisfiedBy": ["spec [mode=sync]"],
           "when": "Implemented behavior differs from the supplied spec"
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "LEAN SPEC-SUPPLIED ROUTE: the requested behavior is already written in a canonical spec or TC set, so this route implements it without re-authoring the spec. Read .claude/skills/workflow-implement-spec/SKILL.md. FIRST ACTION: triage size (XS/S/M/L/XL), kind and risk. ESCALATION (BR-GWF-04): /investigate reads the supplied spec and affected code, then /spec [mode=clarify] runs its EXISTING-SPEC gap-review profile against the request; vague, contradictory, or missing behavior stops before /plan and routes to user clarification or workflow-feature. SPEC-BASELINE ANCHOR (BR-GWF-05): before /plan, record the supplied spec path and revision as spec_baseline; /plan (light profile) keeps every phase and acceptance gate within it, and unowned additions require approval. /plan --mode=execute writes code and its tests together; /integration-test covers only cases still without a test; one /spec [mode=sync] runs before the nested /workflow-review-changes when behavior or case-to-test evidence changed, and only that scoped sync repeats if review fixes invalidate it. Tests run only in the final verification gates. MODE greenfield-slice (/workflow-implement-spec --mode=greenfield-slice, the hand-off of /workflow-greenfield-init): the plan step is skipped when the approved plan the foundation handed off still covers the slice and its spec (cite it and its Validation Summary), seed data runs when the product persists state, and the near-end /workflow-e2e --source=context is a gate after the integration verify.",
-        "readFiles": [
-          ".claude/skills/workflow-implement-spec/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-implement-spec/SKILL.md"]
       },
       "defaultMode": "default",
       "variants": {
@@ -1195,63 +1043,35 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "implement-spec-investigate"
-              ]
+              "steps": ["implement-spec-investigate"]
             },
             {
               "id": "specify",
-              "steps": [
-                "implement-spec-gap-review"
-              ]
+              "steps": ["implement-spec-gap-review"]
             },
             {
               "id": "plan",
-              "steps": [
-                "implement-spec-plan"
-              ]
+              "steps": ["implement-spec-plan"]
             },
             {
               "id": "build",
-              "steps": [
-                "implement-spec-execute",
-                "implement-spec-seed-test-data",
-                "implement-spec-integration-test",
-                "implement-spec-sync"
-              ],
-              "exit": [
-                "spec-synced"
-              ]
+              "steps": ["implement-spec-execute", "implement-spec-seed-test-data", "implement-spec-integration-test", "implement-spec-sync"],
+              "exit": ["spec-synced"]
             },
             {
               "id": "review",
-              "steps": [
-                "implement-spec-review"
-              ],
-              "exit": [
-                "review-converged"
-              ]
+              "steps": ["implement-spec-review"],
+              "exit": ["review-converged"]
             },
             {
               "id": "verify",
-              "steps": [
-                "implement-spec-integration-verify",
-                "implement-spec-e2e",
-                "implement-spec-test"
-              ],
-              "exit": [
-                "tests-pass"
-              ]
+              "steps": ["implement-spec-integration-verify", "implement-spec-e2e", "implement-spec-test"],
+              "exit": ["tests-pass"]
             },
             {
               "id": "close",
-              "steps": [
-                "implement-spec-end",
-                "implement-spec-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["implement-spec-end", "implement-spec-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -1350,63 +1170,35 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "implement-spec-investigate"
-              ]
+              "steps": ["implement-spec-investigate"]
             },
             {
               "id": "specify",
-              "steps": [
-                "implement-spec-gap-review"
-              ]
+              "steps": ["implement-spec-gap-review"]
             },
             {
               "id": "plan",
-              "steps": [
-                "implement-spec-plan"
-              ]
+              "steps": ["implement-spec-plan"]
             },
             {
               "id": "build",
-              "steps": [
-                "implement-spec-execute",
-                "implement-spec-seed-test-data",
-                "implement-spec-integration-test",
-                "implement-spec-sync"
-              ],
-              "exit": [
-                "spec-synced"
-              ]
+              "steps": ["implement-spec-execute", "implement-spec-seed-test-data", "implement-spec-integration-test", "implement-spec-sync"],
+              "exit": ["spec-synced"]
             },
             {
               "id": "review",
-              "steps": [
-                "implement-spec-review"
-              ],
-              "exit": [
-                "review-converged"
-              ]
+              "steps": ["implement-spec-review"],
+              "exit": ["review-converged"]
             },
             {
               "id": "verify",
-              "steps": [
-                "implement-spec-integration-verify",
-                "implement-spec-e2e",
-                "implement-spec-test"
-              ],
-              "exit": [
-                "tests-pass"
-              ]
+              "steps": ["implement-spec-integration-verify", "implement-spec-e2e", "implement-spec-test"],
+              "exit": ["tests-pass"]
             },
             {
               "id": "close",
-              "steps": [
-                "implement-spec-end",
-                "implement-spec-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["implement-spec-end", "implement-spec-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         }
@@ -1510,29 +1302,21 @@
       "outcomeGates": [
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "work-item --mode=review"
-          ]
+          "satisfiedBy": ["work-item --mode=review"]
         },
         {
           "id": "spec-synced",
-          "satisfiedBy": [
-            "spec [mode=sync]"
-          ],
+          "satisfiedBy": ["spec [mode=sync]"],
           "when": "Test cases or their links to executing tests changed"
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "FEATURE-SPEC: create or update ONE canonical feature/spec artifact for one capability at its configured path, with its cases reconciled and reviewed. Read .claude/skills/workflow-feature-spec/SKILL.md.\nTRIAGE FIRST (SKILL.md section 1): an XS/S change lists its section and case changes in the task list; M+ (new spec, restructure, UI intent, many rules) adds /plan; several capabilities split into one spec each or route to workflow-code-to-spec.\nPROFILE FIRST: read docs/project-config.json (specRoots.business.path, workflowPatterns.featureDocTemplate, specArtifacts), the configured template, spec-system-reference.md and spec-principles.md; the native profile or local contract owns paths, section roles, IDs and test/evidence carriers, and intent roles stay tech-agnostic. Unknown mapping = BLOCKED/UNKNOWN, never PASS; a malformed contract blocks.\nCHAIN: /spec authors or updates the spec (gate) \u2192 /spec [mode=tests] when behavior or test evidence changed \u2192 /spec [mode=clarify] for non-obvious decisions \u2192 /spec [mode=sync] when case links changed \u2192 /work-item --mode=review --type=spec-tests --fix-loop (gate; reviews the final spec and its cases) \u2192 /workflow-end. Every case names the business intent or invariant it guards and would fail if that intent broke.",
-        "readFiles": [
-          ".claude/skills/workflow-feature-spec/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-feature-spec/SKILL.md"]
       },
       "sequence": [
         {
@@ -1618,10 +1402,7 @@
       "phases": [
         {
           "id": "discover",
-          "steps": [
-            "feature-spec-investigate",
-            "feature-spec-plan"
-          ]
+          "steps": ["feature-spec-investigate", "feature-spec-plan"]
         },
         {
           "id": "specify",
@@ -1633,20 +1414,12 @@
             "feature-spec-spec-review",
             "feature-spec-docs"
           ],
-          "exit": [
-            "review-converged",
-            "spec-synced"
-          ]
+          "exit": ["review-converged", "spec-synced"]
         },
         {
           "id": "close",
-          "steps": [
-            "feature-spec-end",
-            "feature-spec-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["feature-spec-end", "feature-spec-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -1658,42 +1431,26 @@
       "outcomeGates": [
         {
           "id": "plan-approved",
-          "satisfiedBy": [
-            "plan --mode=validate"
-          ]
+          "satisfiedBy": ["plan --mode=validate"]
         },
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "workflow-review-changes"
-          ]
+          "satisfiedBy": ["workflow-review-changes"]
         },
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "test"
-          ]
+          "satisfiedBy": ["test"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "parallelGroups": [
         {
           "id": "architecture-gates",
-          "members": [
-            "architecture-scalability-gate",
-            "architecture-rationale-review",
-            "architecture-security-review",
-            "architecture-performance-review"
-          ],
-          "conditionalMembers": [
-            "architecture-security-review",
-            "architecture-performance-review"
-          ],
+          "members": ["architecture-scalability-gate", "architecture-rationale-review", "architecture-security-review", "architecture-performance-review"],
+          "conditionalMembers": ["architecture-security-review", "architecture-performance-review"],
           "barrier": true
         }
       ],
@@ -1719,9 +1476,7 @@
       },
       "preActions": {
         "injectContext": "GREENFIELD INCEPTION: take a new product from idea to an approved plan, a reviewed first-slice spec and a reviewed, tested foundation, then hand the first slice to /workflow-implement-spec --mode=greenfield-slice. Read .claude/skills/workflow-greenfield-init/SKILL.md before step 1 \u2014 it owns triage, the required gates and orchestration; /start-workflow \u2192 Step Execution Protocol owns step flex and the deviation log.\nTRIAGE FIRST and record it: scale (prototype/internal \u00b7 product \u00b7 platform), UI surface, commercial market, criticality (auth, PII, money, regulated), isLargeIdea (multipleIndependentOutcomes || ambiguousOrResearchHeavy || releaseScopeDecomposition || oversizedTaskThatMustSplit) and applicable test tiers. True isLargeIdea \u2192 the complete large_idea_decomposition block in the owning artifact; never create {PRODUCT_ROADMAP_DOC}.\nORDER: business and domain before technology \u2014 do not ask for the tech stack upfront. The research phase is validated with the user once; major decisions show 2-4 options with confidence % and evidence; never self-approve a one-way door.\nBLOCKING: before the first /plan completes, record the SYNC:scale-ready-foundation matrix and the SYNC:ai-agent-as-user-access decision (or an explicit evidence-backed omission). /plan --mode=validate approves the implementation plan before scaffold; the hand-off passes that approved plan to /workflow-implement-spec --mode=greenfield-slice, whose plan step is skipped while that plan still covers the slice (cite it and its Validation Summary). Before the hand-off, every Test Architecture & Execution Contract tier is APPLICABLE with runner and copy-ready commands, or N/A \u2014 <evidence>.\nTAIL: the foundation review (/architecture --mode=full), the reference-doc refresh and one nested /workflow-review-changes --tests=defer over the foundation (INLINE; its receipt satisfies review-converged) run after scaffold; the final /test proves the scaffold's harness and smoke tests green; /workflow-end closes and prints the hand-off: /workflow-implement-spec --mode=greenfield-slice with the first slice's spec, test cases and approved plan; that mode's near-end /workflow-e2e --source=context is a gate. Tests name the protected intent or invariant and fail when it breaks.",
-        "readFiles": [
-          ".claude/skills/workflow-greenfield-init/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-greenfield-init/SKILL.md"]
       },
       "sequence": [
         {
@@ -1996,46 +1751,26 @@
             "plan-implementation-review",
             "greenfield-plan-validation"
           ],
-          "exit": [
-            "plan-approved"
-          ]
+          "exit": ["plan-approved"]
         },
         {
           "id": "build",
-          "steps": [
-            "greenfield-scaffold",
-            "greenfield-harness-setup"
-          ]
+          "steps": ["greenfield-scaffold", "greenfield-harness-setup"]
         },
         {
           "id": "review",
-          "steps": [
-            "greenfield-foundation-review",
-            "greenfield-foundation-docs",
-            "greenfield-review"
-          ],
-          "exit": [
-            "review-converged"
-          ]
+          "steps": ["greenfield-foundation-review", "greenfield-foundation-docs", "greenfield-review"],
+          "exit": ["review-converged"]
         },
         {
           "id": "verify",
-          "steps": [
-            "final-test"
-          ],
-          "exit": [
-            "tests-pass"
-          ]
+          "steps": ["final-test"],
+          "exit": ["tests-pass"]
         },
         {
           "id": "close",
-          "steps": [
-            "greenfield-end",
-            "greenfield-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["greenfield-end", "greenfield-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -2047,22 +1782,16 @@
       "outcomeGates": [
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "work-item --mode=review"
-          ]
+          "satisfiedBy": ["work-item --mode=review"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "PLANNED WORK: one workflow, three modes chosen by --from/--to (or --mode): idea-to-tasks (default), idea-to-spec, spec-to-tasks. Read .claude/skills/workflow-planned-work/SKILL.md first; apply only the selected mode's section below.\nMODE idea-to-tasks (default; --from=idea --to=tasks) \u2014 turn an idea into reviewed, readiness-checked, prioritized planned work (no implementation). Read .claude/skills/workflow-planned-work/SKILL.md and references/mode-idea-to-tasks.md first, and references/planned-work-core.md for the shared readiness, spec and UI blocks.\nTRIAGE FIRST and record it: track = SINGLE-TASK (one concrete idea/ticket/brief) or MULTI-OPPORTUNITY (raw vision spanning several opportunities; ask via ask user question tool when unclear); size XS\u2026XL; kinds (UI surface, domain change, existing artifact, market uncertainty); risk; isLargeIdea (multipleIndependentOutcomes || ambiguousOrResearchHeavy || releaseScopeDecomposition || oversizedTaskThatMustSplit). A small clear idea skips research, brainstorm, scenario, the plan cycle, prioritize and the deck.\nSINGLE-TASK is spec-first: the draft spec and its test cases are reviewed by /work-item --mode=review --type=spec-tests and /spec [mode=clarify] confirms their decisions before /work-item --mode=refine derives the task from the clarified spec.\nGATES: /work-item --mode=review --type=task (fresh context; its rows 10-12 cover module, feasibility and cross-cutting), /work-item --mode=dor (PASS or WARN; it also covers the stories), /workflow-end. The independent /work-item --mode=challenge runs when a second reviewer is available or the task is M+ or risky. Every task is one independently releasable actor-facing outcome (.claude/skills/shared/releasable-task-contract.md); interviews read the run's decision log first. Never create {PRODUCT_ROADMAP_DOC}; write each artifact under {TEAM_ARTIFACTS_ROOT} as soon as it is drafted.\nMODE idea-to-spec (--from=idea --to=spec; stops at the reviewed spec): turn a raw idea into ONE reviewed, provisional canonical spec per converged capability. No task, story, planned work, mockup or roadmap artifact here; chain /workflow-planned-work --from=spec --to=tasks for planned work or workflow-implement-spec to build. Read .claude/skills/workflow-planned-work/SKILL.md and references/mode-idea-to-spec.md.\nTRIAGE FIRST (mode-idea-to-spec.md section 1): size band XS..XL, kinds and risk select the optional steps; brainstorm runs only for an open problem space or several capabilities. Evaluate isLargeIdea (multipleIndependentOutcomes || ambiguousOrResearchHeavy || releaseScopeDecomposition || oversizedTaskThatMustSplit); true \u2192 the complete large_idea_decomposition block in the profile role that permits slice plans; false \u2192 omit it.\nPROFILE FIRST: read docs/project-config.json (specRoots.business.path, workflowPatterns.featureDocTemplate, specArtifacts), the configured template, spec-system-reference.md and spec-principles.md; the native profile or local contract owns paths, section roles, IDs and test/evidence carriers, and intent roles stay tech-agnostic. Unknown mapping = BLOCKED/UNKNOWN, never PASS; a malformed contract blocks. Before code exists use the profile's provisional convention (portable: Evidence: TBD, Status: Planned, provisional: true).\nGATES: /work-item --mode=review --type=spec-tests reviews the spec and its cases, incl. the M1-M7 gate; /spec [mode=clarify] confirms every non-obvious decision via ask user question tool; /workflow-end closes. 4+ capabilities -> one spec sub-agent per capability in ONE message.\nMODE spec-to-tasks (--from=spec --to=tasks) \u2014 turn existing canonical specs into complete, dependency-ordered, prioritized, readiness-checked planned tasks and stories (no implementation). Read .claude/skills/workflow-planned-work/SKILL.md and references/mode-spec-to-tasks.md first: the mode reference owns triage, gates, the coverage matrix and the recommended-skill table.\nCANONICAL INPUT: resolve the spec root, template, specArtifacts profile and local spec-system-reference.md / spec-principles.md from docs/project-config.json; map native intent, acceptance, rule, contract, UI-intent and test/evidence roles; carry native IDs as the citation spine and never mint replacement IDs or synthesize a missing section. The {SPEC_ROOT}/{Bucket}/README.{Feature}.md 8-section form is the fallback only when no native profile or local contract exists. An unknown role/owner/case mapping is UNKNOWN and blocks that mapping.\nTRIAGE FIRST and record it: capability count (1-3 inline \u00b7 4-10 split by capability \u00b7 10+ batched with coverage-matrix checkpoints), kinds (domain change, UI surface, implementation exists \u2192 freshness risk), risk, isLargeIdea. Each step's applicability follows the triage; log every skip/merge with evidence.\nRead references/planned-work-core.md in .claude/skills/workflow-planned-work for the shared readiness and UI blocks.\nREQUIRED (gates, and bars that hold whenever their step runs): spec [mode=clarify] before decomposition (Spec Validation: questions=4-8, EXISTING-SPEC context; confirmed changes route through /spec [mode=update]), work-item --mode=review --type=task, work-item --mode=dor (PASS or WARN), workflow-end; coverage matrix maps every spec item to a task, attached enabling subtask, existing task or out-of-scope reason; every task is one independently releasable actor-facing outcome (.claude/skills/shared/releasable-task-contract.md) with business-visible (M7) acceptance criteria; work-item --mode=challenge, when it runs (a second reviewer is available, or the task is M+ or risky), reviewer \u2260 drafter; UI tasks get a navigable full-flow mock app + design-spec; prioritize ranks all tasks once when three or more were generated or ranking against existing planned work was requested (below three tasks the main session writes each task's integer priority, through /task-track when the task is tracked, in the order refine's value and effort analysis supports) and writes rank/priority into every task's frontmatter, shown by mockups and the deck; docs-manager --mode=update syncs canonical specs and their test/evidence carriers before close when they changed.\nLARGE SPEC: when isLargeIdea is true, carry the complete large_idea_decomposition block (outcome_slices, dependencies_order, non_goals, risks_evidence, deferred_work_owner) from the spec's declared slice-planning role through tasks, stories, mockups and the deck; stop decomposition when no role permits slice plans. Never create {PRODUCT_ROADMAP_DOC}; a roadmap is an explicit standalone request only and a supplied roadmap is read-only context.\nWrite each task to {TEAM_ARTIFACTS_ROOT}/tasks and the ranked planned work to {TEAM_ARTIFACTS_ROOT}/backlog immediately; never hold all tasks in memory. Goal-driven: define success criteria first and loop until observable checks pass.",
-        "readFiles": [
-          ".claude/skills/workflow-planned-work/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-planned-work/SKILL.md"]
       },
       "defaultMode": "idea-to-tasks",
       "variants": {
@@ -2294,9 +2023,7 @@
           "outcomeGates": [
             {
               "id": "spec-synced",
-              "satisfiedBy": [
-                "docs-manager --mode=update"
-              ],
+              "satisfiedBy": ["docs-manager --mode=update"],
               "when": "A draft Feature Spec or test specifications were authored or changed in this run"
             }
           ],
@@ -2338,21 +2065,12 @@
                 "idea-to-tasks-mockup",
                 "idea-to-tasks-docs"
               ],
-              "exit": [
-                "review-converged",
-                "spec-synced"
-              ]
+              "exit": ["review-converged", "spec-synced"]
             },
             {
               "id": "close",
-              "steps": [
-                "idea-to-tasks-presentation",
-                "idea-to-tasks-end",
-                "idea-to-tasks-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["idea-to-tasks-presentation", "idea-to-tasks-end", "idea-to-tasks-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -2510,11 +2228,7 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "idea-to-spec-web-research",
-                "idea-to-spec-brainstorm",
-                "idea-to-spec-spec-landscape"
-              ]
+              "steps": ["idea-to-spec-web-research", "idea-to-spec-brainstorm", "idea-to-spec-spec-landscape"]
             },
             {
               "id": "specify",
@@ -2532,20 +2246,12 @@
                 "idea-to-spec-rationale-review",
                 "idea-to-spec-docs"
               ],
-              "exit": [
-                "review-converged"
-              ]
+              "exit": ["review-converged"]
             },
             {
               "id": "close",
-              "steps": [
-                "idea-to-spec-presentation",
-                "idea-to-spec-end",
-                "idea-to-spec-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["idea-to-spec-presentation", "idea-to-spec-end", "idea-to-spec-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -2714,28 +2420,18 @@
           "outcomeGates": [
             {
               "id": "spec-synced",
-              "satisfiedBy": [
-                "docs-manager --mode=update"
-              ],
+              "satisfiedBy": ["docs-manager --mode=update"],
               "when": "Generated tasks, clarified decisions or scenario proof changed canonical spec content or its test/evidence carriers"
             }
           ],
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "spec-to-tasks-investigate",
-                "spec-to-tasks-derived-index",
-                "spec-to-tasks-domain-analysis",
-                "spec-to-tasks-rationale-review"
-              ]
+              "steps": ["spec-to-tasks-investigate", "spec-to-tasks-derived-index", "spec-to-tasks-domain-analysis", "spec-to-tasks-rationale-review"]
             },
             {
               "id": "specify",
-              "steps": [
-                "spec-to-tasks-spec-clarification",
-                "spec-to-tasks-scenario"
-              ]
+              "steps": ["spec-to-tasks-spec-clarification", "spec-to-tasks-scenario"]
             },
             {
               "id": "plan",
@@ -2752,21 +2448,12 @@
                 "spec-to-tasks-mockup",
                 "spec-to-tasks-docs"
               ],
-              "exit": [
-                "review-converged",
-                "spec-synced"
-              ]
+              "exit": ["review-converged", "spec-synced"]
             },
             {
               "id": "close",
-              "steps": [
-                "spec-to-tasks-presentation",
-                "spec-to-tasks-end",
-                "spec-to-tasks-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["spec-to-tasks-presentation", "spec-to-tasks-end", "spec-to-tasks-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         }
@@ -3004,29 +2691,20 @@
       "outcomeGates": [
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "test",
-            "integration-test --mode=verify"
-          ]
+          "satisfiedBy": ["test", "integration-test --mode=verify"]
         },
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "workflow-review-changes"
-          ]
+          "satisfiedBy": ["workflow-review-changes"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "REFACTOR (lean, behavior-preserving): restructure code without changing observable behavior, proven by the same test scope green before and after plus a converged change review. Read .claude/skills/workflow-refactor/SKILL.md (triage, gates).\nFIRST: triage size (XS/S/M/L/XL), kind and risk; it selects which optional steps run.\nNON-NEGOTIABLE:\n- Search before planning: find the target pattern in 3+ local examples (file:line) and follow docs/project-config.json workflowPatterns.\n- BASELINE: characterization tests for touched behavior no test guards are written BEFORE the baseline; the one baseline /test run on the unrefactored tree must be green \u2014 red stops the refactor or routes the failure to workflow-bugfix.\n- Observable behavior (outputs, persisted state, public contracts, errors, state transitions, timing boundaries) must not change; test code changes only mechanically (imports, renamed symbols, moved paths). Removing 'unused' code needs /investigate evidence.\n- /workflow-review-changes runs INLINE in the main session; the final /test re-runs the baseline scope and must be green; the main session owns the mutation check when /integration-test --mode=verify does not run.\nPERFORMANCE-SDD ROUTE: a performance-driven refactor runs /performance-review for benchmark evidence (SLA, baseline, measurement command) while preserving observable behavior and functional no-regression; a changed SLA, public contract or docs/spec boundary still requires spec/test/docs sync.",
-        "readFiles": [
-          ".claude/skills/workflow-refactor/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-refactor/SKILL.md"]
       },
       "sequence": [
         {
@@ -3137,56 +2815,30 @@
       "phases": [
         {
           "id": "discover",
-          "steps": [
-            "refactor-investigate",
-            "refactor-characterization-tests",
-            "refactor-baseline-test"
-          ]
+          "steps": ["refactor-investigate", "refactor-characterization-tests", "refactor-baseline-test"]
         },
         {
           "id": "plan",
-          "steps": [
-            "refactor-plan",
-            "refactor-plan-validation"
-          ]
+          "steps": ["refactor-plan", "refactor-plan-validation"]
         },
         {
           "id": "build",
-          "steps": [
-            "refactor-execute",
-            "refactor-spec-tests",
-            "refactor-spec-tests-review",
-            "refactor-spec-sync"
-          ]
+          "steps": ["refactor-execute", "refactor-spec-tests", "refactor-spec-tests-review", "refactor-spec-sync"]
         },
         {
           "id": "review",
-          "steps": [
-            "refactor-review"
-          ],
-          "exit": [
-            "review-converged"
-          ]
+          "steps": ["refactor-review"],
+          "exit": ["review-converged"]
         },
         {
           "id": "verify",
-          "steps": [
-            "refactor-test-verify",
-            "refactor-test"
-          ],
-          "exit": [
-            "tests-pass"
-          ]
+          "steps": ["refactor-test-verify", "refactor-test"],
+          "exit": ["tests-pass"]
         },
         {
           "id": "close",
-          "steps": [
-            "refactor-end",
-            "refactor-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["refactor-end", "refactor-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -3197,22 +2849,16 @@
       "outcomeGates": [
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "knowledge-review"
-          ]
+          "satisfiedBy": ["knowledge-review"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "RESEARCH & SYNTHESIS (research artifacts only, no code):\n- Pick `--output` from the prompt BEFORE creating tasks: synthesis (cited knowledge report, default \u2014 state the assumption when ambiguous) \u00b7 business-eval \u00b7 marketing \u00b7 course. The resolved variant is a complete sequence; build tasks from it.\n- FIRST triage question scope (narrow / standard / broad or decision-critical) per the workflow SKILL.md. Scope sets query and fetch depth inside the research step's caps; it never lowers the evidence bar.\n- The research step is `web-research --chain=deep-dive`: one step that writes the source map, then the evidence base (`tmp/research/_sources-{slug}.md`, `_evidence-{slug}.md`). `knowledge-review` stays a separate gate.\n- Evidence bar: every factual claim ends with an inline citation mapped to a Sources row; factual claims rest on 2+ independent sources (a single-source claim is marked unverified, below 60%); Tier 4 is never cited as fact; gaps and findings below 60% are flagged.\n- `knowledge-review --fix-loop` is the review gate: it validates findings, fixes them in the artifact and re-reviews until it converges. `market-analysis` reads the evidence base first and searches only for named gaps.\n- business-eval / marketing: derive one ARTIFACT_SLUG and MARKET_ANALYSIS_PATH before the first research step and pass the exact values to market-analysis and its consumer.\nFull contract: .claude/skills/workflow-research/SKILL.md",
-        "readFiles": [
-          ".claude/skills/workflow-research/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-research/SKILL.md"]
       },
       "defaultMode": "synthesis",
       "variants": {
@@ -3251,24 +2897,13 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "synthesis-research",
-                "synthesis-knowledge",
-                "synthesis-review"
-              ],
-              "exit": [
-                "review-converged"
-              ]
+              "steps": ["synthesis-research", "synthesis-knowledge", "synthesis-review"],
+              "exit": ["review-converged"]
             },
             {
               "id": "close",
-              "steps": [
-                "synthesis-end",
-                "synthesis-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["synthesis-end", "synthesis-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -3311,25 +2946,13 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "business-research",
-                "business-market-analysis",
-                "business-evaluation",
-                "business-review"
-              ],
-              "exit": [
-                "review-converged"
-              ]
+              "steps": ["business-research", "business-market-analysis", "business-evaluation", "business-review"],
+              "exit": ["review-converged"]
             },
             {
               "id": "close",
-              "steps": [
-                "business-end",
-                "business-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["business-end", "business-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -3372,25 +2995,13 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "marketing-research",
-                "marketing-market-analysis",
-                "marketing-strategy",
-                "marketing-review"
-              ],
-              "exit": [
-                "review-converged"
-              ]
+              "steps": ["marketing-research", "marketing-market-analysis", "marketing-strategy", "marketing-review"],
+              "exit": ["review-converged"]
             },
             {
               "id": "close",
-              "steps": [
-                "marketing-end",
-                "marketing-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["marketing-end", "marketing-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -3429,24 +3040,13 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "course-research",
-                "course-builder",
-                "course-review"
-              ],
-              "exit": [
-                "review-converged"
-              ]
+              "steps": ["course-research", "course-builder", "course-review"],
+              "exit": ["review-converged"]
             },
             {
               "id": "close",
-              "steps": [
-                "course-end",
-                "course-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["course-end", "course-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         }
@@ -3491,9 +3091,7 @@
       "preActions": {
         "domainEntityReferenceRefresh": "Immediately before docs-manager --mode=update, run scan --target=domain-entities when the final diff changes entity/model, DTO/contract, persistence schema/migration, or documented entity-sync evidence; otherwise record a cited skip reason.",
         "injectContext": "Triage all requested files and intent; write a short risk/coverage plan and create occurrence, validation, fix and fresh re-review todo tasks before reviewing. Choose inline work, related groups or specialists from risk, dependencies and context headroom, without fixed file/line/byte caps. Default --fix-loop covers every review child under one main-session fixing coordinator; children passed --loop-owner=caller stay read-only. Explicit --review-only/--report-only overrides the default and stops after validated reports. Independent specialist lenses (and the simplifier as a report-only lens) may run together, and every report returns before any fix; findings are validated once; fix at the evidenced owner, run the domain-entity refresh and docs update, then re-run all applicable review lenses on the settled target: any fix, simplification, spec/doc/test repair or validated blocking finding the fix step rejects needs that fresh review, and a narrower spot check never replaces it. One shared two-round budget by default, enforced by the coordinator before the generic review-policy eligibility helper; shared three-round guidance never authorizes a third workflow round. Child lenses, repair re-reviews and resumed or nested invocations retain the same spent budget. Current clean proof ends early; LOW-only at cap is accepted with disclosure. At round 2, MEDIUM/HIGH/CRITICAL, unresolved required evidence or failed required checks ask the user whether to extend by a stated bounded number of rounds or stop with the unresolved report. Wait for an explicit answer before further fixes or review rounds; silence never extends the budget. Record approval and the extra-round limit, preserve inherited findings/scope and spent rounds, and ask again at each exhausted extension. An exhausted executable record requires an approved linked bounded run, never an automatic reset. Preserve required tests, spec/test/code consistency, docs and parity; no staging/commit/push authority.\nMULTILINGUAL UI SYNC CHECK: When UI changes affect a multilingual project, verify its translation updates and retain missing coverage as a finding for authorized repair or caller handoff. State/lifecycle changes need persisted-state assertions and invalid-transition rejection coverage.",
-        "readFiles": [
-          ".claude/skills/workflow-review-changes/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-review-changes/SKILL.md"]
       },
       "sequence": [
         {
@@ -3835,20 +3433,12 @@
                 "experience-review",
                 "validate-findings"
               ],
-              "exit": [
-                "review-converged",
-                "tests-pass"
-              ]
+              "exit": ["review-converged", "tests-pass"]
             },
             {
               "id": "close",
-              "steps": [
-                "review-changes-end",
-                "review-changes-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["review-changes-end", "review-changes-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -4030,9 +3620,7 @@
           "outcomeGates": [
             {
               "id": "root-cause-traced",
-              "satisfiedBy": [
-                "investigate --mode=debug"
-              ],
+              "satisfiedBy": ["investigate --mode=debug"],
               "when": "A validated finding is a defect whose owning cause the review evidence does not already trace"
             }
           ],
@@ -4075,21 +3663,12 @@
                 "domain-refresh",
                 "documentation-update"
               ],
-              "exit": [
-                "review-converged",
-                "tests-pass",
-                "root-cause-traced"
-              ]
+              "exit": ["review-converged", "tests-pass", "root-cause-traced"]
             },
             {
               "id": "close",
-              "steps": [
-                "review-changes-end",
-                "review-changes-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["review-changes-end", "review-changes-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         }
@@ -4097,21 +3676,15 @@
       "outcomeGates": [
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "changes-review"
-          ]
+          "satisfiedBy": ["changes-review"]
         },
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "integration-test --mode=review"
-          ]
+          "satisfiedBy": ["integration-test --mode=review"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ],
+          "satisfiedBy": ["workflow-end"],
           "when": "This workflow is the top-level invocation, not nested in a parent workflow"
         }
       ]
@@ -4123,22 +3696,16 @@
       "outcomeGates": [
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "architecture --mode=full"
-          ]
+          "satisfiedBy": ["architecture --mode=full"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "ARCHITECTURE AUDIT (READ-ONLY): produce ONE consolidated Architecture Health Report \u2014 three sub-scores, one worst-case combined verdict, and the merged ADVISORY Technique Applicability and Scenario Stress matrices (advisory: they never change a sub-score, the verdict or a gate).\n- FIRST triage scope (whole project / current diff / specific path / greenfield `mode=init`) and size (XS\u2013XL) per the workflow SKILL.md; depth follows size and risk.\n- `architecture --mode=full --defer=validate` runs INLINE: it owns the three-reviewer fan-out, the all-return barrier and progressive synthesis, and leaves findings validation to the workflow gate. This workflow declares no workflow-level parallel groups.\n- The workflow-level `why-review` gate then validates each face's findings once and the FINISHED report \u2014 scope (nothing in-scope missed, nothing out-of-scope pulled in), verdict rollup, dedup completeness, cross-face severity consistency \u2014 and fixes the report in place.\n- Every finding carries `file:line` proof and a confidence; below 60% is flagged, never recommended.\n- No source fixes here: each validated finding routes to a follow-up `/plan` or feature workflow.\n- `docs-manager --mode=update` runs only when the validated audit shows project docs contradicting the code, and re-validates its own non-trivial doc diff with `why-review`.\nFull contract: .claude/skills/workflow-architecture-audit/SKILL.md",
-        "readFiles": [
-          ".claude/skills/workflow-architecture-audit/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-architecture-audit/SKILL.md"]
       },
       "sequence": [
         {
@@ -4206,30 +3773,17 @@
       "phases": [
         {
           "id": "discover",
-          "steps": [
-            "architecture-audit-investigate"
-          ]
+          "steps": ["architecture-audit-investigate"]
         },
         {
           "id": "review",
-          "steps": [
-            "architecture-audit-review",
-            "architecture-audit-why-review",
-            "architecture-audit-docs"
-          ],
-          "exit": [
-            "review-converged"
-          ]
+          "steps": ["architecture-audit-review", "architecture-audit-why-review", "architecture-audit-docs"],
+          "exit": ["review-converged"]
         },
         {
           "id": "close",
-          "steps": [
-            "architecture-audit-end",
-            "architecture-audit-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["architecture-audit-end", "architecture-audit-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -4240,30 +3794,21 @@
       "outcomeGates": [
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "work-item --mode=review",
-            "why-review --validate-findings"
-          ]
+          "satisfiedBy": ["work-item --mode=review", "why-review --validate-findings"]
         },
         {
           "id": "spec-synced",
-          "satisfiedBy": [
-            "spec"
-          ],
+          "satisfiedBy": ["spec"],
           "when": "The selected mode writes the spec (init-full or update)"
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "CODE-TO-SPEC: modes init-full | update (default) | audit. Keep ONE canonical spec per capability in agreement with code (technical truth) and test evidence; the spec owns requirements and behavior. Create only project-declared derived aids, never a parallel spec tree.\nSTEP 0 (BLOCKING): detect the mode, map changed code to its capability owner (App Bucket Mapping in spec-system-reference.md), confirm mode, capabilities and target paths via ask user question tool.\nTRIAGE (SKILL.md section 2): 1-3 capabilities inline; 4-10 -> one spec sub-agent per capability in ONE message; >10 -> groups of 10 run sequentially; multi-bucket/whole-project keeps the resumable Coverage Ledger (tmp/reports) and the completeness gate (every capability REVIEWED or deferred with a reason). After compaction read the ledger and TaskList first; never re-author a done capability.\nPROFILE FIRST: read docs/project-config.json (specRoots.business.path, workflowPatterns.featureDocTemplate, specArtifacts), the configured template, spec-system-reference.md and spec-principles.md. The native profile or local contract owns paths, section roles, IDs and test/evidence carriers; intent roles stay tech-agnostic. The portable eight-section README + Section 8 TC-{FEATURE}-{NNN} form applies only when neither exists (details: SKILL.md). Unknown mapping = BLOCKED/UNKNOWN, never PASS; a malformed contract blocks.\nGATES: full vertical chain traced and reconciled per capability (UI -> API -> handler -> domain -> event -> read model -> UI); three-way sync of native intent/contract/acceptance roles <-> configured cases/evidence <-> executing test code (follow spec-system-reference.md incl. its STATE MACHINE DATA ASSERT mandate); work-item --mode=review --type=spec-tests (spec and cases) converged incl. M1-M7; update mode takes its impact map from workflow-review-changes --review-only inline in the main session; audit stays read-only and closes on why-review --validate-findings over its report; docs-manager --mode=update only for derived docs; Goal Satisfaction matrix before close.\nSpec-Loop Discipline: property cases with boundary counter-cases for every hard invariant; mutation-score gate, not line coverage, for protected core logic; feed uncovered behavior into spec and tests via a dual-feedback ledger.\nTests Verify Intent: every case names the business intent or invariant it guards and would fail if that intent broke. Goal-Driven Execution: define success criteria first; loop until observable checks pass.",
-        "readFiles": [
-          ".claude/skills/workflow-code-to-spec/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-code-to-spec/SKILL.md"]
       },
       "defaultMode": "update",
       "variants": {
@@ -4341,34 +3886,17 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "init-investigate",
-                "init-plan",
-                "init-plan-validation"
-              ]
+              "steps": ["init-investigate", "init-plan", "init-plan-validation"]
             },
             {
               "id": "specify",
-              "steps": [
-                "init-spec",
-                "init-spec-tests",
-                "init-review",
-                "init-docs"
-              ],
-              "exit": [
-                "review-converged",
-                "spec-synced"
-              ]
+              "steps": ["init-spec", "init-spec-tests", "init-review", "init-docs"],
+              "exit": ["review-converged", "spec-synced"]
             },
             {
               "id": "close",
-              "steps": [
-                "init-end",
-                "init-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["init-end", "init-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -4439,33 +3967,17 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "update-review"
-              ]
+              "steps": ["update-review"]
             },
             {
               "id": "specify",
-              "steps": [
-                "update-spec",
-                "update-spec-tests",
-                "update-review-spec-tests",
-                "update-spec-sync",
-                "update-docs"
-              ],
-              "exit": [
-                "review-converged",
-                "spec-synced"
-              ]
+              "steps": ["update-spec", "update-spec-tests", "update-review-spec-tests", "update-spec-sync", "update-docs"],
+              "exit": ["review-converged", "spec-synced"]
             },
             {
               "id": "close",
-              "steps": [
-                "update-end",
-                "update-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["update-end", "update-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -4504,30 +4016,17 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "audit-investigate"
-              ]
+              "steps": ["audit-investigate"]
             },
             {
               "id": "specify",
-              "steps": [
-                "audit-spec",
-                "audit-review"
-              ],
-              "exit": [
-                "review-converged",
-                "spec-synced"
-              ]
+              "steps": ["audit-spec", "audit-review"],
+              "exit": ["review-converged", "spec-synced"]
             },
             {
               "id": "close",
-              "steps": [
-                "audit-end",
-                "audit-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["audit-end", "audit-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         }
@@ -4605,23 +4104,16 @@
       "outcomeGates": [
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "work-item --mode=review",
-            "ui-design --mode=review"
-          ]
+          "satisfiedBy": ["work-item --mode=review", "ui-design --mode=review"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "SPEC TO INTERACTIVE MOCKUP \u2014 turn UI-bearing canonical spec(s) into ONE reviewed, journey-validated, interactive multi-view HTML mock app per spec, built in a visual direction the user picked (no task, story, plan or code). Read .claude/skills/workflow-spec-to-mockup/SKILL.md first: it owns triage, the journey-first order, gates and the fix path.\nSOURCE: resolve the canonical spec path(s) the user named or search {SPEC_ROOT}; read the spec's UI intent layer (view inventory with information priority and container role, navigation map, observable states, per-story action flows \u2014 SYNC:ui-intent-layer) and its business rules through the active artifact profile. No canonical spec \u2192 route to workflow-planned-work --from=idea --to=spec. Backend-only spec \u2192 stop, no mockup applies, state the reason. A missing UI intent layer \u2192 spec [mode=update] first, or derive it in design-spec with every derived item tagged INFERRED.\nJOURNEY-FIRST ORDER (BLOCKING, SYNC:ux-journey-gate, every generation step): design-spec Step 0a writes the Journey Report (UX-1) and the design-authority record (UX-2) before anything else; work-item --mode=mockup --source=<spec path> reuses both as its Step 2a/3 evidence and re-confirms only deltas (a conflicting re-derivation goes to the user); ui-design --mode=review walks every main journey on the final mockup with a traceability matrix (UX-8); the mockup closes with the UI/UX Gate Report (UX-11) and an unresolved FAIL blocks hand-off. Catalogs: .claude/docs/ux-journey-process.md, .claude/docs/design-knowledge.md, .claude/docs/design-review-checklist.md.\nEXPLORE PICK GATE (the user's decision while the user can be asked): work-item --mode=mockup --explore owns the 1-3 direction drafts (tmp/design/<run>/direction-{a,b,c}.html), the browser open, the ask user question tool pick with your evidence-backed recommendation first, the recorded Selection: line in tmp/design/<run>/direction-approved.md, and the exemption when a brief or design system pins every axis; it reuses the scope-gate answer and the pick stays in the main session.\nMOCK-APP CONTRACT: the final mockup is ONE self-contained multi-view mock app per spec \u2014 every required view, navigation edge, common/domain/page component and applicable state (empty, loading and error first) plus a connected full-flow demo of each main journey; one static or disconnected screen fails. Apply .claude/skills/shared/releasable-task-contract.md.\nARTIFACTS: direction drafts, renders, product facts and run notes are disposable run output under tmp/design/<run>/ (<run> = YYMMDD-HHmm-<slug>); the design spec lives under {TEAM_ARTIFACTS_ROOT}; the final mockup lives at the work-item --mode=mockup spec-source output path, design-specs/ under {TEAM_ARTIFACTS_ROOT} \u2014 never inside {SPEC_ROOT}, which holds canonical specs only. The mockup step's render (html-export --to=png) is the journey-view evidence for ui-design --mode=review: exit 0 = render evidence only, exit 4 = fix the mockup and re-render, exit 3 = NOT VERIFIABLE with a setup pointer (never install), exit 1/2 or any other code = tool failure, NOT VERIFIABLE. The mockup step records the design spec and mockup paths in the spec's companion-artifact frontmatter (design_spec:/mockup: in the portable fallback) \u2014 frontmatter only, spec body untouched.\nGATES (never skipped): work-item --mode=review --type=design, ui-design --mode=review (N/A only when Mockup: SKIPPED by user: no mockup to review), workflow-end. User confirmations and the explore pick are never parallelized or delegated, and never auto-answered while the user can be asked (only the recorded Selection: AUTO-SELECTED paths). Goal-driven: define success criteria first and loop until observable checks pass.\nSCOPE GATE FIRST (this workflow): work-item --mode=mockup Step 0 (3/2/1 mockup options, or skip) is the run's FIRST action, before /design-spec or any reading; record the answer in the run report. Skip -> run /design-spec, /work-item --mode=review --type=design and the /ui-design --mode=review gate (record N/A \u2014 no mockup to review); record Mockup: SKIPPED by user; log work-item --mode=mockup as N/A (no mockup exists), then /workflow-end (and /watzup only when its registry condition holds). MAIN SESSION ONLY: the scope gate and the pick never run inside a delegated sub-agent; only the draft builders may be sub-agents.",
-        "readFiles": [
-          ".claude/skills/workflow-spec-to-mockup/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-spec-to-mockup/SKILL.md"]
       },
       "sequence": [
         {
@@ -4664,30 +4156,17 @@
       "phases": [
         {
           "id": "specify",
-          "steps": [
-            "spec-to-mockup-design-spec",
-            "spec-to-mockup-design-review",
-            "spec-to-mockup-mockup"
-          ]
+          "steps": ["spec-to-mockup-design-spec", "spec-to-mockup-design-review", "spec-to-mockup-mockup"]
         },
         {
           "id": "review",
-          "steps": [
-            "spec-to-mockup-ui-design-review"
-          ],
-          "exit": [
-            "review-converged"
-          ]
+          "steps": ["spec-to-mockup-ui-design-review"],
+          "exit": ["review-converged"]
         },
         {
           "id": "close",
-          "steps": [
-            "spec-to-mockup-end",
-            "spec-to-mockup-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["spec-to-mockup-end", "spec-to-mockup-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -4698,34 +4177,24 @@
       "outcomeGates": [
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "workflow-review-changes"
-          ]
+          "satisfiedBy": ["workflow-review-changes"]
         },
         {
           "id": "spec-synced",
-          "satisfiedBy": [
-            "spec"
-          ]
+          "satisfiedBy": ["spec"]
         },
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "test"
-          ]
+          "satisfiedBy": ["test"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "SPEC SYNC (post-change): bring canonical test cases, feature docs and integration tests back in line with the code after a change; every changed behavior ends covered by tests that ran green in this run.\nA native contract may be declared by config or local references; resolve the active artifact contract from docs/project-config.json (specArtifacts, specRoots) and the required local references first, and use the strict portable defaults only when neither config nor local references declares a native artifact contract. An unresolved mapping stays UNKNOWN/BLOCKED.\nTRIAGE FIRST (record it): size band (XS/S/M/L/XL) and trigger kind (bug fix -> regression case; behavior or contract change; behavior-preserving refactor or docs-only -> cases usually current; UI-bearing). Optional steps run only when their registry `when` holds; log every other deviation per /start-workflow.\nORDER (verify last): /spec [mode=tests] -> changed-case review -> /integration-test when a changed case has no executing test -> /spec [mode=sync] -> ONE nested /workflow-review-changes --tests=defer over the triggering change and this run's cases, tests and docs (a trigger whose converged review report still matches its current commit or diff narrows this review to the run's delta and its interaction with the trigger; a later trigger edit is part of the delta; the review is never skipped) -> /integration-test --mode=verify -> /test. A review fix that changes behavior re-runs /spec [mode=tests], the changed-case review when it changed a case, and /spec [mode=sync] on the changed part, then the review again on the settled tree, before the verify.\nGATES: the nested /workflow-review-changes runs INLINE in the main session and its docs step syncs the docs; /spec [mode=sync] reconciles the case owner with the executing tests and the source (three-way sync per {REF_DOCS_ROOT}/spec-system-reference.md; strict default = Feature Spec Section 8 TCs + CoveredBy links); the /test gate (--proven=@verify) proves changed behavior green in this run; /workflow-end closes.\nINVARIANTS: cases encode intended behavior, never the bug - name the Business Intent / Invariant Guarded and make the test fail if that intent breaks. For each changed hard rule or invariant, sync a universally quantified property case plus its boundary counter-case (property/metamorphic tests; mutation testing when configured or warranted by risk), and feed every behavior-changing finding into BOTH the spec and the tests. A failing test gets a five-way Fault Verdict (SOURCE-WRONG | TEST-WRONG | TEST-NOT-OPTIMAL | ENVIRONMENT-BLOCKED | AMBIGUOUS) via /investigate --mode=debug before any edit; never weaken, skip or retry an assertion to force green. UI-bearing change -> refresh the interaction surface (strict default: Feature Spec section 6) alongside the sync; backend-only -> state that reason.\nTriage table, gates and recommended skills: .claude/skills/workflow-spec-sync/SKILL.md.",
-        "readFiles": [
-          ".claude/skills/workflow-spec-sync/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-spec-sync/SKILL.md"]
       },
       "sequence": [
         {
@@ -4799,49 +4268,27 @@
       "phases": [
         {
           "id": "specify",
-          "steps": [
-            "spec-sync-spec-tests",
-            "spec-sync-spec-tests-review"
-          ]
+          "steps": ["spec-sync-spec-tests", "spec-sync-spec-tests-review"]
         },
         {
           "id": "build",
-          "steps": [
-            "spec-sync-integration-test",
-            "spec-sync-sync"
-          ],
-          "exit": [
-            "spec-synced"
-          ]
+          "steps": ["spec-sync-integration-test", "spec-sync-sync"],
+          "exit": ["spec-synced"]
         },
         {
           "id": "review",
-          "steps": [
-            "spec-sync-review"
-          ],
-          "exit": [
-            "review-converged"
-          ]
+          "steps": ["spec-sync-review"],
+          "exit": ["review-converged"]
         },
         {
           "id": "verify",
-          "steps": [
-            "spec-sync-integration-verification",
-            "spec-sync-test"
-          ],
-          "exit": [
-            "tests-pass"
-          ]
+          "steps": ["spec-sync-integration-verification", "spec-sync-test"],
+          "exit": ["tests-pass"]
         },
         {
           "id": "close",
-          "steps": [
-            "spec-sync-end",
-            "spec-sync-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["spec-sync-end", "spec-sync-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -4852,28 +4299,20 @@
       "outcomeGates": [
         {
           "id": "review-converged",
-          "satisfiedBy": [
-            "changes-review"
-          ]
+          "satisfiedBy": ["changes-review"]
         },
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "test"
-          ]
+          "satisfiedBy": ["test"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "SEED TEST DATA \u2014 follow .claude/skills/workflow-seed-test-data/SKILL.md (triage, gates, recommended skills).\nBEFORE any seeder code: read docs/project-config.json seeder context group (e.g. Data Seeders: base class, file location, env-gate key, count key, DI registration) and {REF_DOCS_ROOT}/seed-test-data-reference.md; match the existing seeder convention exactly.\nUNIVERSAL RULES:\n1. Environment gate FIRST \u2014 development or config-enabled only. NEVER production.\n2. Command-based ONLY \u2014 application-layer commands; NEVER direct DB/repo writes for domain entities; commands own validation and domain rules, the seeder supplies valid inputs.\n3. Idempotency \u2014 check existing count BEFORE seeding; loop from existing to target (restart-safe), never from 0.\n4. Count-configurable \u2014 read the count from the project config key; small default; zero is a no-op.\n5. Scoped DI per iteration \u2014 never share a DI scope across loop iterations.\nGates: tests pass on the final seeder code; changes-review --fix-loop converges; experience-review inspects seeded data a QC/operator observes (ENVIRONMENT-BLOCKED, never PASS, when it cannot be inspected).\nSpec-loop (seeder tier): property/metamorphic and mutation-score gates are N/A; seeded state MUST stay consistent with spec invariants, and any domain rule a seeder encodes goes into the spec (and tests where testable), never a seeder-only fix.",
-        "readFiles": [
-          ".claude/skills/workflow-seed-test-data/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-seed-test-data/SKILL.md"]
       },
       "sequence": [
         {
@@ -4938,45 +4377,26 @@
       "phases": [
         {
           "id": "discover",
-          "steps": [
-            "seed-investigate"
-          ]
+          "steps": ["seed-investigate"]
         },
         {
           "id": "build",
-          "steps": [
-            "seed-test-data-seed-test-data"
-          ]
+          "steps": ["seed-test-data-seed-test-data"]
         },
         {
           "id": "review",
-          "steps": [
-            "experience-review",
-            "seed-test-data-review"
-          ],
-          "exit": [
-            "review-converged"
-          ]
+          "steps": ["experience-review", "seed-test-data-review"],
+          "exit": ["review-converged"]
         },
         {
           "id": "verify",
-          "steps": [
-            "seed-test-data-test",
-            "seed-docs"
-          ],
-          "exit": [
-            "tests-pass"
-          ]
+          "steps": ["seed-test-data-test", "seed-docs"],
+          "exit": ["tests-pass"]
         },
         {
           "id": "close",
-          "steps": [
-            "seed-test-data-end",
-            "seed-test-data-watzup"
-          ],
-          "exit": [
-            "run-closed"
-          ]
+          "steps": ["seed-test-data-end", "seed-test-data-watzup"],
+          "exit": ["run-closed"]
         }
       ]
     },
@@ -4987,22 +4407,16 @@
       "outcomeGates": [
         {
           "id": "tests-pass",
-          "satisfiedBy": [
-            "integration-test --mode=verify"
-          ]
+          "satisfiedBy": ["integration-test --mode=verify"]
         },
         {
           "id": "run-closed",
-          "satisfiedBy": [
-            "workflow-end"
-          ]
+          "satisfiedBy": ["workflow-end"]
         }
       ],
       "preActions": {
         "injectContext": "INTEGRATION TESTS (variants write | green): pick `--mode` from the prompt BEFORE creating tasks \u2014 `write` (default: author or update spec-traced integration tests for existing code and prove them green; state the assumption when ambiguous) or `green` (a suite or named test is red, flaky or must be proven repeatably green: verify -> adjudicate -> fix -> re-verify). The resolved variant is a complete sequence; build tasks from it and apply ONLY its section below.\n\nVARIANT write (--mode=write):\nWRITE INTEGRATION TESTS: write or update integration tests traced to the project's canonical case owner and prove they pass with real assertion value.\nPROJECT CONTEXT: read docs/project-config.json -> integrationTestVerify (guidance, commands, test roots) and framework.integrationTestDoc, the selected referenceDocs, and same-area tests; they choose runner, layout, fixtures, waits, annotations and repeat policy. Never assume a language, database, layer layout or helper.\nCASE OWNER: resolve specArtifacts and specRoots; use the configured carrier and identifiers, else the strict-default Feature Spec Section 8 TC contract when that is the selected contract. Never invent sections, TC IDs, CoveredBy fields or annotations for a custom carrier.\nTRIAGE FIRST (record it): size band (XS 1-3 cases in one suite ... XL whole-suite audit), kind (new coverage, converting existing cases, stabilising a suite, persistent/shared state, UI, security) and case state (missing, stale, current). Optional steps run only when their registry `when` holds; log every other deviation per /start-workflow.\nGATES: /integration-test --mode=review performs one evidence-backed review pass over all eight gates, including change coverage and real-world fidelity, then reports and stops; fixes and any later review are caller-owned and require a new explicit invocation. /integration-test --mode=verify is green over the configured suites under integrationTestVerify.guidance (absent: two fresh green runs without destructive reset for persistent/shared-state suites) with real runner output; /spec [mode=sync] reconciles cases with executing tests; /workflow-end closes after the Goal Satisfaction matrix.\nGUARDRAILS: read the production and test source before writing any assertion; every test names the invariant it protects and asserts an outcome the system owns; exercise the production entry path when it is the behavior under test and valid fixtures for unrelated preconditions; wait only on a real observable signal. On any failure record a five-way Fault Verdict via /investigate --mode=debug before editing; never force green by deleting or skipping tests, weakening assertions, widening assertion timeouts, retrying assertions or narrowing scope.\nTriage table, gates and recommended skills: .claude/skills/workflow-integration-test/references/variant-write.md.\n\nVARIANT green (--mode=green):\nINTEGRATION TEST GREEN (verify -> adjudicate -> fix -> re-verify, bounded loop): drive the resolved integration-test scope to repeatable green by fixing each failure at its owning layer.\nPROJECT CONTEXT: read docs/project-config.json -> integrationTestVerify (guidance, quickRunCommand, testProjectPattern/testProjects, systemCheckCommand, startupScript) and framework.integrationTestDoc; never hardcode a runner, database, helper or layout.\nSCOPE: the WHOLE system by default; a named suite, module, test or diff narrows it. Record the concrete suite list and pass it explicitly every round - never the git-changed subset, never narrowed; widen it (logged) when a source fix reaches suites outside it.\nTRIAGE FIRST (record it): failure load after the first verify (0 = proof-only run; XS 1-3 failures sharing a cause = inline; larger = cluster by signature and module, sweep the environment first, adjudicate cluster by cluster in bounded batches) and the verdict kinds. Optional steps run only when their registry `when` holds; log every other deviation per /start-workflow.\nLOOP (owned by /integration-test --mode=verify --fix-loop, INLINE): Goal Contract first; each round runs the default verify pass INLINE over the fixed scope; every failure gets ONE Fault Verdict (SOURCE-WRONG | TEST-WRONG | TEST-NOT-OPTIMAL | ENVIRONMENT-BLOCKED | AMBIGUOUS) from /investigate --mode=debug BEFORE any edit, plus a report-only /integration-test --mode=review of the test side for a TEST-WRONG or TEST-NOT-OPTIMAL verdict; /fix at the owning component (SOURCE-WRONG keeps or strengthens the catching test); every round with a fix runs INLINE report-only /changes-review over the fix diff, validates findings with /why-review --validate-findings and folds them into the same round; Round Integrity Check (executed count never shrinks, skipped never grows, scope never narrows); fresh full re-verify. Round cap 3 -> escalate via ask user question tool on no progress across 2 rounds, more failures, lost coverage, an open validated finding, ENVIRONMENT-BLOCKED or AMBIGUOUS. Investigation and fixes happen only inside the loop (no workflow-level /investigate --mode=debug or /fix step) - never a second fix loop after it returns.\nGUARDRAIL - NEVER force green: no weakened or removed assertions, skips, widened assertion timeouts, retried assertions, mutated unrelated persistent data or narrowed scope. Every pass/fail claim cites runner output.\nAFTER CONVERGENCE: sync the configured case owner (strict default: Feature Spec Section 8 TCs + CoveredBy; custom profile: its declared carrier and fields), then /docs-manager --mode=update - its impact map verifies the integration-test reference and other docs and escalates to /scan --target=integration-tests only when that reference needs a rebuild.\nTriage table, gates and recommended skills: .claude/skills/workflow-integration-test/references/variant-green.md.\n\nFull contract: .claude/skills/workflow-integration-test/SKILL.md",
-        "readFiles": [
-          ".claude/skills/workflow-integration-test/SKILL.md"
-        ]
+        "readFiles": [".claude/skills/workflow-integration-test/SKILL.md"]
       },
       "defaultMode": "write",
       "variants": {
@@ -5010,15 +4424,11 @@
           "outcomeGates": [
             {
               "id": "spec-synced",
-              "satisfiedBy": [
-                "spec"
-              ]
+              "satisfiedBy": ["spec"]
             },
             {
               "id": "review-converged",
-              "satisfiedBy": [
-                "integration-test --mode=review"
-              ]
+              "satisfiedBy": ["integration-test --mode=review"]
             }
           ],
           "sequence": [
@@ -5096,53 +4506,30 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "write-investigate"
-              ]
+              "steps": ["write-investigate"]
             },
             {
               "id": "specify",
-              "steps": [
-                "write-spec-tests",
-                "write-spec-tests-review"
-              ]
+              "steps": ["write-spec-tests", "write-spec-tests-review"]
             },
             {
               "id": "build",
-              "steps": [
-                "write-test-code"
-              ]
+              "steps": ["write-test-code"]
             },
             {
               "id": "review",
-              "steps": [
-                "write-integration-review"
-              ],
-              "exit": [
-                "review-converged"
-              ]
+              "steps": ["write-integration-review"],
+              "exit": ["review-converged"]
             },
             {
               "id": "verify",
-              "steps": [
-                "write-integration-verification",
-                "write-spec-sync",
-                "write-docs"
-              ],
-              "exit": [
-                "tests-pass",
-                "spec-synced"
-              ]
+              "steps": ["write-integration-verification", "write-spec-sync", "write-docs"],
+              "exit": ["tests-pass", "spec-synced"]
             },
             {
               "id": "close",
-              "steps": [
-                "write-end",
-                "write-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["write-end", "write-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         },
@@ -5150,16 +4537,12 @@
           "outcomeGates": [
             {
               "id": "root-cause-traced",
-              "satisfiedBy": [
-                "integration-test --mode=verify"
-              ],
+              "satisfiedBy": ["integration-test --mode=verify"],
               "when": "A verify run reported a failing test"
             },
             {
               "id": "spec-synced",
-              "satisfiedBy": [
-                "spec"
-              ],
+              "satisfiedBy": ["spec"],
               "when": "A fix changed tested behavior or a test case"
             }
           ],
@@ -5217,32 +4600,17 @@
           "phases": [
             {
               "id": "discover",
-              "steps": [
-                "green-investigate"
-              ]
+              "steps": ["green-investigate"]
             },
             {
               "id": "verify",
-              "steps": [
-                "green-verify-loop",
-                "green-spec-sync",
-                "green-docs"
-              ],
-              "exit": [
-                "tests-pass",
-                "root-cause-traced",
-                "spec-synced"
-              ]
+              "steps": ["green-verify-loop", "green-spec-sync", "green-docs"],
+              "exit": ["tests-pass", "root-cause-traced", "spec-synced"]
             },
             {
               "id": "close",
-              "steps": [
-                "green-end",
-                "green-watzup"
-              ],
-              "exit": [
-                "run-closed"
-              ]
+              "steps": ["green-end", "green-watzup"],
+              "exit": ["run-closed"]
             }
           ]
         }

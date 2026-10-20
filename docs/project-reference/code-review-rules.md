@@ -40,7 +40,7 @@
 MUST extend `PlatformBaseController`. Controllers are thin — delegate to CQRS only.
 
 ```csharp
-// DO — src/Backend/PlatformExampleApp.TextSnippet.Api/Controllers/TextSnippetController.cs:22
+// DO — src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/Controllers/TextSnippetController.cs:22
 [Route("api/[controller]")]
 [ApiController]
 public class TextSnippetController : PlatformBaseController
@@ -63,7 +63,7 @@ public async Task<IActionResult> Save([FromBody] SaveDto dto)
 MUST place all three classes in a single file under `UseCaseCommands/{Feature}/`.
 
 ```csharp
-// DO — src/Backend/.../UseCaseCommands/SaveSnippetTextCommand.cs
+// DO — src/PlatformExampleApp/.../UseCaseCommands/SaveSnippetTextCommand.cs
 public sealed class SaveSnippetTextCommand : PlatformCqrsCommand<SaveSnippetTextCommandResult>
 {
     public TextSnippetEntityDto Data { get; set; }
@@ -89,7 +89,7 @@ internal sealed class SaveSnippetTextCommandHandler
 Validation logic MUST live in the entity/domain layer. Command `Validate()` delegates to entity.
 
 ```csharp
-// DO — src/Backend/.../Domain/Entities/TextSnippetEntity.cs:352
+// DO — src/PlatformExampleApp/.../Domain/Entities/TextSnippetEntity.cs:352
 public PlatformValidationResult<TextSnippetEntity> ValidateCanBePublished()
 {
     return this.Validate(_ => Status != SnippetStatus.Published, "Snippet is already published")
@@ -123,7 +123,7 @@ if (entity.Status == SnippetStatus.Published)
 MUST define reusable validators as static methods on the entity.
 
 ```csharp
-// DO — src/Backend/.../Domain/Entities/TextSnippetEntity.cs:297
+// DO — src/PlatformExampleApp/.../Domain/Entities/TextSnippetEntity.cs:297
 public static PlatformSingleValidator<TextSnippetEntity, string> SnippetTextValidator()
 {
     return new PlatformSingleValidator<TextSnippetEntity, string>(
@@ -138,7 +138,7 @@ public override PlatformValidator<TextSnippetEntity> GetValidator()
 ### DTO Mapping — DTOs Own It
 
 ```csharp
-// DO — src/Backend/.../Dtos/EntityDtos/TextSnippetEntityDto.cs:212
+// DO — src/PlatformExampleApp/.../Dtos/EntityDtos/TextSnippetEntityDto.cs:212
 protected override TextSnippetEntity MapToEntity(TextSnippetEntity entity, MapToEntityModes mode)
 {
     entity.SnippetText = SnippetText;
@@ -155,7 +155,7 @@ var entity = new TextSnippetEntity { SnippetText = command.Data.SnippetText }; /
 ### Entity Event Handlers — Side Effects Here
 
 ```csharp
-// DO — src/Backend/.../UseCaseEvents/Snippet/SendNotificationOnPublishSnippetEventHandler.cs
+// DO — src/PlatformExampleApp/.../UseCaseEvents/Snippet/SendNotificationOnPublishSnippetEventHandler.cs
 internal sealed class SendNotificationOnPublishSnippetEventHandler
     : PlatformCqrsEntityEventApplicationHandler<TextSnippetEntity>
 {
@@ -179,7 +179,7 @@ internal sealed class SendNotificationOnPublishSnippetEventHandler
 MUST define service-specific repository interface. NEVER use `IPlatformRootRepository<T>` directly in application code. **Read-vs-Root split:** inject the READ interface (`ITextSnippetRepository<T>`) in queries; inject the ROOT interface (`ITextSnippetRootRepository<T>`) only where writes happen.
 
 ```csharp
-// DO — src/Backend/.../Domain/Repositories/ITextSnippetRepository.cs:6,11
+// DO — src/PlatformExampleApp/.../Domain/Repositories/ITextSnippetRepository.cs:6,11
 public interface ITextSnippetRepository<TEntity>          // READ — inject in queries (SearchSnippetTextQuery.cs:86,93)
     : IPlatformQueryableRepository<TEntity, string> { }
 public interface ITextSnippetRootRepository<TEntity>      // WRITE — inject in command handlers (SaveSnippetTextCommand.cs:63,70,78)
@@ -195,7 +195,7 @@ public MyHandler(IPlatformRootRepository<MyEntity> repo) // WRONG — use servic
 MUST use structured logging with named placeholders. NEVER use string interpolation in log messages (defeats structured fields). Acquire the logger via injected `ILogger<T>` / `ILoggerFactory`, or `CreateLogger(LoggerFactory)` / `CreateGlobalLogger()` in event handlers.
 
 ```csharp
-// DO — src/Backend/.../UseCaseEvents/Snippet/SendNotificationOnPublishSnippetEventHandler.cs:67
+// DO — src/PlatformExampleApp/.../UseCaseEvents/Snippet/SendNotificationOnPublishSnippetEventHandler.cs:67
 logger.LogInformation("NOTIFICATION: '{SnippetText}' (ID: {SnippetId}) {PreviousStatus} {UserId} {CategoryId}", ...);
 // DO — exception as first arg — SaveSnippetTextCommand.cs:296
 logger.LogWarning(e, "...");
@@ -244,7 +244,7 @@ if (ex.GetType().Name is "PostgresException") { /* ... */ }
 Scheduled work MUST live in a `PlatformApplicationBackgroundJobExecutor` decorated with `[PlatformRecurringJob(cron, ...)]`. NEVER put cron logic in a command handler. Connection strings MUST come from `Configuration.GetSection(...)` — never hardcoded.
 
 ```csharp
-// DO — src/Backend/.../BackgroundJob/TestRecurringBackgroundJobExecutor.cs:18
+// DO — src/PlatformExampleApp/.../BackgroundJob/TestRecurringBackgroundJobExecutor.cs:18
 [PlatformRecurringJob("0 0 * * *", timeZoneOffset: -7)]
 public sealed class TestRecurringBackgroundJobExecutor : PlatformApplicationBackgroundJobExecutor
 {
@@ -271,7 +271,7 @@ Configuration.GetSection("MongoDB:ConnectionString");
 | Forms          | `PlatformFormComponent<TFormVm>`               | Create/edit forms        |
 
 ```typescript
-// DO — src/Frontend/apps/playground-text-snippet/src/app/app.component.ts:59
+// DO — src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/app.component.ts:59
 @Component({
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
@@ -292,7 +292,7 @@ export class MyComponent extends PlatformComponent {} // with ChangeDetectionStr
 ViewModel MUST extend `PlatformVm`. Store MUST extend `PlatformVmStore<TViewModel>`. Use `effectSimple()` for async operations.
 
 ```typescript
-// DO — src/Frontend/apps/playground-text-snippet/src/app/app.store.ts:87,107
+// DO — src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/app.store.ts:87,107
 export class AppStore extends PlatformVmStore<AppVm> {
     public loadSnippetTextItems = this.effectSimple((query: SearchTextSnippetQuery) => {
         return this.textSnippetApi.search(query).pipe(
@@ -313,7 +313,7 @@ this.http.get<Item[]>('/api/items').subscribe(...);    // WRONG — go through P
 MUST extend `PlatformApiService`. Define `apiUrl` getter. Use `this.get<T>()`, `this.post<T>()`.
 
 ```typescript
-// DO — src/Frontend/libs/apps-domains/text-snippet-domain/src/lib/apis/text-snippet.api.ts:23
+// DO — src/PlatformExampleAppWeb/libs/apps-domains/text-snippet-domain/src/lib/apis/text-snippet.api.ts:23
 @Injectable()
 export class TextSnippetApi extends PlatformApiService {
     protected get apiUrl(): string {
@@ -334,7 +334,7 @@ this.http.get('/api/TextSnippet/search', ...); // WRONG
 MUST extend `PlatformDataModel`. Constructor with `data?: Partial<T>`.
 
 ```typescript
-// DO — src/Frontend/libs/apps-domains/text-snippet-domain/src/lib/data-models/text-snippet.data-model.ts:3
+// DO — src/PlatformExampleAppWeb/libs/apps-domains/text-snippet-domain/src/lib/data-models/text-snippet.data-model.ts:3
 export class TextSnippetDataModel extends PlatformDataModel {
     public constructor(data?: Partial<TextSnippetDataModel>) {
         super(data);
@@ -347,7 +347,7 @@ export class TextSnippetDataModel extends PlatformDataModel {
 ### BEM Classes on All Template Elements
 
 ```html
-<!-- DO — src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-list/task-list.component.html -->
+<!-- DO — src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/shared/components/task-list/task-list.component.html -->
 <div class="task-list">
     <div class="task-list__statistics">
         <div class="stat-card">
@@ -365,7 +365,7 @@ export class TextSnippetDataModel extends PlatformDataModel {
 
 ### ESLint Enforced Rules
 
-Source of truth: `src/Frontend/.eslintrc.json` (root `*.ts` override) + per-app `apps/playground-text-snippet/.eslintrc.json`.
+Source of truth: `src/PlatformExampleAppWeb/.eslintrc.json` (root `*.ts` override) + per-app `apps/playground-text-snippet/.eslintrc.json`.
 
 | Rule                                                                    | Severity | What It Catches                                               |
 | ----------------------------------------------------------------------- | -------- | ------------------------------------------------------------- |
@@ -440,10 +440,10 @@ Shared ──> Easy.Platform ONLY      (leaf)                                   
 
 - Integration tests extend `PlatformServiceIntegrationTestWithAssertions<TModule>` (`TextSnippetIntegrationTestBase.cs:33-34`)
 - Drive use cases via `ExecuteCommandAsync` / `ExecuteQueryAsync` — never call handlers directly
-- Generate ALL test data with `IntegrationTestHelper.UniqueName(...)` (alias defined `src/Backend/PlatformExampleApp.IntegrationTests/GlobalUsings.cs:16`) — never literal/static names (collide across parallel runs)
+- Generate ALL test data with `IntegrationTestHelper.UniqueName(...)` (alias defined `src/PlatformExampleApp/PlatformExampleApp.IntegrationTests/GlobalUsings.cs:16`) — never literal/static names (collide across parallel runs)
 - Assert DB state via `AssertEntityMatchesAsync<T>` / `WaitUntilAsync` (eventual consistency) — never a single immediate read
 - Tag tests with `[Trait("TestSpec", "TC-...")]` for spec traceability
-- **Integration suites use real DB and bus.** Isolated framework/application mechanics in `src/Backend/PlatformExampleApp.Tests.Unit/` use Moq; they do not prove provider/broker integration.
+- **Integration suites use real DB and bus.** Isolated framework/application mechanics in `src/PlatformExampleApp/PlatformExampleApp.Tests.Unit/` use Moq; they do not prove provider/broker integration.
 
 ### Configuration & Secrets
 

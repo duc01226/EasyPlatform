@@ -1013,6 +1013,21 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
 
         // Multiple handlers: deep-clone event for handler isolation (each handler gets its own event instance)
         var clonedEvent = @event.DeepClone();
+
+        // Local execution policy is excluded from the wire payload, but must survive handler isolation.
+        // Copy the sets and their comparers so one handler cannot change another handler's policy.
+        var waitHandlerNames = @event.WaitHandlerExecutionFinishedImmediatelyFullNames;
+        clonedEvent.WaitHandlerExecutionFinishedImmediatelyFullNames = waitHandlerNames == null
+            ? null
+            : new HashSet<string>(waitHandlerNames, waitHandlerNames.Comparer);
+        if (@event is PlatformCqrsEvent originalPlatformEvent && clonedEvent is PlatformCqrsEvent clonedPlatformEvent)
+        {
+            var sameUowHandlerNames = originalPlatformEvent.RunHandlerInSameCurrentActiveUowFullNames;
+            clonedPlatformEvent.RunHandlerInSameCurrentActiveUowFullNames = sameUowHandlerNames == null
+                ? null
+                : new HashSet<string>(sameUowHandlerNames, sameUowHandlerNames.Comparer);
+        }
+
         NoNeedCloneNewEventInstanceForTheHandler = true;
 
         // ═══════════════════════════════════════════════════════════════════

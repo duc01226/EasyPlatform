@@ -20,9 +20,9 @@ namespace Easy.Platform.Tests.Unit.Application.MessageBus.Consumers;
 /// Guards the inbox-related defaults and retry-ownership decision of
 /// <see cref="PlatformApplicationMessageBusConsumer{TMessage}" />.
 /// <para>
-/// <b>Invariant guarded:</b> these flags decide whether a consumed message is durably recorded before it is handled
-/// (the inbox pattern) and WHO owns the retry budget. Every one of them defaults in the direction of durability —
-/// inbox on, sequential per-consumer ordering on, keep-alive ping on, delete-after-processing off. A silent flip of any
+/// <b>Invariant guarded:</b> these flags decide how a consumed message reaches the inbox and WHO owns the retry
+/// budget. Defaults preserve inbox support with the unordered direct-first optimization, sequential per-consumer
+/// ordering, keep-alive ping and retained processed messages. A silent flip of any
 /// default changes the at-least-once delivery guarantee of every application consumer in every service at once, and
 /// does so invisibly: nothing throws, messages simply stop being recorded, or start being handled out of order, or get
 /// deleted before an operator can inspect them.
@@ -49,9 +49,10 @@ public class PlatformApplicationMessageBusConsumerDefaultsTests : PlatformUnitTe
         // the required handling logic, so every value asserted below is production's, not a test double's invention.
         var consumer = CreateDefaultConsumer();
 
-        // Inbox ON by default: the message is persisted before handling, so a crash mid-handle replays rather than
-        // loses it. A service that genuinely wants fire-and-forget must opt OUT explicitly and visibly.
+        // Inbox support is ON. Unordered messages retain their established direct-first optimization; a consumer
+        // with long-running handling can opt into persistence before handling without changing other consumers.
         consumer.AllowUseInboxMessage.Should().BeTrue();
+        consumer.AllowTryConsumeMessageImmediatelyBeforeCreateInboxMessage.Should().BeTrue();
 
         // Handle in the CURRENT request flow, not on a detached background task: backgrounding by default would let the
         // producing request complete while its consumer work is still unstarted and untracked.

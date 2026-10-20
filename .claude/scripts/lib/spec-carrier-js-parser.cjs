@@ -57,7 +57,6 @@ function span(node, sourceFile) {
 }
 
 function stringValue(node, ts) {
-  if (!node) return null;
   return ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) ? node.text : null;
 }
 

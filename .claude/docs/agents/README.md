@@ -55,30 +55,30 @@ Main Claude Session
 
 ### Development & Implementation
 
-| Agent                 | Purpose                                                                | Tools     |
-| --------------------- | ---------------------------------------------------------------------- | --------- |
-| `fullstack-developer` | Execute implementation phases                                          | All tools |
-| `backend-developer`   | Backend features using the project's configured stack and architecture | All tools |
-| `integration-tester`  | Generate integration tests from changes                                | All tools |
-| `performance-tester` | Write/update or statically review performance tests and reusable harnesses through `performance-test`; execution stays with the explicitly authorized caller | All tools |
-| `code-simplifier`     | Simplify code for clarity and maintainability                          | All tools |
+| Agent                 | Purpose                                                                                                                                                      | Tools     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| `fullstack-developer` | Execute implementation phases                                                                                                                                | All tools |
+| `backend-developer`   | Backend features using the project's configured stack and architecture                                                                                       | All tools |
+| `integration-tester`  | Generate integration tests from changes                                                                                                                      | All tools |
+| `performance-tester`  | Write/update or statically review performance tests and reusable harnesses through `performance-test`; execution stays with the explicitly authorized caller | All tools |
+| `code-simplifier`     | Simplify code for clarity and maintainability                                                                                                                | All tools |
 
 ### Quality & Review
 
-| Agent                      | Purpose                                                                | Tools                                  |
-| -------------------------- | ---------------------------------------------------------------------- | -------------------------------------- |
-| `code-reviewer`            | Comprehensive code review and quality assessment                       | All tools (no frontmatter restriction) |
+| Agent                      | Purpose                                                                                                              | Tools                                  |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `code-reviewer`            | Comprehensive code review and quality assessment                                                                     | All tools (no frontmatter restriction) |
 | `ai-engineering-reviewer`  | Read-only review of plans and code that call models (LLM calls, prompts, agents, RAG, tool use, evals, cost, safety) | All tools (no frontmatter restriction) |
-| `spec-compliance-reviewer` | Verify implementation matches spec (before code review)                | All tools (no frontmatter restriction) |
-| `tester`                   | Validate code through testing                                          | All tools                              |
-| `debugger`                 | Investigate issues and analyze system behavior                         | All tools                              |
-| `e2e-runner`               | E2E testing with the project's configured runner and patterns (Sonnet) | All tools                              |
+| `spec-compliance-reviewer` | Verify implementation matches spec (before code review)                                                              | All tools (no frontmatter restriction) |
+| `tester`                   | Validate code through testing                                                                                        | All tools                              |
+| `debugger`                 | Investigate issues and analyze system behavior                                                                       | All tools                              |
+| `e2e-runner`               | E2E testing with the project's configured runner and patterns (Sonnet)                                               | All tools                              |
 
 ### Operations & Management
 
-| Agent          | Purpose                                           | Tools                                  |
-| -------------- | ------------------------------------------------- | -------------------------------------- |
-| `git-manager`  | Stage, commit, and push with conventional commits | All tools (no frontmatter restriction) |
+| Agent          | Purpose                                                              | Tools                                  |
+| -------------- | -------------------------------------------------------------------- | -------------------------------------- |
+| `git-manager`  | Stage, commit, and push with conventional commits                    | All tools (no frontmatter restriction) |
 | `docs-manager` | Manage technical documentation; drives `/docs-manager --mode=update` | All tools                              |
 
 ### Team Collaboration
@@ -160,29 +160,29 @@ Task({
 
 ### When to Use Each Agent
 
-| Scenario                      | Agent                  | Why                                                         |
-| ----------------------------- | ---------------------- | ----------------------------------------------------------- |
-| Investigate codebase behavior | `/investigate`         | Deep tracing with evidence and graph context                |
-| Understand codebase structure | `Explore`              | Comprehensive exploration with context                      |
-| Research new technology       | `researcher`           | Web search + documentation synthesis                        |
-| Plan feature implementation   | `planner`              | Creates structured implementation plans                     |
-| Evaluate architecture options | `planner`              | Creates structured plans with trade-off analysis            |
-| Design system architecture    | `architect`            | ADR creation, cross-service analysis                        |
-| Greenfield project inception  | `solution-architect`   | Tech stack, DDD, project structure                          |
-| Plan E2E test structure       | `e2e-runner`           | Configured test organization and stable accessible locators |
-| Write/update or review performance tests | `performance-tester` | Shared performance-test gates; author/static review only; explicit caller owns runs |
-| Implement from plan           | `fullstack-developer`  | Executes implementation phases                              |
-| Debug failing tests           | `debugger`             | Systematic issue investigation                              |
-| Run and analyze tests         | `tester`               | Test execution and coverage analysis                        |
-| Review code quality           | `code-reviewer`        | Security, performance, best practices                       |
-| Review an AI-feature plan or diff | `ai-engineering-reviewer` | Model calls, prompts, agents, RAG, tool use, evals; `AF`/`AE`/`AR` gates with provider facts verified |
-| Clean up code                 | `code-simplifier`      | Refactor for clarity and maintainability                    |
-| Commit changes                | `git-manager`          | Conventional commits with proper messages                   |
-| Update documentation          | `docs-manager`         | Technical docs maintenance (`/docs-manager --mode=update`)   |
-| Create test plan              | `tester`               | Test coverage, case generation                              |
-| Synthesize knowledge          | `knowledge-worker`     | Web research, structured reports, course material           |
-| Design specification          | `ui-ux-designer`       | Platform-aware visual language, layouts, and accessibility  |
-| Edit the .claude framework    | `framework-maintainer` | Skills, agents, hooks, SYNC blocks, Codex mirrors           |
+| Scenario                                 | Agent                     | Why                                                                                                   |
+| ---------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Investigate codebase behavior            | `/investigate`            | Deep tracing with evidence and graph context                                                          |
+| Understand codebase structure            | `Explore`                 | Comprehensive exploration with context                                                                |
+| Research new technology                  | `researcher`              | Web search + documentation synthesis                                                                  |
+| Plan feature implementation              | `planner`                 | Creates structured implementation plans                                                               |
+| Evaluate architecture options            | `planner`                 | Creates structured plans with trade-off analysis                                                      |
+| Design system architecture               | `architect`               | ADR creation, cross-service analysis                                                                  |
+| Greenfield project inception             | `solution-architect`      | Tech stack, DDD, project structure                                                                    |
+| Plan E2E test structure                  | `e2e-runner`              | Configured test organization and stable accessible locators                                           |
+| Write/update or review performance tests | `performance-tester`      | Shared performance-test gates; author/static review only; explicit caller owns runs                   |
+| Implement from plan                      | `fullstack-developer`     | Executes implementation phases                                                                        |
+| Debug failing tests                      | `debugger`                | Systematic issue investigation                                                                        |
+| Run and analyze tests                    | `tester`                  | Test execution and coverage analysis                                                                  |
+| Review code quality                      | `code-reviewer`           | Security, performance, best practices                                                                 |
+| Review an AI-feature plan or diff        | `ai-engineering-reviewer` | Model calls, prompts, agents, RAG, tool use, evals; `AF`/`AE`/`AR` gates with provider facts verified |
+| Clean up code                            | `code-simplifier`         | Refactor for clarity and maintainability                                                              |
+| Commit changes                           | `git-manager`             | Conventional commits with proper messages                                                             |
+| Update documentation                     | `docs-manager`            | Technical docs maintenance (`/docs-manager --mode=update`)                                            |
+| Create test plan                         | `tester`                  | Test coverage, case generation                                                                        |
+| Synthesize knowledge                     | `knowledge-worker`        | Web research, structured reports, course material                                                     |
+| Design specification                     | `ui-ux-designer`          | Platform-aware visual language, layouts, and accessibility                                            |
+| Edit the .claude framework               | `framework-maintainer`    | Skills, agents, hooks, SYNC blocks, Codex mirrors                                                     |
 
 ### When NOT to Use Agents
 

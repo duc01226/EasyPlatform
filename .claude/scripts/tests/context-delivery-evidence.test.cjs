@@ -525,9 +525,9 @@ test('the evaluation CLI prepares the frozen job list without building a world',
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /^PREPARED 120 jobs in .+; behavioral evidence NOT RUN\./);
     const dir = runDirOf(outputDir);
-    const reported = result.stdout.match(/^PREPARED 120 jobs in (.+); behavioral evidence NOT RUN\./);
-    assert.ok(reported, 'the report names the run directory');
-    assert.equal(fs.realpathSync(path.resolve(REPO_ROOT, reported[1])), fs.realpathSync(dir));
+    const reportedDir = result.stdout.match(/^PREPARED 120 jobs in (.+); behavioral evidence NOT RUN\./)[1];
+    assert.equal(fs.realpathSync.native(path.resolve(REPO_ROOT, reportedDir)), fs.realpathSync.native(dir),
+        'the report names the actual run directory, using either an absolute or project-relative path');
     assert.deepEqual(fs.readdirSync(outputDir).length, 1);
     assert.deepEqual(fs.readdirSync(dir), ['jobs.json'], 'a preparation leaves the job list only');
     const jobs = JSON.parse(fs.readFileSync(path.join(dir, 'jobs.json'), 'utf8'));

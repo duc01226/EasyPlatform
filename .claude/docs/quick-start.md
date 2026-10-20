@@ -117,17 +117,17 @@ Searches codebase for relevant files and explains functionality.
 
 Claude Code intercepts these event types (`SubagentStart` and `UserPromptExpansion` carry only the protocol-delivery handlers — standing agent context is static in the agent `.md` files; `PreCompact` has no live hook — the universal bundle is re-delivered after a compaction and `TaskList` resumes the task state):
 
-| Event                 | When It Fires            | Example Hook                   |
-| --------------------- | ------------------------ | ------------------------------ |
-| `SessionStart`        | Claude Code starts       | `session-init.cjs`             |
-| `SessionEnd`          | Claude Code exits        | `session-end.cjs`              |
-| `UserPromptSubmit`    | Before each user message | `init-prompt-gate.cjs`         |
-| `PostToolUse`         | After tool execution     | `post-edit-prettier.cjs`       |
-| `PreToolUse`          | Before tool execution    | `review-commit-gate.cjs`       |
+| Event                 | When It Fires            | Example Hook                      |
+| --------------------- | ------------------------ | --------------------------------- |
+| `SessionStart`        | Claude Code starts       | `session-init.cjs`                |
+| `SessionEnd`          | Claude Code exits        | `session-end.cjs`                 |
+| `UserPromptSubmit`    | Before each user message | `init-prompt-gate.cjs`            |
+| `PostToolUse`         | After tool execution     | `post-edit-prettier.cjs`          |
+| `PreToolUse`          | Before tool execution    | `review-commit-gate.cjs`          |
 | `SubagentStart`       | Sub-agent starts         | `protocol-inject-universal-1.cjs` |
-| `UserPromptExpansion` | Typed `/command` expands | `protocol-inject-review.cjs`   |
-| `Stop`                | Response complete        | `notifications/notify.cjs`     |
-| `Notification`        | Idle/waiting events      | `notifications/notify.cjs`     |
+| `UserPromptExpansion` | Typed `/command` expands | `protocol-inject-review.cjs`      |
+| `Stop`                | Response complete        | `notifications/notify.cjs`        |
+| `Notification`        | Idle/waiting events      | `notifications/notify.cjs`        |
 
 See [hooks/README.md](./hooks/README.md) for detailed explanations.
 

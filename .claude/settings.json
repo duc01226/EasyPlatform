@@ -4,16 +4,9 @@
     "pr": "Generated with [Claude Code](https://claude.com/claude-code)"
   },
   "cleanupPeriodDays": 30,
-  "disabledMcpjsonServers": [
-    "chrome-devtools"
-  ],
+  "disabledMcpjsonServers": ["chrome-devtools"],
   "enableAllProjectMcpServers": false,
-  "enabledMcpjsonServers": [
-    "context7",
-    "github",
-    "mongodb",
-    "postgres"
-  ],
+  "enabledMcpjsonServers": ["context7", "github", "mongodb", "postgres"],
   "enabledPlugins": {
     "code-review@claude-plugins-official": false,
     "code-simplifier@claude-plugins-official": false,
@@ -167,8 +160,7 @@
             "timeout": 3
           }
         ]
-      }
-,
+      },
       {
         "matcher": "*",
         "hooks": [

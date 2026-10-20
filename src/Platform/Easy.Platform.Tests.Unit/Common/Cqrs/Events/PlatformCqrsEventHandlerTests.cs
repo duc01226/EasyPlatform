@@ -168,6 +168,75 @@ public class PlatformCqrsEventHandlerTests : PlatformUnitTestBase
         siblingHandler.NeedRunHandlerInSameCurrentActiveUowForTest(@event).Should().BeFalse();
     }
 
+    // Local cloning must preserve execution policy without making it part of the serialized event contract.
+    [Theory]
+    [Trait("TechnicalSpec", "TC-PLATEVT-019")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void BuildHandlerInstanceEvent_PreservesTargetedExecutionPolicyAndIsolation(bool targetSibling)
+    {
+        using var host = EventHandlerTestHost.Create(registerPlainEventHandlers: true);
+        var handler = host.NewPlainHandler();
+        var sibling = host.NewSiblingPlainHandler();
+        var waitType = targetSibling ? typeof(SiblingPlainTestEventHandler) : typeof(PlainTestEventHandler);
+        var sameUowType = targetSibling ? typeof(PlainTestEventHandler) : typeof(SiblingPlainTestEventHandler);
+        var @event = new PlainTestEvent
+        {
+            WaitHandlerExecutionFinishedImmediatelyFullNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { waitType.FullName!.ToLowerInvariant() },
+            RunHandlerInSameCurrentActiveUowFullNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { sameUowType.FullName!.ToLowerInvariant() },
+            RequestContext = new Dictionary<string, object> { ["correlation"] = "original" }
+        };
+
+        var clone = handler.BuildHandlerInstanceEventForTest(@event);
+
+        clone.Should().NotBeSameAs(@event, "two real handler registrations require an isolated local event");
+        handler.NeedWaitHandlerExecutionFinishedImmediatelyForTest(clone).Should().Be(!targetSibling);
+        sibling.NeedWaitHandlerExecutionFinishedImmediatelyForTest(clone).Should().Be(targetSibling);
+        handler.NeedRunHandlerInSameCurrentActiveUowForTest(clone).Should().Be(targetSibling);
+        sibling.NeedRunHandlerInSameCurrentActiveUowForTest(clone).Should().Be(!targetSibling);
+        clone.WaitHandlerExecutionFinishedImmediatelyFullNames.Should().NotBeSameAs(@event.WaitHandlerExecutionFinishedImmediatelyFullNames);
+        clone.RunHandlerInSameCurrentActiveUowFullNames.Should().NotBeSameAs(@event.RunHandlerInSameCurrentActiveUowFullNames);
+        clone.WaitHandlerExecutionFinishedImmediatelyFullNames.Clear();
+        clone.RunHandlerInSameCurrentActiveUowFullNames.Clear();
+        clone.RequestContext["correlation"] = "clone";
+        @event.MustWaitHandlerExecutionFinishedImmediately(waitType).Should().BeTrue();
+        @event.MustRunHandlerInSameCurrentActiveUow(sameUowType).Should().BeTrue();
+        @event.RequestContext["correlation"].Should().Be("original");
+        handler.BuildHandlerInstanceEventForTest(clone).Should().BeSameAs(clone, "re-entry must reuse this handler's isolated event");
+    }
+
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PLATEVT-020")]
+    public void BuildHandlerInstanceEvent_WithoutLocalPolicy_PreservesBackgroundDefaults()
+    {
+        using var host = EventHandlerTestHost.Create(registerPlainEventHandlers: true);
+        var handler = host.NewPlainHandler();
+
+        var clone = handler.BuildHandlerInstanceEventForTest(new PlainTestEvent());
+
+        clone.WaitHandlerExecutionFinishedImmediatelyFullNames.Should().BeNull();
+        clone.RunHandlerInSameCurrentActiveUowFullNames.Should().BeNull();
+        handler.NeedWaitHandlerExecutionFinishedImmediatelyForTest(clone).Should().BeFalse();
+        handler.NeedRunHandlerInSameCurrentActiveUowForTest(clone).Should().BeFalse();
+    }
+
+    [Fact]
+    [Trait("TechnicalSpec", "TC-PLATEVT-021")]
+    public void BuildHandlerInstanceEvent_LocalPolicyRemainsExcludedFromWirePayload()
+    {
+        using var host = EventHandlerTestHost.Create(registerPlainEventHandlers: true);
+        var handler = host.NewPlainHandler();
+        var @event = new PlainTestEvent();
+        @event.SetWaitHandlerExecutionFinishedImmediately(typeof(PlainTestEventHandler));
+        @event.SetRunHandlerInSameCurrentActiveUow(typeof(PlainTestEventHandler));
+
+        var clone = handler.BuildHandlerInstanceEventForTest(@event);
+        var json = Easy.Platform.Common.JsonSerialization.PlatformJsonSerializer.Serialize(clone);
+
+        json.Should().NotContain(nameof(PlatformCqrsEvent.WaitHandlerExecutionFinishedImmediatelyFullNames));
+        json.Should().NotContain(nameof(PlatformCqrsEvent.RunHandlerInSameCurrentActiveUowFullNames));
+    }
+
     // -- Conditional processing check and its cache --
 
     // TC-PLATEVT-010: CheckHandleWhen surfaces whatever HandleWhen decided.

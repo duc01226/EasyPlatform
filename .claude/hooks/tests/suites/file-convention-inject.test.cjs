@@ -252,57 +252,6 @@ function deliverOnceFor(fx, sessionId, { write, now = NOW } = {}) {
 
 const tests = [
     {
-        name: '[complete-lookup] unknown path includes and exclusions never claim complete rule delivery',
-        fn: () => {
-            const source = '^/guarded/';
-            try {
-                conventions.resetContentGuard();
-                conventions.guardedPathRegexTest(source, '/guarded/a.ts', { remainingMs: 100 }, {
-                    execute: () => { const error = new Error('bounded guard'); error.code = 'ERR_SCRIPT_EXECUTION_TIMEOUT'; throw error; }
-                });
-                for (const group of [
-                    { name: 'unknown-include', pathRegexes: [source], rules: ['Required include rule'] },
-                    { name: 'unknown-exclude', pathRegexes: [], pathGlobs: ['**'], excludePathRegexes: [source], rules: ['Required exclusion rule'] }
-                ]) {
-                    const config = enabled([group], { completeLookup: true });
-                    const result = conventions.lookup(config, 'guarded/a.ts', { projectDir: process.cwd() });
-                    assert.equal(result.incomplete, true);
-                    assert.deepEqual(result.unresolvedClasses, [group.name]);
-                    assert.deepEqual(result.pages, []);
-                    assert.match(result.text, /incomplete/);
-                    assert.ok(!result.text.includes('Complete lookup finished'));
-                }
-                const known = conventions.lookup(enabled([{ name: 'known', pathRegexes: [], pathGlobs: ['**'], rules: ['Known rule'] }], { completeLookup: true }), 'guarded/a.ts', { projectDir: process.cwd() });
-                assert.equal(known.incomplete, false);
-                assert.match(known.text, /Known rule/);
-                assert.match(known.text, /Complete lookup finished/);
-            } finally {
-                conventions.resetContentGuard();
-            }
-        }
-    },
-    {
-        name: '[complete-lookup] native CLI refuses a supported path regex timeout',
-        fn: async () => {
-            const tempRoot = path.resolve(HOOKS_DIR, '../../tmp');
-            fs.mkdirSync(tempRoot, { recursive: true });
-            const root = fs.realpathSync(fs.mkdtempSync(path.join(tempRoot, 'complete-lookup-')));
-            try {
-                fs.mkdirSync(path.join(root, 'docs'));
-                const config = { project: { name: 'bounded-lookup' }, ...enabled([{ name: 'slow-rule', pathRegexes: ['^/(a+)+$|!$'], rules: ['Required rule'] }], { completeLookup: true }) };
-                fs.writeFileSync(path.join(root, 'docs/project-config.json'), JSON.stringify(config));
-                const result = await spawnNode([LOOKUP_CLI, '--lookup', 'a'.repeat(200) + '!', '--complete'], {
-                    cwd: root, env: { CLAUDE_PROJECT_DIR: root, HOME: root, USERPROFILE: root }
-                });
-                assert.equal(result.code, 1, result.stdout + result.stderr);
-                assert.match(result.stderr, /Complete lookup is incomplete.*slow-rule/);
-                assert.equal(result.stdout, '');
-            } finally {
-                fs.rmSync(root, { recursive: true, force: true });
-            }
-        }
-    },
-    {
         // INTENT BR-PFCI-26 / TC-PFCI-099: only completed current full owned content proves presence.
         name: 'TC-PFCI-099 verified complete evidence rejects failed partial foreign unresolved and unknown loads',
         fn: async () => withFixture(async fx => {

@@ -36,7 +36,7 @@ stages:
           nuget | "$(Agent.OS)"
         path: $(NUGET_PACKAGES)
 
-    - script: dotnet build src/Backend/PlatformExampleApp.TextSnippet.Api --configuration $(buildConfiguration)
+    - script: dotnet build src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api --configuration $(buildConfiguration)
       displayName: 'dotnet build $(buildConfiguration)'
 
 - stage: IntegrationTests
@@ -62,7 +62,7 @@ stages:
         path: $(NUGET_PACKAGES)
 
     - script: |
-        dotnet test src/Backend/PlatformExampleApp.TextSnippet.ContractTests \
+        dotnet test src/PlatformExampleApp/PlatformExampleApp.TextSnippet.ContractTests \
           --configuration $(buildConfiguration) \
           --logger "trx;LogFileName=contract-test-results.trx" \
           --results-directory $(Build.ArtifactStagingDirectory)/test-results
@@ -94,7 +94,7 @@ stages:
       displayName: 'Wait for infrastructure'
 
     - script: |
-        dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api \
+        dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api \
           --configuration $(buildConfiguration) \
           -- --urls "http://localhost:5001" &
         API_PID=$!
@@ -109,7 +109,7 @@ stages:
       displayName: 'Start API and wait for health'
 
     - script: |
-        dotnet test src/Backend/PlatformExampleApp.Tests.Integration \
+        dotnet test src/PlatformExampleApp/PlatformExampleApp.Tests.Integration \
           --configuration $(buildConfiguration) \
           --logger "trx;LogFileName=integration-test-results.trx" \
           --results-directory $(Build.ArtifactStagingDirectory)/test-results
@@ -158,10 +158,10 @@ stages:
     - task: Cache@2
       displayName: 'Cache npm packages'
       inputs:
-        key: 'npm | "$(Agent.OS)" | src/Frontend/e2e/package-lock.json'
+        key: 'npm | "$(Agent.OS)" | src/PlatformExampleAppWeb/e2e/package-lock.json'
         restoreKeys: |
           npm | "$(Agent.OS)"
-        path: src/Frontend/e2e/node_modules
+        path: src/PlatformExampleAppWeb/e2e/node_modules
 
     - script: docker network create platform-example-app-network || true
       displayName: 'Create docker network'
@@ -181,15 +181,15 @@ stages:
       displayName: 'Wait for frontend'
 
     - script: npm ci
-      workingDirectory: src/Frontend/e2e
+      workingDirectory: src/PlatformExampleAppWeb/e2e
       displayName: 'Install E2E dependencies'
 
     - script: npx playwright install --with-deps chromium
-      workingDirectory: src/Frontend/e2e
+      workingDirectory: src/PlatformExampleAppWeb/e2e
       displayName: 'Install Playwright browsers'
 
     - script: npm test
-      workingDirectory: src/Frontend/e2e
+      workingDirectory: src/PlatformExampleAppWeb/e2e
       displayName: 'Run Playwright E2E tests'
       env:
         CI: true
@@ -198,14 +198,14 @@ stages:
       displayName: 'Upload Playwright HTML report'
       condition: always()
       inputs:
-        PathtoPublish: 'src/Frontend/e2e/playwright-report'
+        PathtoPublish: 'src/PlatformExampleAppWeb/e2e/playwright-report'
         ArtifactName: 'playwright-report'
 
     - task: PublishBuildArtifacts@1
       displayName: 'Upload failure screenshots'
       condition: failed()
       inputs:
-        PathtoPublish: 'src/Frontend/e2e/test-results'
+        PathtoPublish: 'src/PlatformExampleAppWeb/e2e/test-results'
         ArtifactName: 'playwright-failure-screenshots'
 
     - script: |

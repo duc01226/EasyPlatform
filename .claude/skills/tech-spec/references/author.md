@@ -180,6 +180,8 @@ When the derivation surfaces an invariant **enforced at ≥2 points with no busi
 
 Emit exactly these sections, in exactly this order. No run may add, drop, or reorder.
 
+For a generated view over 200 physical lines, add a linked `## Contents` after the title and before the first section. Derive its labels and anchors from the actual section headings; this navigation does not add a semantic section. Keep compact views unchanged.
+
 ````markdown
 > **DERIVED — regenerate with the tech-spec skill; do NOT hand-edit.** Source of truth: the code and tests under `[Source: {namespace}/{service}]`. Regenerated: {YYYY-MM-DD}.
 
