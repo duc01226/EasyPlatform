@@ -153,31 +153,57 @@ public class PlatformRabbitMqTransportContractsTests
 
     [Fact]
     [Trait("TechnicalSpec", "TC-RMQ-TRANSPORT-006")]
-    public async Task QueueArgumentConflict_PreservesQueueAndOriginalFailureWithoutDeleteOrRebind()
+    public async Task QueueArgumentConflict_PreservesExistingQueueAndBindsItOnFreshChannelWithoutDelete()
     {
         using var fixture = new TransportFixture();
+        var spare = SetupQueueArgumentConflict(fixture);
+        spare.Setup(channel => channel.QueueDeclarePassiveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueueDeclareOk("preserved", 3, 0));
+
+        // A legacy queue (e.g. declared without x-message-ttl) must not block startup of every consumer.
+        await fixture.Declare();
+
+        fixture.Channel.Invocations.Concat(spare.Invocations).Should().NotContain(invocation =>
+            invocation.Method.Name == nameof(IChannel.QueueDeleteAsync));
+        spare.Verify(channel => channel.QueueDeclareAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(),
+            It.IsAny<IDictionary<string, object?>>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        spare.Verify(channel => channel.QueueDeclarePassiveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        spare.Verify(channel => channel.QueueBindAsync(It.IsAny<string>(), "test-exchange", It.IsAny<string>(),
+            It.IsAny<IDictionary<string, object?>>(), false, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        fixture.Channel.Verify(channel => channel.QueueBindAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<IDictionary<string, object?>>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        fixture.Policy.Returned.Should().Be(2);
+    }
+
+    [Fact]
+    [Trait("TechnicalSpec", "TC-RMQ-TRANSPORT-011")]
+    public async Task QueueArgumentConflict_WhenExistingQueueCannotBeUsed_PropagatesFallbackFailureWithoutBindOrDelete()
+    {
+        using var fixture = new TransportFixture();
+        var spare = SetupQueueArgumentConflict(fixture);
+        var expected = new InvalidOperationException("Queue vanished or is locked.");
+        spare.Setup(channel => channel.QueueDeclarePassiveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(expected);
+
+        var action = () => fixture.Declare();
+
+        (await action.Should().ThrowAsync<InvalidOperationException>()).Which.Should().BeSameAs(expected);
+        fixture.Channel.Invocations.Concat(spare.Invocations).Should().NotContain(invocation =>
+            invocation.Method.Name == nameof(IChannel.QueueDeleteAsync) || invocation.Method.Name == nameof(IChannel.QueueBindAsync));
+        fixture.Policy.Returned.Should().Be(2);
+    }
+
+    private static Mock<IChannel> SetupQueueArgumentConflict(TransportFixture fixture)
+    {
         ShutdownEventArgs? closeReason = null;
         fixture.Channel.SetupGet(channel => channel.CloseReason).Returns(() => closeReason);
-        var expected = new InvalidOperationException("Incompatible queue arguments.");
         fixture.Channel.Setup(channel => channel.QueueDeclareAsync(It.IsAny<string>(), true, false, false,
                 It.IsAny<IDictionary<string, object?>>(), false, false, It.IsAny<CancellationToken>()))
             .Callback(() => closeReason = new ShutdownEventArgs(ShutdownInitiator.Peer, 406, "PRECONDITION_FAILED"))
-            .ThrowsAsync(expected);
+            .ThrowsAsync(new InvalidOperationException("Incompatible queue arguments."));
         var spare = NewChannel();
-        spare.Setup(channel => channel.QueueDeclarePassiveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new QueueDeclareOk("preserved", 0, 0));
         fixture.Policy.NextChannel = spare.Object;
-
-        var action = () => fixture.Declare();
-        var failure = await action.Should().ThrowAsync<InvalidOperationException>();
-
-        failure.Which.InnerException.Should().BeSameAs(expected);
-        failure.Which.Message.Should().Contain("preserved").And.Contain("Migrate");
-        fixture.Channel.Invocations.Concat(spare.Invocations).Should().NotContain(invocation =>
-            invocation.Method.Name == nameof(IChannel.QueueDeleteAsync) || invocation.Method.Name == nameof(IChannel.QueueDeclarePassiveAsync));
-        fixture.Channel.Verify(channel => channel.QueueBindAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-            It.IsAny<IDictionary<string, object?>>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
-        fixture.Policy.Returned.Should().Be(1);
+        return spare;
     }
 
     [Fact]

@@ -978,25 +978,45 @@ public class PlatformRabbitMqProcessInitializerService : IDisposable
     /// </summary>
     private async Task DeclareQueueForConsumer(PlatformBusMessageRoutingKey consumerBindingRoutingKey)
     {
+        var exchange = GetConsumerExchange(consumerBindingRoutingKey);
+        var queueName = GetConsumerQueueName(consumerBindingRoutingKey);
+        Exception? incompatibleDeclarationException = null;
+
         await channelPool.GetChannelDoActionAndReturn(async currentChannel =>
         {
-            var exchange = GetConsumerExchange(consumerBindingRoutingKey);
-            var queueName = GetConsumerQueueName(consumerBindingRoutingKey);
-
             try
             {
                 await DeclareQueueAndBindForConsumer(currentChannel, queueName, exchange);
             }
             catch (Exception exception) when (currentChannel.CloseReason?.ReplyCode == RabbitMqCloseReasonCodes.NotAcceptable)
             {
-                // Never delete/recreate a live queue: an empty snapshot is racy and rebinding leaves a routing gap.
-                // Preserve accepted messages and require an operator-controlled migration of incompatible arguments.
-                throw new InvalidOperationException(
-                    $"RabbitMQ queue '{queueName}' has incompatible declaration settings. The existing queue was preserved. " +
-                    "Migrate its messages and bindings to a compatible queue before restarting this consumer; automatic deletion is disabled.",
-                    exception);
+                incompatibleDeclarationException = exception;
             }
         });
+
+        if (incompatibleDeclarationException != null)
+            await UseExistingIncompatibleQueue(incompatibleDeclarationException);
+
+        async Task UseExistingIncompatibleQueue(Exception declarationException)
+        {
+            // Never delete/recreate a live queue: an empty snapshot is racy and rebinding leaves a routing gap.
+            // Never fail startup either: one legacy queue would block every consumer and the outbox/inbox workers.
+            // WHY: queues created before the "message-ttl" -> "x-message-ttl" fix carry no TTL, so every redeclare
+            // returns 406. Keep consuming from the existing queue as-is until an operator migrates it.
+            // The 406 closed the original channel, so the fallback runs on a fresh pooled channel.
+            await channelPool.GetChannelDoActionAndReturn(async channel =>
+            {
+                await channel.QueueDeclarePassiveAsync(queueName, currentStartProcessCancellationToken);
+                await DeclareQueueBindForConsumer(channel, consumerBindingRoutingKey, queueName, exchange);
+            });
+
+            Logger.LogWarning(
+                "RabbitMQ queue {QueueName} has incompatible declaration settings: {Error}. The existing queue is preserved and used with its current settings. " +
+                "Migrate its messages and bindings to a compatible queue to apply the configured settings; automatic deletion is disabled.",
+                queueName,
+                PlatformMessageBusDiagnosticFormatter.FormatException(declarationException)
+            );
+        }
 
         async Task DeclareQueue(IChannel model, string queueName)
         {

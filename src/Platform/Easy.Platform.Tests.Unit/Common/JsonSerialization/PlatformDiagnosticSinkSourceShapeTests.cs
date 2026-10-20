@@ -165,6 +165,8 @@ public class PlatformDiagnosticSinkSourceShapeTests
         initializerSource.Should().NotContain("busMessage.ToJson()");
         initializerSource.Should().NotContain("deserializedBusMessage.ToFormattedJson()");
         initializerSource.Should().Contain("PlatformMessageBusDiagnosticFormatter.FormatException(finalEx)");
+        initializerSource.Should().Contain("PlatformMessageBusDiagnosticFormatter.FormatException(declarationException)");
+        initializerSource.Should().NotContain("declarationException.Message");
         initializerSource.Should().NotContain(
             "finalEx.BeautifyStackTrace()",
             "the final requeue failure must not hand the raw exception to ILogger");

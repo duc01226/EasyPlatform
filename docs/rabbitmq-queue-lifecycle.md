@@ -1,12 +1,14 @@
 # RabbitMQ queue lifecycle
 
-Read this guide when changing queue arguments, upgrading an existing deployment, or diagnosing a declaration failure. The initializer preserves an incompatible queue and fails startup; it never deletes and recreates it automatically.
+Read this guide when changing queue arguments, upgrading an existing deployment, or diagnosing a declaration failure. The initializer preserves an incompatible queue and continues startup when it can use that queue with its existing settings; it never deletes and recreates it automatically.
 
 Ordinary consumer queues are durable, nonexclusive and not automatically deleted. Their declaration uses `x-expires` for unused-queue expiry and `x-message-ttl` for message lifetime, from `PlatformRabbitMqOptions`. The former `message-ttl` declaration key was a policy name and did not enforce the intended message lifetime. This correction can produce a406 incompatibility for existing queues.
 
 ## Incompatible declarations
 
-A406 declaration failure includes the queue name, retains the original exception and explains the migration requirement. Keep the existing queue and its accepted messages. A passive empty-count check is a snapshot: a publisher can enqueue immediately afterward, and deleting/rebinding also leaves a routing gap. Neither is an automatic migration strategy.
+A 406 declaration failure closes the declaration channel. The initializer releases it, acquires a fresh pooled channel, passively checks that the existing queue is accessible and applies the consumer's bindings. It then logs a warning with the queue name, declaration error and migration requirement, and continues startup. The queue retains its existing arguments, so newly configured TTL or expiry settings do not take effect until migration. If the passive check or binding fails, that failure propagates; declaration failures with other reply codes also propagate.
+
+Keep the existing queue and its accepted messages. A passive empty-count check is a snapshot: a publisher can enqueue immediately afterward, and deleting/rebinding also leaves a routing gap. Neither is an automatic migration strategy.
 
 Choose an operator-controlled migration appropriate to the service: align the requested arguments with an already compatible declaration, or introduce a separately named queue and coordinate bindings, publishers and consumers. Drain or transfer accepted messages, retain replay/idempotency protection, verify consumption and only retire the old queue under the deployment owner's procedure. This framework provides no automatic queue migration or exactly-once transfer guarantee. Do not delete an existing queue merely to make startup green.
 
